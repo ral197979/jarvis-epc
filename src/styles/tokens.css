@@ -1,0 +1,129 @@
+/**
+ * JARVIS EPC — CSS Design Tokens
+ * ───────────────────────────────
+ * Single source of truth for all CSS custom properties.
+ * These map 1:1 to the TypeScript THEME object in src/modules/theme/index.ts.
+ *
+ * Usage in CSS:  background: var(--jarvis-bg);
+ * Usage in JS:   getComputedStyle(el).getPropertyValue('--jarvis-bg')
+ *
+ * Phase 5 migration target:
+ *   Replace all inline `style={{ background: e.bg }}` patterns with
+ *   CSS class + var() references, removing the JS runtime overhead.
+ */
+
+:root {
+  /* ── Backgrounds ─────────────────────────────────────────────────────────── */
+  --jarvis-bg:   #08090d;   /* App background — deepest level */
+  --jarvis-sf:   #0e1015;   /* Surface — cards, panels */
+  --jarvis-cd:   #13161d;   /* Cadet — nested content areas */
+  --jarvis-bd:   #1e2230;   /* Border — dividers, separators */
+  --jarvis-bl:   #2a2f3f;   /* Blend — hover states, subtle fills */
+
+  /* ── Accent ──────────────────────────────────────────────────────────────── */
+  --jarvis-ac:   #3b82f6;   /* Primary action — buttons, links, focus rings */
+
+  /* ── Text ────────────────────────────────────────────────────────────────── */
+  --jarvis-tx:   #e8ecf4;   /* Primary text */
+  --jarvis-ts:   #8892a6;   /* Secondary text — labels, captions */
+  --jarvis-td:   #4a5168;   /* Disabled text — inactive states */
+
+  /* ── Semantic / Status ───────────────────────────────────────────────────── */
+  --jarvis-blue: #3b82f6;   /* Info — same as accent */
+  --jarvis-grn:  #22c55e;   /* Success / positive variance */
+  --jarvis-red:  #ef4444;   /* Danger / critical / negative variance */
+  --jarvis-amb:  #f59e0b;   /* Warning / amber alert */
+  --jarvis-pur:  #a78bfa;   /* Purple — AI, ML features */
+  --jarvis-cyn:  #06b6d4;   /* Cyan — data, analytics */
+  --jarvis-pnk:  #ec4899;   /* Pink — notifications, badges */
+  --jarvis-org:  #f97316;   /* Orange — construction, field ops */
+
+  /* ── Spacing scale (base-4) ──────────────────────────────────────────────── */
+  --jarvis-sp-1: 4px;
+  --jarvis-sp-2: 8px;
+  --jarvis-sp-3: 12px;
+  --jarvis-sp-4: 16px;
+  --jarvis-sp-5: 20px;
+  --jarvis-sp-6: 24px;
+  --jarvis-sp-8: 32px;
+
+  /* ── Border radius ───────────────────────────────────────────────────────── */
+  --jarvis-r-sm: 4px;
+  --jarvis-r-md: 6px;
+  --jarvis-r-lg: 10px;
+  --jarvis-r-xl: 14px;
+
+  /* ── Typography ─────────────────────────────────────────────────────────── */
+  --jarvis-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --jarvis-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --jarvis-font-size-xs:  9px;
+  --jarvis-font-size-sm:  11px;
+  --jarvis-font-size-md:  13px;
+  --jarvis-font-size-lg:  16px;
+  --jarvis-font-size-xl:  20px;
+  --jarvis-font-size-2xl: 28px;
+
+  /* ── Shadows ──────────────────────────────────────────────────────────────── */
+  --jarvis-shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+  --jarvis-shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+  --jarvis-shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+
+  /* ── Transitions ──────────────────────────────────────────────────────────── */
+  --jarvis-t-fast:   150ms ease;
+  --jarvis-t-normal: 250ms ease;
+  --jarvis-t-slow:   400ms ease;
+
+  /* ── Z-index scale ────────────────────────────────────────────────────────── */
+  --jarvis-z-base:    0;
+  --jarvis-z-raised:  10;
+  --jarvis-z-overlay: 100;
+  --jarvis-z-modal:   200;
+  --jarvis-z-toast:   300;
+  --jarvis-z-tooltip: 400;
+}
+
+/* ── Dark mode is default — light mode override (Phase 5 target) ───────────── */
+@media (prefers-color-scheme: light) {
+  /* TODO Phase 5: define light mode overrides */
+  /* :root { --jarvis-bg: #ffffff; ... } */
+}
+
+/* ── Focus ring — accessible default ─────────────────────────────────────────── */
+*:focus-visible {
+  outline:        2px solid var(--jarvis-ac);
+  outline-offset: 2px;
+  border-radius:  var(--jarvis-r-sm);
+}
+
+/* ── Scrollbar (webkit) ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width:  6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track { background: var(--jarvis-bg); }
+::-webkit-scrollbar-thumb {
+  background:    var(--jarvis-bd);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--jarvis-bl); }
+
+/* ── Selection ────────────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--jarvis-ac);
+  color:      var(--jarvis-tx);
+  opacity:    0.3;
+}
+
+/* ── Base reset ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin:     0;
+  padding:    0;
+  background: var(--jarvis-bg);
+  color:      var(--jarvis-tx);
+  font-family: var(--jarvis-font-sans);
+  font-size:  var(--jarvis-font-size-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}

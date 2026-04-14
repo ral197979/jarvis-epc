@@ -1,0 +1,17 @@
+/**
+ * JARVIS EPC — CSS Entry Point
+ * ──────────────────────────────
+ * Import order matters: tokens first, then utilities that depend on them.
+ *
+ * Usage in main.jsx:
+ *   import './styles/index.css'  ← replaces the individual imports
+ *
+ * Phase 6 target:
+ *   Add CSS Modules imports here as components are migrated.
+ */
+
+/* 1. Design tokens — :root custom properties */
+@import './tokens.css';
+
+/* 2. Utility classes — use var(--jarvis-*) from tokens */
+@import './utilities.css';
