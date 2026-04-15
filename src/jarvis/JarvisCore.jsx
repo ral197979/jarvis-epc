@@ -105,6 +105,51 @@ import {
     useCallback as ti
 } from "react";
 // recharts: moved to extracted view components
+// ============================================================================
+// io — localStorage-backed persistence shim (async API: get/set/remove)
+// ============================================================================
+var io = (function() {
+    var PREFIX = "jarvis:";
+    var mem = {};
+    var hasLS = (function() {
+        try { var k = "__jarvis_ls_test__"; localStorage.setItem(k, "1"); localStorage.removeItem(k); return true; }
+        catch (e) { return false; }
+    })();
+    return {
+        get: function(key) {
+            return new Promise(function(resolve) {
+                try {
+                    if (hasLS) {
+                        var raw = localStorage.getItem(PREFIX + key);
+                        resolve(raw == null ? null : JSON.parse(raw));
+                    } else {
+                        resolve(mem[key] == null ? null : mem[key]);
+                    }
+                } catch (e) { resolve(null); }
+            });
+        },
+        set: function(key, value) {
+            return new Promise(function(resolve) {
+                try {
+                    if (hasLS) localStorage.setItem(PREFIX + key, JSON.stringify(value));
+                    else mem[key] = value;
+                    resolve(value);
+                } catch (e) { resolve(null); }
+            });
+        },
+        remove: function(key) {
+            return new Promise(function(resolve) {
+                try {
+                    if (hasLS) localStorage.removeItem(PREFIX + key);
+                    else delete mem[key];
+                    resolve(true);
+                } catch (e) { resolve(false); }
+            });
+        },
+    };
+})();
+
+
 
 
 // ============================================================================
