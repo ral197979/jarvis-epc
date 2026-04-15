@@ -213,10 +213,10 @@ function Ki(i) {
 // Phase 15: body extracted to src/components/ModalShellView.tsx
 function Zi(i) {
   var _ctx = useJarvis();
-  return React.createElement(JarvisModalShellView, {
+  return React.createElement(JarvisModalShellView, Object.assign({}, i, {
     policy: _ctx.policy || {},
     biz:    _ctx.biz    || i.b || {},
-  });
+  }));
 }
 
 // Phase 18d: $i() seed state extracted to src/config/defaultState.ts
