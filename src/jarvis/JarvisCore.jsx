@@ -48,6 +48,7 @@ import {
     _bulkDeleteAction, _bulkStatusAction, _validators,
     _isCollectionLocked, injectCrudDeps,
 } from "../modules/persistence";
+import { hashPin as _hashPin } from "../modules/utils/pinUtils";
 import { createDispatch, actions as _bizActions, checkWritePolicy } from "../modules/biz/dispatch";
 import { useBizStore } from "../modules/biz/store";
 import { SubPanelGView       as JarvisSubPanelGView       } from "../components/SubPanelGView";
