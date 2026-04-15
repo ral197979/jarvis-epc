@@ -232,13 +232,13 @@ export const useAppStore = create<AppStore>()(
         // ── Toasts ───────────────────────────────────────────────────────────
         addToast: (message, type = 'info') => {
           const id = `toast_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`
-          set(s => ({ ui: { ...s.ui, toasts: [...s.ui.toasts, { id, message, type, ts: new Date().toISOString() }] } }),
+          set(s => ({ ui: { ...s.ui, toasts: [...(s.ui.toasts || []), { id, message, type, ts: new Date().toISOString() }] } }),
             false, 'addToast')
           // Auto-remove after 4s
           setTimeout(() => get().removeToast(id), 4000)
         },
         removeToast: (id) => set(s => ({
-          ui: { ...s.ui, toasts: s.ui.toasts.filter(t => t.id !== id) }
+          ui: { ...s.ui, toasts: (s.ui.toasts || []).filter(t => t.id !== id) }
         }), false, 'removeToast'),
       }),
       {
@@ -255,6 +255,14 @@ export const useAppStore = create<AppStore>()(
             theme:           s.ui.theme,
           },
         }),
+        merge: (persisted, current) => {
+          const p = (persisted || {}) as Partial<AppStore>
+          return {
+            ...current,
+            ...p,
+            ui: { ...current.ui, ...(p.ui || {}), toasts: current.ui.toasts || [] },
+          } as AppStore
+        },
       }
     ),
     { name: 'AppStore' }

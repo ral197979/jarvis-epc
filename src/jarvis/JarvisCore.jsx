@@ -51,6 +51,7 @@ import {
 import { hashPin as _hashPin } from "../modules/utils/pinUtils";
 import { createDispatch, actions as _bizActions, checkWritePolicy } from "../modules/biz/dispatch";
 import { useBizStore } from "../modules/biz/store";
+import { ModalShellView     as JarvisModalShellView     } from "../components/ModalShellView";
 import { SubPanelGView       as JarvisSubPanelGView       } from "../components/SubPanelGView";
 import { SubPanelVView       as JarvisSubPanelVView       } from "../components/SubPanelVView";
 import { SubPanelQView       as JarvisSubPanelQView       } from "../components/SubPanelQView";
