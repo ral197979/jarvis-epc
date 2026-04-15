@@ -244,15 +244,16 @@ const FUNNEL_STAGES = ['new', 'qualified', 'proposal', 'negotiation', 'won'] as 
 
 interface FunnelEntry { stage: string; value: number }
 
-function buildFunnelData(leads: Lead[]): FunnelEntry[] {
+function buildFunnelData(leads: Lead[] | undefined): FunnelEntry[] {
+  const safeLeads = Array.isArray(leads) ? leads : []
   return FUNNEL_STAGES
     .map(stage => ({
       stage: stage.charAt(0).toUpperCase() + stage.slice(1),
-      value: leads
-        .filter(l => l.status === stage)
-        .reduce((sum, l) => sum + (l.estimated_value ?? 0), 0),
+      value: safeLeads
+        .filter(l => l && l.status === stage)
+        .reduce((sum, l) => sum + (Number(l.estimated_value) || 0), 0),
     }))
-    .filter(d => d.value > 0)
+    .filter(d => Number.isFinite(d.value) && d.value > 0)
 }
 
 // ─── EVM health card ──────────────────────────────────────────────────────────
@@ -326,10 +327,10 @@ function ActivityItem({ entry }: ActivityItemProps) {
  */
 export default function Dashboard({ biz, onNavigate }: DashboardProps) {
   const {
-    leads, contracts, invoices, purchase_orders,
-    documents, incidents, jhas, toolbox_talks,
-    evm_projects, activity_log = [],
-  } = biz
+    leads = [], contracts = [], invoices = [], purchase_orders = [],
+    documents = [], incidents = [], jhas = [], toolbox_talks = [],
+    evm_projects = [], activity_log = [],
+  } = (biz || {}) as typeof biz
 
   // ── KPI computations ────────────────────────────────────────────────────────
   const weightedPipeline = useMemo(() =>
