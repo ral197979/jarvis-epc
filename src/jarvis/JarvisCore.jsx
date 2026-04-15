@@ -1187,7 +1187,7 @@ export default function JarvisCore() {
                 return next;
             });
         }
-    }))), React.createElement(Bi, {
+    }))), React.createElement(Zi, {
         open: I,
         title: "Create Action Item",
         onClose: function() {
@@ -1200,7 +1200,7 @@ export default function JarvisCore() {
             q(!1)
         },
         onSave: D
-    })), React.createElement(Bi, {
+    })), React.createElement(Zi, {
         open: O,
         title: "Activity Timeline",
         onClose: function() {
