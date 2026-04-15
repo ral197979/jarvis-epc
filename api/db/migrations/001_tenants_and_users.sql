@@ -147,7 +147,9 @@ DO $$ BEGIN
   END IF;
 END $$;
 
-GRANT CONNECT ON DATABASE jarvis_epc TO jarvis_app;
+DO $grant$ BEGIN
+  EXECUTE format('GRANT CONNECT ON DATABASE %I TO jarvis_app', current_database());
+END $grant$;
 GRANT USAGE   ON SCHEMA public       TO jarvis_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES    IN SCHEMA public TO jarvis_app;
 GRANT USAGE, SELECT                  ON ALL SEQUENCES IN SCHEMA public TO jarvis_app;
