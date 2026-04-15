@@ -36,6 +36,7 @@ const FinanceView       = lazy(() => import('./FinanceView'))
 const EngineeringView   = lazy(() => import('./EngineeringView'))
 const SettingsView      = lazy(() => import('./SettingsView'))
 const DashboardMainView = lazy(() => import('./DashboardMainView'))
+import ComingSoonView from './ComingSoonView'
 const SubmittalsView    = lazy(() => import('./SubmittalsView'))
 const JobsView          = lazy(() => import('./JobsView'))
 const PlannerView       = lazy(() => import('./PlannerView'))
@@ -89,6 +90,11 @@ const TAB_MAP: Record<string, ViewEntry> = {
   submittals:    SubmittalsView,
   jobs:          JobsView,
   overview:      DashboardMainView,
+  proposals:     () => React.createElement(ComingSoonView, { label: 'Proposals',     domain: 'CRM',        icon: '📄', viewId: 'proposals',     context: 'Bid/no-bid workflow, proposal builder, and RFQ tracking are in active extraction from the core.' }),
+  team:          () => React.createElement(ComingSoonView, { label: 'Team',          domain: 'Operations', icon: '👥', viewId: 'team',          context: 'Team roster, role assignments, and labor allocation module is in active extraction from the core.' }),
+  predict:       () => React.createElement(ComingSoonView, { label: 'Predict',       domain: 'AI',         icon: '🔮', viewId: 'predict',       context: 'Ava ML predictions (RUL, fault classification, cost/schedule variance) will appear here once the Ava MCP bridge is connected.' }),
+  integrations:  () => React.createElement(ComingSoonView, { label: 'Integrations',  domain: 'System',     icon: '🔗', viewId: 'integrations',  context: 'Outbound connectors (QuickBooks, Slack, Tractian, BACnet) are being migrated to the new integration framework.' }),
+  notifications: () => React.createElement(ComingSoonView, { label: 'Notifications', domain: 'Operations', icon: '🔔', viewId: 'notifications', context: 'Real-time alert stream, subscription preferences, and delivery channels are in active extraction from the core.' }),
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
