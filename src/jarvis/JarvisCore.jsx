@@ -768,9 +768,9 @@ export default function JarvisCore() {
     }
 
     var te = {
-        crm: t.leads.length,
+        crm: (t.leads || []).length,
         feed: (t.feed_studies || []).length,
-        projects: t.contracts.length,
+        projects: (t.contracts || []).length,
         construction: (t.construction_reports || []).length,
         proposals: (t.proposals || []).length,
         calc: (t.calculators || []).length,
@@ -786,9 +786,9 @@ export default function JarvisCore() {
         }).length + (t.service_tickets || []).filter(function(d) {
             return d.status === "open"
         }).length,
-        docs: t.documents.length + t.transmittals.length,
+        docs: (t.documents || []).length + (t.transmittals || []).length,
         directory: (t.vendors || []).length + (t.customers || []).length,
-        mcp: oi.length,
+        mcp: (oi || []).length,
         integrations: (t.integrations || []).length,
         notifications: (t.notifications || []).filter(function(d) {
             return !d.read
