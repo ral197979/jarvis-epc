@@ -243,7 +243,14 @@ export const useAppStore = create<AppStore>()(
       }),
       {
         name:    'jarvis-app-state',
-        version: 1,
+        version: 2,
+        migrate: (persisted, from) => {
+          if (from < 2 && persisted && persisted.ui) {
+            persisted.ui.navHidden = {}
+            persisted.ui.navOrder  = []
+          }
+          return persisted
+        },
         // Only persist non-ephemeral UI state
         partialize: (s) => ({
           ownerConfig: s.ownerConfig,

@@ -39,9 +39,10 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
     ? navOrder.map(id => NAVIGATION_ITEMS.find(n => n.id === id)!).filter(Boolean)
     : NAVIGATION_ITEMS
 
-  const visibleItems = orderedItems.filter(item => {
+  const _filtered = orderedItems.filter(item => {
     if (navHidden[item.id]) return false
-    if (cfg.activeRole === 'owner') return true
+    if (cfg.activeRole === 'owner' || !cfg.activeRole) return true
+    if (cfg.activeRole === 'admin') return true
     if (cfg.activeRole === 'engineer' || cfg.activeRole === 'project_manager') {
       return ['operations','engineering','construction','documents','field'].includes(item.domain ?? '')
     }
@@ -50,6 +51,8 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
     }
     return true
   })
+  // Safety: if filter wipes everything (bad persisted state or unknown role), show full nav
+  const visibleItems = _filtered.length ? _filtered : orderedItems
 
   function navigate(id: string) {
     setTab(id)
