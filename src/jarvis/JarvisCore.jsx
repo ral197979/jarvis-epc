@@ -343,6 +343,7 @@ function _selectCollectionCount(biz, key) {
 
 function _bindGlobals(mutator, tabSetter, bizRef, oCfgRef) {
     mutateBiz = mutator;
+    if (!window.__JARVIS_DIAG) window.__JARVIS_DIAG = {};
     if (bizRef !== undefined) window.__JARVIS_DIAG._biz = bizRef;
     if (oCfgRef !== undefined) window.__JARVIS_DIAG._oCfg = oCfgRef;
     setTab = tabSetter;
