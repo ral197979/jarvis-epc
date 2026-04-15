@@ -156,24 +156,59 @@ interface KPICardProps {
   value: string | number
   sub?:  string
   warn?: boolean
+  accent?: 'amber' | 'green' | 'blue' | 'red' | 'muted'
 }
-function KPICard({ label, value, sub, warn }: KPICardProps) {
+
+function KPICard({ label, value, sub, warn, accent }: KPICardProps) {
+  const accentColor = warn
+    ? 'var(--jarvis-red)'
+    : accent === 'green' ? 'var(--jarvis-grn)'
+    : accent === 'blue'  ? 'var(--jarvis-blue)'
+    : accent === 'red'   ? 'var(--jarvis-red)'
+    : accent === 'muted' ? 'var(--jarvis-bd2)'
+    :                      'var(--jarvis-ac)'
   return (
     <div
       role="group"
       aria-label={label}
-      className="jarvis-card"
-      style={{ minWidth: 0, padding: '12px 14px' }}
+      style={{
+        position: 'relative',
+        minWidth: 0,
+        padding: '14px 16px 16px',
+        background: 'var(--jarvis-sf)',
+        border: '1px solid var(--jarvis-bd)',
+        borderRadius: 'var(--jarvis-r-lg)',
+        overflow: 'hidden',
+        transition: 'border-color var(--jarvis-t-fast), transform var(--jarvis-t-fast)',
+      }}
     >
-      <div className="jarvis-label" style={{ marginBottom: 3 }}>{label}</div>
+      <div aria-hidden style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+        background: accentColor, opacity: warn ? 1 : 0.55,
+      }} />
+      <div style={{
+        fontFamily: 'var(--jarvis-font-mono)',
+        fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
+        color: 'var(--jarvis-ts)', marginBottom: 6,
+      }}>{label}</div>
       <div
-        className="jarvis-kpi-value"
-        aria-label={`${label}: ${value}`}
-        style={{ color: warn ? 'var(--jarvis-amber)' : undefined }}
+        aria-label={label + ': ' + String(value)}
+        style={{
+          fontFamily: 'var(--jarvis-font-mono)',
+          fontVariantNumeric: 'tabular-nums',
+          fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em',
+          color: warn ? 'var(--jarvis-red)' : 'var(--jarvis-tx)',
+          lineHeight: 1.1,
+        }}
       >
         {value}
       </div>
-      {sub && <div className="jarvis-small" style={{ marginTop: 2 }}>{sub}</div>}
+      {sub && (
+        <div style={{
+          marginTop: 4, fontSize: 11, color: 'var(--jarvis-ts)',
+          fontFamily: 'var(--jarvis-font-sans)',
+        }}>{sub}</div>
+      )}
     </div>
   )
 }
@@ -232,10 +267,14 @@ function SectionCard({ title, children, onMore }: SectionCardProps) {
 interface EmptyStateProps { message: string }
 function EmptyState({ message }: EmptyStateProps) {
   return (
-    <div className="jarvis-empty" role="status" aria-label="No data">
-      <div style={{ fontSize: 28, marginBottom: 8 }}>📋</div>
-      <div className="jarvis-muted">{message}</div>
-    </div>
+    <div role="status" aria-label="No data" style={{
+      padding: '48px 24px', textAlign: 'center',
+      background: 'var(--jarvis-sf)',
+      border: '1px dashed var(--jarvis-bd)',
+      borderRadius: 'var(--jarvis-r-lg)',
+      color: 'var(--jarvis-ts)',
+      fontSize: 13,
+    }}>{message}</div>
   )
 }
 
@@ -392,9 +431,9 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-          gap: 10,
-          marginBottom: 16,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: 12,
+          marginBottom: 24,
         }}
         role="region"
         aria-label="Key Performance Indicators"
