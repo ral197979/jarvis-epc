@@ -34,6 +34,7 @@ import {
     csrfToken as _csrfToken,
     undoStack as _undoStack,
     mutationWindow as _mutationWindow,
+    gatewayMode as _GATEWAY_MODE,
 } from "../modules/store";
 import {
     _checkPolicy, _checkPolicyServer, _setAuthToken, _getAuthToken,
