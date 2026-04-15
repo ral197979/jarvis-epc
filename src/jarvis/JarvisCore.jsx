@@ -40,7 +40,7 @@ import {
     _checkPolicy, _checkPolicyServer, _setAuthToken, _getAuthToken,
     _clearAuthToken, _checkSessionTimeout, _announce, _PERSONAS, _INPUT_LIMITS,
 } from "../modules/auth";
-import { _gateway, tn as _tnGateway, nn as _nnGateway } from "../modules/gateway";
+import { _gateway, tn as _tnGateway, nn as _nnGateway, backendUrl as _backendUrl } from "../modules/gateway";
 import {
     _crud, _sanitize, _rateLimitOk, _pushUndo, _popUndo,
     _filterItems, _SearchBar, _collectionInventory,
