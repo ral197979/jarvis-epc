@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — HeartbeatBar  (v4.29.0)
+ * JARVIS EPC — HeartbeatBar  (v4.30.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 19d: System status header bar extracted from JarvisApp.
  * Shows auth status, API stats, gateway state, and active role.

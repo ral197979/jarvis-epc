@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — OwnerPanel  (v4.29.0)
+ * JARVIS EPC — OwnerPanel  (v4.30.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 19e extraction: the owner configuration sidebar from JarvisApp (~350 lines).
  * Previously rendered inline inside JarvisCore.jsx as `_oPanelOpen && React.createElement(...)`.
