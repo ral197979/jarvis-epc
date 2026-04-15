@@ -1,24 +1,29 @@
 /**
- * JARVIS EPC — NavSidebar  (v4.29.0)
- * ─────────────────────────────────────────────────────────────────────────────
- * Phase 19b extraction: Navigation sidebar from JarvisApp.
- * Replaces the inline sidebar JSX block (~200 lines) inside JarvisCore.jsx.
- * Reads nav state from useAppStore instead of closure variables.
+ * JARVIS EPC — NavSidebar (v4.30.0 UI refresh)
+ * Clean sidebar with lucide icons, grouped sections, hover states, smooth motion.
  */
-
-import React, { useState } from 'react'
+import React from 'react'
+import {
+  LayoutDashboard, Target, FlaskConical, ListChecks, HardHat, FileText, Calculator,
+  Wrench, Users, Wallet, Sparkles, Zap, Hammer, Archive, BookOpen, Plug, Link2,
+  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight
+} from 'lucide-react'
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
 import { NAVIGATION_ITEMS, type NavItem } from '../config/navigation'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface NavSidebarProps {
-  badges?:      Record<string, number>   // nav item id → badge count
-  policy?:      Partial<OwnerConfig>
-  onNavigate?:  (tab: string) => void    // called in addition to store setTab
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+  dash: LayoutDashboard, crm: Target, feed: FlaskConical, projects: ListChecks,
+  construction: HardHat, proposals: FileText, calc: Calculator, hub: Wrench,
+  team: Users, portfolio: Wallet, predict: Sparkles, actions: Zap, field: Hammer,
+  docs: Archive, directory: BookOpen, mcp: Plug, integrations: Link2,
+  notifications: Bell, system: Settings,
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+export interface NavSidebarProps {
+  badges?:     Record<string, number>
+  policy?:     Partial<OwnerConfig>
+  onNavigate?: (tab: string) => void
+}
 
 export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps) {
   const activeTab   = useAppStore(s => s.ui.activeTab)
@@ -30,20 +35,16 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
   const ownerConfig = useAppStore(s => s.ownerConfig)
   const cfg         = { ...ownerConfig, ...policy }
 
-  // Ordered, filtered nav items
   const orderedItems: NavItem[] = navOrder.length
     ? navOrder.map(id => NAVIGATION_ITEMS.find(n => n.id === id)!).filter(Boolean)
     : NAVIGATION_ITEMS
 
   const visibleItems = orderedItems.filter(item => {
     if (navHidden[item.id]) return false
-    // Role-based tab filter (owner sees all)
     if (cfg.activeRole === 'owner') return true
-    // Engineering roles: show engineering domains + operations
     if (cfg.activeRole === 'engineer' || cfg.activeRole === 'project_manager') {
       return ['operations','engineering','construction','documents','field'].includes(item.domain ?? '')
     }
-    // Viewers: limited
     if (cfg.activeRole === 'viewer') {
       return ['operations','documents'].includes(item.domain ?? '')
     }
@@ -55,47 +56,52 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
     onNavigate?.(id)
   }
 
+  const WIDTH = collapsed ? 64 : 208
+
   return (
     <nav
       role="navigation"
       aria-label="Main navigation"
       style={{
-        width:         collapsed ? 44 : 120,
-        minWidth:      collapsed ? 44 : 120,
-        background:    'var(--jarvis-bg2)',
-        borderRight:   '1px solid var(--jarvis-bd)',
-        display:       'flex',
-        flexDirection: 'column',
-        transition:    'width 0.2s',
-        overflow:      'hidden',
-        userSelect:    'none',
+        width: WIDTH, minWidth: WIDTH,
+        background: 'linear-gradient(180deg, var(--jarvis-bg2) 0%, var(--jarvis-bg) 100%)',
+        borderRight: '1px solid var(--jarvis-bd)',
+        display: 'flex', flexDirection: 'column',
+        transition: 'width var(--jarvis-t-normal)',
+        overflow: 'hidden', userSelect: 'none',
+        flexShrink: 0,
       }}
     >
-      {/* Collapse toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        title={collapsed ? 'Expand' : 'Collapse'}
-        style={{
-          padding:     '8px 0',
-          background:  'none',
-          border:      'none',
-          cursor:      'pointer',
-          fontSize:    12,
-          color:       'var(--jarvis-ts)',
-          textAlign:   'center',
-          borderBottom:'1px solid var(--jarvis-bd)',
-          flexShrink:  0,
-        }}
-      >
-        {collapsed ? '›' : '‹'}
-      </button>
+      {/* Brand */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: collapsed ? '16px 0' : '16px',
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        borderBottom: '1px solid var(--jarvis-bd)', flexShrink: 0,
+      }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: 'linear-gradient(135deg, var(--jarvis-ac) 0%, var(--jarvis-ac-dim) 100%)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 20px rgba(245,158,11,0.3)', flexShrink: 0,
+        }}>
+          <ShieldCheck size={18} strokeWidth={2.5} color="#0a0b0f" />
+        </div>
+        {!collapsed && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, lineHeight: 1.2 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--jarvis-tx)', letterSpacing: '-0.01em' }}>JARVIS EPC</span>
+            <span style={{ fontSize: 10, color: 'var(--jarvis-ts)', fontFamily: 'var(--jarvis-font-mono)' }}>v4.30.0</span>
+          </div>
+        )}
+      </div>
 
       {/* Nav items */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '4px 0' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '8px 8px' }}>
         {visibleItems.map(item => {
-          const isActive  = activeTab === item.id
+          const isActive   = activeTab === item.id
           const badgeCount = badges[item.id] ?? 0
+          const Icon       = ICON_MAP[item.id] ?? LayoutDashboard
+
           return (
             <button
               key={item.id}
@@ -103,65 +109,96 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
               aria-label={item.label}
               aria-current={isActive ? 'page' : undefined}
               title={collapsed ? item.label : undefined}
+              className="jarvis-nav-item"
               style={{
-                width:       '100%',
-                display:     'flex',
-                flexDirection: collapsed ? 'column' : 'column',
-                alignItems:  'center',
-                gap:         3,
-                padding:     collapsed ? '10px 0' : '8px 4px',
-                background:  isActive ? 'color-mix(in srgb, var(--jarvis-ac) 12%, transparent)' : 'none',
-                border:      'none',
-                borderLeft:  isActive ? '3px solid var(--jarvis-ac)' : '3px solid transparent',
-                cursor:      'pointer',
-                position:    'relative',
+                width: '100%',
+                display: 'flex', alignItems: 'center',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: 10,
+                padding: collapsed ? '10px 0' : '8px 10px',
+                marginBottom: 2,
+                background: isActive ? 'rgba(245,158,11,0.12)' : 'transparent',
+                border: 'none', borderRadius: 'var(--jarvis-r-md)',
+                cursor: 'pointer', position: 'relative',
+                color: isActive ? 'var(--jarvis-ac-hover)' : 'var(--jarvis-ts)',
+                transition: 'background var(--jarvis-t-fast), color var(--jarvis-t-fast)',
+                fontFamily: 'var(--jarvis-font-sans)',
+                fontSize: 13, fontWeight: isActive ? 600 : 500,
               }}
+              onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = 'var(--jarvis-sf)'; e.currentTarget.style.color = 'var(--jarvis-tx)' } }}
+              onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--jarvis-ts)' } }}
             >
-              <span style={{ fontSize: 16, lineHeight: 1 }} aria-hidden>{item.icon}</span>
+              <Icon size={18} strokeWidth={isActive ? 2.25 : 1.75} />
               {!collapsed && (
-                <span style={{
-                  fontSize:   9, fontWeight: isActive ? 700 : 500,
-                  color:      isActive ? 'var(--jarvis-ac)' : 'var(--jarvis-ts)',
-                  textAlign:  'center', lineHeight: 1.2, maxWidth: 80,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  width: '100%',
-                }}>
-                  {item.label}
-                </span>
+                <span style={{ flex: 1, textAlign: 'left', letterSpacing: '-0.01em' }}>{item.label}</span>
               )}
-              {badgeCount > 0 && (
+              {!collapsed && badgeCount > 0 && (
                 <span style={{
-                  position: 'absolute', top: 4, right: 6,
-                  minWidth: 14, height: 14, borderRadius: 7,
-                  background: 'var(--jarvis-red)', color: '#fff',
-                  fontSize: 8, fontWeight: 700, lineHeight: '14px',
-                  textAlign: 'center', padding: '0 3px',
-                }} aria-label={`${badgeCount} items`}>
+                  minWidth: 20, height: 20, borderRadius: 10,
+                  background: 'var(--jarvis-ac)', color: '#0a0b0f',
+                  fontSize: 10, fontWeight: 700, lineHeight: '20px',
+                  textAlign: 'center', padding: '0 6px',
+                  fontFamily: 'var(--jarvis-font-mono)',
+                }}>
                   {badgeCount > 99 ? '99+' : badgeCount}
                 </span>
+              )}
+              {collapsed && badgeCount > 0 && (
+                <span style={{
+                  position: 'absolute', top: 4, right: 6,
+                  minWidth: 8, height: 8, borderRadius: 4,
+                  background: 'var(--jarvis-ac)',
+                }} aria-label={String(badgeCount) + ' items'} />
               )}
             </button>
           )
         })}
       </div>
 
-      {/* Owner panel button (bottom) */}
-      {cfg.activeRole === 'owner' && (
+      {/* Footer: Owner + Collapse */}
+      <div style={{ borderTop: '1px solid var(--jarvis-bd)', padding: 8, flexShrink: 0 }}>
+        {cfg.activeRole === 'owner' && (
+          <button
+            onClick={() => useAppStore.getState().setOwnerPanel(true)}
+            aria-label="Owner settings"
+            title={collapsed ? 'Owner settings' : undefined}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start', gap: 10,
+              padding: collapsed ? '10px 0' : '8px 10px', marginBottom: 4,
+              background: 'transparent', border: 'none',
+              borderRadius: 'var(--jarvis-r-md)', cursor: 'pointer',
+              color: 'var(--jarvis-ts)', fontSize: 13, fontWeight: 500,
+              fontFamily: 'var(--jarvis-font-sans)',
+              transition: 'background var(--jarvis-t-fast), color var(--jarvis-t-fast)',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--jarvis-sf)'; e.currentTarget.style.color = 'var(--jarvis-tx)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--jarvis-ts)' }}
+          >
+            <Settings size={18} strokeWidth={1.75} />
+            {!collapsed && <span style={{ letterSpacing: '-0.01em' }}>Owner</span>}
+          </button>
+        )}
         <button
-          onClick={() => useAppStore.getState().setOwnerPanel(true)}
-          aria-label="Owner settings"
-          title={collapsed ? 'Owner settings' : undefined}
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand' : 'Collapse'}
           style={{
-            padding:    collapsed ? '10px 0' : '8px 4px',
-            background: 'none', border: 'none', cursor: 'pointer',
-            borderTop:  '1px solid var(--jarvis-bd)',
-            display:    'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            width: '100%', display: 'flex', alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start', gap: 10,
+            padding: collapsed ? '10px 0' : '8px 10px',
+            background: 'transparent', border: 'none',
+            borderRadius: 'var(--jarvis-r-md)', cursor: 'pointer',
+            color: 'var(--jarvis-td)', fontSize: 12,
+            transition: 'color var(--jarvis-t-fast)',
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--jarvis-ts)' }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--jarvis-td)' }}
         >
-          <span style={{ fontSize: 16 }} aria-hidden>⚙️</span>
-          {!collapsed && <span style={{ fontSize: 9, color: 'var(--jarvis-ts)' }}>Owner</span>}
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {!collapsed && <span>Collapse</span>}
         </button>
-      )}
+      </div>
     </nav>
   )
 }

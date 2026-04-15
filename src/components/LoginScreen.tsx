@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — LoginScreen  (v4.29.0)
+ * JARVIS EPC — LoginScreen  (v4.30.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 19a extraction: The auth gate from JarvisApp function.
  * Reads from / writes to useAppStore instead of JarvisApp closure state.
@@ -240,7 +240,7 @@ export function LoginScreen({ onSuccess, gatewayMode, backendUrl = '' }: LoginSc
         )}
 
         <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--jarvis-ts)', marginTop: 24, marginBottom: 0 }}>
-          JARVIS EPC v4.29 · Ava Systems LLC
+          JARVIS EPC v4.30 · Ava Systems LLC
         </p>
       </div>
     </div>
