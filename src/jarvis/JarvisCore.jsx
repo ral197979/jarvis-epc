@@ -35,6 +35,7 @@ import {
     undoStack as _undoStack,
     mutationWindow as _mutationWindow,
     gatewayMode as _GATEWAY_MODE,
+    errorLog as _errorLog,
 } from "../modules/store";
 import {
     _checkPolicy, _checkPolicyServer, _setAuthToken, _getAuthToken,
