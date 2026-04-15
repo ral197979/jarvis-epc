@@ -34,6 +34,8 @@
  */
 
 import express, { Request, Response, NextFunction } from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import cookieParser from 'cookie-parser'
 import cors         from 'cors'
 import helmet       from 'helmet'
@@ -263,6 +265,17 @@ app.post('/api/v1/gateway', requireAuth as never, aiLimiter, async (req: Request
     res.status(502).json({ error: 'gateway_unreachable', message: msg })
   }
 })
+
+// ─── Static SPA (production) ──────────────────────────────────────────────────
+if (process.env['NODE_ENV'] === 'production' || process.env['SERVE_STATIC'] === '1') {
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = path.dirname(__filename)
+  const distDir = path.resolve(__dirname, '..', 'dist')
+  app.use(express.static(distDir, { index: false, maxAge: '1y' }))
+  app.get(/^\/(?!api\/).*/, (_req: Request, res: Response) => {
+    res.sendFile(path.join(distDir, 'index.html'))
+  })
+}
 
 // ─── 404 ──────────────────────────────────────────────────────────────────────
 
