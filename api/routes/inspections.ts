@@ -287,9 +287,12 @@ router.post('/inspections/:id/complete', async (req: Request, res: Response) => 
       r.tenantId!,
       `UPDATE inspections
         SET status='completed', completed_date=COALESCE($3, NOW()), pass_count=$4, fail_count=$5,
-            na_count=$6, overall_result=$7, updated_at=NOW()
+            na_count=$6, overall_result=$7,
+            signatures = CASE WHEN $8::jsonb IS NOT NULL THEN $8::jsonb ELSE signatures END,
+            updated_at=NOW()
        WHERE id=$1 AND tenant_id=$2 RETURNING *`,
-      [req.params.id, r.tenantId!, b.completed_date ?? null, passCount, failCount, naCount, overallResult]
+      [req.params.id, r.tenantId!, b.completed_date ?? null, passCount, failCount, naCount, overallResult,
+       b.signatures != null ? JSON.stringify(b.signatures) : null]
     )
     if (!result.rows[0]) return res.status(404).json({ error: 'Inspection not found' })
     res.json({ inspection: result.rows[0] })

@@ -199,6 +199,12 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
   const [activeChecklist, setActiveChecklist] = useState<ChecklistItem[]>([]);
   const [activeResults, setActiveResults] = useState<InspectionResult[]>([]);
   const [activeNotes, setActiveNotes] = useState('');
+  const [signatures, setSignatures] = useState<Array<{ name: string; role?: string; signed_at: string; data_url: string }>>([]);
+  const [sigDrawing, setSigDrawing] = useState(false);
+  const [sigName, setSigName] = useState('');
+  const [sigRole, setSigRole] = useState('');
+  const sigCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
+  const sigLastRef = React.useRef<{ x: number; y: number } | null>(null);
 
   const [createForm, setCreateForm] = useState({
     title: '',
@@ -388,13 +394,14 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed_date: new Date().toISOString().slice(0, 10) })
+        body: JSON.stringify({ completed_date: new Date().toISOString().slice(0, 10), signatures })
       });
       const json = await res.json();
       if (res.ok && json.inspection) {
         setInspections(inspections.map(i => i.id === activeInspection.id ? json.inspection : i));
         setShowRunModal(false);
         setActiveInspection(null);
+        setSignatures([]); setSigName(''); setSigRole('');
 
         // If failed, prompt to auto-create a punch list
         const failed = activeResults.filter(r => r.result === 'fail');
@@ -796,7 +803,7 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
                   {activeInspection.discipline ?? '—'} · {activeInspection.location ?? '—'} · {activeInspection.template_name ?? 'free-form'}
                 </div>
               </div>
-              <button onClick={() => setShowRunModal(false)} style={{ background: 'transparent', border: 'none', color: 'var(--jarvis-ts)', fontSize: '20px', cursor: 'pointer' }}>×</button>
+              <button onClick={() => { setShowRunModal(false); setSignatures([]); setSigName(''); setSigRole(''); }} style={{ background: 'transparent', border: 'none', color: 'var(--jarvis-ts)', fontSize: '20px', cursor: 'pointer' }}>×</button>
             </div>
 
             {activeChecklist.length === 0 ? (
@@ -854,6 +861,83 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
               </div>
             )}
 
+            <div style={{ marginBottom: '16px', border: '1px solid var(--jarvis-border, #8884)', borderRadius: 6, padding: 12 }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '8px' }}>Signatures ({signatures.length})</label>
+              {signatures.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 10 }}>
+                  {signatures.map((s, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 6, border: '1px solid var(--jarvis-border, #8883)', borderRadius: 4 }}>
+                      <img src={s.data_url} alt="sig" style={{ height: 36, background: '#fff', borderRadius: 3 }} />
+                      <div style={{ flex: 1, fontSize: 12 }}>
+                        <div style={{ fontWeight: 600 }}>{s.name}{s.role ? ` — ${s.role}` : ''}</div>
+                        <div style={{ color: 'var(--jarvis-ts)' }}>{new Date(s.signed_at).toLocaleString()}</div>
+                      </div>
+                      <button type="button" onClick={() => setSignatures(signatures.filter((_, j) => j !== i))} style={{ background: 'transparent', border: '1px solid var(--jarvis-red, #e11)', color: 'var(--jarvis-red, #e11)', borderRadius: 3, padding: '3px 8px', cursor: 'pointer', fontSize: 11 }}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+                <input value={sigName} onChange={e => setSigName(e.target.value)} placeholder="Signer name" className="jarvis-input" style={{ flex: '2 1 180px', fontSize: 12 }} />
+                <input value={sigRole} onChange={e => setSigRole(e.target.value)} placeholder="Role (optional, e.g. AHJ, PM)" className="jarvis-input" style={{ flex: '2 1 180px', fontSize: 12 }} />
+              </div>
+              <canvas
+                ref={sigCanvasRef}
+                width={560}
+                height={140}
+                style={{ width: '100%', height: 140, background: '#fff', border: '1px dashed var(--jarvis-border, #8884)', borderRadius: 4, cursor: 'crosshair', touchAction: 'none' }}
+                onPointerDown={(e) => {
+                  const c = sigCanvasRef.current; if (!c) return;
+                  (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+                  const r = c.getBoundingClientRect();
+                  sigLastRef.current = { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+                  setSigDrawing(true);
+                }}
+                onPointerMove={(e) => {
+                  if (!sigDrawing) return;
+                  const c = sigCanvasRef.current; if (!c) return;
+                  const ctx = c.getContext('2d'); if (!ctx) return;
+                  const r = c.getBoundingClientRect();
+                  const x = (e.clientX - r.left) * (c.width / r.width);
+                  const y = (e.clientY - r.top) * (c.height / r.height);
+                  const last = sigLastRef.current;
+                  if (last) {
+                    ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                    ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(x, y); ctx.stroke();
+                  }
+                  sigLastRef.current = { x, y };
+                }}
+                onPointerUp={() => { setSigDrawing(false); sigLastRef.current = null; }}
+                onPointerLeave={() => { setSigDrawing(false); sigLastRef.current = null; }}
+              />
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = sigCanvasRef.current; if (!c) return;
+                    const ctx = c.getContext('2d'); if (!ctx) return;
+                    ctx.clearRect(0, 0, c.width, c.height);
+                  }}
+                  style={{ padding: '6px 12px', border: '1px solid var(--jarvis-border, #8884)', background: 'transparent', color: 'var(--jarvis-ts)', borderRadius: 4, cursor: 'pointer', fontSize: 12 }}
+                >Clear</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!sigName.trim()) { alert('Enter signer name first.'); return; }
+                    const c = sigCanvasRef.current; if (!c) return;
+                    // blank detection
+                    const ctx = c.getContext('2d'); const blank = document.createElement('canvas');
+                    blank.width = c.width; blank.height = c.height;
+                    if (ctx && c.toDataURL() === blank.toDataURL()) { alert('Signature is empty.'); return; }
+                    const data_url = c.toDataURL('image/png');
+                    setSignatures([...signatures, { name: sigName.trim(), role: sigRole.trim() || undefined, signed_at: new Date().toISOString(), data_url }]);
+                    setSigName(''); setSigRole('');
+                    if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+                  }}
+                  style={{ padding: '6px 12px', border: 'none', background: 'var(--jarvis-accent)', color: 'white', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                >Add Signature</button>
+              </div>
+            </div>
             <div style={{ marginBottom: '16px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>Overall Notes</label>
               <textarea value={activeNotes} onChange={(e) => setActiveNotes(e.target.value)} className="jarvis-input" style={{ width: '100%', minHeight: '60px', fontFamily: 'inherit' }} placeholder="General observations, follow-ups, AHJ comments..." />
