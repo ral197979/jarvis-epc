@@ -369,9 +369,54 @@ submittalsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
+submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  // Allowed lifecycle transitions for non-terminal status changes via PATCH.
+  // Terminal stamps (approved/approved_as_noted/revise_resubmit/rejected) must
+  // go through POST /:id/review which captures reviewer + reviewed_at.
+  const transitionalStatuses = ['draft', 'submitted', 'under_review']
+
+  const fields = ['title','type','discipline','spec_section','submitted_by','due_date','metadata']
+  const sets: string[] = []
+  const vals: unknown[] = []
+  let i = 1
+
+  for (const f of fields) {
+    if (Object.prototype.hasOwnProperty.call(req.body, f)) {
+      sets.push(`${f} = $${i++}`)
+      vals.push(f === 'metadata' ? JSON.stringify(req.body[f]) : req.body[f])
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(req.body, 'status')) {
+    const s = String(req.body['status'])
+    if (!transitionalStatuses.includes(s)) {
+      res.status(422).json({ error: 'validation', message: `status via PATCH must be one of: ${transitionalStatuses.join(', ')}; use POST /:id/review for terminal stamps` })
+      return
+    }
+    sets.push(`status = $${i++}`)
+    vals.push(s)
+  }
+
+  if (!sets.length) { res.status(422).json({ error: 'validation', message: 'No valid fields' }); return }
+
+  vals.push(req.params['id'])
+  const result = await tenantQuery(tenantId, `
+    UPDATE submittals SET ${sets.join(',')}
+    WHERE id = $${i} AND tenant_id = current_setting('app.current_tenant_id',true)::uuid RETURNING *
+  `, vals)
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  res.json({ data: result.rows[0] })
+})
+
 submittalsRouter.post('/:id/review', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  if (!['owner','admin','project_manager'].includes(req.auth?.role ?? '')) {
+    res.status(403).json({ error: 'forbidden', message: 'Submittal stamping requires project_manager, admin, or owner role' }); return
+  }
   const { status, review_notes } = req.body as { status?: string; review_notes?: string }
 
   const validStatuses = ['approved','approved_as_noted','revise_resubmit','rejected']
@@ -385,5 +430,6 @@ submittalsRouter.post('/:id/review', async (req: Req, res: Response) => {
   `, [status, review_notes ?? null, req.auth?.sub, req.params['id']])
 
   if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  slog('INFO', 'procurement', '[submittal] Stamped', { tenantId, submittalId: req.params['id'], status, by: req.auth?.sub })
   res.json({ data: result.rows[0] })
 })

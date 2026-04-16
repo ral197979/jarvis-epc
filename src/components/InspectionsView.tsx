@@ -424,7 +424,7 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
         })
       });
       const listJson = await listRes.json();
-      const listId = listJson.punch_list?.id ?? listJson.data?.id;
+      const listId = listJson.punchList?.id ?? listJson.punch_list?.id ?? listJson.data?.id;
       if (!listId) {
         console.warn('Could not create punch list, raw response:', listJson);
         return;

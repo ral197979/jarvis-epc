@@ -251,6 +251,12 @@ router.post('/inspections/:id/complete', async (req: Request, res: Response) => 
   const r = req as AuthTenantReq
   const b = req.body ?? {}
 
+  // RBAC: finalizing an inspection is a quality gate; restrict to qualified roles.
+  const role = (r as any).auth?.role ?? ''
+  if (!['owner','admin','project_manager','engineer','inspector'].includes(role)) {
+    return res.status(403).json({ error: 'forbidden', message: 'Completing inspections requires inspector, engineer, project_manager, admin, or owner role' })
+  }
+
   // Get current inspection to access results
   const getResult = await tenantQuery(
     r.tenantId!,
