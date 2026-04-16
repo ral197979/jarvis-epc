@@ -18,7 +18,7 @@ interface DailyLog {
   created_at: string; submitted_at?: string; approved_at?: string
 }
 
-export interface DailyLogsViewProps { policy?: Partial<PolicyConfig> }
+export interface DailyLogsViewProps { policy?: Partial<PolicyConfig>; onToast?: (m: string, t?: string) => void; onAudit?: (e: unknown) => void }
 
 const EMPTY_LOG: Omit<DailyLog,'id'|'created_at'|'status'> & { status: string } = {
   log_date: new Date().toISOString().slice(0,10),
@@ -27,7 +27,7 @@ const EMPTY_LOG: Omit<DailyLog,'id'|'created_at'|'status'> & { status: string } 
   photos: [], status: 'draft',
 }
 
-export function DailyLogsView({ policy }: DailyLogsViewProps) {
+export function DailyLogsView({ policy, onToast, onAudit }: DailyLogsViewProps) {
   const projects = useBizStore(selectProjects)
   const [projectId, setProjectId] = useState<string>('')
   const [logs, setLogs] = useState<DailyLog[]>([])
@@ -54,7 +54,7 @@ export function DailyLogsView({ policy }: DailyLogsViewProps) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(draft),
     })
-    if (res.ok) { setCreating(false); setDraft(EMPTY_LOG); reload() }
+    if (res.ok) { setCreating(false); onToast?.('Daily log saved', 'success'); onAudit?.({ type: 'daily.log.created' }); setDraft(EMPTY_LOG); reload() }
   }
 
   const transition = async (id: string, action: 'submit'|'approve') => {

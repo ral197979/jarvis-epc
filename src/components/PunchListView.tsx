@@ -145,7 +145,8 @@ function Pill({ color, children }: { color: string; children: React.ReactNode })
   )
 }
 
-export default function PunchListView(_props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void }) {
+export default function PunchListView(_props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void; onToast?: (m: string, t?: string) => void; onAudit?: (e: unknown) => void }) {
+  const { onToast, onAudit } = _props
   const [projects, setProjects] = useState<Project[]>([])
   const [projectId, setProjectId] = useState<string>('')
 
@@ -301,7 +302,7 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
       }
       const json = await res.json()
       const created: PunchList | undefined = json.punchList || json.data
-      setShowCreateList(false)
+      setShowCreateList(false); onToast?.('Punch list created', 'success'); onAudit?.({ type: 'punch.list.created' })
       setListForm({ title: '', description: '' })
       await reloadLists()
       if (created?.id) setSelectedListId(created.id)
@@ -338,7 +339,7 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
         alert(`Create failed: ${j.error ?? res.statusText}`)
         return
       }
-      setShowCreateItem(false)
+      setShowCreateItem(false); onToast?.('Punch item added', 'success'); onAudit?.({ type: 'punch.item.created' })
       setItemForm({
         title: '',
         description: '',

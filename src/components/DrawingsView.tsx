@@ -18,9 +18,9 @@ interface Markup { id: string; rev: string; page: number; title?: string; annota
 
 const DISCIPLINES = ['all','mechanical','electrical','plumbing','structural','civil','architectural','process']
 
-export interface DrawingsViewProps { policy?: Partial<PolicyConfig> }
+export interface DrawingsViewProps { policy?: Partial<PolicyConfig>; onToast?: (m: string, t?: string) => void; onAudit?: (e: unknown) => void }
 
-export function DrawingsView({ policy }: DrawingsViewProps) {
+export function DrawingsView({ policy, onToast, onAudit }: DrawingsViewProps) {
   const projects = useBizStore(selectProjects)
   const [projectId, setProjectId] = useState<string>('')
   const [drawings, setDrawings] = useState<Drawing[]>([])
@@ -59,7 +59,7 @@ export function DrawingsView({ policy }: DrawingsViewProps) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(draft),
     })
-    if (res.ok) { setCreating(false); reload() }
+    if (res.ok) { setCreating(false); onToast?.('Drawing sheet added', 'success'); onAudit?.({ type: 'drawing.created' }); reload() }
   }
 
   const saveMarkup = async () => {

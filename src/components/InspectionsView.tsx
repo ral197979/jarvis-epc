@@ -182,7 +182,8 @@ const SEED_TEMPLATES: Array<Omit<InspectionTemplate, 'id' | 'version' | 'is_acti
   }
 ];
 
-export default function InspectionsView(props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void }) {
+export default function InspectionsView(props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void; onToast?: (m: string, t?: string) => void; onAudit?: (e: unknown) => void }) {
+  const { onToast, onAudit } = props
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string>('');
   const [inspections, setInspections] = useState<Inspection[]>([]);
@@ -403,6 +404,8 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
         setShowRunModal(false);
         setActiveInspection(null);
         setSignatures([]); setSigName(''); setSigRole('');
+        onToast?.(`Inspection ${json.inspection.overall_result === 'pass' ? 'passed' : json.inspection.overall_result === 'fail' ? 'failed' : 'completed'}`, json.inspection.overall_result === 'fail' ? 'warn' : 'success');
+        onAudit?.({ type: 'inspection.completed', id: json.inspection.id, result: json.inspection.overall_result });
 
         // If failed, prompt to auto-create a punch list
         const failed = activeResults.filter(r => r.result === 'fail');
