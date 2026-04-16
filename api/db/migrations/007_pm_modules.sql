@@ -3,29 +3,27 @@
 -- v4.31.0 | Daily Logs, Drawings + Markups, BIM Models, Budget, Change Orders
 -- ============================================================
 
--- 
--- DAILY LOGS  (Procore-parity field reporting)
--- 
+-- DAILY LOGS (Procore-parity field reporting)
 CREATE TABLE daily_logs (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   project_id         UUID         NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   log_date           DATE         NOT NULL,
-  weather            VARCHAR(60),                 -- 'sunny', 'rain', 'overcast', etc.
+  weather            VARCHAR(60),
   temp_f             NUMERIC(5,1),
   wind_mph           NUMERIC(5,1),
   humidity_pct       NUMERIC(5,1),
-  manpower           JSONB        NOT NULL DEFAULT '[]',  -- [{trade, count, hours, contractor}]
-  equipment          JSONB        NOT NULL DEFAULT '[]',  -- [{type, id, hours, operator}]
-  visitors           JSONB        NOT NULL DEFAULT '[]',  -- [{name, company, purpose, arrive, depart}]
-  deliveries         JSONB        NOT NULL DEFAULT '[]',  -- [{vendor, item, qty, po_number}]
+  manpower           JSONB        NOT NULL DEFAULT '[]',
+  equipment          JSONB        NOT NULL DEFAULT '[]',
+  visitors           JSONB        NOT NULL DEFAULT '[]',
+  deliveries         JSONB        NOT NULL DEFAULT '[]',
   work_performed     TEXT,
   delays             TEXT,
   safety_notes       TEXT,
-  incidents          JSONB        NOT NULL DEFAULT '[]',  -- [{time, severity, description, reported_to}]
+  incidents          JSONB        NOT NULL DEFAULT '[]',
   quality_notes      TEXT,
-  photos             JSONB        NOT NULL DEFAULT '[]',  -- [{file_id, caption, geotag, taken_at}]
-  status             VARCHAR(20)  NOT NULL DEFAULT 'draft',  -- draft | submitted | approved
+  photos             JSONB        NOT NULL DEFAULT '[]',
+  status             VARCHAR(20)  NOT NULL DEFAULT 'draft',
   submitted_by       UUID         REFERENCES users(id) ON DELETE SET NULL,
   submitted_at       TIMESTAMPTZ,
   approved_by        UUID         REFERENCES users(id) ON DELETE SET NULL,
@@ -44,23 +42,18 @@ CREATE POLICY tenant_isolation_daily_logs ON daily_logs
 CREATE TRIGGER trg_daily_logs_updated_at BEFORE UPDATE ON daily_logs
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- 
--- DRAWINGS  (Autodesk/Procore-parity plans register)
--- 
--- Drawings reference a file stored in documents / file_versions.
--- Revision lifecycle: current_rev tracks the active sheet.
+-- DRAWINGS (Autodesk/Procore-parity plans register)
 CREATE TABLE drawings (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   project_id         UUID         NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-  sheet_number       VARCHAR(50)  NOT NULL,         -- e.g. M-101, E-203
+  sheet_number       VARCHAR(50)  NOT NULL,
   title              VARCHAR(255) NOT NULL,
-  discipline         VARCHAR(60),                   -- 'mechanical','electrical','plumbing','structural','civil','architectural','process'
+  discipline         VARCHAR(60),
   current_rev        VARCHAR(20)  NOT NULL DEFAULT 'A',
-  set_name           VARCHAR(120),                  -- e.g. '90% CD Set', 'IFC Set'
+  set_name           VARCHAR(120),
   issue_date         DATE,
-  document_id        UUID         REFERENCES documents(id) ON DELETE SET NULL,  -- active PDF
+  document_id        UUID         REFERENCES documents(id) ON DELETE SET NULL,
   scale              VARCHAR(40),
   page_count         INTEGER      NOT NULL DEFAULT 1,
   metadata           JSONB        NOT NULL DEFAULT '{}',
@@ -77,8 +70,6 @@ CREATE POLICY tenant_isolation_drawings ON drawings
 CREATE TRIGGER trg_drawings_updated_at BEFORE UPDATE ON drawings
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- Revisions history (IFC, IFR, ASI, etc.)
 CREATE TABLE drawing_revisions (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -96,15 +87,11 @@ ALTER TABLE drawing_revisions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation_drawing_revisions ON drawing_revisions
   USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
 
-
--- Redline / markup annotations on a drawing page.
--- annotations is PDF.js-compatible JSON (or simple shape schema):
---   [{ type:'rect', page:1, x, y, w, h, color, note }, {type:'text', page:2, x, y, text }, ...]
 CREATE TABLE drawing_markups (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   drawing_id         UUID         NOT NULL REFERENCES drawings(id) ON DELETE CASCADE,
-  rev                VARCHAR(20)  NOT NULL,         -- markups are bound to the rev they were drawn on
+  rev                VARCHAR(20)  NOT NULL,
   page               INTEGER      NOT NULL DEFAULT 1,
   title              VARCHAR(200),
   annotations        JSONB        NOT NULL DEFAULT '[]',
@@ -123,22 +110,19 @@ CREATE POLICY tenant_isolation_drawing_markups ON drawing_markups
 CREATE TRIGGER trg_drawing_markups_updated_at BEFORE UPDATE ON drawing_markups
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- 
--- BIM MODELS  (Autodesk parity  IFC / glTF 3D coordination)
--- 
+-- BIM MODELS (Autodesk parity - IFC / glTF 3D coordination)
 CREATE TABLE bim_models (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   project_id         UUID         NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name               VARCHAR(200) NOT NULL,
   discipline         VARCHAR(60),
-  format             VARCHAR(20)  NOT NULL,       -- 'ifc' | 'glb' | 'gltf' | 'nwd' | 'rvt'
+  format             VARCHAR(20)  NOT NULL,
   document_id        UUID         REFERENCES documents(id) ON DELETE SET NULL,
   size_bytes         BIGINT       NOT NULL DEFAULT 0,
-  element_count      INTEGER,                      -- populated by post-processing if available
+  element_count      INTEGER,
   coord_system       VARCHAR(60),
-  georef             JSONB        NOT NULL DEFAULT '{}',  -- {lat, lon, site_offset_ft}
+  georef             JSONB        NOT NULL DEFAULT '{}',
   metadata           JSONB        NOT NULL DEFAULT '{}',
   status             VARCHAR(20)  NOT NULL DEFAULT 'active',
   created_by         UUID         REFERENCES users(id) ON DELETE SET NULL,
@@ -153,8 +137,6 @@ CREATE POLICY tenant_isolation_bim_models ON bim_models
 CREATE TRIGGER trg_bim_models_updated_at BEFORE UPDATE ON bim_models
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- Clash / issue tracking tied to BIM coordinates (coordination-model parity)
 CREATE TABLE bim_issues (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -162,10 +144,10 @@ CREATE TABLE bim_issues (
   model_id           UUID         REFERENCES bim_models(id) ON DELETE SET NULL,
   title              VARCHAR(200) NOT NULL,
   description        TEXT,
-  severity           VARCHAR(20)  NOT NULL DEFAULT 'minor',  -- minor | major | critical
-  status             VARCHAR(20)  NOT NULL DEFAULT 'open',   -- open | in_review | resolved | closed
-  element_ids        JSONB        NOT NULL DEFAULT '[]',     -- IFC GUIDs of clashing elements
-  viewpoint          JSONB        NOT NULL DEFAULT '{}',     -- {camera, target, clipping_planes}
+  severity           VARCHAR(20)  NOT NULL DEFAULT 'minor',
+  status             VARCHAR(20)  NOT NULL DEFAULT 'open',
+  element_ids        JSONB        NOT NULL DEFAULT '[]',
+  viewpoint          JSONB        NOT NULL DEFAULT '{}',
   assigned_to        UUID         REFERENCES users(id) ON DELETE SET NULL,
   created_by         UUID         REFERENCES users(id) ON DELETE SET NULL,
   created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -178,10 +160,7 @@ CREATE POLICY tenant_isolation_bim_issues ON bim_issues
 CREATE TRIGGER trg_bim_issues_updated_at BEFORE UPDATE ON bim_issues
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- 
--- BUDGET & COST CONTROL  (Procore Financials parity)
--- 
+-- BUDGET AND COST CONTROL (Procore Financials parity)
 CREATE TABLE budgets (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -194,7 +173,7 @@ CREATE TABLE budgets (
   actual_total       NUMERIC(18,2) NOT NULL DEFAULT 0,
   forecast_total     NUMERIC(18,2) NOT NULL DEFAULT 0,
   baseline_date      DATE,
-  status             VARCHAR(20)  NOT NULL DEFAULT 'draft',  -- draft | baselined | locked
+  status             VARCHAR(20)  NOT NULL DEFAULT 'draft',
   created_by         UUID         REFERENCES users(id) ON DELETE SET NULL,
   created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -208,14 +187,13 @@ CREATE POLICY tenant_isolation_budgets ON budgets
 CREATE TRIGGER trg_budgets_updated_at BEFORE UPDATE ON budgets
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
 CREATE TABLE budget_items (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   budget_id          UUID         NOT NULL REFERENCES budgets(id) ON DELETE CASCADE,
-  cost_code          VARCHAR(40)  NOT NULL,         -- CSI / WBS / internal
+  cost_code          VARCHAR(40)  NOT NULL,
   description        VARCHAR(500) NOT NULL,
-  category           VARCHAR(60),                   -- labor | material | equipment | subcontract | other
+  category           VARCHAR(60),
   unit               VARCHAR(20),
   qty                NUMERIC(14,4) NOT NULL DEFAULT 0,
   unit_cost          NUMERIC(14,4) NOT NULL DEFAULT 0,
@@ -237,49 +215,50 @@ CREATE POLICY tenant_isolation_budget_items ON budget_items
 CREATE TRIGGER trg_budget_items_updated_at BEFORE UPDATE ON budget_items
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
 -- Change Orders (Owner COs and PCO / Prime COs)
-CREATE TABLE ULT 0,
-  forecbudget/r dapp.  NOT NULL REFE
-CREATE TABLE budgets (W(_id    hZW EXECUTE FUNCTION set_updatT NULL RON se 
-CREATE TABLE budgommitted_total    NUMERptionCUTE _id | Oid | TE CASCADE,T N         NOT NULL REFERENCES tenants(id) ON DELEADE,
-  project_id         ays, status,LL REFERENCES t     UUID         NOT NULLoUSIN_r{ requi|LEADign_t.rowi|LfftatndiN DELE| Tcope_addE| TcFailed
-O')}-${S        NOT NMERIC(18,2) NOT NULL DEFAULT 0,
-  reLUES ($1,$2,$333333T 0,
-  committed_amount   NUMERIC(18    JSONB        NOT NULL DEFAULT '[]',  -- [{time, severity, description, reported_to}]
- ARCHA
- ARCed_by='$
-quality_notes      TEXT,
-  photos             JSONB        NOT NULL DEFAULT '[]',  -- [{file_id, caption, geotag, taken_at}]
-  status             VARCHAR(20)  NOT NULL DEFAULT 'draft',  -- draft | submitted | approved
-  ed_by='${r.submitted | approved
-        PRIMARY KEY DEFAULT uuidLT '[]',     -- IFC GUIDs of clashing elements
-  viewpoint          JSONB        NOT NULL DEFAULT '{}',     -- {camera, target, clipping_planes}
-  assigned_to        UUID         REFERENCES u      NOT NULL DEFAULT '{}',
-  creaLL REFE NOT NULL DEFAULT 0,
- rent_tenant_i       TIMESrent_tenant_iD         REFERENCES users(id) ON rent_tenant_idESTAMPTZ   NOT NULL DEFAULT NOW()
+CREATE TABLE change_orders (
+  id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  project_id         UUID         NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  co_number          VARCHAR(40)  NOT NULL,
+  co_type            VARCHAR(20)  NOT NULL DEFAULT 'PCO',
+  title              VARCHAR(255) NOT NULL,
+  description        TEXT,
+  reason_code        VARCHAR(60),
+  amount             NUMERIC(18,2) NOT NULL DEFAULT 0,
+  schedule_days      INTEGER       NOT NULL DEFAULT 0,
+  status             VARCHAR(20)  NOT NULL DEFAULT 'draft',
+  submitted_by       UUID         REFERENCES users(id) ON DELETE SET NULL,
+  submitted_at       TIMESTAMPTZ,
+  approved_by        UUID         REFERENCES users(id) ON DELETE SET NULL,
+  approved_at        TIMESTAMPTZ,
+  executed_at        TIMESTAMPTZ,
+  cost_code          VARCHAR(40),
+  created_by         UUID         REFERENCES users(id) ON DELETE SET NULL,
+  created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, project_id, co_number)
 );
-CREATE INDEX idx_budgrent_tenant_idMESrent_tenant_iems(budget_id, sort_order);
-CREATE INDEX idx_budget_items_cost_code ON budget_items(tenant_id, crent_tenant_i TER TABLE budget_items ENABLrent_tenant_iemsURITY;
-CREATE POLICY tenant_isolation_budget_items ONHelpAND         }
-})
+CREATE INDEX idx_change_orders_project ON change_orders(project_id, status);
+ALTER TABLE change_orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation_change_orders ON change_orders
+  USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
+CREATE TRIGGER trg_change_orders_updated_at BEFORE UPDATE ON change_orders
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-   VA(inaompy=' tal  sd
- */
-EVEL etting('aRITREPLACE VIEWem' })
-  }
-})
-
-AS
-: RequTE FId/bAS Number(b.uTE FI         RETE FILL DEFAULTTE FI', async TE COALESCE(SUM(bide || !b.descriptrit0: ResE,
-  project_i TE COALESCE(SUM(bidcontract | oth   UU0: ResS projects(id TE COALESCE(SUM(bidy                  0: ResVARCHAR(200) NO TE COALESCE(SUM(bidit_cost         UUI0: Resncy          TE COALESCE(SUM(bidiginal_amount  trit0: Resiginal_total   TE CO, rebidpoinResEVEL     V
-b
-LEFT('/projects/ms_budgbisues Et/rollup',tenanid
-GROUPconsanid;0]) return res.status(404).json({ error: 'Issue not found' })
-    res.json({ issue: result.rows[0] })
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to update issue' })
-  }
-})
-
-export { router as bimRouter }
+-- Helper: budget rollup view
+CREATE OR REPLACE VIEW budget_rollup AS
+SELECT
+  b.id AS budget_id,
+  b.project_id,
+  b.tenant_id,
+  b.currency,
+  COALESCE(SUM(bi.original_amount),  0) AS original_total,
+  COALESCE(SUM(bi.revised_amount),   0) AS revised_total,
+  COALESCE(SUM(bi.committed_amount), 0) AS committed_total,
+  COALESCE(SUM(bi.actual_amount),    0) AS actual_total,
+  COALESCE(SUM(bi.forecast_amount),  0) AS forecast_total,
+  COUNT(bi.id) AS item_count
+FROM budgets b
+LEFT JOIN budget_items bi ON bi.budget_id = b.id
+GROUP BY b.id;
