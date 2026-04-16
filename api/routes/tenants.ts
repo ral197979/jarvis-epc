@@ -26,9 +26,10 @@ type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
 
+const _regEnv = parseInt(process.env.RATE_LIMIT_REGISTER_MAX ?? '', 10)
 const registrationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,  // 1 hour
-  max:      10,
+  max:      Number.isFinite(_regEnv) && _regEnv > 0 ? _regEnv : 60,
   message:  { error: 'rate_limited', message: 'Too many registration attempts.' },
 })
 

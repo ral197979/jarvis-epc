@@ -131,9 +131,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // ─── Global rate limits ───────────────────────────────────────────────────────
 
-const globalLimiter = rateLimit({ windowMs: 60_000, max: 120, standardHeaders: true, legacyHeaders: false })
-const authLimiter   = rateLimit({ windowMs: 15 * 60_000, max: 20, standardHeaders: true, legacyHeaders: false })
-const aiLimiter     = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false })
+const envInt = (k: string, def: number) => { const v = parseInt(process.env[k] ?? '', 10); return Number.isFinite(v) && v > 0 ? v : def }
+const globalLimiter = rateLimit({ windowMs: 60_000,      max: envInt('RATE_LIMIT_GLOBAL_MAX', 600), standardHeaders: true, legacyHeaders: false })
+const authLimiter   = rateLimit({ windowMs: 15 * 60_000, max: envInt('RATE_LIMIT_AUTH_MAX',   200), standardHeaders: true, legacyHeaders: false })
+const aiLimiter     = rateLimit({ windowMs: 60_000,      max: envInt('RATE_LIMIT_AI_MAX',      30), standardHeaders: true, legacyHeaders: false })
 
 app.use('/api/', globalLimiter)
 app.use('/api/v1/auth/', authLimiter)
