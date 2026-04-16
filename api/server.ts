@@ -221,10 +221,13 @@ app.use('/api/v1/files',          filesRouter)
 app.use('/api/v1/integrations',   integrationsRouter)
 app.use('/api/v1/webhooks',       webhooksRouter)
 app.use('/api/v1/sync-jobs',      syncJobsRouter)
-app.use('/api/v1',                calculationsRouter)
+// Specific-prefix mounts MUST precede the broad '/api/v1' mounts below,
+// otherwise those catch-all routers' top-level requireAuth middleware will
+// 401 requests destined for more specific mounts (e.g. /api/v1/mcp/tools).
 app.use('/api/v1/mcp',            mcpRouter)           // v4.28.0: MCP bridge + native tools
-app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
 app.use('/api/v1/commissioning',  commissioningRouter) // v4.30.0: Pack generation workflow
+app.use('/api/v1',                calculationsRouter)
+app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
