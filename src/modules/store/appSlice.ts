@@ -244,7 +244,7 @@ export const useAppStore = create<AppStore>()(
       {
         name:    'jarvis-app-state',
         version: 2,
-        migrate: (persisted, from) => {
+        migrate: (persisted: any, from: number) => {
           if (from < 2 && persisted && persisted.ui) {
             persisted.ui.navHidden = {}
             persisted.ui.navOrder  = []

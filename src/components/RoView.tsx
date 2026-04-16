@@ -351,11 +351,11 @@ export function RoView({ policy: pProp, onToast, onAudit }: RoViewProps) {
           </div>
 
           {/* Top risks from stats */}
-          {stats?.top_risks?.length > 0 && (
+          {stats && (stats.top_risks?.length ?? 0) > 0 && (
             <div style={{ marginTop: 24 }}>
               <h4 className="jarvis-label" style={{ marginBottom: 10 }}>Top Risks by Score</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {stats.top_risks.map(r => (
+                {stats.top_risks!.map(r => (
                   <div key={r.id} className="jarvis-card"
                     style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
                     onClick={() => setActiveTab('register')}

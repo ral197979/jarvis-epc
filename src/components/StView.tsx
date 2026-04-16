@@ -60,7 +60,7 @@ function varColor(days: number): string {
 }
 
 export function StView({ policy: _p }: StViewProps) {
-  const storeProjects = useBizStore(selectProjects) as ScheduleRow[]
+  const storeProjects = useBizStore(selectProjects) as unknown as ScheduleRow[]
   const evmData       = useBizStore(selectEVMProjects) as EVMRecord[]
   const [remoteProjects, setRemoteProjects] = useState<ScheduleRow[]>([])
   const [loading, setLoading]               = useState(false)

@@ -374,9 +374,9 @@ function generateDefaultMilestones(project: Project | null): Milestone[] {
     { id: 'm8', name: 'Substantial Completion',phase: 'closeout',      planned_date: project.planned_finish,  status: 'pending' },
   ].map(m => ({
     ...m,
-    status: (m.status === 'pending' && td > m.planned_date) ? 'overdue' : m.status,
+    status: ((m.status === 'pending' && td > m.planned_date) ? 'overdue' : m.status) as Milestone['status'],
     variance_days: td > m.planned_date && m.status !== 'complete' ? daysBetween(m.planned_date, td) : 0,
-  }))
+  })) as Milestone[]
 }
 
 function generatePhaseProgress(project: Project) {
