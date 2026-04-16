@@ -40,7 +40,11 @@ const router = Router()
 // can render the tool browser without a full login session.
 const PUBLIC_GET_PATHS = new Set(['/tools', '/ava/health'])
 router.use((req, res, next) => {
-  if (req.method === 'GET' && PUBLIC_GET_PATHS.has(req.path)) return next()
+  console.log('[mcp-guard]', req.method, 'path=', JSON.stringify(req.path), 'url=', req.url, 'originalUrl=', req.originalUrl)
+  if (req.method === 'GET' && PUBLIC_GET_PATHS.has(req.path)) {
+    console.log('[mcp-guard] BYPASS auth for', req.path)
+    return next()
+  }
   return (requireAuth as any)(req, res, next)
 })
 router.use((req, res, next) => {
