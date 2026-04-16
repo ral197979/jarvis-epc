@@ -1,11 +1,11 @@
 -- ============================================================
--- JARVIS EPC — Migration 007: PM Modules (Procore/Autodesk Parity)
+-- JARVIS EPC  Migration 007: PM Modules (Procore/Autodesk Parity)
 -- v4.31.0 | Daily Logs, Drawings + Markups, BIM Models, Budget, Change Orders
 -- ============================================================
 
--- ──────────────────────────────────────────────────────────────
+-- 
 -- DAILY LOGS  (Procore-parity field reporting)
--- ──────────────────────────────────────────────────────────────
+-- 
 CREATE TABLE daily_logs (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -45,9 +45,9 @@ CREATE TRIGGER trg_daily_logs_updated_at BEFORE UPDATE ON daily_logs
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 
--- ──────────────────────────────────────────────────────────────
+-- 
 -- DRAWINGS  (Autodesk/Procore-parity plans register)
--- ──────────────────────────────────────────────────────────────
+-- 
 -- Drawings reference a file stored in documents / file_versions.
 -- Revision lifecycle: current_rev tracks the active sheet.
 CREATE TABLE drawings (
@@ -124,9 +124,9 @@ CREATE TRIGGER trg_drawing_markups_updated_at BEFORE UPDATE ON drawing_markups
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 
--- ──────────────────────────────────────────────────────────────
--- BIM MODELS  (Autodesk parity — IFC / glTF 3D coordination)
--- ──────────────────────────────────────────────────────────────
+-- 
+-- BIM MODELS  (Autodesk parity  IFC / glTF 3D coordination)
+-- 
 CREATE TABLE bim_models (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -179,9 +179,9 @@ CREATE TRIGGER trg_bim_issues_updated_at BEFORE UPDATE ON bim_issues
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 
--- ──────────────────────────────────────────────────────────────
+-- 
 -- BUDGET & COST CONTROL  (Procore Financials parity)
--- ──────────────────────────────────────────────────────────────
+-- 
 CREATE TABLE budgets (
   id                 UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id          UUID         NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -240,7 +240,7 @@ CREATE TRIGGER trg_budget_items_updated_at BEFORE UPDATE ON budget_items
 
 -- Change Orders (Owner COs and PCO / Prime COs)
 CREATE TABLE ULT 0,
-  forecbudget/r─� dapp.  NOT NULL REFE��
+  forecbudget/r dapp.  NOT NULL REFE
 CREATE TABLE budgets (W(_id    hZW EXECUTE FUNCTION set_updatT NULL RON se 
 CREATE TABLE budgommitted_total    NUMERptionCUTE _id | Oid | TE CASCADE,T N         NOT NULL REFERENCES tenants(id) ON DELEADE,
   project_id         ays, status,LL REFERENCES t     UUID         NOT NULLoUSIN_r{ requi|LEADign_t.rowi|LfftatndiN DELE| Tcope_addE| TcFailed
@@ -256,7 +256,7 @@ quality_notes      TEXT,
         PRIMARY KEY DEFAULT uuidLT '[]',     -- IFC GUIDs of clashing elements
   viewpoint          JSONB        NOT NULL DEFAULT '{}',     -- {camera, target, clipping_planes}
   assigned_to        UUID         REFERENCES u      NOT NULL DEFAULT '{}',
-  creaLL REFE�� NOT NULL DEFAULT 0,
+  creaLL REFE NOT NULL DEFAULT 0,
  rent_tenant_i       TIMESrent_tenant_iD         REFERENCES users(id) ON rent_tenant_idESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_budgrent_tenant_idMESrent_tenant_iems(budget_id, sort_order);
@@ -273,7 +273,7 @@ EVEL etting('aRITREPLACE VIEWem' })
 AS
 : RequTE FId/bAS Number(b.uTE FI         RETE FILL DEFAULTTE FI', async TE COALESCE(SUM(bide || !b.descriptrit0: ResE,
   project_i TE COALESCE(SUM(bidcontract | oth   UU0: ResS projects(id TE COALESCE(SUM(bidy                  0: ResVARCHAR(200) NO TE COALESCE(SUM(bidit_cost         UUI0: Resncy          TE COALESCE(SUM(bidiginal_amount  trit0: Resiginal_total   TE CO, rebidpoinResEVEL     V
-�────b
+b
 LEFT('/projects/ms_budgbisues Et/rollup',tenanid
 GROUPconsanid;0]) return res.status(404).json({ error: 'Issue not found' })
     res.json({ issue: result.rows[0] })
