@@ -45,6 +45,7 @@ const SubmittalsView    = lazy(() => import('./SubmittalsView'))
 const RFIsView          = lazy(() => import('./RFIsView'))
 const PunchListView     = lazy(() => import('./PunchListView'))
 const InspectionsView   = lazy(() => import('./InspectionsView'))
+const AuditLogView      = lazy(() => import('./AuditLogView'))
 const JobsView          = lazy(() => import('./JobsView'))
 const PlannerView       = lazy(() => import('./PlannerView'))
 const ResourcesView     = lazy(() => import('./ResourcesView'))
@@ -102,6 +103,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   rfis:          RFIsView,
   punch:         PunchListView,
   inspections:   InspectionsView,
+  audit:         AuditLogView,
   jobs:          JobsView,
   overview:      DashboardMainView,
   proposals:     () => React.createElement(ComingSoonView, { label: 'Proposals',     domain: 'CRM',        icon: '📄', viewId: 'proposals',     context: 'Bid/no-bid workflow, proposal builder, and RFQ tracking are in active extraction from the core.' }),

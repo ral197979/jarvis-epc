@@ -70,6 +70,7 @@ import { bimRouter          } from './routes/bim'           // v4.31.0
 import { budgetsRouter      } from './routes/budgets'       // v4.31.0
 import { inspectionsRouter  } from './routes/inspections'   // v4.32.0
 import { punchListsRouter   } from './routes/punchLists'    // v4.32.0
+import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { startPackWorker, stopPackWorker } from './services/packWorker' // v4.30.0
 
@@ -241,6 +242,7 @@ app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models +
 app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
 app.use('/api/v1',                inspectionsRouter)    // v4.32.0: Inspection templates + records
 app.use('/api/v1',                punchListsRouter)     // v4.32.0: Punch lists + items
+app.use('/api/v1/audit',          auditRouter)          // v4.30.0: Audit log read API
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
