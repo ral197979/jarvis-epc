@@ -240,14 +240,14 @@ CREATE TRIGGER trg_budget_items_updated_at BEFORE UPDATE ON budget_items
 
 -- Change Orders (Owner COs and PCO / Prime COs)
 CREATE TABLE ULT 0,
-  forec    budget/râ”€â” dapp.  NOT NULL REFE”€
+  forecbudget/râ”€â” dapp.  NOT NULL REFE”€
 CREATE TABLE budgets (W(_id    hZW EXECUTE FUNCTION set_updatT NULL RON se 
 CREATE TABLE budgommitted_total    NUMERptionCUTE _id | Oid | TE CASCADE,T N         NOT NULL REFERENCES tenants(id) ON DELEADE,
   project_id         ays, status,LL REFERENCES t     UUID         NOT NULLoUSIN_r{ requi|LEADign_t.rowi|LfftatndiN DELE| Tcope_addE| TcFailed
 O')}-${S        NOT NMERIC(18,2) NOT NULL DEFAULT 0,
   reLUES ($1,$2,$333333T 0,
   committed_amount   NUMERIC(18    JSONB        NOT NULL DEFAULT '[]',  -- [{time, severity, description, reported_to}]
- ARCHA    
+ ARCHA
  ARCed_by='$
 quality_notes      TEXT,
   photos             JSONB        NOT NULL DEFAULT '[]',  -- [{file_id, caption, geotag, taken_at}]
