@@ -64,6 +64,10 @@ import {
 import { calculationsRouter } from './routes/calculations'
 import { mcpRouter          } from './routes/mcp'           // v4.28.0
 import { risksRouter        } from './routes/risks'         // v4.28.0
+import { dailyLogsRouter    } from './routes/dailyLogs'     // v4.31.0
+import { drawingsRouter     } from './routes/drawings'      // v4.31.0
+import { bimRouter          } from './routes/bim'           // v4.31.0
+import { budgetsRouter      } from './routes/budgets'       // v4.31.0
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { startPackWorker, stopPackWorker } from './services/packWorker' // v4.30.0
 
@@ -228,6 +232,10 @@ app.use('/api/v1/mcp',            mcpRouter)           // v4.28.0: MCP bridge + 
 app.use('/api/v1/commissioning',  commissioningRouter) // v4.30.0: Pack generation workflow
 app.use('/api/v1',                calculationsRouter)
 app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
+app.use('/api/v1',                dailyLogsRouter)      // v4.31.0: Daily logs
+app.use('/api/v1',                drawingsRouter)       // v4.31.0: Drawings + revisions + markups
+app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models + coordination issues
+app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 

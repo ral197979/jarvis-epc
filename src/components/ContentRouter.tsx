@@ -22,6 +22,10 @@ const CRMView           = lazy(() => import('./CRMView'))
 const FeedView          = lazy(() => import('./FeedView'))
 const ProjectsView      = lazy(() => import('./ProjectsView'))
 const ConstructionView  = lazy(() => import('./ConstructionView'))
+const DailyLogsView     = lazy(() => import('./DailyLogsView'))
+const DrawingsView      = lazy(() => import('./DrawingsView'))
+const BIMViewerView     = lazy(() => import('./BIMViewerView'))
+const BudgetView        = lazy(() => import('./BudgetView'))
 const DocumentsView     = lazy(() => import('./DocumentsView'))
 const CalcView          = lazy(() => import('./CalcView'))
 const HubView           = lazy(() => import('./HubView'))
@@ -72,6 +76,10 @@ const TAB_MAP: Record<string, ViewEntry> = {
   feed:          FeedView,
   projects:      ProjectsView,
   construction:  ConstructionView,
+  dailylogs:     DailyLogsView,
+  drawings:      DrawingsView,
+  bim:           BIMViewerView,
+  budget:        BudgetView,
   safety:        SafetyView,
   commissioning: CommissioningView,
   procurement:   ProcurementView,
