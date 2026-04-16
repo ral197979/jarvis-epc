@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useBizStore, selectProjects } from '../modules/biz/store'
 import type { PolicyConfig } from '../modules/biz/dispatch'
+import { downloadCsv } from '../utils/csv'
 
 interface Drawing {
   id: string; sheet_number: string; title: string; discipline?: string; current_rev: string
@@ -92,6 +93,16 @@ export function DrawingsView({ policy }: DrawingsViewProps) {
           {DISCIPLINES.map(d => <option key={d}>{d}</option>)}
         </select>
         {canWrite && <button onClick={() => setCreating(true)} style={{ marginLeft: 'auto', padding: '6px 14px', background: 'var(--jarvis-ac)', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>+ New Sheet</button>}
+        <button
+          disabled={!drawings.length}
+          onClick={() => downloadCsv(`drawings-${new Date().toISOString().slice(0,10)}.csv`, drawings.map((d: any) => ({
+            id: d.id, project_id: d.project_id, sheet_number: d.sheet_number, title: d.title,
+            discipline: d.discipline, current_rev: d.current_rev, status: d.status ?? '',
+            document_id: d.document_id ?? '', created_at: d.created_at
+          })))}
+          style={{ marginLeft: 8, padding: '6px 14px', border: '1px solid var(--jarvis-ac)', background: 'transparent', color: 'var(--jarvis-ac)', borderRadius: 4, cursor: drawings.length ? 'pointer' : 'not-allowed', opacity: drawings.length ? 1 : 0.5 }}
+          title="Export drawings to CSV"
+        >⬇ CSV</button>
       </div>
 
       {creating && (

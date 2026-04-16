@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { downloadCsv } from '../utils/csv';
 
 interface ChecklistItem {
   id: string;
@@ -607,6 +608,19 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
               style={{ background: 'var(--jarvis-accent)', color: 'white', padding: '8px 16px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
             >
               + New Inspection
+            </button>
+            <button
+              onClick={() => downloadCsv(`inspections-${new Date().toISOString().slice(0,10)}.csv`, inspections.map(i => ({
+                id: i.id, project_id: i.project_id, title: i.title, status: i.status,
+                scheduled_date: i.scheduled_date, completed_date: (i as any).completed_date ?? '',
+                pass_count: (i as any).pass_count ?? '', fail_count: (i as any).fail_count ?? '',
+                na_count: (i as any).na_count ?? '', overall_result: (i as any).overall_result ?? ''
+              })))}
+              disabled={!inspections.length}
+              style={{ padding: '8px 14px', border: '1px solid var(--jarvis-accent)', background: 'transparent', color: 'var(--jarvis-accent)', borderRadius: '6px', cursor: inspections.length ? 'pointer' : 'not-allowed', marginLeft: 8, opacity: inspections.length ? 1 : 0.5 }}
+              title="Export inspections to CSV"
+            >
+              ⬇ CSV
             </button>
           </div>
 

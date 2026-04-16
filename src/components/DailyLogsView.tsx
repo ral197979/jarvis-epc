@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useBizStore, selectProjects } from '../modules/biz/store'
 import type { PolicyConfig } from '../modules/biz/dispatch'
+import { downloadCsv } from '../utils/csv'
 
 interface ManpowerRow { trade: string; count: number; hours: number; contractor?: string }
 interface DailyLog {
@@ -72,9 +73,21 @@ export function DailyLogsView({ policy }: DailyLogsViewProps) {
         <select value={projectId} onChange={e => setProjectId(e.target.value)} style={{ padding: 6 }}>
           {projects?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        {canWrite && (
+        {canWrite && (<>
           <button onClick={() => setCreating(true)} style={{ marginLeft: 'auto', padding: '6px 14px', background: 'var(--jarvis-ac)', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>+ New Log</button>
-        )}
+          <button
+            disabled={!logs.length}
+            onClick={() => downloadCsv(`daily-logs-${new Date().toISOString().slice(0,10)}.csv`, logs.map((l: any) => ({
+              id: l.id, project_id: l.project_id, log_date: l.log_date, status: l.status,
+              weather: (l.weather && (l.weather.summary ?? JSON.stringify(l.weather))) ?? '',
+              manpower_total: Array.isArray(l.manpower) ? l.manpower.reduce((a:number,b:any)=>a+(b.count||0),0) : '',
+              hours_total: Array.isArray(l.manpower) ? l.manpower.reduce((a:number,b:any)=>a+((b.count||0)*(b.hours||0)),0) : '',
+              notes: l.notes ?? '', created_at: l.created_at
+            })))}
+            style={{ marginLeft: 8, padding: '6px 14px', border: '1px solid var(--jarvis-ac)', background: 'transparent', color: 'var(--jarvis-ac)', borderRadius: 4, cursor: logs.length ? 'pointer' : 'not-allowed', opacity: logs.length ? 1 : 0.5 }}
+            title="Export logs to CSV"
+          >⬇ CSV</button>
+        </>)}
       </div>
 
       {creating && (

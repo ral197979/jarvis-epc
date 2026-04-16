@@ -15,6 +15,7 @@
  * fragments rendered the original unparseable by tsc).
  */
 import React, { useState, useEffect, useMemo } from 'react'
+import { downloadCsv } from '../utils/csv'
 
 interface PunchList {
   id: string
@@ -555,6 +556,21 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
               disabled={!selectedListId}
             >
               + New Item
+            </button>
+            <button
+              className="jarvis-btn"
+              disabled={!items.length}
+              onClick={() => downloadCsv(`punch-items-${new Date().toISOString().slice(0,10)}.csv`, items.map((it: any) => ({
+                id: it.id, list_id: it.list_id, description: it.description, status: it.status,
+                priority: it.priority, location: it.location, trade: it.trade,
+                assignee: it.assignee, due_date: it.due_date ?? '',
+                drawing_id: it.drawing_id ?? '', pin_x: it.pin_x ?? '', pin_y: it.pin_y ?? '',
+                created_at: it.created_at
+              })))}
+              style={{ marginLeft: 8, opacity: items.length ? 1 : 0.5 }}
+              title="Export punch items to CSV"
+            >
+              ⬇ CSV
             </button>
           </div>
 
