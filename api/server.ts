@@ -157,17 +157,37 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
       const tenantId = authReq.tenantId
       const userId   = authReq.auth?.sub
       if (tenantId && userId) {
-        const action = req.method === 'DELETE' ? 'delete'
-          : req.method === 'POST' ? 'create' : 'update'
+        let action: string
+        if (req.path === '/api/v1/auth/login') action = 'login'
+        else if (req.method === 'DELETE') action = 'delete'
+        else if (req.method === 'POST')    action = 'create'
+        else                               action = 'update'
         const parts   = req.path.split('/').filter(Boolean)
         const resource = parts[2] ?? 'unknown'  // /api/v1/resource/...
         const resourceId = parts[3] && /^[0-9a-f-]{36}$/.test(parts[3]) ? parts[3] : undefined
 
+        // v4.30.0: capture request body as new_data for create/update (redact sensitive keys)
+        const SENSITIVE = new Set(['password','token','refresh_token','secret','api_key','authorization'])
+        const redact = (v: unknown): unknown => {
+          if (!v || typeof v !== 'object') return v
+          if (Array.isArray(v)) return v.map(redact)
+          const out: Record<string, unknown> = {}
+          for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+            out[k] = SENSITIVE.has(k.toLowerCase()) ? '[redacted]' : redact(val)
+          }
+          return out
+        }
+        const newData = (action === 'create' || action === 'update') && req.body && Object.keys(req.body).length
+          ? JSON.stringify(redact(req.body))
+          : null
+
         tenantQuery(tenantId, `
-          INSERT INTO audit_log (tenant_id,user_id,action,resource,resource_id,ip_address,request_id)
-          VALUES (current_setting('app.current_tenant_id',true)::uuid,$1,$2,$3,$4,$5,$6)
+          INSERT INTO audit_log (tenant_id,user_id,action,resource,resource_id,new_data,ip_address,user_agent,request_id)
+          VALUES (current_setting('app.current_tenant_id',true)::uuid,$1,$2,$3,$4,$5::jsonb,$6,$7,$8)
         `, [userId, action, resource, resourceId ?? null,
+           newData,
            req.ip ?? null,
+           req.headers['user-agent'] ?? null,
            (req as Request & { requestId?: string }).requestId ?? null,
         ]).catch(() => {})  // never block the response
       }
