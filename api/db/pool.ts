@@ -108,7 +108,7 @@ export async function tenantQuery<T extends QueryResultRow = QueryResultRow>(
 ): Promise<QueryResult<T>> {
   const client = await _pool.connect()
   try {
-    await client.query('SET LOCAL app.current_tenant_id = $1', [tenantId])
+    await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId])
     const start  = Date.now()
     const result = await client.query<T>(text, values)
     const duration = Date.now() - start
@@ -132,7 +132,7 @@ export async function tenantTransaction<T>(
   const client = await _pool.connect()
   try {
     await client.query('BEGIN')
-    await client.query('SET LOCAL app.current_tenant_id = $1', [tenantId])
+    await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId])
     const result = await fn(client)
     await client.query('COMMIT')
     return result
