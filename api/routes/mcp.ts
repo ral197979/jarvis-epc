@@ -36,8 +36,17 @@ import Anthropic from '@anthropic-ai/sdk'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 
 const router = Router()
-router.use(requireAuth  as any)
-router.use(requireTenant as any)
+// Public read-only endpoints (tool catalog + Ava health) bypass auth so the UI
+// can render the tool browser without a full login session.
+const PUBLIC_GET_PATHS = new Set(['/tools', '/ava/health'])
+router.use((req, res, next) => {
+  if (req.method === 'GET' && PUBLIC_GET_PATHS.has(req.path)) return next()
+  return (requireAuth as any)(req, res, next)
+})
+router.use((req, res, next) => {
+  if (req.method === 'GET' && PUBLIC_GET_PATHS.has(req.path)) return next()
+  return (requireTenant as any)(req, res, next)
+})
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 

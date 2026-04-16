@@ -113,6 +113,15 @@ export function OwnerPanel({ backendUrl = '', version = '4.29.0' }: OwnerPanelPr
   // ─────────────────────────────────────────────────────────────────────────
 
   return (
+    <>
+    <div
+      aria-hidden="true"
+      onClick={() => setOwnerPanel(false)}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+        zIndex: 999, backdropFilter: 'blur(2px)',
+      }}
+    />
     <div
       role="complementary"
       aria-label="Owner settings"
@@ -317,6 +326,7 @@ export function OwnerPanel({ backendUrl = '', version = '4.29.0' }: OwnerPanelPr
         )}
       </div>
     </div>
+    </>
   )
 }
 
