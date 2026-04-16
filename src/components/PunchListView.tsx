@@ -32,6 +32,15 @@ interface PunchList {
   updated_at: string
 }
 
+
+interface Drawing {
+  id: string
+  sheet_number: string
+  title: string
+  discipline: string | null
+  current_rev: string | null
+}
+
 interface PunchItem {
   id: string
   punch_list_id: string
@@ -162,7 +171,11 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
     discipline: 'Architectural',
     priority: 'medium' as 'low' | 'medium' | 'high' | 'critical',
     due_date: '',
+    drawing_id: '' as string,
+    pin_x: null as number | null,
+    pin_y: null as number | null,
   })
+  const [drawings, setDrawings] = useState<Drawing[]>([])
 
   const [showDetail, setShowDetail] = useState(false)
   const [selectedItem, setSelectedItem] = useState<PunchItem | null>(null)
@@ -213,6 +226,19 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
     }
   }
   useEffect(() => { reloadLists() }, [projectId])
+
+  // Load drawings for pin wiring
+  useEffect(() => {
+    if (!projectId) { setDrawings([]); return }
+    (async () => {
+      try {
+        const res = await fetch(`/api/v1/projects/${projectId}/drawings?limit=200`, { credentials: 'include' })
+        if (!res.ok) return
+        const json = await res.json()
+        setDrawings(Array.isArray(json.drawings) ? json.drawings : [])
+      } catch { /* ignore */ }
+    })()
+  }, [projectId])
 
   // Load items for selected list
   const reloadItems = async () => {
@@ -301,6 +327,9 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
           discipline: itemForm.discipline || null,
           priority: itemForm.priority,
           due_date: itemForm.due_date || null,
+          drawing_id: itemForm.drawing_id || null,
+          pin_x: itemForm.pin_x,
+          pin_y: itemForm.pin_y,
         }),
       })
       if (!res.ok) {
@@ -316,6 +345,9 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
         discipline: 'Architectural',
         priority: 'medium',
         due_date: '',
+        drawing_id: '',
+        pin_x: null,
+        pin_y: null,
       })
       await reloadItems()
       await reloadLists()
@@ -720,6 +752,67 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
               />
             </FormRow>
           </div>
+          <FormRow label="Drawing (optional)">
+            <select
+              className="jarvis-input"
+              value={itemForm.drawing_id}
+              onChange={e => setItemForm({ ...itemForm, drawing_id: e.target.value, pin_x: null, pin_y: null })}
+            >
+              <option value="">- no drawing -</option>
+              {drawings.map(d => (
+                <option key={d.id} value={d.id}>
+                  {d.sheet_number} - {d.title}{d.discipline ? ` (${d.discipline})` : ''}
+                </option>
+              ))}
+            </select>
+          </FormRow>
+
+          {itemForm.drawing_id && (
+            <FormRow label={`Pin location${itemForm.pin_x != null && itemForm.pin_y != null ? ` (${itemForm.pin_x.toFixed(1)}, ${itemForm.pin_y.toFixed(1)})` : ' - click to place'}`}>
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  const r = (e.currentTarget as HTMLDivElement).getBoundingClientRect()
+                  const x = ((e.clientX - r.left) / r.width)  * 100
+                  const y = ((e.clientY - r.top)  / r.height) * 100
+                  setItemForm({ ...itemForm, pin_x: Math.round(x * 10) / 10, pin_y: Math.round(y * 10) / 10 })
+                }}
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  height: 180,
+                  border: '1px dashed var(--jarvis-border, #8884)',
+                  borderRadius: 6,
+                  background: 'var(--jarvis-panel, #1113)',
+                  cursor: 'crosshair',
+                  userSelect: 'none',
+                }}
+                title="Click to drop pin (normalized 0-100 coords)"
+              >
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.4, fontSize: 12, pointerEvents: 'none' }}>
+                  Drawing preview placeholder - click to place pin
+                </div>
+                {itemForm.pin_x != null && itemForm.pin_y != null && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: `calc(${itemForm.pin_x}% - 8px)`,
+                      top:  `calc(${itemForm.pin_y}% - 8px)`,
+                      width: 16,
+                      height: 16,
+                      borderRadius: '50%',
+                      background: 'var(--jarvis-accent, #e11)',
+                      border: '2px solid #fff',
+                      boxShadow: '0 0 0 2px rgba(0,0,0,0.4)',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+              </div>
+            </FormRow>
+          )}
+
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
             <button className="jarvis-btn" onClick={() => setShowCreateItem(false)}>Cancel</button>
             <button className="jarvis-btn" onClick={handleCreateItem} style={{ background: 'var(--jarvis-accent)', color: 'var(--jarvis-bg)' }}>
