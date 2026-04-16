@@ -24,7 +24,7 @@ import { tenantQuery } from '../db/pool'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth   as any)
-router.use(requireTenant as any)
+router.use(requireTenant() as any)
 
 router.get('/projects/:projectId/drawings', async (req: Request, res: Response) => {
   const r = req as AuthTenantReq

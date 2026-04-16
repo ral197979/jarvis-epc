@@ -25,7 +25,7 @@ type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 
 const router = Router()
 router.use(requireAuth   as any)
-router.use(requireTenant as any)
+router.use(requireTenant() as any)
 
 // ─── Enums matching DB schema ─────────────────────────────────────────────────
 

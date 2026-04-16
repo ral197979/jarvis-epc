@@ -12,7 +12,7 @@ type AuthTenantRequest = Request & AuthenticatedRequest & TenantRequest
 
 const router = Router()
 router.use(requireAuth as any)
-router.use(requireTenant as any)
+router.use(requireTenant() as any)
 
 // ─── List sessions for a project ──────────────────────────────────────────────
 router.get('/projects/:projectId/calc-sessions', async (req: Request, res: Response) => {
