@@ -108,14 +108,19 @@ export async function tenantQuery<T extends QueryResultRow = QueryResultRow>(
 ): Promise<QueryResult<T>> {
   const client = await _pool.connect()
   try {
+    await client.query('BEGIN')
     await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId])
     const start  = Date.now()
     const result = await client.query<T>(text, values)
     const duration = Date.now() - start
+    await client.query('COMMIT')
     if (duration > 500) {
       slog('WARN', 'db', '[tenantQuery] Slow query', { tenantId, duration, text: text.slice(0, 120) })
     }
     return result
+  } catch (err) {
+    try { await client.query('ROLLBACK') } catch {}
+    throw err
   } finally {
     client.release()
   }
