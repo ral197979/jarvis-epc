@@ -68,6 +68,8 @@ import { dailyLogsRouter    } from './routes/dailyLogs'     // v4.31.0
 import { drawingsRouter     } from './routes/drawings'      // v4.31.0
 import { bimRouter          } from './routes/bim'           // v4.31.0
 import { budgetsRouter      } from './routes/budgets'       // v4.31.0
+import { inspectionsRouter  } from './routes/inspections'   // v4.32.0
+import { punchListsRouter   } from './routes/punchLists'    // v4.32.0
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { startPackWorker, stopPackWorker } from './services/packWorker' // v4.30.0
 
@@ -236,6 +238,8 @@ app.use('/api/v1',                dailyLogsRouter)      // v4.31.0: Daily logs
 app.use('/api/v1',                drawingsRouter)       // v4.31.0: Drawings + revisions + markups
 app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models + coordination issues
 app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
+app.use('/api/v1',                inspectionsRouter)    // v4.32.0: Inspection templates + records
+app.use('/api/v1',                punchListsRouter)     // v4.32.0: Punch lists + items
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
