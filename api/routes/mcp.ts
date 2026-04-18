@@ -200,6 +200,25 @@ router.post('/execute', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'tool name required' })
   }
 
+  // v4.31.0: per-tenant MCP marketplace — tools explicitly disabled by an
+  // admin in mcp_disabled_tools are blocked here. Default is enabled (no row).
+  try {
+    const disabledRes = await tenantQuery<{ tool_name: string }>(r.tenantId, `
+      SELECT tool_name FROM mcp_disabled_tools
+      WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid
+        AND  tool_name = $1
+    `, [tool])
+    if (disabledRes.rows.length > 0) {
+      return res.status(403).json({
+        error: 'tool_disabled',
+        message: `Tool '${tool}' is disabled for this tenant.`,
+        tool,
+      })
+    }
+  } catch {
+    // Marketplace table unavailable — fail open (don't block existing flows).
+  }
+
   // Emit audit entry (non-fatal)
   await writeAudit(r.tenantId, r.auth?.sub, `mcp:${tool}`, { params, project_id })
 

@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Target, FlaskConical, ListChecks, HardHat, FileText, Calculator,
   Wrench, Users, Wallet, Sparkles, Zap, Hammer, Archive, BookOpen, Plug, Link2,
-  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight
+  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, Workflow, ShieldAlert
 } from 'lucide-react'
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
 import { NAVIGATION_ITEMS, type NavItem } from '../config/navigation'
@@ -18,7 +18,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   dash: LayoutDashboard, crm: Target, feed: FlaskConical, projects: ListChecks,
   construction: HardHat, proposals: FileText, calc: Calculator, hub: Wrench,
   team: Users, portfolio: Wallet, predict: Sparkles, actions: Zap, field: Hammer,
-  docs: Archive, directory: BookOpen, mcp: Plug, integrations: Link2,
+  docs: Archive, directory: BookOpen, mcp: Plug, automation: Workflow,
+  compliance: ShieldAlert, integrations: Link2,
   notifications: Bell, system: Settings,
 }
 

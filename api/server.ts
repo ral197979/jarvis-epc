@@ -73,7 +73,17 @@ import { inspectionsRouter  } from './routes/inspections'   // v4.32.0
 import { punchListsRouter   } from './routes/punchLists'    // v4.32.0
 import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
+import automationRouter       from './routes/automation'    // v4.31.0
+import complianceRouter       from './routes/compliance'    // v4.31.0
+import fieldSyncRouter        from './routes/fieldSync'     // v4.31.0
+import scheduleRouter         from './routes/schedule'      // v4.31.0
 import { startPackWorker, stopPackWorker } from './services/packWorker' // v4.30.0
+import { startScheduler,  stopScheduler  } from './services/scheduler'  // v4.31.0
+import { registerWebhookDispatchHandler, emitEvent } from './services/webhookDispatch' // v4.31.0
+import { registerIntegrationSync } from './services/integrationSync' // v4.31.0
+import { registerKpiSnapshotHandler } from './services/kpiSnapshot'  // v4.31.0
+import { registerComplianceWatcher } from './services/complianceWatcher' // v4.31.0
+import { registerAuditRetentionHandler } from './services/auditRetention' // v4.31.0
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -191,6 +201,17 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
            req.headers['user-agent'] ?? null,
            (req as Request & { requestId?: string }).requestId ?? null,
         ]).catch(() => {})  // never block the response
+
+        // v4.31.0: every successful mutation also emits a webhook event.
+        // Subscribers filter by `{resource}.{action}` (e.g. 'projects.create').
+        // Payload intentionally omits `newData` — webhooks go to external URLs,
+        // so we send only the resource identity and let subscribers re-fetch
+        // via the API if they need details. Fire-and-forget; errors logged.
+        emitEvent(tenantId, `${resource}.${action}`, {
+          resourceId: resourceId ?? null,
+          userId,
+          requestId: (req as Request & { requestId?: string }).requestId ?? null,
+        })
       }
     }
     return origJson(body)
@@ -255,6 +276,10 @@ app.use('/api/v1/sync-jobs',      syncJobsRouter)
 // 401 requests destined for more specific mounts (e.g. /api/v1/mcp/tools).
 app.use('/api/v1/mcp',            mcpRouter)           // v4.28.0: MCP bridge + native tools
 app.use('/api/v1/commissioning',  commissioningRouter) // v4.30.0: Pack generation workflow
+app.use('/api/v1/admin/automation', automationRouter)  // v4.31.0: scheduler admin
+app.use('/api/v1/compliance-tasks', complianceRouter)  // v4.31.0: compliance watcher CRUD
+app.use('/api/v1/field-sync',       fieldSyncRouter)   // v4.31.0: offline batch replay
+app.use('/api/v1/schedule',         scheduleRouter)    // v4.31.0: CPM + tasks + dependencies
 app.use('/api/v1',                calculationsRouter)
 app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
 app.use('/api/v1',                dailyLogsRouter)      // v4.31.0: Daily logs
@@ -344,6 +369,18 @@ async function start(): Promise<void> {
   // Start commissioning pack job worker (v4.30.0)
   startPackWorker()
 
+  // Start generic scheduler + background-job runner (v4.31.0)
+  // Handlers for specific job types should be registered from their
+  // respective route/service modules via registerHandler() before or
+  // shortly after this call (registration is lazy — missing handlers
+  // fail their job cleanly instead of crashing the scheduler).
+  startScheduler()
+  registerWebhookDispatchHandler()
+  registerIntegrationSync()
+  registerKpiSnapshotHandler()
+  registerComplianceWatcher()
+  registerAuditRetentionHandler()
+
   // Periodic cleanup
   setInterval(() => {
     purgeExpiredTokens().catch(() => {})
@@ -357,6 +394,7 @@ async function start(): Promise<void> {
   for (const sig of ['SIGTERM','SIGINT']) {
     process.on(sig, () => {
       log.info(`[shutdown] ${sig} received — draining connections...`)
+      stopScheduler()  // v4.31.0
       stopPackWorker() // v4.30.0
       server.close(() => {
         log.info('[shutdown] HTTP server closed')

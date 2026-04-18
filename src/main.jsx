@@ -12,6 +12,13 @@ import './styles/index.css'
 // In production: set VITE_GATEWAY_MODE=proxied in deployment env vars.
 // In development: .env.local defaults to proxied; set to 'direct' only for local-only dev.
 import { setGatewayMode, setBackendBase } from './modules/store'
+import { installAutoFlush } from './modules/offlineQueue'
+
+// v4.31.0: PWA offline queue — install 'online' + SW listeners so that
+// pending mutations captured while offline auto-replay on reconnection.
+// Safe to call unconditionally; installAutoFlush short-circuits in SSR
+// or when IndexedDB is unavailable.
+installAutoFlush()
 
 const _rawGatewayMode = import.meta.env.VITE_GATEWAY_MODE
 const _rawBackendUrl  = import.meta.env.VITE_BACKEND_URL ?? ''
