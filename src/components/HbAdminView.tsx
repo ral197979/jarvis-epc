@@ -1,18 +1,26 @@
 /**
  * JARVIS EPC — HbAdminView  ·  Hub Admin / Settings
  */
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useBizStore } from '../modules/biz/store'
 import type { PolicyConfig } from '../modules/biz/dispatch'
 
 export interface HbAdminViewProps { policy?: Partial<PolicyConfig>; onToast?: (m: string, t: string) => void }
 
 export function HbAdminView({ policy: _p, onToast }: HbAdminViewProps) {
-  const company   = useBizStore(s => s.biz.company)
-  const totalBiz  = useBizStore(s => {
-    const biz = s.biz
-    return Object.entries(biz).filter(([, v]) => Array.isArray(v)).map(([k, v]) => ({ collection: k, count: (v as unknown[]).length })).filter(x => x.count > 0)
-  })
+  // v4.31.0 fix: the previous implementation used a useBizStore selector that
+  // returned a freshly-constructed array on every call, breaking Zustand's
+  // Object.is identity check → infinite re-render → "Maximum update depth".
+  // Select the stable `biz` reference and derive `totalBiz` via useMemo.
+  const company = useBizStore(s => s.biz.company)
+  const biz     = useBizStore(s => s.biz)
+  const totalBiz = useMemo(
+    () => Object.entries(biz)
+      .filter(([, v]) => Array.isArray(v))
+      .map(([k, v]) => ({ collection: k, count: (v as unknown[]).length }))
+      .filter(x => x.count > 0),
+    [biz],
+  )
   const [tab, setTab] = useState<'overview'|'data'>('overview')
 
   return (

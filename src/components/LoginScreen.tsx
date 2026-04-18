@@ -24,7 +24,9 @@ export interface LoginScreenProps {
   backendUrl?:   string
 }
 
-const IS_PROXIED = (typeof import.meta !== 'undefined' && (import.meta as Record<string, Record<string, string>>).env?.['VITE_GATEWAY_MODE']) === 'proxied'
+// v4.31.0 TS fix: ImportMeta doesn't directly cast to the target shape under
+// strict mode — double-cast via `unknown` is the standard escape.
+const IS_PROXIED = (typeof import.meta !== 'undefined' && (import.meta as unknown as Record<string, Record<string, string>>).env?.['VITE_GATEWAY_MODE']) === 'proxied'
 
 // ─── PIN utilities (mirrors JarvisCore _hashPin) ─────────────────────────────
 

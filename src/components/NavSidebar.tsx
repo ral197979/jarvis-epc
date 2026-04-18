@@ -3,6 +3,7 @@
  * Clean sidebar with lucide icons, grouped sections, hover states, smooth motion.
  */
 import React from 'react'
+import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Target, FlaskConical, ListChecks, HardHat, FileText, Calculator,
   Wrench, Users, Wallet, Sparkles, Zap, Hammer, Archive, BookOpen, Plug, Link2,
@@ -11,7 +12,9 @@ import {
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
 import { NAVIGATION_ITEMS, type NavItem } from '../config/navigation'
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
+// v4.31.0 TS fix: lucide-react icons are ForwardRefExoticComponent, not plain
+// ComponentType — use the library's own LucideIcon type so the map is assignable.
+const ICON_MAP: Record<string, LucideIcon> = {
   dash: LayoutDashboard, crm: Target, feed: FlaskConical, projects: ListChecks,
   construction: HardHat, proposals: FileText, calc: Calculator, hub: Wrench,
   team: Users, portfolio: Wallet, predict: Sparkles, actions: Zap, field: Hammer,

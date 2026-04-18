@@ -17,6 +17,14 @@ export default defineConfig({
     // Default fallback
     environment: 'jsdom',
 
+    // v4.31.0: stub secrets that module-load-time checks in api/server + mcp
+    // require, so tests that transitively import those modules don't throw
+    // at construction. Tests needing real Anthropic behaviour mock the SDK.
+    env: {
+      ANTHROPIC_API_KEY: 'sk-test-stub-for-vitest',
+      JWT_SECRET:        'test-jwt-secret',
+    },
+
     setupFiles: [path.resolve(__dirname, './src/__tests__/setup.ts')],
 
     coverage: {

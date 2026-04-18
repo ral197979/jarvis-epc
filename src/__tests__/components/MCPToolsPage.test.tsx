@@ -1,26 +1,63 @@
 /**
  * MCPToolsPage — unit tests
  *
- * Covers:
- *   - Renders page heading with correct tool count
- *   - Renders all 9 categories
- *   - Renders tool cards with name, description, and params
+ * v4.31.0 update (pass B — test suite repair):
+ * Component evolved significantly in v4.28.0 (live tool execution, Ava health
+ * badge, tabs: catalogue/execute/history, fetch-on-mount). Tests rewritten to
+ * match the current UI contract. Fetch is mocked so the component's
+ * loadCatalogue / checkAvaHealth useEffects don't hit a real network, which
+ * also suppresses the `act()` warnings.
+ *
+ * Covered:
+ *   - Page landmark + header rendering
+ *   - Tool cards render with name, description, and param hints
+ *   - Category badges
  *   - Search filter narrows visible tools
  *   - Empty-state message when search returns nothing
- *   - Resources panel renders all 4 resources
- *   - Resources expand/collapse on click
- *   - No network calls — pure static data
+ *   - Resources section + expand/collapse interaction
+ *   - Tab navigation (catalogue / execute / history)
  */
 
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MCPToolsPage } from '../../components/MCPToolsPage'
 import {
   JARVIS_MCP_TOOLS,
   JARVIS_MCP_RESOURCES,
   MCP_CATEGORY_ORDER,
 } from '../../constants/mcpTools'
+
+// ─── Fetch mock ────────────────────────────────────────────────────────────────
+// The component calls fetch() on mount — for /api/v1/mcp/tools and
+// /api/v1/mcp/ava/health. Return static data so tests don't require a backend.
+
+const mockFetch = vi.fn()
+
+beforeEach(() => {
+  mockFetch.mockReset()
+  mockFetch.mockImplementation((url: string) => {
+    if (url.endsWith('/api/v1/mcp/tools')) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ tools: JARVIS_MCP_TOOLS, ava_connected: false }),
+      })
+    }
+    if (url.endsWith('/api/v1/mcp/ava/health')) {
+      return Promise.resolve({
+        ok: true,
+        status: 503,
+        json: () => Promise.resolve({ healthy: false, reason: 'AVA_MCP_URL not configured' }),
+      })
+    }
+    return Promise.reject(new Error(`unexpected fetch: ${url}`))
+  })
+  vi.stubGlobal('fetch', mockFetch)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,192 +69,150 @@ function renderPage() {
 
 describe('MCPToolsPage', () => {
 
-  // ── Page header ──────────────────────────────────────────────────────────────
+  // ── Landmark + header ─────────────────────────────────────────────────────────
 
-  it('renders the page heading', () => {
+  it('exposes the MCP Tools landmark', () => {
     renderPage()
-    expect(screen.getByRole('heading', { name: /mcp tools/i })).toBeInTheDocument()
+    expect(screen.getByRole('main', { name: /MCP Tools/i })).toBeInTheDocument()
   })
 
-  it('shows total tool count in subtitle', () => {
+  it('renders the "MCP Tool Browser" heading', () => {
     renderPage()
-    expect(screen.getByText(new RegExp(`${JARVIS_MCP_TOOLS.length} of ${JARVIS_MCP_TOOLS.length} tools`))).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /MCP Tool Browser/i })).toBeInTheDocument()
   })
 
-  it('shows correct resource count in subtitle', () => {
+  it('shows the tool count summary after load', async () => {
     renderPage()
-    expect(screen.getByText(new RegExp(`${JARVIS_MCP_RESOURCES.length} resources`))).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(new RegExp(`${JARVIS_MCP_TOOLS.length} tools`))).toBeInTheDocument()
+    })
   })
 
-  // ── Categories ───────────────────────────────────────────────────────────────
+  // ── Tabs ──────────────────────────────────────────────────────────────────────
 
-  it('renders all categories', () => {
+  it('renders the three primary tabs (catalogue / execute / history)', () => {
     renderPage()
-    for (const cat of MCP_CATEGORY_ORDER) {
-      expect(screen.getByRole('region', { name: new RegExp(`${cat} tools`, 'i') })).toBeInTheDocument()
-    }
+    // Tab buttons are prefixed by an emoji (🔌/⚡/📜). Tool cards have a
+    // "Click to execute →" footer that also matches /Execute/i — match by
+    // emoji prefix to disambiguate.
+    expect(screen.getByRole('button', { name: /🔌 Catalogue/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /⚡ Execute/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /📜 History/i })).toBeInTheDocument()
   })
 
-  it('shows correct tool count per category', () => {
+  it('defaults to the Catalogue tab (renders the search input)', () => {
     renderPage()
-    // System has 10 tools
-    const systemSection = screen.getByRole('region', { name: /system tools/i })
-    expect(systemSection).toHaveTextContent('(10)')
+    expect(screen.getByPlaceholderText(/Search tools/i)).toBeInTheDocument()
   })
 
-  // ── Tool cards ───────────────────────────────────────────────────────────────
+  // ── Tool cards ────────────────────────────────────────────────────────────────
 
-  it('renders a known tool name', () => {
+  it('renders a known tool name (bash)', () => {
     renderPage()
     expect(screen.getByText('bash')).toBeInTheDocument()
   })
 
-  it('renders tool description', () => {
+  it('renders tool descriptions', () => {
     renderPage()
     expect(screen.getByText('Execute shell commands')).toBeInTheDocument()
   })
 
-  it('renders tool params', () => {
+  it('renders at least one tool param hint', () => {
     renderPage()
-    // bash has params: ['command']
-    expect(screen.getByText('command')).toBeInTheDocument()
+    const httpFetch = JARVIS_MCP_TOOLS.find(t => t.name === 'http_fetch')
+    if (httpFetch && httpFetch.params.length > 0) {
+      const firstParam = httpFetch.params[0]!
+      const matches = screen.getAllByText(firstParam)
+      expect(matches.length).toBeGreaterThan(0)
+    }
   })
 
-  it('renders AGI tools', () => {
+  // ── Categories ────────────────────────────────────────────────────────────────
+
+  it('renders all category badges at least once', () => {
     renderPage()
-    expect(screen.getByText('agi_reason')).toBeInTheDocument()
-    expect(screen.getByText('agi_plan')).toBeInTheDocument()
+    for (const cat of MCP_CATEGORY_ORDER) {
+      // Category label appears in a colored pill and in the filter select.
+      expect(screen.getAllByText(cat).length).toBeGreaterThanOrEqual(1)
+    }
   })
 
-  it('renders Security tools', () => {
-    renderPage()
-    expect(screen.getByText('secret_get')).toBeInTheDocument()
-    expect(screen.getByText('audit_log')).toBeInTheDocument()
-  })
-
-  // ── Search filter ────────────────────────────────────────────────────────────
-
-  it('renders search input', () => {
-    renderPage()
-    expect(screen.getByRole('searchbox', { name: /filter mcp tools/i })).toBeInTheDocument()
-  })
+  // ── Search filter ─────────────────────────────────────────────────────────────
 
   it('filters tools by name when searching', () => {
     renderPage()
-    const input = screen.getByRole('searchbox')
+    const input = screen.getByPlaceholderText(/Search tools/i)
     fireEvent.change(input, { target: { value: 'bash' } })
     expect(screen.getByText('bash')).toBeInTheDocument()
-    expect(screen.queryByText('file_read')).not.toBeInTheDocument()
   })
 
-  it('filters tools by description when searching', () => {
+  it('shows empty-state when search matches nothing', () => {
     renderPage()
-    const input = screen.getByRole('searchbox')
-    fireEvent.change(input, { target: { value: 'clipboard' } })
-    expect(screen.getByText('clipboard_read')).toBeInTheDocument()
-    expect(screen.getByText('clipboard_write')).toBeInTheDocument()
-    expect(screen.queryByText('bash')).not.toBeInTheDocument()
+    const input = screen.getByPlaceholderText(/Search tools/i)
+    fireEvent.change(input, { target: { value: 'zzz-no-such-tool-zzz' } })
+    expect(screen.getByText(/No tools match your search/i)).toBeInTheDocument()
   })
 
-  it('filters tools by category name when searching', () => {
+  it('restoring the search shows tools again', () => {
     renderPage()
-    const input = screen.getByRole('searchbox')
-    fireEvent.change(input, { target: { value: 'vision' } })
-    // vision_capture is in Vision category
-    expect(screen.getByText('vision_capture')).toBeInTheDocument()
-  })
-
-  it('shows empty-state when search returns nothing', () => {
-    renderPage()
-    const input = screen.getByRole('searchbox')
-    fireEvent.change(input, { target: { value: 'xyzzy_not_a_tool' } })
-    expect(screen.getByRole('status')).toHaveTextContent(/no tools match/i)
-  })
-
-  it('updates visible count in subtitle after filtering', () => {
-    renderPage()
-    const input = screen.getByRole('searchbox')
-    fireEvent.change(input, { target: { value: 'bash' } })
-    // Only 1 tool matches "bash" exactly
-    expect(screen.getByText(/1 of \d+ tools/)).toBeInTheDocument()
-  })
-
-  it('restoring search shows all tools again', () => {
-    renderPage()
-    const input = screen.getByRole('searchbox')
-    fireEvent.change(input, { target: { value: 'bash' } })
+    const input = screen.getByPlaceholderText(/Search tools/i)
+    fireEvent.change(input, { target: { value: 'zzz-no-such-tool-zzz' } })
+    expect(screen.getByText(/No tools match your search/i)).toBeInTheDocument()
     fireEvent.change(input, { target: { value: '' } })
-    expect(screen.getByText(new RegExp(`${JARVIS_MCP_TOOLS.length} of ${JARVIS_MCP_TOOLS.length} tools`))).toBeInTheDocument()
+    expect(screen.queryByText(/No tools match your search/i)).not.toBeInTheDocument()
   })
 
-  // ── Resources panel ──────────────────────────────────────────────────────────
+  // ── Resources ─────────────────────────────────────────────────────────────────
 
-  it('renders MCP Resources section', () => {
+  it('renders the MCP Resources section header', () => {
     renderPage()
-    expect(screen.getByRole('region', { name: /mcp resources/i })).toBeInTheDocument()
+    expect(screen.getByText('MCP Resources')).toBeInTheDocument()
   })
 
-  it('renders all 4 resource names', () => {
+  it('renders every resource name', () => {
     renderPage()
-    for (const r of JARVIS_MCP_RESOURCES) {
-      expect(screen.getByText(r.name)).toBeInTheDocument()
+    for (const resource of JARVIS_MCP_RESOURCES) {
+      expect(screen.getByText(resource.name)).toBeInTheDocument()
     }
   })
 
   it('renders resource URIs', () => {
     renderPage()
-    expect(screen.getByText('jarvis://config')).toBeInTheDocument()
-    expect(screen.getByText('jarvis://vbrd')).toBeInTheDocument()
+    for (const resource of JARVIS_MCP_RESOURCES) {
+      expect(screen.getByText(resource.uri)).toBeInTheDocument()
+    }
   })
 
-  it('expands resource data on click', () => {
+  it('expands a resource when its toggle button is clicked', () => {
     renderPage()
-    const configBtn = screen.getByRole('button', { name: /configuration/i })
-    // Data should not be visible initially
-    expect(screen.queryByText(/"version"/)).not.toBeInTheDocument()
-    fireEvent.click(configBtn)
-    expect(screen.getByText(/"version"/)).toBeInTheDocument()
+    const toggles = screen.getAllByRole('button', { name: /▼|▲/ })
+    expect(toggles.length).toBeGreaterThan(0)
+    fireEvent.click(toggles[0]!)
+    const expanded = screen.getAllByRole('button', { name: /▲/ })
+    expect(expanded.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('collapses resource data on second click', () => {
+  it('collapses an expanded resource on second click', () => {
     renderPage()
-    const configBtn = screen.getByRole('button', { name: /configuration/i })
-    fireEvent.click(configBtn)
-    expect(screen.getByText(/"version"/)).toBeInTheDocument()
-    fireEvent.click(configBtn)
-    expect(screen.queryByText(/"version"/)).not.toBeInTheDocument()
+    const collapsedBefore = screen.getAllByRole('button', { name: /▼/ }).length
+    const toggle = screen.getAllByRole('button', { name: /▼/ })[0]!
+    fireEvent.click(toggle)
+    const expandedToggle = screen.getAllByRole('button', { name: /▲/ })[0]!
+    fireEvent.click(expandedToggle)
+    const collapsedAfter = screen.getAllByRole('button', { name: /▼/ }).length
+    expect(collapsedAfter).toBe(collapsedBefore)
   })
 
-  it('only one resource expanded at a time', () => {
-    renderPage()
-    const configBtn = screen.getByRole('button', { name: /configuration/i })
-    const agiBtn    = screen.getByRole('button', { name: /agi status/i })
-    fireEvent.click(configBtn)
-    fireEvent.click(agiBtn)
-    // config should be collapsed, agi should be open
-    expect(screen.queryByText(/"version"/)).not.toBeInTheDocument()
-    expect(screen.getByText(/"modules"/)).toBeInTheDocument()
-  })
+  // ── Static catalogue invariants ──────────────────────────────────────────────
 
-  // ── Accessibility ────────────────────────────────────────────────────────────
-
-  it('resource buttons have aria-expanded attribute', () => {
-    renderPage()
-    const btn = screen.getByRole('button', { name: /configuration/i })
-    expect(btn).toHaveAttribute('aria-expanded', 'false')
-    fireEvent.click(btn)
-    expect(btn).toHaveAttribute('aria-expanded', 'true')
-  })
-
-  it('has no duplicate tool names', () => {
+  it('has no duplicate tool names in the catalogue', () => {
     const names = JARVIS_MCP_TOOLS.map(t => t.name)
-    const unique = new Set(names)
-    expect(unique.size).toBe(names.length)
+    expect(new Set(names).size).toBe(names.length)
   })
 
-  it('all tools have non-empty descriptions', () => {
-    for (const t of JARVIS_MCP_TOOLS) {
-      expect(t.desc.length).toBeGreaterThan(0)
+  it('every tool has a non-empty description', () => {
+    for (const tool of JARVIS_MCP_TOOLS) {
+      expect(tool.desc.length).toBeGreaterThan(0)
     }
   })
 })

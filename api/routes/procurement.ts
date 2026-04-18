@@ -265,7 +265,8 @@ rfisRouter.get('/', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
-  const { page, limit, offset } = _pagination(req.query as Record<string, unknown>)
+  // v4.31.0 TS fix: `page` unused — pagination uses limit/offset directly
+  const { limit, offset } = _pagination(req.query as Record<string, unknown>)
   const { status, project_id, priority } = req.query as Record<string, string>
 
   const conds: string[] = []; const vals: unknown[] = []; let i = 1
@@ -330,7 +331,8 @@ submittalsRouter.get('/', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
-  const { page, limit, offset } = _pagination(req.query as Record<string, unknown>)
+  // v4.31.0 TS fix: `page` unused — pagination uses limit/offset directly
+  const { limit, offset } = _pagination(req.query as Record<string, unknown>)
   const { status, project_id } = req.query as Record<string, string>
 
   const conds: string[] = []; const vals: unknown[] = []; let i = 1

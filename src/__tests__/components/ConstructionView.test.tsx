@@ -3,36 +3,43 @@ import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { ConstructionView } from '../../components/ConstructionView'
 
+/**
+ * v4.31.0 update: ConstructionView now uses `role="main" aria-label="Construction"`,
+ * has a tabbed layout (Overview | Jobs | Equipment | Tracking) where each tab is
+ * `role="tab"` inside a `role="tablist"`, and its children (WView/JobsView/...) may
+ * themselves render `role="main"` landmarks. Queries use getAllByRole where needed.
+ */
 describe('ConstructionView', () => {
-  it('renders the heading', () => {
-    render(React.createElement(ConstructionView))
-    expect(screen.getByRole('heading', { name: /Construction Management/i })).toBeInTheDocument()
-  })
-
-  it('sets data-view attribute', () => {
+  it('renders without crashing', () => {
     const { container } = render(React.createElement(ConstructionView))
-    expect(container.querySelector('[data-view="construction"]')).toBeTruthy()
+    expect(container.firstChild).toBeTruthy()
   })
 
-  it('shows zero counts when biz is empty', () => {
-    render(React.createElement(ConstructionView, { biz: {} }))
-    const zeros = screen.getAllByText('0')
-    expect(zeros.length).toBeGreaterThanOrEqual(3)
-  })
-
-  it('renders populated counts from biz prop', () => {
-    render(React.createElement(ConstructionView, {
-      biz: { subcontracts: [{}, {}], rfis: [{}], submittals: [{}, {}, {}] }
-    }))
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
-  })
-
-  it('renders KPI labels', () => {
+  it('exposes the Construction landmark', () => {
     render(React.createElement(ConstructionView))
-    expect(screen.getByText('Subcontracts')).toBeInTheDocument()
-    expect(screen.getByText('Open RFIs')).toBeInTheDocument()
-    expect(screen.getByText('Submittals')).toBeInTheDocument()
+    const landmarks = screen.getAllByRole('main', { name: /Construction/i })
+    expect(landmarks.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('renders all four tab buttons with correct labels', () => {
+    render(React.createElement(ConstructionView))
+    expect(screen.getByRole('tab', { name: /Overview/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Jobs/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Equipment/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Tracking/i })).toBeInTheDocument()
+  })
+
+  it('has exactly one tablist', () => {
+    render(React.createElement(ConstructionView))
+    expect(screen.getByRole('tablist')).toBeInTheDocument()
+  })
+
+  it('accepts optional biz prop and callbacks without erroring', () => {
+    const onNavigate = () => undefined
+    const onToast = () => undefined
+    const { container } = render(React.createElement(ConstructionView, {
+      biz: { subcontracts: [{}, {}] }, onNavigate, onToast,
+    }))
+    expect(container.firstChild).toBeTruthy()
   })
 })

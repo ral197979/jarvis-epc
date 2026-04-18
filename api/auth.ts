@@ -19,7 +19,8 @@ import jwt, { type JwtPayload, type SignOptions } from 'jsonwebtoken'
 import { randomBytes, createHash } from 'node:crypto'
 import { Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcrypt'
-import { query, tenantQuery } from './db/pool'
+// v4.31.0 TS fix: drop unused `tenantQuery` import
+import { query } from './db/pool'
 import { getTokenStore } from './tokenStore'
 import { slog } from '../src/modules/observability/index'
 
@@ -212,8 +213,8 @@ export async function handleRefresh(req: Request, res: Response): Promise<void> 
   await store.revokeJti(payload.jti)
   await store.removeRefreshToken(payload.jti)
 
-  // Revoke in DB too
-  const tokenHash = createHash('sha256').update(rawToken).digest('hex')
+  // v4.31.0 TS fix: `tokenHash` was unused under strict noUnusedLocals; revocation
+  // is keyed by jti only. Recompute here if you later switch to hash-keyed revoke.
   await query('UPDATE refresh_tokens SET revoked_at=NOW() WHERE jti=$1', [payload.jti])
 
   const newAccess  = _issueAccess(payload.sub, payload.tid, payload.role)

@@ -43,15 +43,16 @@ import rateLimit    from 'express-rate-limit'
 import { randomBytes } from 'node:crypto'
 import pino from 'pino'
 
+// v4.31.0 TS fix: drop unused imports (`verifyToken`, `query`, `requireTenant`)
 import {
   handleLogin, handleRefresh, handleLogout, handleMe,
-  requireAuth, purgeExpiredTokens, verifyToken,
+  requireAuth, purgeExpiredTokens,
   type AuthenticatedRequest,
 } from './auth'
 import { initPool, poolHealthy, poolStats } from './db/pool'
 import { runMigrations } from './db/migrate'
-import { tenantQuery, query } from './db/pool'
-import { requireTenant, TenantRequest } from './middleware/tenant'
+import { tenantQuery } from './db/pool'
+import { TenantRequest } from './middleware/tenant'
 import projectsRouter   from './routes/projects'
 import tenantsRouter    from './routes/tenants'
 import {
@@ -267,7 +268,8 @@ app.use('/api/v1/audit',          auditRouter)          // v4.30.0: Audit log re
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
 app.post('/api/v1/gateway', requireAuth as never, aiLimiter, async (req: Request, res: Response) => {
-  const authReq = req as AuthenticatedRequest
+  // v4.31.0 TS fix: `authReq` cast was unused in this handler — requireAuth
+  // has already validated the token; drop the redundant narrowing.
   const gatewayEnabled = process.env['VITE_ENABLE_AI_CHAT'] !== 'false'
   if (!gatewayEnabled) {
     res.status(503).json({ error: 'gateway_disabled', message: 'AI gateway is currently disabled.' })

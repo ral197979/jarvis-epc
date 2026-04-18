@@ -132,7 +132,9 @@ export function buildDraftPack(
 
     // Map CxPack steps to plan / pfc / fpt buckets by cx phase
     for (const step of pack.steps ?? []) {
-      const text = step.description ?? step.id
+      // v4.31.0 TS fix: CxPackStep has `action`, not `description` — the
+      // pack step's human-readable text is its action field.
+      const text = step.action ?? step.id
       if (row.phase === 'pre_commissioning')          plan.push(text)
       else if (row.phase === 'pre_functional')        pfc.push(text)
       else if (row.phase === 'functional_performance') fpt.push(text)

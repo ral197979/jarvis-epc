@@ -33,7 +33,8 @@ import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { tenantQuery, query }                       from '../db/pool'
 import Anthropic from '@anthropic-ai/sdk'
 
-type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
+// v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
+type AuthTenantReq = Request & AuthenticatedRequest & Omit<TenantRequest, 'tenantId'> & { tenantId: string }
 
 const router = Router()
 // Public read-only endpoints (tool catalog + Ava health) bypass auth so the UI
@@ -49,13 +50,25 @@ router.use((req, res, next) => {
 })
 
 // ─── Config ───────────────────────────────────────────────────────────────────
+// v4.31.0 test-friendliness: read env vars live (via getters) so tests that
+// set process.env per-case take effect without reloading the module.
 
-const AVA_MCP_URL = process.env['AVA_MCP_URL']    // e.g. http://ava-host:8788
-const AVA_TIMEOUT = parseInt(process.env['AVA_MCP_TIMEOUT_MS'] ?? '15000', 10)
+function getAvaMcpUrl(): string | undefined {
+  return process.env['AVA_MCP_URL']
+}
+
+function getAvaTimeout(): number {
+  return parseInt(process.env['AVA_MCP_TIMEOUT_MS'] ?? '15000', 10)
+}
 
 /** Comma-separated list of domains http_fetch may contact. */
-const FETCH_ALLOWLIST = (process.env['MCP_FETCH_ALLOWLIST'] ?? '')
-  .split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+function getFetchAllowlist(): string[] {
+  return (process.env['MCP_FETCH_ALLOWLIST'] ?? '')
+    .split(',').map(d => d.trim().toLowerCase()).filter(Boolean)
+}
+
+// (AVA_TIMEOUT / FETCH_ALLOWLIST are read via getters below — no module-level
+// caches so tests can override env per-case.)
 
 const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] })
 
@@ -71,6 +84,10 @@ const NATIVE_TOOLS = [
   { name: 'session_resume',    cat: 'AI',       live: true,  desc: 'Resume an existing agent session',    params: ['session_id', 'message'] },
 ]
 
+// v4.31.0 TS fix: AVA_ONLY_TOOLS reference catalogue kept as documentation;
+// prefix with `void` to acknowledge intentional non-use and satisfy both
+// loose and strict typechecks (the strict config raises noUnusedLocals).
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const AVA_ONLY_TOOLS = [
   'bash','file_read','file_write','file_search','glob',
   'process_list','process_kill','clipboard_read','clipboard_write',
@@ -82,14 +99,20 @@ const AVA_ONLY_TOOLS = [
   'skill_run','skill_list','skill_install',
   'mcp_tool','mcp_resource',
   'secret_get','secret_set',
-]
+] as const
+// v4.31.0 TS fix: suppress noUnusedLocals for this reference catalogue
+void AVA_ONLY_TOOLS
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function fetchAva(path: string, options?: RequestInit, timeoutMs = AVA_TIMEOUT): Promise<Response> {
+// v4.31.0 TS fix: disambiguate from Express's Response — the Web fetch Response
+// has `.ok` / `.status` property, not a method. Use globalThis.Response so TS
+// doesn't resolve to the Express type imported at the top of this file.
+async function fetchAva(path: string, options?: RequestInit, timeoutMs?: number): Promise<globalThis.Response> {
+  const AVA_MCP_URL = getAvaMcpUrl()
   if (!AVA_MCP_URL) throw new Error('AVA_MCP_URL not configured')
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs ?? getAvaTimeout())
   try {
     return await fetch(`${AVA_MCP_URL}${path}`, { ...options, signal: ctrl.signal })
   } finally {
@@ -98,6 +121,7 @@ async function fetchAva(path: string, options?: RequestInit, timeoutMs = AVA_TIM
 }
 
 function isDomainAllowed(url: string): boolean {
+  const FETCH_ALLOWLIST = getFetchAllowlist()
   if (FETCH_ALLOWLIST.length === 0) return true  // open by default in dev
   try {
     const host = new URL(url).hostname.toLowerCase()
@@ -118,6 +142,7 @@ async function writeAudit(tenantId: string, userId: string | undefined, action: 
 // ─── GET /api/v1/mcp/tools — merged catalogue ──────────────────────────────────
 
 router.get('/tools', async (req: Request, res: Response) => {
+  const AVA_MCP_URL = getAvaMcpUrl()
   const avaTools: unknown[] = []
 
   if (AVA_MCP_URL) {
@@ -148,13 +173,16 @@ router.get('/tools', async (req: Request, res: Response) => {
 // ─── GET /api/v1/mcp/ava/health ───────────────────────────────────────────────
 
 router.get('/ava/health', async (_req: Request, res: Response) => {
+  const AVA_MCP_URL = getAvaMcpUrl()
   if (!AVA_MCP_URL) {
     return res.json({ healthy: false, reason: 'AVA_MCP_URL not configured' })
   }
   try {
     const r = await fetchAva('/health', {}, 3000)
-    const body = await r.json()
-    res.json({ healthy: r.ok, status: r.status, ...body })
+    const body = await r.json() as Record<string, unknown>
+    // v4.31.0 TS fix: spread Ava body first so our authoritative `status` + `healthy`
+    // override any same-named fields returned by Ava's health endpoint.
+    res.json({ ...body, healthy: r.ok, status: r.status })
   } catch (e: unknown) {
     res.json({ healthy: false, reason: (e as Error).message })
   }
@@ -182,6 +210,7 @@ router.post('/execute', async (req: Request, res: Response) => {
   }
 
   // ── Ava-only or unknown — proxy to Ava ──
+  const AVA_MCP_URL = getAvaMcpUrl()
   if (!AVA_MCP_URL) {
     return res.status(503).json({
       error: 'ava_not_configured',
@@ -321,6 +350,7 @@ async function executeNative(
       // ── embedding_create ────────────────────────────────────────────────────
       case 'embedding_create': {
         // Anthropic doesn't expose embeddings — proxy hint to Ava if available
+        const AVA_MCP_URL = getAvaMcpUrl()
         if (AVA_MCP_URL) {
           const avaRes = await fetchAva('/execute', {
             method: 'POST',

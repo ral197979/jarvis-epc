@@ -67,9 +67,14 @@ describe('CommissioningView — tab navigation', () => {
     expect(screen.getByRole('tablist', { name: /commissioning sections/i })).toBeDefined()
   })
 
-  it('has 3 tabs: Completion, Punch List, Lessons Learned', () => {
+  it('has at least 3 tabs (Completion, Punch List, Lessons Learned + optional Closeouts)', () => {
+    // v4.31.0: tab count grew from 3 → 4 as Closeouts tab was added. Assert
+    // the baseline three tabs exist rather than lock the total count.
     render(<CommissioningView {...defaultProps()} />)
-    expect(screen.getAllByRole('tab').length).toBe(3)
+    expect(screen.getAllByRole('tab').length).toBeGreaterThanOrEqual(3)
+    expect(screen.getByRole('tab', { name: /Completion/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Punch/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /Lessons/i })).toBeInTheDocument()
   })
 
   it('Completion tab is selected by default', () => {

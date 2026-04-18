@@ -3,36 +3,29 @@ import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { FeedView } from '../../components/FeedView'
 
+/**
+ * v4.31.0 update: FeedView was migrated to Zustand (`useBizStore`) and is now a
+ * finance-feed (journal/transaction stream), not a FEED-Studies register.
+ * It uses `role="main" aria-label="Finance Feed"` as its landmark. Tests
+ * updated to match current contract.
+ */
 describe('FeedView', () => {
-  it('renders the FEED Study heading', () => {
+  it('renders without crashing and exposes the Finance Feed landmark', () => {
     render(React.createElement(FeedView))
-    expect(screen.getByRole('heading', { name: /FEED Study/i })).toBeInTheDocument()
+    expect(screen.getByRole('main', { name: /Finance Feed/i })).toBeInTheDocument()
   })
 
-  it('sets data-view attribute', () => {
-    const { container } = render(React.createElement(FeedView))
-    expect(container.querySelector('[data-view="feed"]')).toBeTruthy()
-  })
-
-  it('shows zero counts with empty biz', () => {
-    render(React.createElement(FeedView, { biz: {} }))
-    const zeros = screen.getAllByText('0')
-    expect(zeros.length).toBeGreaterThanOrEqual(3)
-  })
-
-  it('reflects populated biz data in KPIs', () => {
+  it('accepts optional policy prop without erroring', () => {
     render(React.createElement(FeedView, {
-      biz: { feed_studies: [{}, {}], deliverables: [{}], tech_selections: [{}, {}, {}] }
+      policy: { writesEnabled: false, chatEnabled: false, exportsEnabled: false, activeRole: 'viewer' },
     }))
-    expect(screen.getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByRole('main', { name: /Finance Feed/i })).toBeInTheDocument()
   })
 
-  it('renders KPI labels', () => {
-    render(React.createElement(FeedView))
-    expect(screen.getByText('FEED Studies')).toBeInTheDocument()
-    expect(screen.getByText('Deliverables')).toBeInTheDocument()
-    expect(screen.getByText('Tech Selections')).toBeInTheDocument()
+  it('accepts onAudit and onToast callbacks without erroring', () => {
+    const onAudit = () => undefined
+    const onToast = () => undefined
+    render(React.createElement(FeedView, { onAudit, onToast }))
+    expect(screen.getByRole('main', { name: /Finance Feed/i })).toBeInTheDocument()
   })
 })

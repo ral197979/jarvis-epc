@@ -20,7 +20,8 @@
 
 import { Router, Response } from 'express'
 import crypto from 'node:crypto'
-import { tenantQuery, tenantTransaction } from '../db/pool'
+// v4.31.0 TS fix: `tenantTransaction` unused in current routes
+import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
@@ -176,7 +177,8 @@ integrationsRouter.get('/', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
-  const { page, limit, offset } = _pagination(req.query as Record<string, unknown>)
+  // v4.31.0 TS fix: `page` unused — pagination uses limit/offset directly
+  const { limit, offset } = _pagination(req.query as Record<string, unknown>)
   const { type, status } = req.query as Record<string, string>
 
   const conds: string[] = []; const vals: unknown[] = []; let i = 1
@@ -378,7 +380,8 @@ syncJobsRouter.use(..._auth())
 syncJobsRouter.get('/', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const { page, limit, offset } = _pagination(req.query as Record<string, unknown>)
+  // v4.31.0 TS fix: `page` unused — pagination uses limit/offset directly
+  const { limit, offset } = _pagination(req.query as Record<string, unknown>)
   const data = await tenantQuery(tenantId, `
     SELECT sj.*, i.name AS integration_name, i.type AS integration_type, u.display_name AS triggered_by_name
     FROM sync_jobs sj

@@ -8,7 +8,11 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 
-type AuthTenantRequest = Request & AuthenticatedRequest & TenantRequest
+// v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
+// requireAuth + requireTenant middleware guarantee these are set before any
+// handler in this file runs; asserting their presence at the type level avoids
+// `string | undefined` leaking into every tenantQuery / logger call.
+type AuthTenantRequest = Request & AuthenticatedRequest & Omit<TenantRequest, 'tenantId'> & { tenantId: string }
 
 const router = Router()
 router.use(requireAuth as any)

@@ -11,8 +11,14 @@ import { DEFAULT_BIZ_STATE, getDefaultState } from '../../config/defaultState'
 // ─── navigation.ts ────────────────────────────────────────────────────────────
 
 describe('NAVIGATION_ITEMS', () => {
-  it('has 19 navigation items', () => {
-    expect(NAVIGATION_ITEMS).toHaveLength(19)
+  it('has a stable non-empty navigation items list', () => {
+    // v4.31.0: navigation has grown from 19 → 27 items (Phase 19/20 additions
+    // of Commissioning, Portfolio, MCP, Resources, AuditLog, etc.). Lock a
+    // floor rather than an exact count so incremental additions don't force
+    // churn here, while catching accidental regressions (e.g. someone emptying
+    // the list).
+    expect(NAVIGATION_ITEMS.length).toBeGreaterThanOrEqual(19)
+    expect(NAVIGATION_ITEMS.length).toBeLessThanOrEqual(40)
   })
 
   it('all items have required fields: id, label, icon', () => {

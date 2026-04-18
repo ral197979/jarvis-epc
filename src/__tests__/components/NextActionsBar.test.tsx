@@ -48,9 +48,12 @@ vi.mock('../../modules/biz/store', () => {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// v4.31.0 TS fix: `typeof patch.__setState` resolved to `unknown[]` because
+// the patch type is Record<string, unknown[]>. Annotate the setter as an
+// actual function type so the call is valid.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const setState = (patch: Record<string, unknown[]>) =>
-  (vi.mocked(useBizStore) as unknown as { __setState: typeof patch.__setState }).__setState?.(patch) ??
+  (vi.mocked(useBizStore) as unknown as { __setState?: (p: Record<string, unknown[]>) => void }).__setState?.(patch) ??
   // fall through to the module export
   (require('../../modules/biz/store') as { __setState: (p: Record<string, unknown[]>) => void }).__setState(patch)
 
@@ -192,9 +195,12 @@ describe('NextActionsBar', () => {
       notifications:   [makeNotif()],
     })
     renderBar()
-    expect(screen.getByText(/action/i)).toBeInTheDocument()
-    expect(screen.getByText(/ticket/i)).toBeInTheDocument()
-    expect(screen.getByText(/alert/i)).toBeInTheDocument()
+    // v4.31.0: text "action" appears both in the kind badge and in aria-labels
+    // inside the bar (e.g. "Open action item"). Use getAllByText and assert
+    // at least one match for each kind, which is what this test intends.
+    expect(screen.getAllByText(/action/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/ticket/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/alert/i).length).toBeGreaterThan(0)
   })
 
   // ── Item count badge ─────────────────────────────────────────────────────────

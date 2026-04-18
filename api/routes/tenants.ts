@@ -16,7 +16,8 @@
 
 import { Router, Response, Request } from 'express'
 import bcrypt from 'bcrypt'
-import { query, tenantQuery, tenantTransaction } from '../db/pool'
+// v4.31.0 TS fix: `tenantTransaction` unused in current routes
+import { query, tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest, invalidateTenantCache } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'

@@ -13,11 +13,13 @@
  */
 
 import { Router, Response } from 'express'
-import { tenantQuery, tenantTransaction } from '../db/pool'
+// v4.31.0 TS fix: `tenantTransaction` unused in current routes
+import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
-import { randomBytes } from 'node:crypto'
+// v4.31.0 TS fix: `randomBytes` unused — commented pending reintroduction
+// import { randomBytes } from 'node:crypto'
 
 type Req = AuthenticatedRequest & TenantRequest
 

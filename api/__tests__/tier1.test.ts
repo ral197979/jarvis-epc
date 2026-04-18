@@ -36,9 +36,17 @@ vi.mock('../middleware/tenant', () => ({
 }))
 
 // slog spams; silence it
-vi.mock('../../src/modules/observability/index', () => ({
-  slog: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}))
+// v4.31.0: slog is a callable function `slog(level, category, msg, data)`, not
+// an object with .error/.info methods. Mock as a callable that also carries
+// method properties for any legacy call sites.
+vi.mock('../../src/modules/observability/index', () => {
+  const slog: any = vi.fn()
+  slog.info  = vi.fn()
+  slog.warn  = vi.fn()
+  slog.error = vi.fn()
+  slog.debug = vi.fn()
+  return { slog }
+})
 
 // ─── Import routers AFTER mocks ───────────────────────────────────────────────
 import express from 'express'

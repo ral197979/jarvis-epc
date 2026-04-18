@@ -9,17 +9,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 // ─── Mock DB pool ─────────────────────────────────────────────────────────────
 
 const mockQuery = vi.fn()
-vi.mock('../../db/pool', () => ({
+vi.mock('../db/pool', () => ({
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
   query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
 }))
 
-vi.mock('../../auth', () => ({
+vi.mock('../auth', () => ({
   requireAuth: (_req: any, _res: any, next: any) => next(),
 }))
 
-vi.mock('../../middleware/tenant', () => ({
-  requireTenant: (req: any, _res: any, next: any) => {
+// v4.31.0: requireTenant is used as a factory in routes (`requireTenant()`),
+// so the mock must return a middleware from a no-arg call.
+vi.mock('../middleware/tenant', () => ({
+  requireTenant: () => (req: any, _res: any, next: any) => {
     req.tenantId = 'tenant-123'
     next()
   },
@@ -29,7 +31,8 @@ vi.mock('../../middleware/tenant', () => ({
 
 import express from 'express'
 import request from 'supertest'
-import { router as risksRouter } from '../routes/risks'
+// v4.31.0 fix: module exports the router under the name `risksRouter`, not `router`
+import { risksRouter } from '../routes/risks'
 
 const app = express()
 app.use(express.json())

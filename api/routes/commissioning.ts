@@ -27,8 +27,10 @@
 
 import { Router, Response }  from 'express'
 import fs                     from 'node:fs/promises'
-import path                   from 'node:path'
-import { tenantQuery, tenantTransaction, query } from '../db/pool'
+// v4.31.0 TS fix: `path` unused after STORAGE_DIR removal
+// import path                   from 'node:path'
+// v4.31.0 TS fix: `tenantTransaction` unused in current routes
+import { tenantQuery, query } from '../db/pool'
 import { requireAuth, AuthenticatedRequest }     from '../auth'
 import { requireTenant, TenantRequest }          from '../middleware/tenant'
 import { slog }                                  from '../../src/modules/observability/index'
@@ -42,7 +44,8 @@ router.use(requireTenant() as never)
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const PACK_CREDIT_COST = Number(process.env['CX_PACK_CREDIT_COST'] ?? '1')
-const STORAGE_DIR      = process.env['CX_PACK_STORAGE_DIR'] ?? path.join(process.cwd(), 'cx-packs')
+// v4.31.0 TS fix: STORAGE_DIR declaration removed (strict noUnusedLocals bites
+// even underscored names). Reintroduce when pack-storage persistence goes live.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

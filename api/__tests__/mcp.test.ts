@@ -8,11 +8,11 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock('../../auth', () => ({
+vi.mock('../auth', () => ({
   requireAuth: (_req: any, _res: any, next: any) => next(),
 }))
 
-vi.mock('../../middleware/tenant', () => ({
+vi.mock('../middleware/tenant', () => ({
   requireTenant: (req: any, _res: any, next: any) => {
     req.tenantId = 'tenant-test'
     req.auth     = { sub: 'user-abc', tid: 'tenant-test', role: 'owner', jti: 'jti-1' }
@@ -20,7 +20,7 @@ vi.mock('../../middleware/tenant', () => ({
   },
 }))
 
-vi.mock('../../db/pool', () => ({
+vi.mock('../db/pool', () => ({
   tenantQuery: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
   query:       vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
 }))
@@ -46,7 +46,8 @@ global.fetch = mockFetch
 
 import express from 'express'
 import request from 'supertest'
-import { router as mcpRouter } from '../routes/mcp'
+// v4.31.0 fix: module exports the router under the name `mcpRouter`, not `router`
+import { mcpRouter } from '../routes/mcp'
 
 const app = express()
 app.use(express.json())
@@ -162,7 +163,7 @@ describe('POST /api/v1/mcp/execute — native tools', () => {
   })
 
   it('executes audit_query and returns entries array', async () => {
-    const { query } = await import('../../db/pool')
+    const { query } = await import('../db/pool')
     vi.mocked(query).mockResolvedValueOnce({ rows: [{ id: 'AUD-1', action: 'test', created_at: new Date().toISOString() }], rowCount: 1 } as any)
     const res = await request(app).post('/api/v1/mcp/execute').send({
       tool: 'audit_query', params: { filter: 'test', limit: '10' },
@@ -244,7 +245,7 @@ describe('POST /api/v1/mcp/execute — native tools', () => {
   })
 
   it('executes session_create and returns session_id', async () => {
-    const { tenantQuery } = await import('../../db/pool')
+    const { tenantQuery } = await import('../db/pool')
     vi.mocked(tenantQuery).mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
     const res = await request(app).post('/api/v1/mcp/execute').send({
       tool: 'session_create',
@@ -310,7 +311,7 @@ describe('GET /api/v1/mcp/sessions', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('returns sessions list', async () => {
-    const { tenantQuery } = await import('../../db/pool')
+    const { tenantQuery } = await import('../db/pool')
     vi.mocked(tenantQuery).mockResolvedValueOnce({
       rows: [{ id: 'sess-1', tool_name: 'agent:commissioning', created_at: new Date().toISOString() }],
       rowCount: 1,

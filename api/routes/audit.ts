@@ -133,7 +133,7 @@ router.get('/', async (req: Req, res: Response) => {
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     })
   } catch (err) {
-    slog.error('audit.list.failed', { err: String(err), tenantId })
+    slog('ERROR', 'audit', 'audit.list.failed', { err: String(err), tenantId })
     res.status(500).json({ error: 'audit_list_failed' })
   }
 })
@@ -159,7 +159,7 @@ router.get('/:id', async (req: Req, res: Response) => {
     if (!r.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
     res.json(r.rows[0])
   } catch (err) {
-    slog.error('audit.get.failed', { err: String(err), tenantId, id })
+    slog('ERROR', 'audit', 'audit.get.failed', { err: String(err), tenantId, id })
     res.status(500).json({ error: 'audit_get_failed' })
   }
 })
