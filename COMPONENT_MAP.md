@@ -117,36 +117,32 @@
 | Status | Count |
 |---|---|
 | ✅ Functional | 22 |
-| 🚧 Coming Soon | 54 |
+| 🚧 Coming Soon (surviving) | 19 |
 | 🔧 Utility | 7 |
-| **Total** | **83** |
+| **Total** | **74** (from 83 in v4.23.0) |
 
 ---
 
-## Domain breakdown
+## v4.31.0 — P4 coordinated cleanup
 
-| Domain | Functional | Coming Soon |
-|---|---|---|
-| Construction | 2 | 14 |
-| Engineering | 1 | 9 |
-| Procurement | 4 | 7 |
-| Safety | 2 | 6 |
-| Operations | 3 | 7 |
-| Finance | 2 | 4 |
-| Documents | 1 | 4 |
-| Quality | 0 | 4 |
-| CRM | 1 | 3 |
-| Planning | 0 | 2 |
-| Risk | 0 | 2 |
-| Commissioning | 2 | 1 |
-| Hub | 0 | 2 |
-| Reporting | 1 | 0 |
-| Admin | 0 | 1 |
-| Field Engineering | 1 | 0 |
-| Settings | 1 | 0 |
-| System | 1 | 0 |
+35 unreferenced letter-code stubs deleted: `AeView`, `AnView`, `BnView`,
+`DetailPanelView`, `DnView`, `DtView`, `EeView`, `FnView`, `HiView`, `HnView`,
+`HtView`, `IeView`, `InView`, `JnSubView`, `JnView`, `KtView`, `LeView`, `LnView`,
+`NeView`, `PnView`, `QiView`, `RoView`, `RtView`, `SnView`, `SoView`, `StView`,
+`SubPanelGView`, `SubPanelQView`, `SubPanelVView`, `UnView`, `WnView`, `XtView`,
+`ZeView`, `ZnView`, `ZtView`.
+
+Dead wrapper functions in `src/jarvis/JarvisCore.jsx` (`Bi`, `Qi`, `Yi`) removed.
+40 dangling imports cleaned up. Monolith shrunk: 1,222 → 1,126 lines (−96).
+
+**Surviving letter-code stubs** (kept because still referenced by a live view):
+`AoView`, `AtView` (via EngineeringView), `BiView`, `LoView` (via PlannerView),
+`CtView`, `EtView`, `WView` (via ConstructionView / ConstructionMainView),
+`FeView`, `WtView` (via FieldOperationsView), `JiView`, `KiView`, `ModalShellView`
+(via JarvisCore live wrappers `ji` / `Ki` / `Zi`), `LiView` (via ResourcesView),
+`YiView` (via KiView), `DocumentsSubView`, `ProcurementSubView`.
 
 ---
 
-*Last updated: v4.23.0 — P1 remediation cycle*
+*Last updated: v4.31.0 — P4 coordinated cleanup*
 *Maintained by: Owner-First Audit process*

@@ -50,47 +50,22 @@ import {
 } from "../modules/persistence";
 import { hashPin as _hashPin } from "../modules/utils/pinUtils";
 import { createDispatch, actions as _bizActions, checkWritePolicy } from "../modules/biz/dispatch";
+// G5 Sprint 5 (v4.31.0): use extracted JARVIS_ACTIONS from biz/reducer (superset of former inline map)
+import { JARVIS_ACTIONS } from "../modules/biz/reducer";
 import { useBizStore } from "../modules/biz/store";
+// G5 Sprint 7 + P4 (v4.31.0): removed 34 dangling letter-code stub imports.
+// Only views actually referenced in JarvisCore's body (via live wrappers Ki/ji/Zi
+// and the top-level JarvisToastContainer / JarvisCmdPalette / JarvisBuildAIContext /
+// JarvisDomainReducer bindings) are imported here. The dangling imports were
+// artefacts of earlier extraction phases; their underlying view files were either
+// deleted in P4 or kept live via other components (ContentRouter / sibling views).
 import { ModalShellView     as JarvisModalShellView     } from "../components/ModalShellView";
-import { SubPanelGView       as JarvisSubPanelGView       } from "../components/SubPanelGView";
-import { SubPanelVView       as JarvisSubPanelVView       } from "../components/SubPanelVView";
-import { SubPanelQView       as JarvisSubPanelQView       } from "../components/SubPanelQView";
-import { LnView              as JarvisLnView              } from "../components/LnView";
 import { KiView              as JarvisKiView              } from "../components/KiView";
-import { ZtView              as JarvisZtView              } from "../components/ZtView";
-import { EeView              as JarvisEeView              } from "../components/EeView";
-import { SnView              as JarvisSnView              } from "../components/SnView";
-import { AnView              as JarvisAnView              } from "../components/AnView";
-import { HnView              as JarvisHnView              } from "../components/HnView";
-import { AtView              as JarvisAtView              } from "../components/AtView";
-import { BnView              as JarvisBnView              } from "../components/BnView";
-import { LeView              as JarvisLeView              } from "../components/LeView";
-import { DomainReducer  as JarvisDomainReducer  } from "../components/DomainReducer";
-import { CmdPalette     as JarvisCmdPalette     } from "../components/CmdPalette";
-import { BuildAIContext as JarvisBuildAIContext  } from "../components/BuildAIContext";
-import { ToastContainer as JarvisToastContainer } from "../components/ToastContainer";
-import { YiView              as JarvisYiView              } from "../components/YiView";
-import { DnView              as JarvisDnView              } from "../components/DnView";
-import { JnView              as JarvisJnView              } from "../components/JnView";
-import { JnSubView           as JarvisJnSubView           } from "../components/JnSubView";
-import { StView              as JarvisStView              } from "../components/StView";
-import { PnView              as JarvisPnView              } from "../components/PnView";
-import { UnView              as JarvisUnView              } from "../components/UnView";
-import { WnView              as JarvisWnView              } from "../components/WnView";
-import { CtView              as JarvisCtView              } from "../components/CtView";
-import { BiView              as JarvisBiView              } from "../components/BiView";
-import { InView              as JarvisInView              } from "../components/InView";
-import { ZnView              as JarvisZnView              } from "../components/ZnView";
-import { QiView              as JarvisQiView              } from "../components/QiView";
-import { EtView              as JarvisEtView              } from "../components/EtView";
-import { DtView              as JarvisDtView              } from "../components/DtView";
 import { JiView              as JarvisJiView              } from "../components/JiView";
-import { AeView              as JarvisAeView              } from "../components/AeView";
-import { HtView              as JarvisHtView              } from "../components/HtView";
-import { KtView              as JarvisKtView              } from "../components/KtView";
-import { WView               as JarvisWView               } from "../components/WView";
-import { ZeView              as JarvisZeView              } from "../components/ZeView";
-import { MCPToolsPage   as JarvisMCPToolsPage   } from "../components/MCPToolsPage";
+import { DomainReducer       as JarvisDomainReducer       } from "../components/DomainReducer";
+import { CmdPalette          as JarvisCmdPalette          } from "../components/CmdPalette";
+import { BuildAIContext      as JarvisBuildAIContext      } from "../components/BuildAIContext";
+import { ToastContainer      as JarvisToastContainer      } from "../components/ToastContainer";
 import { useAppStore }      from "../modules/store/appSlice";
 import { LoginScreen }      from "../components/LoginScreen";
 import { OwnerPanel }       from "../components/OwnerPanel";
@@ -165,32 +140,11 @@ var io = (function() {
 // MCP tool + resource lists extracted to src/constants/mcpTools.ts
 import { JARVIS_MCP_TOOLS as oi, JARVIS_MCP_RESOURCES as Ai } from "../constants/mcpTools";
 var Ji = 0, yi = false, Di = [];  // session counters (retained)
-// Phase 17: extracted to src/components/QiView.tsx
-function Qi(i) {
-  var _ctx = useJarvis();
-  return React.createElement(JarvisQiView, {
-    policy: _ctx.policy || {},
-    biz:    _ctx.biz    || i.b || {},
-  });
-}
-
-// Phase 17: extracted to src/components/YiView.tsx
-function Yi(i) {
-  var _ctx = useJarvis();
-  return React.createElement(JarvisYiView, {
-    policy: _ctx.policy || {},
-    biz:    _ctx.biz    || i.b || {},
-  });
-}
-
-// Phase 17: extracted to src/components/BiView.tsx
-function Bi(i) {
-  var _ctx = useJarvis();
-  return React.createElement(JarvisBiView, {
-    policy: _ctx.policy || {},
-    biz:    _ctx.biz    || i.b || {},
-  });
-}
+// G5 Sprint 7 (v4.31.0): dead wrappers Bi / Qi / Yi deleted — they were never
+// referenced in the render tree (ContentRouter handles those tabs natively).
+// QiView was also deleted in P4 stub cleanup. BiView and YiView remain live
+// (BiView via PlannerView, YiView via KiView chain) — we just don't import them
+// in JarvisCore anymore.
 
 // Phase 17: extracted to src/components/JiView.tsx
 function ji(i) {
@@ -295,59 +249,9 @@ function useJarvis() {
     return ctx;
 }
 
-// SM-02: Domain action types — typed alternatives to inline mutations
-var JARVIS_ACTIONS = {
-    // CRM Domain
-    ADD_LEAD: "crm/add_lead",
-    UPDATE_LEAD: "crm/update_lead",
-    DELETE_LEAD: "crm/delete_lead",
-    // Contracts Domain
-    ADD_CONTRACT: "contracts/add_contract",
-    UPDATE_CONTRACT: "contracts/update_contract",
-    // Financial Domain
-    ADD_INVOICE: "finance/add_invoice",
-    UPDATE_INVOICE: "finance/update_invoice",
-    RECORD_PAYMENT: "finance/record_payment",
-    ADD_EXPENSE: "finance/add_expense",
-    ADD_JOURNAL: "finance/add_journal",
-    // Procurement Domain
-    ADD_PO: "procurement/add_po",
-    UPDATE_PO: "procurement/update_po",
-    ADD_RFQ: "procurement/add_rfq",
-    UPDATE_RFQ: "procurement/update_rfq",
-    ADD_SUBMITTAL: "procurement/add_submittal",
-    ADD_RFI: "procurement/add_rfi",
-    // Safety Domain
-    ADD_JHA: "safety/add_jha",
-    ADD_INCIDENT: "safety/add_incident",
-    ADD_TOOLBOX: "safety/add_toolbox",
-    ADD_PERMIT: "safety/add_permit",
-    // Engineering Domain
-    ADD_DELIVERABLE: "engineering/add_deliverable",
-    UPDATE_DELIVERABLE: "engineering/update_deliverable",
-    ADD_INSTALLATION: "engineering/add_installation",
-    ADD_MANPOWER: "engineering/add_manpower",
-    ADD_FEED_STUDY: "engineering/add_feed_study",
-    // Commissioning Domain
-    ADD_CX_PHASE: "cx/add_phase",
-    ADD_CX_ISSUE: "cx/add_issue",
-    // Documents Domain
-    ADD_DOCUMENT: "docs/add_document",
-    ADD_TRANSMITTAL: "docs/add_transmittal",
-    // Actions Domain
-    ADD_ACTION: "actions/add_action",
-    UPDATE_ACTION: "actions/update_action",
-    ADD_PUNCH: "actions/add_punch",
-    ADD_LESSON: "actions/add_lesson",
-    ADD_CLOSEOUT: "actions/add_closeout",
-    // EVM Domain
-    ADD_EVM: "evm/add_evm",
-    // Company
-    SET_COMPANY: "company/set",
-    // Generic
-    UPDATE_STATUS: "generic/update_status",
-    UPDATE_COLLECTION: "generic/update_collection"
-};
+// G5 Sprint 5 (v4.31.0): inline JARVIS_ACTIONS deleted — now imported from ../modules/biz/reducer
+// The extracted version is a typed superset of the former inline map; all original
+// string values are preserved so existing _domainReducer switch cases continue to match.
 
 // SM-03: Domain reducer — processes typed actions against biz state
 // This is the future replacement for inline Z(function(v) { ... }) patterns.
