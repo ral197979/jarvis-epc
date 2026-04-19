@@ -75,7 +75,8 @@ router.get('/', async (req: Req, res: Response) => {
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
   const { page, limit, offset } = _pagination(req.query as Record<string, unknown>)
-  const { asset_system, confidence, project_id } = req.query as Record<string, string>
+  const { asset_system, confidence, project_id, source_id, auto_only } =
+    req.query as Record<string, string>
 
   const conds: string[] = []
   const vals: unknown[] = []
@@ -83,6 +84,9 @@ router.get('/', async (req: Req, res: Response) => {
   if (asset_system) { conds.push(`asset_system = $${i++}`); vals.push(asset_system) }
   if (confidence)   { conds.push(`confidence = $${i++}`);   vals.push(confidence) }
   if (project_id)   { conds.push(`project_id = $${i++}`);   vals.push(project_id) }
+  if (source_id)    { conds.push(`source_id = $${i++}`);    vals.push(source_id) }
+  if (auto_only === 'true') { conds.push(`extraction_run_id IS NOT NULL`) }
+  if (auto_only === 'false') { conds.push(`extraction_run_id IS NULL`) }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
   const [rows, countRow] = await Promise.all([
@@ -90,6 +94,7 @@ router.get('/', async (req: Req, res: Response) => {
       SELECT id, project_id, asset_system, asset_tag, symptoms,
              root_cause, resolution_steps, confidence,
              verified_by, verified_at, source_url, source_note,
+             source_id, extraction_run_id,
              created_by, created_at, updated_at
       FROM   knowledge_fixes
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}

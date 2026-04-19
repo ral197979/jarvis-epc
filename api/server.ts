@@ -92,6 +92,7 @@ import { registerKpiSnapshotHandler } from './services/kpiSnapshot'  // v4.31.0
 import { registerComplianceWatcher } from './services/complianceWatcher' // v4.31.0
 import { registerAuditRetentionHandler } from './services/auditRetention' // v4.31.0
 import { registerKnowledgeIngestHandler } from './services/knowledgeIngest' // v4.31.0
+import { registerFixExtractorHandler }    from './services/fixExtractor'    // v4.31.0
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -396,6 +397,7 @@ async function start(): Promise<void> {
   registerComplianceWatcher()
   registerAuditRetentionHandler()
   registerKnowledgeIngestHandler()
+  registerFixExtractorHandler()
 
   // Periodic cleanup
   setInterval(() => {

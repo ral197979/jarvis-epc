@@ -21,6 +21,7 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
 import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
+import { enqueueExtractFromSource, enqueueExtractBulk } from '../services/fixExtractor'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -307,6 +308,66 @@ router.post('/sources/:id/reingest', async (req: Req, res: Response) => {
   `, [req.params['id']])
   const jobId = await enqueueSourceIngest(tenantId, String(req.params['id']), req.auth?.sub ?? null)
   res.status(202).json({ data: { source_id: req.params['id'], status: 'pending', ingest_job_id: jobId } })
+})
+
+// ─── Mine fixes from a single source ──────────────────────────────────────────
+
+router.post('/sources/:id/mine-fixes', async (req: Req, res: Response) => {
+  if (!_requireAdmin(req, res)) return
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  // Verify source exists + belongs to tenant
+  const own = await tenantQuery<{ id: string; status: string }>(tenantId, `
+    SELECT id, status FROM knowledge_sources
+    WHERE  id = $1 AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+  `, [req.params['id']])
+  if (!own.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  if (own.rows[0].status !== 'ready') {
+    res.status(409).json({
+      error: 'source_not_ready',
+      message: `source status=${own.rows[0].status} — wait for ingest to complete`,
+    })
+    return
+  }
+
+  const b = req.body as { reextract?: boolean }
+  try {
+    const jobId = await enqueueExtractFromSource(
+      tenantId, String(req.params['id']), req.auth?.sub ?? null,
+      { reextract: b?.reextract === true },
+    )
+    res.status(202).json({ data: {
+      source_id: req.params['id'],
+      job_id:    jobId,
+      queued:    true,
+      message:   'Fix extraction queued. Check progress via GET /api/v1/knowledge-fixes?source_id=<id>.',
+    }})
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    res.status(500).json({ error: 'enqueue_failed', message: msg })
+  }
+})
+
+// ─── Mine fixes in bulk — OEM + record tier only by default ────────────────────
+
+router.post('/mine-fixes-bulk', async (req: Req, res: Response) => {
+  if (!_requireAdmin(req, res)) return
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const b = req.body as { limit?: number; asset_system?: string; reextract?: boolean }
+  try {
+    const result = await enqueueExtractBulk(tenantId, req.auth?.sub ?? null, {
+      limit:       typeof b?.limit === 'number' ? b.limit : undefined,
+      assetSystem: b?.asset_system,
+      reextract:   b?.reextract === true,
+    })
+    res.status(202).json({ data: result })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    res.status(500).json({ error: 'enqueue_failed', message: msg })
+  }
 })
 
 // ─── Delete (admin) ───────────────────────────────────────────────────────────

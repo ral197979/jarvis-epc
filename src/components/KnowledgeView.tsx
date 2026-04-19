@@ -241,6 +241,30 @@ function SourcesTab({
     } catch (e) { onToast?.(String(e), 'error') }
   }
 
+  async function mineFixes(row: SourceRow) {
+    try {
+      const r = await fetch(`/api/v1/knowledge/sources/${row.id}/mine-fixes`, {
+        method: 'POST', headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.message || `HTTP ${r.status}`) }
+      onToast?.(`Queued fix extraction for "${row.title.slice(0, 40)}"`, 'success')
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
+  async function bulkMine() {
+    if (!confirm('Queue fix extraction for up to 100 OEM/record sources (uses Anthropic tokens, ~$0.05-$0.15 per source)?')) return
+    try {
+      const r = await fetch('/api/v1/knowledge/mine-fixes-bulk', {
+        method: 'POST', headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 100 }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const j = await r.json()
+      onToast?.(`Bulk extraction queued: ${j.data.enqueued} sources (${j.data.skipped} skipped)`, 'success')
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
   async function remove(row: SourceRow) {
     if (!confirm(`Delete "${row.title}" and all its chunks?`)) return
     try {
@@ -273,8 +297,13 @@ function SourcesTab({
         </label>
         <button onClick={() => load(pagination.page)}
           className="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded">Refresh</button>
+        <button onClick={bulkMine}
+          className="px-3 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded">
+          ⚗ Mine fixes (bulk)
+        </button>
         <span className="text-xs text-gray-600">
-          Bulk load with <code className="bg-gray-100 px-1 rounded">npm run knowledge:ingest -- /path/to/folder</code>
+          Claude reads OEM / record sources and extracts <code>{`{symptoms, root_cause, resolution}`}</code>
+          &nbsp;into the Fix Library at <em>suspected</em> confidence — engineers verify later.
         </span>
       </div>
 
@@ -319,6 +348,10 @@ function SourcesTab({
                     {r.ingested_at ? new Date(r.ingested_at).toLocaleString() : '—'}
                   </td>
                   <td className="px-3 py-2 text-right whitespace-nowrap">
+                    {r.status === 'ready' && (
+                      <button onClick={() => mineFixes(r)}
+                        className="text-indigo-600 hover:text-indigo-800 text-xs mr-3">⚗ Mine fixes</button>
+                    )}
                     {r.status !== 'ingesting' && (
                       <button onClick={() => reingest(r)}
                         className="text-amber-600 hover:text-amber-800 text-xs mr-3">Re-ingest</button>
