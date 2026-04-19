@@ -85,6 +85,9 @@ const NATIVE_TOOLS = [
   { name: 'knowledge.fix_search', cat: 'Knowledge', live: true,
     desc: 'Search the tenant fix library by symptoms / asset system / free text. Returns ranked resolutions.',
     params: ['symptoms', 'asset_system', 'asset_tag', 'query', 'limit', 'min_confidence'] },
+  { name: 'knowledge.search', cat: 'Knowledge', live: true,
+    desc: 'Full-text search over ingested PDF corpus (manuals, IOMs, specs, standards). Returns ranked chunks w/ source citation.',
+    params: ['query', 'topK', 'source_ids', 'tags', 'asset_system', 'license_types'] },
 ]
 
 // v4.31.0 TS fix: AVA_ONLY_TOOLS reference catalogue kept as documentation;
@@ -425,6 +428,24 @@ async function executeNative(
 
         const reply = completion.content.filter(b => b.type === 'text').map(b => (b as Anthropic.TextBlock).text).join('')
         res.json({ session_id, reply, usage: completion.usage })
+        break
+      }
+
+      // ── knowledge.search — ingested-corpus full-text search ────────────────
+      case 'knowledge.search': {
+        const { searchKnowledge } = await import('../services/knowledgeSearch')
+        const q = String(params['query'] ?? '').trim()
+        if (!q) return void res.status(400).json({ error: 'query required' })
+        const hits = await searchKnowledge({
+          tenantId:    r.tenantId,
+          query:       q,
+          topK:        typeof params['topK'] === 'number' ? params['topK'] as number : undefined,
+          sourceIds:   Array.isArray(params['source_ids'])    ? params['source_ids']    as string[] : undefined,
+          tags:        Array.isArray(params['tags'])          ? params['tags']          as string[] : undefined,
+          assetSystem: params['asset_system'] as string | undefined,
+          licenseTypes: Array.isArray(params['license_types']) ? params['license_types'] as string[] : undefined,
+        })
+        res.json({ hits })
         break
       }
 

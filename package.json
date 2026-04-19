@@ -24,7 +24,8 @@
     "typecheck:all": "npm run typecheck && npm run typecheck:modules",
     "check:monolith": "node scripts/check-monolith-size.js",
     "ci": "npm audit --audit-level=high && npm run typecheck:all && npm run check:monolith && npm test -- --run",
-    "db:migrate": "tsx api/db/migrate.ts"
+    "db:migrate": "tsx api/db/migrate.ts",
+    "knowledge:ingest": "tsx api/scripts/ingest-directory.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -33,6 +34,7 @@
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "lucide-react": "^1.8.0",
+    "pdf-parse": "^1.1.1",
     "pg": "^8.13.3",
     "pino": "^10.3.1",
     "pino-http": "^11.0.0",
