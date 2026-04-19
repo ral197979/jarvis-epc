@@ -45,7 +45,7 @@ interface SearchHit {
 interface Pagination { page: number; limit: number; total: number; pages: number }
 const EMPTY_PAGE: Pagination = { page: 1, limit: 25, total: 0, pages: 0 }
 
-type Tab = 'search' | 'sources'
+type Tab = 'search' | 'sources' | 'bulk'
 
 interface Props {
   onToast?: (m: string, t?: string) => void
@@ -70,20 +70,21 @@ export default function KnowledgeView({ onToast }: Props) {
       </div>
 
       <div className="mb-4 border-b border-gray-200 flex gap-0">
-        {(['search','sources'] as const).map(t => (
+        {(['search','sources','bulk'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm border-b-2 ${
               tab === t
                 ? 'border-indigo-600 text-indigo-700 font-medium'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}>
-            {t === 'search' ? 'Search' : 'Sources'}
+            {t === 'search' ? 'Search' : t === 'sources' ? 'Sources' : 'Bulk Load'}
           </button>
         ))}
       </div>
 
       {tab === 'search'  && <SearchTab  authHeaders={authHeaders} onToast={onToast} />}
       {tab === 'sources' && <SourcesTab authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'bulk'    && <BulkLoadTab authHeaders={authHeaders} onToast={onToast} />}
     </div>
   )
 }
@@ -341,6 +342,226 @@ function SourcesTab({
         </div>
       </div>
     </>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Bulk Load tab — admin server-side directory walk
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface BulkResult {
+  rootPath:        string
+  dryRun:          boolean
+  candidatesFound: number
+  queued:          number
+  duplicates:      number
+  errors:          number
+  truncated:       boolean
+  errorSamples:    Array<{ path: string; message: string }>
+  queuedSourceIds: string[]
+  plan?:           Array<{ path: string; size: number; name: string; ext: string }>
+}
+
+function BulkLoadTab({
+  authHeaders, onToast,
+}: { authHeaders: Record<string,string>; onToast?: (m:string,t?:string)=>void }) {
+  const [rootPath, setRootPath]         = useState('')
+  const [extensions, setExtensions]     = useState('pdf')
+  const [tags, setTags]                 = useState('')
+  const [assetSystem, setAssetSystem]   = useState('')
+  const [licenseType, setLicenseType]   = useState('owned')
+  const [limit, setLimit]               = useState('5000')
+  const [running, setRunning]           = useState(false)
+  const [result, setResult]             = useState<BulkResult | null>(null)
+  const [err, setErr]                   = useState<string | null>(null)
+
+  async function run(dryRun: boolean) {
+    if (!rootPath.trim()) { onToast?.('root path required', 'error'); return }
+    setRunning(true); setErr(null); setResult(null)
+    try {
+      const r = await fetch('/api/v1/knowledge/bulk-ingest', {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          root_path:    rootPath.trim(),
+          extensions:   extensions.split(',').map(s => s.trim()).filter(Boolean),
+          tags:         tags.split(',').map(s => s.trim()).filter(Boolean),
+          license_type: licenseType,
+          asset_system: assetSystem || undefined,
+          limit:        Number(limit) || undefined,
+          dry_run:      dryRun,
+        }),
+      })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        throw new Error(j.message || `HTTP ${r.status}`)
+      }
+      const j = await r.json()
+      setResult(j.data as BulkResult)
+      onToast?.(
+        dryRun
+          ? `Preview: ${j.data.candidatesFound} candidates`
+          : `Queued ${j.data.queued} · ${j.data.duplicates} dupes · ${j.data.errors} errors`,
+        dryRun ? 'info' : 'success',
+      )
+    } catch (e) {
+      setErr(String(e)); onToast?.(String(e), 'error')
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded text-sm">
+        <div className="font-semibold text-amber-900 mb-1">⚠ Admin-only server-side walk</div>
+        <div className="text-amber-800 text-xs">
+          This tells the API server to read a directory on the server&apos;s filesystem. In production,
+          set <code className="bg-white px-1 rounded">KNOWLEDGE_INGEST_ROOTS</code> to restrict which paths are
+          accepted. In dev (e.g. macOS), any path the server can read works — mounted drives like
+          <code className="bg-white px-1 rounded">/Volumes/A/...</code> are fine.
+        </div>
+      </div>
+
+      <div className="p-4 bg-white border border-gray-200 rounded space-y-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Root path *</label>
+          <input value={rootPath} onChange={e => setRootPath(e.target.value)}
+            placeholder="/Volumes/A/My_Folder/Technical"
+            className="w-full border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Extensions (comma)</label>
+            <input value={extensions} onChange={e => setExtensions(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Tags (comma)</label>
+            <input value={tags} onChange={e => setTags(e.target.value)}
+              placeholder="engineering,reference"
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Asset system (optional)</label>
+            <input value={assetSystem} onChange={e => setAssetSystem(e.target.value)}
+              placeholder="chiller"
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">License</label>
+            <select value={licenseType} onChange={e => setLicenseType(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm">
+              <option value="owned">owned</option>
+              <option value="purchased">purchased</option>
+              <option value="public_domain">public_domain</option>
+              <option value="cc-by">cc-by</option>
+              <option value="cc-by-sa">cc-by-sa</option>
+              <option value="gov">gov</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Max files</label>
+            <input type="number" min={1} max={10000} value={limit}
+              onChange={e => setLimit(e.target.value)}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm font-mono" />
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2 border-t">
+          <button onClick={() => run(true)} disabled={running || !rootPath.trim()}
+            className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 rounded border border-gray-300 disabled:opacity-50">
+            {running ? 'Working…' : 'Preview (dry run)'}
+          </button>
+          <button onClick={() => run(false)} disabled={running || !rootPath.trim()}
+            className="px-3 py-1.5 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded disabled:opacity-50">
+            {running ? 'Working…' : 'Queue ingest'}
+          </button>
+        </div>
+      </div>
+
+      {err && <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">{err}</div>}
+
+      {result && (
+        <div className="mt-4 p-4 bg-white border border-gray-200 rounded">
+          <div className="flex items-center gap-4 mb-3 text-sm">
+            <StatCard label="Candidates"  value={result.candidatesFound} />
+            <StatCard label="Queued"      value={result.queued}      tone="good" />
+            <StatCard label="Duplicates"  value={result.duplicates}  tone="muted" />
+            <StatCard label="Errors"      value={result.errors}      tone={result.errors > 0 ? 'bad' : 'muted'} />
+            {result.truncated && (
+              <div className="text-xs text-amber-700">⚠ truncated by limit — raise limit + re-run to continue</div>
+            )}
+            {result.dryRun && <div className="text-xs text-indigo-700">dry run · no changes written</div>}
+          </div>
+
+          {result.errorSamples.length > 0 && (
+            <details className="mb-3 text-xs">
+              <summary className="cursor-pointer text-red-700">Error samples ({result.errorSamples.length})</summary>
+              <ul className="mt-2 space-y-1">
+                {result.errorSamples.map((e, i) => (
+                  <li key={i} className="font-mono text-red-700 break-all">
+                    <span className="text-red-400">{e.path}</span> — {e.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+
+          {result.plan && result.plan.length > 0 && (
+            <details>
+              <summary className="cursor-pointer text-sm text-gray-700">
+                Preview plan ({result.plan.length} files{result.truncated ? '+ truncated' : ''})
+              </summary>
+              <div className="mt-2 max-h-96 overflow-y-auto">
+                <table className="min-w-full text-xs">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-2 py-1 text-left">Name</th>
+                      <th className="px-2 py-1 text-right">Size</th>
+                      <th className="px-2 py-1 text-left">Path</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.plan.map((p, i) => (
+                      <tr key={i} className="border-t border-gray-100">
+                        <td className="px-2 py-1">{p.name}</td>
+                        <td className="px-2 py-1 text-right font-mono">{fmtBytes(p.size)}</td>
+                        <td className="px-2 py-1 font-mono text-gray-500 truncate max-w-md" title={p.path}>{p.path}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          )}
+
+          {!result.dryRun && result.queued > 0 && (
+            <div className="mt-3 text-xs text-gray-600">
+              Processing is async — switch to <strong>Sources</strong> and filter by <code>ingesting</code> to watch progress.
+              Each PDF extracts in ~1–5 s; a 1300-file batch finishes in 20–60 min.
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+function StatCard({ label, value, tone }: { label: string; value: number; tone?: 'good'|'bad'|'muted' }) {
+  const cls = tone === 'good'  ? 'text-green-700'
+           : tone === 'bad'    ? 'text-red-700'
+           : tone === 'muted'  ? 'text-gray-500'
+           :                     'text-indigo-700'
+  return (
+    <div>
+      <div className="text-xs text-gray-500 uppercase">{label}</div>
+      <div className={`text-xl font-bold ${cls}`}>{value.toLocaleString()}</div>
+    </div>
   )
 }
 

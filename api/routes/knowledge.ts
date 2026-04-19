@@ -20,6 +20,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
+import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -40,6 +41,69 @@ function _pagination(q: Record<string, unknown>) {
   const limit = Math.min(200, Math.max(1, parseInt(String(q['limit'] ?? '25'), 10)))
   return { page, limit, offset: (page - 1) * limit }
 }
+
+// ─── Bulk ingest — admin-only server-side directory walk ──────────────────────
+//
+// Body:
+//   {
+//     root_path:     string,              // absolute path readable by the server
+//     extensions?:   string[],            // ['pdf'] default
+//     tags?:         string[],
+//     license_type?: string,              // 'owned' default
+//     asset_system?: string,
+//     dry_run?:      boolean,             // preview only
+//     limit?:        number,              // max files, default 5000
+//     skip_dirs?:    string[]             // override default skip list
+//   }
+//
+// Returns the BulkIngestResult.  If KNOWLEDGE_INGEST_ROOTS is set in the
+// server env, root_path must be under one of those prefixes.
+
+router.post('/bulk-ingest', async (req: Req, res: Response) => {
+  if (!_requireAdmin(req, res)) return
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const b = req.body as Record<string, unknown>
+  const rootPath = String(b['root_path'] ?? '').trim()
+  if (!rootPath) {
+    res.status(422).json({ error: 'validation', message: 'root_path required' })
+    return
+  }
+
+  // Reject paths outside the allowlist early with a clear error — don't
+  // wait until the walker opens the dir.
+  const guard = isPathAllowed(rootPath)
+  if (!guard.ok) {
+    res.status(403).json({ error: 'path_not_allowed', message: guard.reason })
+    return
+  }
+
+  try {
+    const result = await bulkIngestDirectory(
+      tenantId,
+      req.auth?.sub ?? null,
+      {
+        rootPath,
+        extensions:  Array.isArray(b['extensions']) ? (b['extensions'] as string[]) : ['pdf'],
+        tags:        Array.isArray(b['tags'])       ? (b['tags']       as string[]) : [],
+        licenseType: (b['license_type'] as string | undefined) ?? 'owned',
+        assetSystem: (b['asset_system'] as string | undefined) ?? null,
+        skipDirs:    Array.isArray(b['skip_dirs'])  ? (b['skip_dirs']  as string[]) : undefined,
+        limit:       typeof b['limit'] === 'number' ? (b['limit'] as number) : undefined,
+        dryRun:      b['dry_run'] === true,
+      },
+    )
+    res.json({ data: result })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.startsWith('path_not_allowed:')) {
+      res.status(403).json({ error: 'path_not_allowed', message: msg })
+      return
+    }
+    res.status(500).json({ error: 'bulk_ingest_failed', message: msg })
+  }
+})
 
 // ─── Search (POST so tag arrays serialize cleanly) ────────────────────────────
 
