@@ -1,16 +1,21 @@
 /**
  * JARVIS EPC — Embedding service (v4.31.0)
  *
- * Thin wrapper around OpenAI's embeddings API with batching, retry,
- * and strict dimension enforcement. No SDK dependency — plain fetch.
+ * Thin wrapper around OpenAI-compatible embeddings APIs with batching,
+ * retry, and strict dimension enforcement. No SDK dependency — plain
+ * fetch. Supports two providers picked by EMBED_PROVIDER:
  *
- * Default model: text-embedding-3-small (1536 dims, $0.02/Mtok).
- * Override via EMBED_MODEL env var; if dimensions change you must
- * ALTER the knowledge_chunks.embedding column and re-embed the corpus.
+ *   'openai'   → https://api.openai.com/v1/embeddings
+ *                 default model: text-embedding-3-small (1536 dims)
+ *                 needs: OPENAI_API_KEY
  *
- * The service knows nothing about Jarvis schemas — callers (like the
- * ingest handler or the search path) pass in strings and get back
- * Float32Array-ish number arrays.
+ *   'together' → https://api.together.xyz/v1/embeddings  (default)
+ *                 default model: intfloat/multilingual-e5-large-instruct (1024 dims)
+ *                 needs: TOGETHER_AI_API_KEY
+ *
+ * If dimensions change, ALTER the knowledge_chunks.embedding column
+ * to the new dimension and re-embed. The EMBED_DIMENSIONS env var
+ * must match the chosen model.
  */
 
 import { slog } from '../../src/modules/observability/index'
@@ -21,21 +26,55 @@ export interface EmbedResult {
   total_tokens:  number
 }
 
-const DEFAULT_MODEL = process.env['EMBED_MODEL'] ?? 'text-embedding-3-small'
-export const EMBED_DIMENSIONS = Number(process.env['EMBED_DIMENSIONS'] ?? '1536')
+type Provider = 'openai' | 'together'
 
-// OpenAI accepts up to 2048 strings per request, but long inputs blow
-// the per-request token ceiling (8191 tokens). We batch conservatively.
+function _resolveProvider(): Provider {
+  const raw = (process.env['EMBED_PROVIDER'] ?? '').toLowerCase().trim()
+  if (raw === 'openai' || raw === 'together') return raw
+  // Auto-select: prefer Together AI (cheaper, the key we have works).
+  if (process.env['TOGETHER_AI_API_KEY']) return 'together'
+  if (process.env['OPENAI_API_KEY'])      return 'openai'
+  return 'together'  // force a clear error from _apiKey() if nothing is set
+}
+
+// maxChars: provider-specific input truncation. Together's e5-large
+// maxes at 512 tokens (~2000 chars with typical English, but engineering
+// PDFs tokenize denser because of numbers/codes — stay conservative at
+// 1500 chars ≈ ~380 tokens). OpenAI text-embedding-3-small handles 8191
+// tokens, so we can send bigger chunks without loss.
+const PROVIDER_DEFAULTS: Record<Provider, { model: string; dims: number; url: string; envKey: string; maxChars: number }> = {
+  openai:   {
+    model: 'text-embedding-3-small', dims: 1536,
+    url:   'https://api.openai.com/v1/embeddings',
+    envKey: 'OPENAI_API_KEY',
+    maxChars: 8000,
+  },
+  together: {
+    model: 'intfloat/multilingual-e5-large-instruct', dims: 1024,
+    url:   'https://api.together.xyz/v1/embeddings',
+    envKey: 'TOGETHER_AI_API_KEY',
+    // 512-token cap is hard; engineering PDFs with lots of numbers /
+    // codes / abbreviations tokenize at up to ~0.73 tokens/char. Observed:
+    // a 1000-char engineering chunk tokenized to 733 tokens, rejected.
+    // 700 chars leaves safe headroom. Most useful semantic content in
+    // the first 700 chars of any chunk anyway.
+    maxChars: 700,
+  },
+}
+
+const PROVIDER = _resolveProvider()
+const DEFAULT_MODEL = process.env['EMBED_MODEL'] ?? PROVIDER_DEFAULTS[PROVIDER].model
+export const EMBED_DIMENSIONS = Number(process.env['EMBED_DIMENSIONS'] ?? String(PROVIDER_DEFAULTS[PROVIDER].dims))
+const API_URL = process.env['EMBED_URL'] ?? PROVIDER_DEFAULTS[PROVIDER].url
+
 const MAX_BATCH_INPUTS = 96
-
-// Each input string gets truncated to this many chars before being
-// sent so we never overflow the token-per-request cap on big chunks.
-const MAX_INPUT_CHARS = 8000
+const MAX_INPUT_CHARS = Number(process.env['EMBED_MAX_INPUT_CHARS'] ?? String(PROVIDER_DEFAULTS[PROVIDER].maxChars))
 
 function _apiKey(): string {
-  const k = process.env['OPENAI_API_KEY']
+  const envKey = PROVIDER_DEFAULTS[PROVIDER].envKey
+  const k = process.env[envKey]
   if (!k || k.startsWith('placeholder') || k.length < 20) {
-    throw new Error('OPENAI_API_KEY not configured — Phase 3 semantic search requires a real key')
+    throw new Error(`${envKey} not configured — Phase 3 semantic search requires a real key`)
   }
   return k
 }
@@ -75,7 +114,7 @@ async function _callEmbed(
   key: string, model: string, inputs: string[], attempt = 1,
 ): Promise<{ vectors: number[][]; tokens: number }> {
   try {
-    const res = await fetch('https://api.openai.com/v1/embeddings', {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${key}`,
@@ -92,7 +131,7 @@ async function _callEmbed(
         await new Promise(r => setTimeout(r, delay))
         return _callEmbed(key, model, inputs, attempt + 1)
       }
-      throw new Error(`OpenAI embeddings HTTP ${res.status}: ${text.slice(0, 200)}`)
+      throw new Error(`${PROVIDER} embeddings HTTP ${res.status}: ${text.slice(0, 200)}`)
     }
     const body = await res.json() as {
       data: Array<{ embedding: number[]; index: number }>

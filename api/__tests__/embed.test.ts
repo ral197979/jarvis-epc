@@ -58,11 +58,14 @@ describe('embedTexts — provider missing', () => {
     vi.clearAllMocks()
   })
 
-  it('throws helpful error when OPENAI_API_KEY is not set', async () => {
-    process.env['OPENAI_API_KEY'] = 'placeholder-missing'
-    const { embedTexts } = await import('../services/embed')
-    await expect(embedTexts(['hello'])).rejects.toThrow(/OPENAI_API_KEY not configured/)
-    if (PREV) process.env['OPENAI_API_KEY'] = PREV
-    else delete process.env['OPENAI_API_KEY']
+  it('throws helpful error when the provider key is not set', async () => {
+    // Ensure no valid key is present; the resolver picks `together` then errors.
+    const prevTog = process.env['TOGETHER_AI_API_KEY']
+    process.env['OPENAI_API_KEY']       = 'placeholder-missing'
+    process.env['TOGETHER_AI_API_KEY']  = 'placeholder-missing'
+    const mod = await import('../services/embed')
+    await expect(mod.embedTexts(['hello'])).rejects.toThrow(/API_KEY not configured/)
+    if (PREV)    process.env['OPENAI_API_KEY']      = PREV;      else delete process.env['OPENAI_API_KEY']
+    if (prevTog) process.env['TOGETHER_AI_API_KEY'] = prevTog;   else delete process.env['TOGETHER_AI_API_KEY']
   })
 })

@@ -27,9 +27,13 @@
 -- Requires a superuser role; the jarvis user has superuser locally.
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Narrow column: 1536-dim OpenAI text-embedding-3-small.
+-- Column dimension must match the configured EMBED model. v4.31.0
+-- defaults to Together AI's intfloat/multilingual-e5-large-instruct (1024 dim).
+-- Swap to OpenAI text-embedding-3-small by running:
+--   ALTER TABLE knowledge_chunks ALTER COLUMN embedding TYPE vector(1536);
+-- and re-embedding the corpus.
 ALTER TABLE knowledge_chunks
-  ADD COLUMN IF NOT EXISTS embedding vector(1536);
+  ADD COLUMN IF NOT EXISTS embedding vector(1024);
 
 -- HNSW index for cosine similarity. Parameters:
 --   m = 16        — default; graph neighbors per node
