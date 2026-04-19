@@ -56,6 +56,11 @@ export interface KnowledgeHit {
 // OR lets ts_rank_cd rank by how many + how close the terms match — which
 // is what we actually want for RAG. For short "strict" queries like
 // 'Carrier 30XA' the OR form still finds the exact same chunk at the top.
+//
+// Exported so other FTS-backed services (fixLibrary) can share the fix.
+export function buildTsQuery(text: string): string {
+  return _buildTsQuery(text)
+}
 function _buildTsQuery(text: string): string {
   const STOP = new Set([
     'a','an','and','are','as','at','be','by','for','from','has','have','he',

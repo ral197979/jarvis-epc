@@ -12,6 +12,7 @@
 
 import { tenantQuery, query } from '../db/pool'
 import { normalizeSystemTag } from './systemTagAlias'
+import { buildTsQuery } from './knowledgeSearch'
 import { slog } from '../../src/modules/observability/index'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -151,8 +152,10 @@ export async function searchFixes(input: FixSearchInput): Promise<FixSearchHit[]
     vals.push(assetTag)
   }
   if (input.query && input.query.trim()) {
-    ors.push(`search_tsv @@ plainto_tsquery('english', $${i++})`)
-    vals.push(input.query.trim())
+    // Use OR-rewriter so long natural-language questions still find fixes.
+    // Engineering terms are well-defined so lexical + OR-rank works well.
+    ors.push(`search_tsv @@ websearch_to_tsquery('english', $${i++})`)
+    vals.push(buildTsQuery(input.query.trim()))
   }
   if (ors.length === 0) {
     return []        // no search signal provided — refuse to return the whole corpus
@@ -170,10 +173,22 @@ export async function searchFixes(input: FixSearchInput): Promise<FixSearchHit[]
   // Limit raw candidate set to keep scoring cheap. Over-select so the
   // ranker has enough to pick from.
   const candidateLimit = Math.max(50, limit * 10)
-  const res = await tenantQuery<FixRow>(input.tenantId, `
-    SELECT * FROM knowledge_fixes
+
+  // When a free-text query is present, pull ts_rank_cd alongside the row
+  // so the JS ranker can use it instead of a flat 0.5 baseline — this
+  // lets FTS relevance drive ordering for NL questions.
+  const queryParamIdx = input.query?.trim()
+    ? vals.findIndex(v => v === buildTsQuery(input.query!.trim())) + 1
+    : 0
+  const fts = queryParamIdx > 0
+    ? `, ts_rank_cd(search_tsv, websearch_to_tsquery('english', $${queryParamIdx}))::float8 AS fts_score`
+    : `, 0::float8 AS fts_score`
+
+  const res = await tenantQuery<FixRow & { fts_score: number }>(input.tenantId, `
+    SELECT *${fts}
+    FROM knowledge_fixes
     WHERE ${conds.join(' AND ')}
-    ORDER BY created_at DESC
+    ORDER BY ${queryParamIdx > 0 ? 'fts_score DESC, ' : ''}created_at DESC
     LIMIT ${candidateLimit}
   `, vals)
 
@@ -200,9 +215,15 @@ export async function searchFixes(input: FixSearchInput): Promise<FixSearchHit[]
     const ageDays = (now - new Date(row.created_at).getTime()) / 86_400_000
     const recency = Math.pow(0.5, ageDays / RECENCY_HALF_LIFE_DAYS)
 
-    // Base score — symptom overlap is primary when provided, otherwise
-    // a flat 0.5 baseline so asset + query matches still rank.
-    const baseScore = symptomsQ.length > 0 ? symptomOverlap : 0.5
+    // Base score prefers symptom overlap; falls back to raw FTS rank
+    // when the caller passed a free-text query (NL question from
+    // askBuilder). We do NOT clamp fts_score — clamping flattens
+    // rank differences and caused ties in production. Multipliers
+    // still act as tiebreakers within the same FTS tier.
+    const rawFts  = row.fts_score ?? 0
+    const baseScore = symptomsQ.length > 0
+      ? symptomOverlap
+      : (input.query ? rawFts : 0.5)
     const score = baseScore * confidenceW * assetMatch * (0.5 + 0.5 * recency)
 
     const parts: string[] = []
