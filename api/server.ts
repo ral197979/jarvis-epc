@@ -77,6 +77,11 @@ import automationRouter       from './routes/automation'    // v4.31.0
 import complianceRouter       from './routes/compliance'    // v4.31.0
 import fieldSyncRouter        from './routes/fieldSync'     // v4.31.0
 import scheduleRouter         from './routes/schedule'      // v4.31.0
+import autosignRulesRouter    from './routes/autosignRules' // v4.31.0
+import agentActionsRouter     from './routes/agentActionsRoutes' // v4.31.0
+import baselinesRouter        from './routes/baselinesRoutes'    // v4.31.0
+import correlationsRouter     from './routes/correlations'       // v4.31.0
+import fixLibraryRouter       from './routes/fixLibrary'          // v4.31.0
 import { startPackWorker, stopPackWorker } from './services/packWorker' // v4.30.0
 import { startScheduler,  stopScheduler  } from './services/scheduler'  // v4.31.0
 import { registerWebhookDispatchHandler, emitEvent } from './services/webhookDispatch' // v4.31.0
@@ -280,6 +285,11 @@ app.use('/api/v1/admin/automation', automationRouter)  // v4.31.0: scheduler adm
 app.use('/api/v1/compliance-tasks', complianceRouter)  // v4.31.0: compliance watcher CRUD
 app.use('/api/v1/field-sync',       fieldSyncRouter)   // v4.31.0: offline batch replay
 app.use('/api/v1/schedule',         scheduleRouter)    // v4.31.0: CPM + tasks + dependencies
+app.use('/api/v1/commissioning/autosign-rules', autosignRulesRouter) // v4.31.0: arbitration rules + /arbitrate
+app.use('/api/v1/commissioning/baselines',      baselinesRouter)     // v4.31.0: baseline visibility
+app.use('/api/v1/agent-actions',   agentActionsRouter) // v4.31.0: agent action log + review queue
+app.use('/api/v1/correlations',    correlationsRouter) // v4.31.0: event proximity ranker
+app.use('/api/v1/knowledge-fixes', fixLibraryRouter)   // v4.31.0: Pattern C fix library
 app.use('/api/v1',                calculationsRouter)
 app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
 app.use('/api/v1',                dailyLogsRouter)      // v4.31.0: Daily logs

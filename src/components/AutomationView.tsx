@@ -53,7 +53,7 @@ interface AutomationViewProps {
   onAudit?: (e: unknown) => void
 }
 
-type Tab = 'scheduled' | 'background' | 'kpi' | 'mcp'
+type Tab = 'scheduled' | 'background' | 'kpi' | 'mcp' | 'rules' | 'actions' | 'baselines'
 
 interface KpiSnapshotRow {
   id: string
@@ -77,26 +77,32 @@ export default function AutomationView({ onToast }: AutomationViewProps) {
         </p>
       </div>
 
-      <div className="mb-4 border-b border-gray-200 flex gap-0">
-        {(['scheduled','background','kpi','mcp'] as const).map(t => (
+      <div className="mb-4 border-b border-gray-200 flex gap-0 flex-wrap">
+        {(['scheduled','background','kpi','mcp','rules','actions','baselines'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm border-b-2 ${
               tab === t
                 ? 'border-indigo-600 text-indigo-700 font-medium'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}>
-            {t === 'scheduled'  ? 'Scheduled Jobs'
+            {t === 'scheduled'    ? 'Scheduled Jobs'
               : t === 'background' ? 'Background Jobs'
               : t === 'kpi'        ? 'KPI History'
-              : 'MCP Marketplace'}
+              : t === 'mcp'        ? 'MCP Marketplace'
+              : t === 'rules'      ? 'Autosign Rules'
+              : t === 'actions'    ? 'Agent Actions'
+              : 'Baselines'}
           </button>
         ))}
       </div>
 
-      {tab === 'scheduled'  && <ScheduledJobsTab  authHeaders={authHeaders} onToast={onToast} />}
-      {tab === 'background' && <BackgroundJobsTab authHeaders={authHeaders} onToast={onToast} />}
-      {tab === 'kpi'        && <KpiHistoryTab     authHeaders={authHeaders} onToast={onToast} />}
-      {tab === 'mcp'        && <McpMarketplaceTab authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'scheduled'  && <ScheduledJobsTab    authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'background' && <BackgroundJobsTab   authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'kpi'        && <KpiHistoryTab       authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'mcp'        && <McpMarketplaceTab   authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'rules'      && <AutosignRulesTab    authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'actions'    && <AgentActionsTab     authHeaders={authHeaders} onToast={onToast} />}
+      {tab === 'baselines'  && <BaselinesTab        authHeaders={authHeaders} onToast={onToast} />}
     </div>
   )
 }
@@ -783,6 +789,468 @@ function McpMarketplaceTab({
       </div>
     </>
   )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Autosign Rules tab
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface AutosignRule {
+  id: string
+  scope: 'global'|'client'|'project'
+  client_id: string | null
+  project_id: string | null
+  system_type: string
+  criteria_name: string
+  criteria_kind: 'numeric'|'boolean'
+  target_value: string | null
+  tolerance_pct: string | null
+  tolerance_abs: string | null
+  unit: string | null
+  expected_bool: boolean | null
+  enabled: boolean
+  baseline_min_samples: number
+  novelty_z_threshold: string
+}
+
+function AutosignRulesTab({
+  authHeaders, onToast,
+}: { authHeaders: Record<string, string>; onToast?: (m: string, t?: string) => void }) {
+  const [rows, setRows] = useState<AutosignRule[]>([])
+  const [pagination, setPagination] = useState<Pagination>(EMPTY_PAGE)
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function load(page = 1) {
+    setLoading(true); setErr(null)
+    try {
+      const r = await fetch(`/api/v1/commissioning/autosign-rules?page=${page}`, { headers: authHeaders })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const j = await r.json()
+      setRows(j.data || [])
+      setPagination(j.pagination || EMPTY_PAGE)
+    } catch (e) {
+      setErr(String(e)); onToast?.('Failed to load rules', 'error')
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+
+  async function toggle(row: AutosignRule) {
+    try {
+      const r = await fetch(`/api/v1/commissioning/autosign-rules/${row.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !row.enabled }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      onToast?.(`${row.enabled ? 'Disabled' : 'Enabled'}: ${row.criteria_name}`, 'success')
+      load(pagination.page)
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
+  return (
+    <>
+      <div className="mb-3 flex gap-2 items-center">
+        <button onClick={() => load(pagination.page)}
+          className="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded">Refresh</button>
+        <span className="text-xs text-gray-600">
+          Create rules via <code className="bg-gray-100 px-1 rounded">POST /api/v1/commissioning/autosign-rules</code>.
+          Scope precedence: project &gt; client &gt; global.
+        </span>
+      </div>
+
+      {err && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">{err}</div>}
+
+      <div className="bg-white border border-gray-200 rounded overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {['Scope','System','Criterion','Kind','Target / Expected','Tolerance','z-thresh','Warmup','State',''].map(h => (
+                <th key={h} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading && <tr><td colSpan={10} className="px-3 py-6 text-center text-gray-500">Loading…</td></tr>}
+            {!loading && rows.length === 0 && (
+              <tr><td colSpan={10} className="px-3 py-6 text-center text-gray-500">No rules yet.</td></tr>
+            )}
+            {!loading && rows.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 text-xs"><code>{r.scope}</code></td>
+                <td className="px-3 py-2 text-xs font-mono">{r.system_type}</td>
+                <td className="px-3 py-2 text-xs font-mono">{r.criteria_name}</td>
+                <td className="px-3 py-2 text-xs">{r.criteria_kind}</td>
+                <td className="px-3 py-2 text-xs font-mono">
+                  {r.criteria_kind === 'boolean'
+                    ? String(r.expected_bool)
+                    : `${r.target_value}${r.unit ? ' ' + r.unit : ''}`}
+                </td>
+                <td className="px-3 py-2 text-xs font-mono">
+                  {r.criteria_kind === 'numeric'
+                    ? (r.tolerance_pct != null ? `±${r.tolerance_pct}%` : `±${r.tolerance_abs}`)
+                    : '—'}
+                </td>
+                <td className="px-3 py-2 text-xs font-mono">{r.novelty_z_threshold}σ</td>
+                <td className="px-3 py-2 text-xs font-mono">{r.baseline_min_samples}</td>
+                <td className="px-3 py-2">
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                    r.enabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                    {r.enabled ? 'enabled' : 'disabled'}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <button onClick={() => toggle(r)}
+                    className="text-indigo-600 hover:text-indigo-800 text-xs">
+                    {r.enabled ? 'Disable' : 'Enable'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">
+          <span>Page {pagination.page} of {pagination.pages || 1} · {pagination.total.toLocaleString()} rules</span>
+          <div className="flex gap-1">
+            <button disabled={pagination.page <= 1 || loading} onClick={() => load(pagination.page - 1)}
+              className="px-2 py-1 border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-100">Prev</button>
+            <button disabled={pagination.page >= pagination.pages || loading} onClick={() => load(pagination.page + 1)}
+              className="px-2 py-1 border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-100">Next</button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Agent Actions tab (review queue)
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface AgentAction {
+  id: string
+  agent_name: string
+  action_type: string
+  decision: string
+  rationale: string
+  target_type: string | null
+  target_id: string | null
+  evidence: Record<string, unknown>
+  confidence: number | null
+  human_reviewable: boolean
+  reviewed_at: string | null
+  review_outcome: string | null
+  created_at: string
+}
+
+function AgentActionsTab({
+  authHeaders, onToast,
+}: { authHeaders: Record<string, string>; onToast?: (m: string, t?: string) => void }) {
+  const [rows, setRows] = useState<AgentAction[]>([])
+  const [pagination, setPagination] = useState<Pagination>(EMPTY_PAGE)
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [showUnreviewed, setShowUnreviewed] = useState(true)
+  const [selected, setSelected] = useState<AgentAction | null>(null)
+
+  async function load(page = 1) {
+    setLoading(true); setErr(null)
+    try {
+      const params = new URLSearchParams()
+      params.set('page', String(page))
+      if (showUnreviewed) params.set('reviewed', 'false')
+      const r = await fetch(`/api/v1/agent-actions?${params}`, { headers: authHeaders })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const j = await r.json()
+      setRows(j.data || [])
+      setPagination(j.pagination || EMPTY_PAGE)
+    } catch (e) {
+      setErr(String(e)); onToast?.('Failed to load actions', 'error')
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showUnreviewed])
+
+  async function review(row: AgentAction, outcome: 'confirmed'|'overridden'|'reversed') {
+    try {
+      const r = await fetch(`/api/v1/agent-actions/${row.id}/review`, {
+        method: 'POST',
+        headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      onToast?.(`Marked ${outcome}`, 'success')
+      setSelected(null); load(pagination.page)
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
+  const decisionCls = (d: string) => ({
+    auto_pass:  'bg-green-100 text-green-800',
+    auto_fail:  'bg-red-100 text-red-800',
+    queued:     'bg-yellow-100 text-yellow-800',
+    sent:       'bg-blue-100 text-blue-800',
+    suppressed: 'bg-gray-100 text-gray-600',
+  } as Record<string, string>)[d] ?? 'bg-gray-100 text-gray-800'
+
+  return (
+    <>
+      <div className="mb-3 flex gap-3 items-center">
+        <label className="text-xs flex items-center gap-1">
+          <input type="checkbox" checked={showUnreviewed}
+            onChange={e => setShowUnreviewed(e.target.checked)} />
+          Unreviewed only
+        </label>
+        <button onClick={() => load(pagination.page)}
+          className="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded">Refresh</button>
+      </div>
+
+      {err && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">{err}</div>}
+
+      <div className="bg-white border border-gray-200 rounded overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {['Time','Agent','Action','Decision','Rationale','Confidence',''].map(h => (
+                <th key={h} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading && <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-500">Loading…</td></tr>}
+            {!loading && rows.length === 0 && (
+              <tr><td colSpan={7} className="px-3 py-6 text-center text-gray-500">
+                {showUnreviewed ? 'Nothing needs your review.' : 'No agent actions yet.'}
+              </td></tr>
+            )}
+            {!loading && rows.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">
+                  {new Date(r.created_at).toLocaleString()}
+                </td>
+                <td className="px-3 py-2 text-xs font-mono">{r.agent_name}</td>
+                <td className="px-3 py-2 text-xs font-mono">{r.action_type}</td>
+                <td className="px-3 py-2">
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${decisionCls(r.decision)}`}>
+                    {r.decision}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-xs text-gray-700 max-w-md truncate">{r.rationale}</td>
+                <td className="px-3 py-2 text-xs text-gray-600">
+                  {r.confidence != null ? r.confidence.toFixed(2) : '—'}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <button onClick={() => setSelected(r)}
+                    className="text-indigo-600 hover:text-indigo-800 text-xs">Review</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">
+          <span>Page {pagination.page} of {pagination.pages || 1} · {pagination.total.toLocaleString()} actions</span>
+          <div className="flex gap-1">
+            <button disabled={pagination.page <= 1 || loading} onClick={() => load(pagination.page - 1)}
+              className="px-2 py-1 border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-100">Prev</button>
+            <button disabled={pagination.page >= pagination.pages || loading} onClick={() => load(pagination.page + 1)}
+              className="px-2 py-1 border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-100">Next</button>
+          </div>
+        </div>
+      </div>
+
+      {selected && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+          onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-3 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold">
+                <code className="text-sm">{selected.agent_name}</code> ·{' '}
+                <span className={`inline-block px-2 py-0.5 rounded text-xs ${decisionCls(selected.decision)}`}>
+                  {selected.decision}
+                </span>
+              </h3>
+              <button onClick={() => setSelected(null)}
+                className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+            </div>
+            <div className="p-5 space-y-3 text-sm">
+              <div>
+                <div className="text-xs font-medium text-gray-500 mb-1">Rationale</div>
+                <p className="text-sm">{selected.rationale}</p>
+              </div>
+              {selected.evidence && Object.keys(selected.evidence).length > 0 && (
+                <div>
+                  <div className="text-xs font-medium text-gray-500 mb-1">Evidence</div>
+                  <pre className="bg-gray-50 border border-gray-200 rounded p-2 text-xs overflow-x-auto">
+{JSON.stringify(selected.evidence, null, 2)}
+                  </pre>
+                </div>
+              )}
+              <div className="flex gap-2 pt-3 border-t">
+                {!selected.reviewed_at ? (
+                  <>
+                    <button onClick={() => review(selected, 'confirmed')}
+                      className="px-3 py-1.5 text-sm bg-green-600 hover:bg-green-700 text-white rounded">
+                      Confirm
+                    </button>
+                    <button onClick={() => review(selected, 'overridden')}
+                      className="px-3 py-1.5 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded">
+                      Override
+                    </button>
+                    <button onClick={() => review(selected, 'reversed')}
+                      className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded">
+                      Reverse
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-xs text-gray-600">
+                    Already reviewed: <strong>{selected.review_outcome}</strong> on {new Date(selected.reviewed_at).toLocaleString()}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Baselines tab — confidence and warmup state
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface Baseline {
+  id: string
+  scope: string
+  system_type: string
+  criteria_name: string
+  sample_count: number
+  mean_value: string | null
+  std_dev: string | null
+  p25_value: string | null
+  p75_value: string | null
+  min_observed: string | null
+  max_observed: string | null
+  window_days: number
+  last_sample_at: string | null
+  updated_at: string
+  is_warm: boolean
+}
+
+function BaselinesTab({
+  authHeaders, onToast,
+}: { authHeaders: Record<string, string>; onToast?: (m: string, t?: string) => void }) {
+  const [rows, setRows] = useState<Baseline[]>([])
+  const [pagination, setPagination] = useState<Pagination>(EMPTY_PAGE)
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  async function load(page = 1) {
+    setLoading(true); setErr(null)
+    try {
+      const r = await fetch(`/api/v1/commissioning/baselines?page=${page}`, { headers: authHeaders })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const j = await r.json()
+      setRows(j.data || [])
+      setPagination(j.pagination || EMPTY_PAGE)
+    } catch (e) {
+      setErr(String(e)); onToast?.('Failed to load baselines', 'error')
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+
+  async function reset(row: Baseline) {
+    if (!confirm(`Reset baseline for ${row.system_type} · ${row.criteria_name}? This drops all observations and restarts warmup.`)) return
+    try {
+      const r = await fetch(`/api/v1/commissioning/baselines/${row.id}`, {
+        method: 'DELETE', headers: authHeaders,
+      })
+      if (!r.ok && r.status !== 204) throw new Error(`HTTP ${r.status}`)
+      onToast?.('Baseline reset', 'success')
+      load(pagination.page)
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
+  return (
+    <>
+      <div className="mb-3 flex gap-2 items-center">
+        <button onClick={() => load(pagination.page)}
+          className="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded">Refresh</button>
+        <span className="text-xs text-gray-600">
+          Statistical baselines for numeric criteria. Boolean criteria do not appear here.
+        </span>
+      </div>
+
+      {err && <div className="mb-3 p-3 bg-red-50 border border-red-200 text-red-800 text-sm rounded">{err}</div>}
+
+      <div className="bg-white border border-gray-200 rounded overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {['Scope','System','Criterion','Samples','Mean','Std','IQR (p25 – p75)','Min / Max','Last sample','State',''].map(h => (
+                <th key={h} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading && <tr><td colSpan={11} className="px-3 py-6 text-center text-gray-500">Loading…</td></tr>}
+            {!loading && rows.length === 0 && (
+              <tr><td colSpan={11} className="px-3 py-6 text-center text-gray-500">
+                No baselines yet. They bootstrap on the first passing observation for any numeric rule.
+              </td></tr>
+            )}
+            {!loading && rows.map(r => (
+              <tr key={r.id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 text-xs"><code>{r.scope}</code></td>
+                <td className="px-3 py-2 text-xs font-mono">{r.system_type}</td>
+                <td className="px-3 py-2 text-xs font-mono">{r.criteria_name}</td>
+                <td className="px-3 py-2 text-xs font-mono">{r.sample_count}</td>
+                <td className="px-3 py-2 text-xs font-mono">{fmtNum(r.mean_value)}</td>
+                <td className="px-3 py-2 text-xs font-mono">{fmtNum(r.std_dev)}</td>
+                <td className="px-3 py-2 text-xs font-mono text-gray-600">
+                  {fmtNum(r.p25_value)} – {fmtNum(r.p75_value)}
+                </td>
+                <td className="px-3 py-2 text-xs font-mono text-gray-600">
+                  {fmtNum(r.min_observed)} / {fmtNum(r.max_observed)}
+                </td>
+                <td className="px-3 py-2 text-xs text-gray-600 whitespace-nowrap">
+                  {r.last_sample_at ? new Date(r.last_sample_at).toLocaleString() : '—'}
+                </td>
+                <td className="px-3 py-2">
+                  <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                    r.is_warm ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {r.is_warm ? 'warm' : 'warmup'}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <button onClick={() => reset(r)}
+                    className="text-red-600 hover:text-red-800 text-xs">Reset</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="px-3 py-2 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">
+          <span>Page {pagination.page} of {pagination.pages || 1} · {pagination.total.toLocaleString()} baselines</span>
+          <div className="flex gap-1">
+            <button disabled={pagination.page <= 1 || loading} onClick={() => load(pagination.page - 1)}
+              className="px-2 py-1 border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-100">Prev</button>
+            <button disabled={pagination.page >= pagination.pages || loading} onClick={() => load(pagination.page + 1)}
+              className="px-2 py-1 border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-100">Next</button>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function fmtNum(v: string | null): string {
+  if (v == null) return '—'
+  const n = Number(v)
+  if (!Number.isFinite(n)) return '—'
+  return Math.abs(n) >= 1_000 ? n.toFixed(0) : n.toFixed(3).replace(/\.?0+$/, '')
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

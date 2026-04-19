@@ -280,4 +280,37 @@ router.get('/:id/summary', async (req: Req, res: Response) => {
   })
 })
 
+// ─── PATCH /api/v1/projects/:id/agent-mode ────────────────────────────────────
+// v4.31.0: agentic kill switch. Owner/admin only. The value here gates
+// downstream agent-originated writes via api/middleware/agentMode.ts.
+router.patch('/:id/agent-mode', async (req: Req, res: Response) => {
+  const { tenantId } = req
+  const { id } = req.params
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
+    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
+    return
+  }
+
+  const mode = (req.body as { mode?: string }).mode
+  if (!['auto','review_all','frozen'].includes(mode ?? '')) {
+    res.status(422).json({ error: 'validation', message: 'mode must be auto|review_all|frozen' })
+    return
+  }
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE projects
+    SET agent_mode = $1
+    WHERE id = $2
+      AND tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    RETURNING id, code, name, agent_mode
+  `, [mode, id])
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+
+  slog('WARN', 'projects', '[api] Project agent_mode changed', {
+    tenantId, projectId: id, mode, changedBy: req.auth?.sub,
+  })
+  res.json({ data: result.rows[0] })
+})
+
 export default router

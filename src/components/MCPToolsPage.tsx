@@ -47,6 +47,7 @@ export interface MCPToolsPageProps {
 
 const NATIVE_TOOL_NAMES = new Set([
   'http_fetch','audit_log','audit_query','model_call','embedding_create','session_create','session_resume',
+  'knowledge.fix_search',
 ])
 
 // ─── Component ────────────────────────────────────────────────────────────────

@@ -82,6 +82,9 @@ const NATIVE_TOOLS = [
   { name: 'embedding_create',  cat: 'AI',       live: true,  desc: 'Create text embedding vector',        params: ['text', 'model'] },
   { name: 'session_create',    cat: 'AI',       live: true,  desc: 'Create a named agent session',        params: ['model', 'system_prompt', 'name'] },
   { name: 'session_resume',    cat: 'AI',       live: true,  desc: 'Resume an existing agent session',    params: ['session_id', 'message'] },
+  { name: 'knowledge.fix_search', cat: 'Knowledge', live: true,
+    desc: 'Search the tenant fix library by symptoms / asset system / free text. Returns ranked resolutions.',
+    params: ['symptoms', 'asset_system', 'asset_tag', 'query', 'limit', 'min_confidence'] },
 ]
 
 // v4.31.0 TS fix: AVA_ONLY_TOOLS reference catalogue kept as documentation;
@@ -422,6 +425,34 @@ async function executeNative(
 
         const reply = completion.content.filter(b => b.type === 'text').map(b => (b as Anthropic.TextBlock).text).join('')
         res.json({ session_id, reply, usage: completion.usage })
+        break
+      }
+
+      // ── knowledge.fix_search — tenant Fix Library retrieval ───────────────
+      case 'knowledge.fix_search': {
+        const { searchFixes } = await import('../services/fixLibrary')
+        const symptoms = Array.isArray(params['symptoms']) ? (params['symptoms'] as string[]) : undefined
+        const hits = await searchFixes({
+          tenantId:      r.tenantId,
+          symptoms,
+          assetSystem:   params['asset_system'] as string | undefined,
+          assetTag:      params['asset_tag']    as string | undefined,
+          query:         params['query']        as string | undefined,
+          limit:         typeof params['limit'] === 'number' ? params['limit'] as number : undefined,
+          minConfidence: params['min_confidence'] as 'confirmed'|'probable'|'suspected'|undefined,
+        })
+        res.json({ hits: hits.map(h => ({
+          fix_id:       h.fix.id,
+          score:        Number(h.score.toFixed(3)),
+          confidence:   h.fix.confidence,
+          asset_system: h.fix.asset_system,
+          asset_tag:    h.fix.asset_tag,
+          symptoms:     h.fix.symptoms,
+          root_cause:   h.fix.root_cause,
+          resolution:   h.fix.resolution_steps,
+          source_url:   h.fix.source_url,
+          why:          h.why,
+        })) })
         break
       }
 
