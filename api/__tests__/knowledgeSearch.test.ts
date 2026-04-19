@@ -22,13 +22,25 @@ describe('searchKnowledge', () => {
     expect(mockQuery).not.toHaveBeenCalled()
   })
 
-  it('builds a websearch_to_tsquery + ts_rank_cd query', async () => {
+  it('builds a websearch_to_tsquery + ts_rank_cd query with OR-rewritten terms', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] })
     await searchKnowledge({ tenantId: 't', query: 'oil pressure trip' })
     const [sql, params] = mockQuery.mock.calls[0]!
     expect(sql).toMatch(/websearch_to_tsquery/)
     expect(sql).toMatch(/ts_rank_cd/)
-    expect(params[0]).toBe('oil pressure trip')
+    // Query is rewritten to OR form so long questions still retrieve
+    // relevant chunks — ts_rank_cd handles relevance ordering.
+    expect(params[0]).toBe('oil or pressure or trip')
+  })
+
+  it('drops stop-words when rewriting the query', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] })
+    await searchKnowledge({
+      tenantId: 't',
+      query: 'What is the procedure for starting the chiller?',
+    })
+    const [, params] = mockQuery.mock.calls[0]!
+    expect(params[0]).toBe('procedure or starting or chiller')
   })
 
   it('applies source_ids / tags / asset_system / license_types filters', async () => {

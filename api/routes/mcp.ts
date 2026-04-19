@@ -88,6 +88,9 @@ const NATIVE_TOOLS = [
   { name: 'knowledge.search', cat: 'Knowledge', live: true,
     desc: 'Full-text search over ingested PDF corpus (manuals, IOMs, specs, standards). Returns ranked chunks w/ source citation.',
     params: ['query', 'topK', 'source_ids', 'tags', 'asset_system', 'license_types'] },
+  { name: 'ask_domain', cat: 'Knowledge', live: true,
+    desc: 'Grounded RAG: tier-weighted retrieval + Fix Library lookup + Claude w/ schema-enforced JSON. Returns { answer, procedure, possible_causes, confidence, citations }.',
+    params: ['question', 'project_id', 'asset_system', 'top_k'] },
 ]
 
 // v4.31.0 TS fix: AVA_ONLY_TOOLS reference catalogue kept as documentation;
@@ -446,6 +449,47 @@ async function executeNative(
           licenseTypes: Array.isArray(params['license_types']) ? params['license_types'] as string[] : undefined,
         })
         res.json({ hits })
+        break
+      }
+
+      // ── ask_domain — grounded RAG, schema-enforced answer ─────────────────
+      case 'ask_domain': {
+        if (!r.auth?.sub) return void res.status(401).json({ error: 'user_required' })
+        const { askJarvis } = await import('../services/askBuilder')
+        const question = String(params['question'] ?? '').trim()
+        if (!question) return void res.status(400).json({ error: 'question required' })
+        try {
+          const out = await askJarvis({
+            tenantId:     r.tenantId,
+            userId:       r.auth.sub,
+            question,
+            projectId:    (params['project_id']   as string | undefined) ?? null,
+            assetSystem:  (params['asset_system'] as string | undefined) ?? null,
+            topK:         typeof params['top_k'] === 'number' ? params['top_k'] as number : undefined,
+          })
+          // Return the structured answer directly (what agents consume),
+          // plus trace metadata for audit.
+          res.json({
+            ...out.structured,
+            _meta: {
+              session_id:   out.session_id,
+              message_id:   out.message_id,
+              model:        out.model,
+              retrieved:    out.retrieved_chunks.map(c => ({ chunk_id: c.chunk_id, score: c.score, tier: c.tier })),
+              fixes:        out.matched_fixes.map(f => ({ fix_id: f.fix.id, score: f.score })),
+              input_tokens: out.input_tokens,
+              output_tokens: out.output_tokens,
+              elapsed_ms:   out.elapsed_ms,
+            },
+          })
+        } catch (e: unknown) {
+          const msg = (e as Error).message
+          if (msg.includes('ANTHROPIC_API_KEY')) {
+            res.status(503).json({ error: 'llm_not_configured', message: msg })
+          } else {
+            res.status(500).json({ error: 'ask_failed', message: msg })
+          }
+        }
         break
       }
 

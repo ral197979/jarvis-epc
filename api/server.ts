@@ -83,6 +83,7 @@ import baselinesRouter        from './routes/baselinesRoutes'    // v4.31.0
 import correlationsRouter     from './routes/correlations'       // v4.31.0
 import fixLibraryRouter       from './routes/fixLibrary'          // v4.31.0
 import knowledgeRouter        from './routes/knowledge'            // v4.31.0
+import askRouter              from './routes/ask'                  // v4.31.0
 import { startPackWorker, stopPackWorker } from './services/packWorker' // v4.30.0
 import { startScheduler,  stopScheduler  } from './services/scheduler'  // v4.31.0
 import { registerWebhookDispatchHandler, emitEvent } from './services/webhookDispatch' // v4.31.0
@@ -293,6 +294,7 @@ app.use('/api/v1/agent-actions',   agentActionsRouter) // v4.31.0: agent action 
 app.use('/api/v1/correlations',    correlationsRouter) // v4.31.0: event proximity ranker
 app.use('/api/v1/knowledge-fixes', fixLibraryRouter)   // v4.31.0: Pattern C fix library
 app.use('/api/v1/knowledge',       knowledgeRouter)    // v4.31.0: ingested-document corpus
+app.use('/api/v1/ask',             askRouter)          // v4.31.0: grounded RAG chat
 app.use('/api/v1',                calculationsRouter)
 app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
 app.use('/api/v1',                dailyLogsRouter)      // v4.31.0: Daily logs
