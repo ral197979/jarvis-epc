@@ -194,7 +194,11 @@ export function _chunkText(text: string,
 ): Chunk[] {
   // Normalize whitespace to reduce noise in chunks (PDFs extract with
   // lots of \r and stray spaces). Preserve paragraph breaks as \n\n.
+  // Also strip ASCII control chars that PostgreSQL's UTF8 encoding
+  // rejects (especially the \u0000 NUL that pdf-parse sometimes emits
+  // from damaged/encrypted PDFs). Keeps \t and \n.
   const normalized = text
+    .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '')
     .replace(/\r\n?/g, '\n')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
