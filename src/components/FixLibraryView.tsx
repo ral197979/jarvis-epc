@@ -46,22 +46,61 @@ interface Props {
   onToast?: (m: string, t?: string) => void
 }
 
+interface NewTabPrefill {
+  sourceUrl?:   string
+  sourceNote?: string
+  title?:      string
+}
+
 export default function FixLibraryView({ onToast }: Props) {
   const [tab, setTab] = useState<Tab>('browse')
+  const [prefill, setPrefill] = useState<NewTabPrefill | null>(null)
+  const [showSetup, setShowSetup] = useState(false)
+
   const token = useMemo(() => {
     try { return localStorage.getItem('jarvis_token') || '' } catch { return '' }
   }, [])
   const authHeaders = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token])
 
+  // v4.31.0: "Save to Fix Library" bookmarklet deep-link.
+  // URL pattern:  /?tab=fixlibrary&source_url=<u>&source_note=<n>&title=<t>
+  // On first mount, if any of those are present, switch to the New tab,
+  // hand them to the form, and scrub the URL so a refresh doesn't repeat
+  // the pre-fill.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const p = new URLSearchParams(window.location.search)
+      const sourceUrl  = p.get('source_url')  ?? undefined
+      const sourceNote = p.get('source_note') ?? undefined
+      const title      = p.get('title')       ?? undefined
+      if (sourceUrl || sourceNote || title) {
+        setPrefill({ sourceUrl, sourceNote, title })
+        setTab('new')
+        // Clean the URL without triggering a reload.
+        const clean = window.location.pathname + window.location.hash
+        window.history.replaceState({}, '', clean)
+      }
+    } catch { /* URL parse failures ignored */ }
+  }, [])
+
   return (
     <div className="p-6">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold text-gray-900">Fix Library</h2>
-        <p className="text-sm text-gray-600">
-          Engineer-authored resolutions. The arbiter surfaces relevant fixes when tests fail or are flagged
-          as novel; growing the library improves that assistance.
-        </p>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Fix Library</h2>
+          <p className="text-sm text-gray-600">
+            Engineer-authored resolutions. The arbiter surfaces relevant fixes when tests fail or are flagged
+            as novel; growing the library improves that assistance.
+          </p>
+        </div>
+        <button onClick={() => setShowSetup(v => !v)}
+          className="text-xs text-indigo-600 hover:text-indigo-800 whitespace-nowrap">
+          {showSetup ? 'Hide setup' : '💡 Install bookmarklet'}
+        </button>
       </div>
+
+      {showSetup && <BookmarkletSetup onClose={() => setShowSetup(false)} />}
 
       <div className="mb-4 border-b border-gray-200 flex gap-0">
         {(['browse','search','new'] as const).map(t => (
@@ -79,7 +118,66 @@ export default function FixLibraryView({ onToast }: Props) {
       {tab === 'browse' && <BrowseTab authHeaders={authHeaders} onToast={onToast} />}
       {tab === 'search' && <SearchTab authHeaders={authHeaders} onToast={onToast} />}
       {tab === 'new'    && <NewTab    authHeaders={authHeaders} onToast={onToast}
-        onCreated={() => setTab('browse')} />}
+        initial={prefill ?? undefined}
+        onCreated={() => { setPrefill(null); setTab('browse') }} />}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Bookmarklet setup panel
+// ═══════════════════════════════════════════════════════════════════════════
+
+function BookmarkletSetup({ onClose }: { onClose: () => void }) {
+  // Build the bookmarklet against THIS deployment's origin so drag-and-drop
+  // works out of the box regardless of dev/staging/prod domain.
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const bookmarkletHref =
+    `javascript:(function(){` +
+      `var sel=window.getSelection().toString().slice(0,500);` +
+      `var u='${origin}/?tab=fixlibrary`
+        + `&source_url='+encodeURIComponent(location.href)` +
+        `+'&source_note='+encodeURIComponent(sel)` +
+        `+'&title='+encodeURIComponent(document.title);` +
+      `window.open(u,'_blank');` +
+    `})()`
+
+  return (
+    <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded text-sm">
+      <div className="flex items-start justify-between mb-2">
+        <h3 className="font-semibold text-indigo-900">Save to Fix Library — browser bookmarklet</h3>
+        <button onClick={onClose} className="text-indigo-400 hover:text-indigo-600">&times;</button>
+      </div>
+      <p className="text-indigo-800 mb-3">
+        Drag the button below to your bookmarks bar. On any forum thread or manufacturer page,
+        highlight the sentence you want to paraphrase, then click the bookmark. Jarvis opens in a
+        new tab with the URL + your selection pre-filled. You write the fix; the source text never
+        hits Jarvis&apos;s servers.
+      </p>
+      <div className="flex items-center gap-3 mb-3">
+        {/* eslint-disable-next-line react/jsx-no-target-blank */}
+        <a href={bookmarkletHref}
+          className="inline-block px-3 py-2 bg-indigo-600 text-white rounded text-sm font-medium shadow hover:bg-indigo-700 cursor-grab active:cursor-grabbing"
+          onClick={(e) => {
+            e.preventDefault()
+            alert('Drag this button to your browser\'s bookmarks bar — clicking it here just navigates.')
+          }}
+        >
+          📌 Save to Fix Library
+        </a>
+        <span className="text-xs text-indigo-700">← drag me to your bookmarks bar</span>
+      </div>
+      <details className="text-xs text-indigo-700">
+        <summary className="cursor-pointer">Source (for manual install)</summary>
+        <pre className="mt-2 bg-white border border-indigo-200 rounded p-2 text-xs overflow-x-auto whitespace-pre-wrap break-all">
+{bookmarkletHref}
+        </pre>
+      </details>
+      <p className="mt-3 text-xs text-indigo-700">
+        <strong>Note:</strong> Jarvis never fetches forum content server-side. You paste the takeaway in
+        your own words; the URL is stored only as a citation. This stays within personal-use terms of
+        every forum we&apos;ve reviewed.
+      </p>
     </div>
   )
 }
@@ -301,17 +399,39 @@ function SearchTab({ authHeaders, onToast }: { authHeaders: Record<string,string
 // ═══════════════════════════════════════════════════════════════════════════
 
 function NewTab({
-  authHeaders, onToast, onCreated,
-}: { authHeaders: Record<string,string>; onToast?: (m:string,t?:string)=>void; onCreated: () => void }) {
+  authHeaders, onToast, onCreated, initial,
+}: {
+  authHeaders: Record<string,string>
+  onToast?: (m:string,t?:string)=>void
+  onCreated: () => void
+  initial?: { sourceUrl?: string; sourceNote?: string; title?: string }
+}) {
+  // If a title came in from the bookmarklet but the engineer didn't
+  // highlight anything, fall back to the page title as the source note
+  // so there's some context to anchor the fix writeup to.
+  const initialNote = initial?.sourceNote && initial.sourceNote.trim().length > 0
+    ? initial.sourceNote
+    : (initial?.title ?? '')
+
   const [assetSystem, setAssetSystem] = useState('')
   const [assetTag, setAssetTag] = useState('')
   const [symptoms, setSymptoms] = useState('')
   const [rootCause, setRootCause] = useState('')
   const [resolution, setResolution] = useState('')
   const [confidence, setConfidence] = useState<'confirmed'|'probable'|'suspected'>('probable')
-  const [sourceUrl, setSourceUrl] = useState('')
-  const [sourceNote, setSourceNote] = useState('')
+  const [sourceUrl, setSourceUrl] = useState(initial?.sourceUrl ?? '')
+  const [sourceNote, setSourceNote] = useState(initialNote)
   const [submitting, setSubmitting] = useState(false)
+
+  // If the bookmarklet fires while the user is already in the New tab
+  // (tab stays mounted), sync the incoming pre-fill rather than creating
+  // a second instance. Only update empty fields so in-progress edits stick.
+  useEffect(() => {
+    if (!initial) return
+    if (initial.sourceUrl && !sourceUrl) setSourceUrl(initial.sourceUrl)
+    if (initialNote && !sourceNote) setSourceNote(initialNote)
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [initial?.sourceUrl, initial?.sourceNote, initial?.title])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()

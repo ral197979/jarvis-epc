@@ -13,12 +13,26 @@ import './styles/index.css'
 // In development: .env.local defaults to proxied; set to 'direct' only for local-only dev.
 import { setGatewayMode, setBackendBase } from './modules/store'
 import { installAutoFlush } from './modules/offlineQueue'
+import { useAppStore } from './modules/store/appSlice'
 
 // v4.31.0: PWA offline queue — install 'online' + SW listeners so that
 // pending mutations captured while offline auto-replay on reconnection.
 // Safe to call unconditionally; installAutoFlush short-circuits in SSR
 // or when IndexedDB is unavailable.
 installAutoFlush()
+
+// v4.31.0: deep-link support for bookmarklets ("Save to Fix Library" etc.).
+// If the URL carries ?tab=<id>, switch to that tab before the first render
+// so users land on the right view. Query params specific to a view (e.g.
+// source_url for FixLibrary) are read by the view itself on mount.
+try {
+  const params = new URLSearchParams(window.location.search)
+  const wantTab = params.get('tab')
+  if (wantTab) {
+    const store = useAppStore.getState()
+    if (typeof store.setTab === 'function') store.setTab(wantTab)
+  }
+} catch { /* URL parse failures are ignored — stay on default tab */ }
 
 const _rawGatewayMode = import.meta.env.VITE_GATEWAY_MODE
 const _rawBackendUrl  = import.meta.env.VITE_BACKEND_URL ?? ''
