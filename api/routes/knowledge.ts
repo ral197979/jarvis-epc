@@ -22,6 +22,7 @@ import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
 import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
 import { enqueueExtractFromSource, enqueueExtractBulk } from '../services/fixExtractor'
+import { enqueueEmbedSource, enqueueEmbedBulk } from '../services/knowledgeEmbed'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -347,6 +348,77 @@ router.post('/sources/:id/mine-fixes', async (req: Req, res: Response) => {
     const msg = err instanceof Error ? err.message : String(err)
     res.status(500).json({ error: 'enqueue_failed', message: msg })
   }
+})
+
+// ─── Embed chunks (per source) ────────────────────────────────────────────────
+
+router.post('/sources/:id/embed', async (req: Req, res: Response) => {
+  if (!_requireAdmin(req, res)) return
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const own = await tenantQuery<{ id: string; status: string }>(tenantId, `
+    SELECT id, status FROM knowledge_sources
+    WHERE id = $1 AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+  `, [req.params['id']])
+  if (!own.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  if (own.rows[0].status !== 'ready') {
+    res.status(409).json({ error: 'source_not_ready', message: `status=${own.rows[0].status}` })
+    return
+  }
+
+  try {
+    const jobId = await enqueueEmbedSource(tenantId, String(req.params['id']), req.auth?.sub ?? null)
+    res.status(202).json({ data: { source_id: req.params['id'], job_id: jobId, queued: true } })
+  } catch (err) {
+    res.status(500).json({ error: 'enqueue_failed', message: err instanceof Error ? err.message : String(err) })
+  }
+})
+
+// ─── Embed in bulk — queue every source with un-embedded chunks ────────────────
+
+router.post('/embed-bulk', async (req: Req, res: Response) => {
+  if (!_requireAdmin(req, res)) return
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const b = req.body as { limit?: number }
+  try {
+    const result = await enqueueEmbedBulk(tenantId, req.auth?.sub ?? null, {
+      limit: typeof b?.limit === 'number' ? b.limit : undefined,
+    })
+    res.status(202).json({ data: result })
+  } catch (err) {
+    res.status(500).json({ error: 'enqueue_failed', message: err instanceof Error ? err.message : String(err) })
+  }
+})
+
+// ─── Embed status summary ─────────────────────────────────────────────────────
+
+router.get('/embed-status', async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  const r = await tenantQuery<{
+    total: string; embedded: string; pending: string
+  }>(tenantId, `
+    SELECT
+      COUNT(*)::text                                   AS total,
+      COUNT(*) FILTER (WHERE embedding IS NOT NULL)::text AS embedded,
+      COUNT(*) FILTER (WHERE embedding IS NULL)::text     AS pending
+    FROM knowledge_chunks
+    WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid
+  `, [])
+  const row = r.rows[0]!
+  res.json({
+    data: {
+      total:    parseInt(row.total, 10),
+      embedded: parseInt(row.embedded, 10),
+      pending:  parseInt(row.pending, 10),
+      percent_complete: parseInt(row.total, 10) > 0
+        ? Math.round(100 * parseInt(row.embedded, 10) / parseInt(row.total, 10))
+        : 0,
+    },
+  })
 })
 
 // ─── Mine fixes in bulk — OEM + record tier only by default ────────────────────

@@ -13,6 +13,8 @@
 
 import { tenantQuery } from '../db/pool'
 import { classifySource, TIER_WEIGHT, type SourceTier } from './knowledgeTier'
+import { embedTexts, toPgVectorLiteral } from './embed'
+import { slog } from '../../src/modules/observability/index'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +33,14 @@ export interface KnowledgeSearchInput {
   // Over-fetch multiplier when tier-boosting: pull more candidates and
   // let the re-rank pick the best topK. Default 4.
   tierOverFetch?: number
+  // Phase 3: blend lexical FTS with pgvector cosine similarity.
+  // Fails open — if no embedding provider / no embedded chunks, falls
+  // back silently to pure lexical. Default true for askBuilder callers.
+  useSemantic?: boolean
+  // Weight for the semantic contribution (0 = pure lexical, 1 = pure
+  // semantic). Default 0.55, slightly favoring semantic once corpus
+  // is embedded. Blend happens on candidates present in both result sets.
+  semanticWeight?: number
 }
 
 export interface KnowledgeHit {
@@ -42,10 +52,11 @@ export interface KnowledgeHit {
   page_ref:      string | null
   ordinal:       number
   text:          string
-  score:         number         // post-weight final score
+  score:         number         // post-weight final score (blended if semantic on)
   lexical_score: number         // raw FTS score (pre-weight)
+  semantic_score?: number       // cosine similarity in 0..1 (higher = closer)
   tier:          SourceTier
-  rank_type:     'lexical' | 'tier_weighted'
+  rank_type:     'lexical' | 'tier_weighted' | 'hybrid'
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -180,5 +191,152 @@ export async function searchKnowledge(input: KnowledgeSearchInput): Promise<Know
   if (applyBoost) {
     candidates.sort((a, b) => b.score - a.score)
   }
+
+  // ── Phase 3 hybrid: blend in semantic similarity when requested ─────────────
+  // We compute semantic scores OVER THE LEXICAL CANDIDATE SET plus a
+  // semantic-native candidate list; both are unioned. This gives us
+  // synonym-recall (chunks that match semantically but not lexically)
+  // AND preserves precision (strong lexical matches rank high regardless).
+  const wantSemantic = input.useSemantic !== false && !!process.env['OPENAI_API_KEY']
+  if (wantSemantic) {
+    const blended = await _applySemanticBlend(input, candidates, tsQuery, conds, vals, i, fetchLimit, topK)
+    if (blended) return blended
+  }
   return candidates.slice(0, topK)
+}
+
+// ─── Semantic blend helper ────────────────────────────────────────────────────
+//
+// Pulls a second candidate set using pgvector cosine distance, merges
+// with the lexical candidates, normalizes + blends scores, and applies
+// the tier boost (same as the lexical path).
+//
+// Returns null if no embeddings exist yet or the embedder isn't
+// reachable — caller then falls back to pure lexical.
+async function _applySemanticBlend(
+  input:         KnowledgeSearchInput,
+  lexical:       KnowledgeHit[],
+  _tsQuery:      string,
+  baseConds:     string[],
+  baseVals:      unknown[],
+  nextParamIdx:  number,
+  fetchLimit:    number,
+  topK:          number,
+): Promise<KnowledgeHit[] | null> {
+  const semanticWeight = Math.min(1, Math.max(0, input.semanticWeight ?? 0.55))
+  const applyBoost = !!input.applyTierBoost
+
+  let queryVec: number[]
+  try {
+    const r = await embedTexts([input.query])
+    queryVec = r.vectors[0] ?? []
+    if (queryVec.length === 0) return null
+  } catch (err) {
+    slog('WARN', 'knowledgeSearch', '[hybrid] embedding call failed, falling back to lexical', {
+      message: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+
+  // Vector candidate query. We drop the tsvector match condition so we
+  // can find chunks that semantically match but don't share keywords.
+  // All other filters (project, tags, source ids, license) stay.
+  const semConds = baseConds.filter(c => !c.includes('search_tsv'))
+  const semVals  = baseVals.slice()
+  semVals.push(toPgVectorLiteral(queryVec))
+  const semIdx = nextParamIdx            // where the $N of the vector literal lands
+
+  let semRes
+  try {
+    semRes = await tenantQuery<{
+      chunk_id:     string
+      source_id:    string
+      source_title: string
+      source_kind:  string
+      license_type: string
+      page_ref:     string | null
+      ordinal:      number
+      text:         string
+      cosine_dist:  string
+    }>(input.tenantId, `
+      SELECT
+        c.id              AS chunk_id,
+        c.source_id       AS source_id,
+        s.title           AS source_title,
+        s.kind            AS source_kind,
+        s.license_type    AS license_type,
+        c.page_ref        AS page_ref,
+        c.ordinal         AS ordinal,
+        c.text            AS text,
+        (c.embedding <=> $${semIdx}::vector)::text AS cosine_dist
+      FROM knowledge_chunks c
+      JOIN knowledge_sources s ON s.id = c.source_id
+      WHERE ${semConds.join(' AND ')}
+        AND c.embedding IS NOT NULL
+      ORDER BY c.embedding <=> $${semIdx}::vector
+      LIMIT ${fetchLimit}
+    `, semVals)
+  } catch (err) {
+    slog('WARN', 'knowledgeSearch', '[hybrid] vector query failed, falling back to lexical', {
+      message: err instanceof Error ? err.message : String(err),
+    })
+    return null
+  }
+
+  if (semRes.rows.length === 0) return null        // corpus not embedded yet
+
+  // Convert distance → similarity in 0..1.
+  // pgvector's `<=>` returns 0 for identical, up to 2 for opposite.
+  // sim = 1 - dist/2 bounds it in [0,1].
+  const semanticHits: KnowledgeHit[] = semRes.rows.map(r => {
+    const dist = Number(r.cosine_dist)
+    const sim  = Math.max(0, 1 - dist / 2)
+    const tier = classifySource(r.source_title, r.source_kind)
+    return {
+      chunk_id:       r.chunk_id,
+      source_id:      r.source_id,
+      source_title:   r.source_title,
+      source_kind:    r.source_kind,
+      license_type:   r.license_type,
+      page_ref:       r.page_ref,
+      ordinal:        r.ordinal,
+      text:           r.text,
+      score:          sim,                   // placeholder; blend computed below
+      lexical_score:  0,
+      semantic_score: sim,
+      tier,
+      rank_type:      'hybrid',
+    }
+  })
+
+  // Merge by chunk_id; lexical score + semantic score live on the same row.
+  const byId = new Map<string, KnowledgeHit>()
+  for (const h of lexical) {
+    byId.set(h.chunk_id, { ...h, rank_type: 'hybrid', semantic_score: 0 })
+  }
+  for (const s of semanticHits) {
+    const existing = byId.get(s.chunk_id)
+    if (existing) {
+      existing.semantic_score = s.semantic_score
+    } else {
+      byId.set(s.chunk_id, s)
+    }
+  }
+
+  // Normalize lexical score to 0..1 relative to the max in this result set.
+  const maxLex = Math.max(
+    ...Array.from(byId.values()).map(h => h.lexical_score),
+    0.0001,
+  )
+  // Blend + apply tier boost.
+  for (const h of byId.values()) {
+    const lex   = h.lexical_score / maxLex
+    const sem   = h.semantic_score ?? 0
+    const blend = (1 - semanticWeight) * lex + semanticWeight * sem
+    h.score = applyBoost ? blend * TIER_WEIGHT[h.tier] : blend
+  }
+
+  const merged = Array.from(byId.values())
+  merged.sort((a, b) => b.score - a.score)
+  return merged.slice(0, topK)
 }

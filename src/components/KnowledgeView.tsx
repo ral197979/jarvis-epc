@@ -265,6 +265,29 @@ function SourcesTab({
     } catch (e) { onToast?.(String(e), 'error') }
   }
 
+  async function embedSource(row: SourceRow) {
+    try {
+      const r = await fetch(`/api/v1/knowledge/sources/${row.id}/embed`, {
+        method: 'POST', headers: authHeaders,
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      onToast?.(`Embedding queued for ${row.title.slice(0, 40)}`, 'success')
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
+  async function bulkEmbed() {
+    if (!confirm('Embed all un-embedded chunks (OpenAI text-embedding-3-small, ~$0.43 for full 61k-chunk corpus)?')) return
+    try {
+      const r = await fetch('/api/v1/knowledge/embed-bulk', {
+        method: 'POST', headers: { ...authHeaders, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 500 }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      const j = await r.json()
+      onToast?.(`Embedding queued for ${j.data.enqueued} sources`, 'success')
+    } catch (e) { onToast?.(String(e), 'error') }
+  }
+
   async function remove(row: SourceRow) {
     if (!confirm(`Delete "${row.title}" and all its chunks?`)) return
     try {
@@ -300,6 +323,10 @@ function SourcesTab({
         <button onClick={bulkMine}
           className="px-3 py-2 text-sm bg-amber-600 hover:bg-amber-700 text-white rounded">
           ⚗ Mine fixes (bulk)
+        </button>
+        <button onClick={bulkEmbed}
+          className="px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded">
+          ✨ Embed corpus
         </button>
         <span className="text-xs text-gray-600">
           Claude reads OEM / record sources and extracts <code>{`{symptoms, root_cause, resolution}`}</code>
@@ -351,6 +378,10 @@ function SourcesTab({
                     {r.status === 'ready' && (
                       <button onClick={() => mineFixes(r)}
                         className="text-indigo-600 hover:text-indigo-800 text-xs mr-3">⚗ Mine fixes</button>
+                    )}
+                    {r.status === 'ready' && (
+                      <button onClick={() => embedSource(r)}
+                        className="text-purple-600 hover:text-purple-800 text-xs mr-3">✨ Embed</button>
                     )}
                     {r.status !== 'ingesting' && (
                       <button onClick={() => reingest(r)}

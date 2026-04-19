@@ -185,7 +185,9 @@ export async function askJarvis(input: AskInput): Promise<AskResult> {
   const topK    = Math.max(3, Math.min(12, input.topK ?? 8))
   const chunkCharLimit = Math.max(300, Math.min(3000, input.chunkCharLimit ?? 1200))
 
-  // 1-3: tier-weighted retrieval over corpus
+  // 1-3: tier-weighted retrieval over corpus. Hybrid (lexical + semantic)
+  // when the corpus has embeddings; falls back silently to pure lexical
+  // otherwise — never errors the /ask request for missing embeddings.
   const chunks = await searchKnowledge({
     tenantId:       input.tenantId,
     query:          input.question,
@@ -193,6 +195,7 @@ export async function askJarvis(input: AskInput): Promise<AskResult> {
     assetSystem:    input.assetSystem ?? undefined,
     projectId:      input.projectId ?? undefined,
     applyTierBoost: true,
+    useSemantic:    true,
   })
 
   // 4: parallel fix-library lookup — question becomes a free-text query.
