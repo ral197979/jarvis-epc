@@ -197,7 +197,10 @@ export async function searchKnowledge(input: KnowledgeSearchInput): Promise<Know
   // semantic-native candidate list; both are unioned. This gives us
   // synonym-recall (chunks that match semantically but not lexically)
   // AND preserves precision (strong lexical matches rank high regardless).
-  const wantSemantic = input.useSemantic !== false && !!process.env['OPENAI_API_KEY']
+  // Provider-agnostic check — we're happy if EITHER OpenAI or Together
+  // has a key. The embed service auto-picks the right one.
+  const hasEmbedProvider = !!process.env['OPENAI_API_KEY'] || !!process.env['TOGETHER_AI_API_KEY']
+  const wantSemantic = input.useSemantic !== false && hasEmbedProvider
   if (wantSemantic) {
     const blended = await _applySemanticBlend(input, candidates, tsQuery, conds, vals, i, fetchLimit, topK)
     if (blended) return blended
@@ -217,9 +220,9 @@ async function _applySemanticBlend(
   input:         KnowledgeSearchInput,
   lexical:       KnowledgeHit[],
   _tsQuery:      string,
-  baseConds:     string[],
-  baseVals:      unknown[],
-  nextParamIdx:  number,
+  _baseConds:    string[],
+  _baseVals:     unknown[],
+  _nextParamIdx: number,
   fetchLimit:    number,
   topK:          number,
 ): Promise<KnowledgeHit[] | null> {
@@ -232,21 +235,47 @@ async function _applySemanticBlend(
     queryVec = r.vectors[0] ?? []
     if (queryVec.length === 0) return null
   } catch (err) {
-    slog('WARN', 'knowledgeSearch', '[hybrid] embedding call failed, falling back to lexical', {
-      message: err instanceof Error ? err.message : String(err),
-    })
+    slog('WARN', 'knowledgeSearch',
+      `[hybrid] embedding call failed (${err instanceof Error ? err.message.slice(0, 200) : String(err)}) — falling back to lexical`)
     return null
   }
 
-  // Vector candidate query. We drop the tsvector match condition so we
-  // can find chunks that semantically match but don't share keywords.
-  // All other filters (project, tags, source ids, license) stay.
-  const semConds = baseConds.filter(c => !c.includes('search_tsv'))
-  const semVals  = baseVals.slice()
+  // Build the vector query with FRESH parameters. We cannot reuse the
+  // lexical path's vals[] because it includes the tsQuery at $1 — if
+  // we drop the tsvector condition but keep that param, Postgres can't
+  // infer its type and the query errors. So re-thread filters here.
+  const semConds: string[] = [
+    `c.tenant_id = current_setting('app.current_tenant_id',true)::uuid`,
+    `c.embedding IS NOT NULL`,
+    `s.status = 'ready'`,
+  ]
+  const semVals: unknown[] = []
+  let pi = 1
+  if (input.sourceIds && input.sourceIds.length > 0) {
+    semConds.push(`c.source_id = ANY($${pi++}::uuid[])`)
+    semVals.push(input.sourceIds)
+  }
+  if (input.assetSystem) {
+    semConds.push(`s.asset_system = $${pi++}`)
+    semVals.push(input.assetSystem)
+  }
+  if (input.tags && input.tags.length > 0) {
+    semConds.push(`s.tags && $${pi++}::text[]`)
+    semVals.push(input.tags)
+  }
+  if (input.licenseTypes && input.licenseTypes.length > 0) {
+    semConds.push(`s.license_type = ANY($${pi++}::text[])`)
+    semVals.push(input.licenseTypes)
+  }
+  if (input.projectId) {
+    semConds.push(`s.project_id = $${pi++}`)
+    semVals.push(input.projectId)
+  }
+  const semIdx = pi
   semVals.push(toPgVectorLiteral(queryVec))
-  const semIdx = nextParamIdx            // where the $N of the vector literal lands
 
   let semRes
+  const vecSqlParams = semVals.slice()
   try {
     semRes = await tenantQuery<{
       chunk_id:     string
@@ -272,14 +301,13 @@ async function _applySemanticBlend(
       FROM knowledge_chunks c
       JOIN knowledge_sources s ON s.id = c.source_id
       WHERE ${semConds.join(' AND ')}
-        AND c.embedding IS NOT NULL
       ORDER BY c.embedding <=> $${semIdx}::vector
       LIMIT ${fetchLimit}
     `, semVals)
   } catch (err) {
-    slog('WARN', 'knowledgeSearch', '[hybrid] vector query failed, falling back to lexical', {
-      message: err instanceof Error ? err.message : String(err),
-    })
+    // Put full error text into msg since slog doesn't print the context obj
+    const emsg = err instanceof Error ? err.message : String(err)
+    slog('WARN', 'knowledgeSearch', `[hybrid] vector query failed (${emsg.slice(0, 300)}) — falling back to lexical. paramCount=${vecSqlParams.length} semIdx=${semIdx}`)
     return null
   }
 
