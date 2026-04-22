@@ -40,10 +40,16 @@ import {
   type CxStepResult,
   type DefSeverity,
 } from '../modules/commissioning/rules'
+import {
+  listProjectTemplates,
+  instantiateProjectTemplate,
+  type ProjectTemplate,
+  type ProjectTemplateKey,
+} from '../modules/commissioning/projectTemplates'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type WorkflowTab = 'scope' | 'matrix' | 'packs' | 'execute' | 'deficiencies' | 'turnover'
+type WorkflowTab = 'project' | 'scope' | 'matrix' | 'packs' | 'execute' | 'deficiencies' | 'turnover'
 
 export interface CxWorkflowViewProps {
   policy:       PolicyConfig
@@ -78,6 +84,146 @@ function SevPill({ severity }: { severity: DefSeverity }) {
     <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: `color-mix(in srgb, ${c} 16%, transparent)`, color: c, textTransform: 'uppercase' }}>
       {severity}
     </span>
+  )
+}
+
+// ─── Tab: Project Setup ───────────────────────────────────────────────────────
+// Pick a project type → review auto-bundled systems → add/remove → apply.
+// "Apply" instantiates one CxAsset per selected slot and registers a system
+// (contract) in the biz store, so the Matrix tab can pick them up immediately.
+
+function ProjectSetupTab({
+  templates, canWrite, onApply, hasExistingAssets,
+}: {
+  templates:         ProjectTemplate[]
+  canWrite:          boolean
+  hasExistingAssets: boolean
+  onApply:           (key: ProjectTemplateKey, projectName: string, selected: Set<string>) => void
+}) {
+  const [selectedKey,  setSelectedKey]  = useState<ProjectTemplateKey | null>(null)
+  const [projectName,  setProjectName]  = useState('')
+  const [selectedSys,  setSelectedSys]  = useState<Set<string>>(new Set())
+
+  const selectedTemplate = templates.find(t => t.key === selectedKey)
+
+  function pickTemplate(t: ProjectTemplate) {
+    setSelectedKey(t.key)
+    setProjectName(t.label)
+    setSelectedSys(new Set(t.systems.map(s => s.name)))
+  }
+
+  function toggleSystem(name: string) {
+    setSelectedSys(prev => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else                next.add(name)
+      return next
+    })
+  }
+
+  function handleApply() {
+    if (!selectedKey || selectedSys.size === 0) return
+    onApply(selectedKey, projectName, selectedSys)
+    setSelectedKey(null)
+    setSelectedSys(new Set())
+    setProjectName('')
+  }
+
+  return (
+    <div>
+      <div className="jarvis-card" style={{ padding: 14, marginBottom: 16 }}>
+        <h4 className="jarvis-label" style={{ marginBottom: 6 }}>Pick a project type</h4>
+        <p className="jarvis-muted" style={{ fontSize: 11, marginBottom: 12 }}>
+          Each template is a starter scope — you can add or remove systems before applying.
+          {hasExistingAssets && ' Applying will append to your existing assets, not replace them.'}
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+          {templates.map(t => {
+            const isActive = t.key === selectedKey
+            return (
+              <button
+                key={t.key}
+                onClick={() => pickTemplate(t)}
+                className="jarvis-card"
+                style={{
+                  padding: 12, textAlign: 'left' as const, cursor: 'pointer', border: isActive ? '1px solid var(--jarvis-ac)' : '1px solid var(--jarvis-bd)',
+                  background: isActive ? 'color-mix(in srgb, var(--jarvis-ac) 8%, transparent)' : 'var(--jarvis-cd)',
+                }}
+              >
+                <div className="jarvis-body" style={{ fontWeight: 700, marginBottom: 4 }}>{t.label}</div>
+                <div className="jarvis-muted" style={{ fontSize: 10, marginBottom: 6, lineHeight: 1.4 }}>{t.description}</div>
+                <div className="jarvis-small" style={{ color: 'var(--jarvis-ac)', fontWeight: 600 }}>
+                  {t.systems.length} system{t.systems.length === 1 ? '' : 's'}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {selectedTemplate && (
+        <div className="jarvis-card" style={{ padding: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12, gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <h4 className="jarvis-heading" style={{ fontSize: 13, marginBottom: 2 }}>{selectedTemplate.label}</h4>
+              <p className="jarvis-muted" style={{ fontSize: 11 }}>{selectedTemplate.description}</p>
+            </div>
+            <div style={{ minWidth: 240, flex: '0 0 auto' }}>
+              <label className="jarvis-small" htmlFor="cx-proj-name" style={{ display: 'block', marginBottom: 4 }}>Project name</label>
+              <input
+                id="cx-proj-name"
+                className="jarvis-input"
+                value={projectName}
+                onChange={e => setProjectName(e.target.value)}
+                placeholder={selectedTemplate.label}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span className="jarvis-label">Bundled systems</span>
+            <span className="jarvis-small">{selectedSys.size} of {selectedTemplate.systems.length} selected</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 6, marginBottom: 16 }}>
+            {selectedTemplate.systems.map(sys => {
+              const checked = selectedSys.has(sys.name)
+              return (
+                <label key={sys.name} style={{
+                  display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
+                  background: checked ? 'color-mix(in srgb, var(--jarvis-ac) 6%, transparent)' : 'var(--jarvis-bl)',
+                  border: '1px solid var(--jarvis-bd)', borderRadius: 6, cursor: 'pointer', fontSize: 12,
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleSystem(sys.name)}
+                    style={{ accentColor: 'var(--jarvis-ac)' }}
+                  />
+                  <span style={{ flex: 1 }}>{sys.name}</span>
+                  <span className="jarvis-small" style={{ fontFamily: 'var(--jarvis-font-mono)', color: 'var(--jarvis-ts)' }}>{sys.assetType}</span>
+                </label>
+              )
+            })}
+          </div>
+
+          {canWrite && (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <button
+                className="jarvis-btn jarvis-btn-primary"
+                onClick={handleApply}
+                disabled={selectedSys.size === 0 || !projectName.trim()}
+              >
+                ✓ Apply Template ({selectedSys.size} system{selectedSys.size === 1 ? '' : 's'})
+              </button>
+              {selectedSys.size === 0 && <span className="jarvis-muted" style={{ fontSize: 11 }}>Select at least one system</span>}
+              {!projectName.trim() && <span className="jarvis-muted" style={{ fontSize: 11 }}>Project name required</span>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -852,6 +998,7 @@ function WorkflowDashboard({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const TABS: { id: WorkflowTab; label: string; icon: string }[] = [
+  { id: 'project',      label: 'Project Setup', icon: '🏗️' },
   { id: 'scope',        label: 'Scope',        icon: '🔍' },
   { id: 'matrix',       label: 'Matrix',       icon: '📋' },
   { id: 'packs',        label: 'Packs',        icon: '📦' },
@@ -861,7 +1008,7 @@ const TABS: { id: WorkflowTab; label: string; icon: string }[] = [
 ]
 
 export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps) {
-  const [tab, setTab]         = useState<WorkflowTab>('scope')
+  const [tab, setTab]         = useState<WorkflowTab>('project')
   const [selectedPack, setSP] = useState<CxPack | null>(null)
 
   const scopeResults  = useCxCollection<CxScopeResult>('cx_scope_results')
@@ -899,6 +1046,35 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
   function updateCollection(key: string, items: unknown[]) {
     dispatch({ type: JARVIS_ACTIONS.UPDATE_COLLECTION, data: { collection: key, items } })
   }
+
+  // ── Project Setup ────────────────────────────────────────────────────────────
+
+  const projectTemplates = useMemo(() => listProjectTemplates(), [])
+
+  const handleApplyProjectTemplate = useCallback(
+    (key: ProjectTemplateKey, projectName: string, selected: Set<string>) => {
+      const { system, assets: newAssets } = instantiateProjectTemplate(key, projectName, selected)
+
+      // Append to existing biz collections — never replace.
+      const nextContracts = [...contracts, { id: system.id, project: system.name, type: system.type }]
+      const nextCiAssets  = [
+        ...ciAssets,
+        ...newAssets.map(a => ({
+          id:          a.id,
+          tag:         a.tag,
+          type:        a.type,
+          system_id:   a.systemId,
+          description: a.description,
+        })),
+      ]
+
+      updateCollection('contracts',  nextContracts)
+      updateCollection('ci_assets',  nextCiAssets)
+      onToast?.(`Created "${system.name}" with ${newAssets.length} asset${newAssets.length === 1 ? '' : 's'}`, 'success')
+      setTab('matrix')
+    },
+    [contracts, ciAssets, dispatch, onToast],
+  )
 
   // ── Scope ────────────────────────────────────────────────────────────────────
 
@@ -1081,6 +1257,14 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
       </div>
 
       {/* Tab panels */}
+      {tab === 'project'      && (
+        <ProjectSetupTab
+          templates={projectTemplates}
+          canWrite={canWrite}
+          hasExistingAssets={ciAssets.length > 0}
+          onApply={handleApplyProjectTemplate}
+        />
+      )}
       {tab === 'scope'        && <ScopeTab scopeResults={scopeResults} onAnalyze={handleAnalyze} />}
       {tab === 'matrix'       && (
         <MatrixTab

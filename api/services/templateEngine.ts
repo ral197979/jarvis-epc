@@ -53,32 +53,54 @@ export interface PackPayload {
 /**
  * Maps user-visible system type strings to rules.ts asset type keys.
  * Case-insensitive. Falls back to 'pump' (safest generic set).
+ *
+ * Project-type strings (wwtp, pwtp, commercial building, etc.) are
+ * intentionally NOT handled here — they are *composite* templates that
+ * expand into many assets, not a single asset checklist. The client-side
+ * Project Setup tab (CxWorkflowView) calls projectTemplates.ts to do that
+ * expansion. If a project-type string reaches this function, we map it to
+ * the most representative single-asset checklist as a graceful fallback.
  */
 export function normaliseSystemType(raw: string): string {
   const v = raw.toLowerCase().trim()
 
-  if (v === 'chiller' || v.includes('chiller'))                      return 'chiller'
-  if (v === 'ahu'     || v.includes('air handling'))                  return 'ahu'
-  if (v === 'generator' || v.includes('genset'))                      return 'generator'
-  if (v === 'vfd'     || v.includes('drive') || v.includes('vsd'))    return 'vfd'
-  if (v === 'boiler'  || v.includes('boiler'))                        return 'boiler'
-  if (v === 'pump'    || v.includes('pump'))                          return 'pump'
-  if (v === 'fan'     || v.includes('fan'))                           return 'fan'
-  if (v === 'motor'   || v.includes('motor'))                         return 'motor'
-  if (v === 'valve'   || v.includes('valve'))                         return 'valve'
-  if (v === 'panel'   || v.includes('panel') || v.includes('mcc'))    return 'panel'
-  if (v === 'ups'     || v.includes('ups'))                           return 'ups'
-  if (v === 'plc'     || v.includes('plc') || v.includes('scada'))    return 'plc'
-  if (v === 'heat exchanger' || v.includes('heat ex'))                return 'heat exchanger'
-  if (v === 'cooling tower'  || v.includes('cooling tower'))          return 'cooling tower'
-  if (v === 'fire alarm'     || v.includes('fire'))                   return 'fire alarm'
-  if (v === 'hvac'           || v.includes('hvac'))                   return 'hvac'
+  // Specific water/wastewater system types (must come before pump/fan checks)
+  if (v.includes('lift station') || v.includes('lift-station'))  return 'lift station'
+  if (v.includes('clarifier'))                                   return 'clarifier'
+  if (v.includes('uv') && (v.includes('system') || v.includes('reactor') || v.includes('disinfect'))) return 'uv system'
+  if (v.includes('chlorin') || v.includes('hypochlorite'))       return 'chlorination system'
+  if (v.includes('dosing') || v.includes('chem feed') || v.includes('chemical feed')) return 'dosing skid'
+  if (v.includes('mixer') || v.includes('agitator') || v.includes('flocculator')) return 'mixer'
+  if (v.includes('blower'))                                      return 'blower'
+  if (v.includes('filter') && !v.includes('pre-filter') && !v.includes('prefilter')) return 'filter'
+  if (v.includes('analyzer') || v.includes('analyser') || v.includes('transmitter') || v.includes('instrument') || v.includes('sensor')) return 'instrument'
 
-  // EngineeringHub-specific aliases
-  if (v === 'pwtp' || v.includes('potable') || v === 'ro skid' || v.includes('reverse osmosis'))
+  // General mechanical / electrical
+  if (v === 'chiller' || v.includes('chiller'))                  return 'chiller'
+  if (v === 'ahu'     || v.includes('air handling'))             return 'ahu'
+  if (v === 'generator' || v.includes('genset'))                 return 'generator'
+  if (v === 'vfd'     || v.includes('drive') || v.includes('vsd')) return 'vfd'
+  if (v === 'boiler'  || v.includes('boiler'))                   return 'boiler'
+  if (v === 'pump'    || v.includes('pump'))                     return 'pump'
+  if (v === 'fan'     || v.includes('fan'))                      return 'fan'
+  if (v === 'motor'   || v.includes('motor'))                    return 'motor'
+  if (v === 'valve'   || v.includes('valve'))                    return 'valve'
+  if (v === 'panel'   || v.includes('panel') || v.includes('mcc') || v.includes('switchboard') || v.includes('ups')) return 'panel'
+  if (v === 'plc'     || v.includes('plc') || v.includes('scada') || v.includes('bms')) return 'plc'
+
+  // RO / potable single-asset alias
+  if (v === 'ro skid' || v.includes('reverse osmosis') || v.includes('ro '))
     return 'ro skid'
-  if (v === 'wwtp' || v.includes('waste water') || v.includes('wastewater'))
-    return 'pump'   // WWTP assets decompose to pump + blower; pump gives best generic checklist
+
+  // Project-type strings — these are composites; pick a representative asset
+  // as a graceful fallback when the client sends the project key directly.
+  if (v === 'pwtp' || v.includes('potable') || v.includes('drinking water')) return 'ro skid'
+  if (v === 'wwtp' || v.includes('waste water') || v.includes('wastewater'))  return 'blower'
+  if (v.includes('commercial')  || v.includes('office') || v.includes('retail')) return 'ahu'
+  if (v.includes('hospital')    || v.includes('healthcare'))                     return 'ahu'
+  if (v.includes('data center') || v.includes('datacenter'))                     return 'ahu'
+  if (v.includes('industrial')) return 'pump'
+  if (v.includes('utility'))    return 'pump'
 
   return 'pump' // fallback
 }

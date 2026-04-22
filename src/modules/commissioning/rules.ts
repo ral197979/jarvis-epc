@@ -6,10 +6,11 @@
  * Pure functions — no React, no store, no side effects.
  * All logic runs client-side; results dispatched to Zustand store.
  *
- * Asset coverage:
+ * Asset coverage (21 types):
  *   pump, ahu, chiller, ro skid, panel, valve, fan, motor,
- *   generator, ups, fire alarm, hvac, boiler, cooling tower,
- *   vfd, plc, heat exchanger
+ *   generator, vfd, plc, boiler,
+ *   blower, mixer, dosing skid, clarifier, filter,
+ *   uv system, chlorination system, lift station, instrument
  */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -252,19 +253,120 @@ const ASSET_RULES: Record<string, AssetRule> = {
     },
     defaultPrereqs: ['Gas or fuel supply confirmed', 'Flue connected', 'Water treatment in service'],
   },
+  blower: {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Installation and mounting verification', 'Rotation check', 'Belt and coupling alignment'],
+      pre_functional:         ['VFD parameter verification', 'Pressure relief valve check', 'Vibration baseline reading'],
+      functional_performance: ['Airflow and pressure measurement', 'DO setpoint response test', 'Surge detection verification'],
+      turnover:               ['Startup report delivery', 'Lubrication schedule confirmed'],
+    },
+    defaultPrereqs: ['Piping connected and pressure tested', 'Motor power confirmed', 'Cooling water available'],
+  },
+  mixer: {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Installation and seal verification', 'Rotation and impeller clearance check', 'Motor insulation resistance'],
+      pre_functional:         ['HOA control verification', 'Run status feedback check', 'Gearbox oil level verification'],
+      functional_performance: ['Mixing performance test at operating level', 'Alarm response verification', 'Torque and current draw check'],
+      turnover:               ['O&M manual delivered', 'Spare parts kit confirmed'],
+    },
+    defaultPrereqs: ['Tank structurally complete', 'Motor power confirmed', 'Seal flush system ready'],
+  },
+  'dosing skid': {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Skid installation check', 'Chemical compatibility verification', 'Calibration cylinder installation'],
+      pre_functional:         ['Pump priming and leak check', 'Flow meter calibration', 'Interlock verification with receiving process'],
+      functional_performance: ['Dosing rate accuracy test', 'Low-level and spill alarm test', 'Automatic control loop verification'],
+      turnover:               ['Calibration certificates delivered', 'Spare parts kit confirmed', 'MSDS and handling training record'],
+    },
+    defaultPrereqs: ['Containment bund complete', 'Chemical feed piping pressure tested', 'Eyewash/safety shower commissioned'],
+  },
+  clarifier: {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Mechanism installation and level verification', 'Drive motor rotation check', 'Weir and baffle alignment'],
+      pre_functional:         ['Drive torque and overload verification', 'Scraper and skimmer travel check', 'Sludge draw-off valve stroke'],
+      functional_performance: ['Full-speed operational run', 'Sludge blanket and TSS performance test', 'Overload trip verification'],
+      turnover:               ['O&M manual delivered', 'Mechanism warranty record'],
+    },
+    defaultPrereqs: ['Tank filled and leak-tested', 'Influent and effluent piping complete', 'Sludge removal line operational'],
+  },
+  filter: {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Media installation and grading verification', 'Underdrain and nozzle inspection', 'Valve and piping verification'],
+      pre_functional:         ['Backwash sequence dry run', 'Differential pressure instrument calibration', 'Air scour verification (if fitted)'],
+      functional_performance: ['Filtration run to terminal headloss', 'Backwash performance and recovery test', 'Effluent quality verification'],
+      turnover:               ['O&M manual delivered', 'Media certificate delivered'],
+    },
+    defaultPrereqs: ['Media loaded and washed', 'Backwash supply available', 'Effluent disposal route confirmed'],
+  },
+  'uv system': {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Reactor installation check', 'Lamp installation and safety interlock verification', 'Quartz sleeve cleanliness check'],
+      pre_functional:         ['UV intensity sensor calibration', 'Low-UV and lamp-fail alarm test', 'Ballast and lamp ignition test'],
+      functional_performance: ['Dose validation at design flow', 'Wiper/cleaning cycle verification', 'Flow-paced control verification'],
+      turnover:               ['Validation report delivered', 'Spare lamp and sleeve stock confirmed'],
+    },
+    defaultPrereqs: ['Upstream filtration operational', 'Power supply confirmed', 'Effluent flow stable'],
+  },
+  'chlorination system': {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Gas/liquid feed installation verification', 'Leak detection and scrubber check', 'PPE and safety signage in place'],
+      pre_functional:         ['Residual analyzer calibration', 'Leak detector and alarm test', 'Emergency shutdown interlock test'],
+      functional_performance: ['Residual setpoint control test', 'Flow-paced dosing verification', 'CT compliance verification'],
+      turnover:               ['Operator training record', 'Emergency response drill record', 'Supply contract confirmed'],
+    },
+    defaultPrereqs: ['Contact tank filled', 'Ventilation and scrubber operational', 'Safety shower commissioned'],
+  },
+  'lift station': {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Wet well inspection and level sensor installation', 'Pump installation and guide-rail alignment', 'Valve and piping check'],
+      pre_functional:         ['Level sensor calibration', 'Duty/standby alternation logic test', 'High-level and dry-run alarm test'],
+      functional_performance: ['Pump-down test at duty flow', 'Telemetry and SCADA integration verification', 'Power failure and restart sequence'],
+      turnover:               ['O&M manual delivered', 'SCADA point list and alarm register handover'],
+    },
+    defaultPrereqs: ['Wet well cleaned and filled', 'Force main pressure tested', 'Standby power confirmed'],
+  },
+  instrument: {
+    phases: ['pre_commissioning', 'pre_functional', 'functional_performance', 'turnover'],
+    tests: {
+      pre_commissioning:      ['Installation and tag verification against loop drawing', 'Wiring termination and shield check'],
+      pre_functional:         ['Bench/field calibration against certified standard', 'Loop check to DCS/PLC (4-20 mA or digital)'],
+      functional_performance: ['Process response verification under operating conditions', 'Alarm and trip setpoint verification'],
+      turnover:               ['Calibration certificate delivered', 'As-installed loop drawing issued'],
+    },
+    defaultPrereqs: ['Process tapping complete', 'Loop wiring terminated', 'DCS/PLC tag configured'],
+  },
 }
 
 // ─── Key inference ────────────────────────────────────────────────────────────
 
 function inferAssetKey(type: string): string {
   const v = type.toLowerCase()
+  // More-specific water/wastewater types first so they don't collapse into pump/fan
+  if (v.includes('lift station') || v.includes('lift-station'))               return 'lift station'
+  if (v.includes('clarifier') || v.includes('settler'))                       return 'clarifier'
+  if (v.includes('uv') && (v.includes('system') || v.includes('reactor') || v.includes('disinfect'))) return 'uv system'
+  if (v.includes('chlorin') || v.includes('hypochlorite'))                    return 'chlorination system'
+  if (v.includes('dosing') || v.includes('chem feed') || v.includes('chemical feed')) return 'dosing skid'
+  if (v.includes('mixer') || v.includes('agitator') || v.includes('flocculator')) return 'mixer'
+  if (v.includes('blower'))                                                    return 'blower'
+  if (v.includes('filter') && !v.includes('pre-filter') && !v.includes('prefilter')) return 'filter'
+  if (v.includes('analyzer') || v.includes('analyser') || v.includes('transmitter') || v.includes('instrument') || v.includes('sensor')) return 'instrument'
+  // General mechanical / electrical
   if (v.includes('pump'))                                  return 'pump'
   if (v.includes('ahu') || v.includes('air handling'))     return 'ahu'
   if (v.includes('chiller'))                               return 'chiller'
   if (v.includes('ro') || v.includes('reverse osmosis'))   return 'ro skid'
   if (v.includes('panel') || v.includes('mcc') || v.includes('switchboard')) return 'panel'
   if (v.includes('valve') || v.includes('actuator'))       return 'valve'
-  if (v.includes('fan') || v.includes('blower'))           return 'fan'
+  if (v.includes('fan'))                                   return 'fan'
   if (v.includes('motor') && !v.includes('vfd'))           return 'motor'
   if (v.includes('generator') || v.includes('genset'))     return 'generator'
   if (v.includes('vfd') || v.includes('drive') || v.includes('inverter')) return 'vfd'
