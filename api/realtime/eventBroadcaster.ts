@@ -10,7 +10,7 @@
  *   - Late-joining clients can replay missed events from the log
  *   - No direct module → broadcaster coupling; always via publishRealtimeEvent()
  */
-import pool from '../db/pool'
+import { pool } from '../db/pool'
 import { getSubscriptionManager } from './subscriptionManager'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

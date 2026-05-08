@@ -33,8 +33,8 @@ import * as ecoOps from '../../../api/services/postGA/ecosystemTrustOperations'
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 
-const mockPool = pool as { query: ReturnType<typeof vi.fn> }
-const mockTenantQuery = tenantQuery as ReturnType<typeof vi.fn>
+const mockPool = pool as unknown as { query: ReturnType<typeof vi.fn> }
+const mockTenantQuery = tenantQuery as unknown as ReturnType<typeof vi.fn>
 
 const mockRow = (row: Record<string, unknown>) => ({ rows: [row], rowCount: 1 })
 const mockRows = (rows: Record<string, unknown>[]) => ({ rows, rowCount: rows.length })
