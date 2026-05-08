@@ -9,7 +9,7 @@
  */
 import { Router, type Response } from 'express'
 import type { Request } from '../middleware/tenant'
-import pool from '../db/pool'
+import { pool } from '../db/pool'
 import {
   computeReadiness, persistReadinessScore, type ReadinessDomain,
 } from '../services/readiness/readinessEngine'

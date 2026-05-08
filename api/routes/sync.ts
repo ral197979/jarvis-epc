@@ -10,7 +10,7 @@
  */
 import { Router, type Response } from 'express'
 import type { Request } from '../middleware/tenant'
-import pool from '../db/pool'
+import { pool } from '../db/pool'
 import { processSyncUpload, pullDelta } from '../services/mobile/syncEngine'
 import { resolveConflict, listUnresolvedConflicts } from '../services/mobile/conflictResolver'
 

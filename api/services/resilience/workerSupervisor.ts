@@ -13,7 +13,7 @@
  *   5. Worker calls releaseLease() on clean shutdown
  */
 
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

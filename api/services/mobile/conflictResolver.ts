@@ -9,7 +9,7 @@
  *   merged       — field-level merge (non-destructive fields prefer client)
  *   rejected     — mark unresolvable, require human intervention
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 
 export type ResolutionStrategy = 'client_wins' | 'server_wins' | 'merged' | 'rejected'
 

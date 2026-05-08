@@ -6,7 +6,7 @@
  *
  * All operations are idempotent via client_id (dedup key per device).
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 import { publishActionEvent } from '../actions/actionEventPublisher'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

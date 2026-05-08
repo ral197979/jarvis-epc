@@ -7,7 +7,7 @@
  */
 
 import { tenantQuery } from '../../db/pool'
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

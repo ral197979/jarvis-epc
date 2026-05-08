@@ -4,7 +4,7 @@
  * Ava Phase 3 — Nightly snapshot of readiness scores for all active
  * projects per tenant. Registers as a named background handler.
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 import { computeReadiness, persistReadinessScore, type ReadinessDomain } from './readinessEngine'
 
 const DOMAINS: ReadinessDomain[] = [

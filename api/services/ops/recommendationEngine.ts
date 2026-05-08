@@ -7,7 +7,7 @@
  * Provider-agnostic: register an LLMRecommendationProvider in Phase 4
  * to upgrade recommendations without changing callers.
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 import { scoreAndRankActions, type ActionScoreInput } from '../actions/actionScoringService'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

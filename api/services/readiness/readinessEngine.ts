@@ -7,7 +7,7 @@
  * Scoring is deterministic, weighted, and explainable.
  * All scores 0–100. State thresholds are configurable per tenant.
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

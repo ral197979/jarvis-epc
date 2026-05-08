@@ -6,7 +6,7 @@
  *
  * Outputs are explainable — every score is traceable to input signals.
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

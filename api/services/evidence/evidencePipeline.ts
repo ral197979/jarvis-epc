@@ -10,7 +10,7 @@
  *   3. Client confirms upload → enqueues processing jobs
  *   4. Background worker: compress, thumbnail, OCR, AI tag
  */
-import pool from '../../db/pool'
+import { pool } from '../../db/pool'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
