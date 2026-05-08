@@ -16,7 +16,8 @@ CREATE TYPE learning_signal AS ENUM (
   'positive',
   'negative',
   'neutral',
-  'mixed'
+  'mixed',
+  'unknown'
 );
 
 CREATE TYPE optimization_status AS ENUM (
