@@ -25,7 +25,9 @@
     "check:monolith": "node scripts/check-monolith-size.js",
     "ci": "npm audit --audit-level=high && npm run typecheck:all && npm run check:monolith && npm test -- --run",
     "db:migrate": "tsx api/db/migrate.ts",
-    "knowledge:ingest": "tsx api/scripts/ingest-directory.ts"
+    "knowledge:ingest": "tsx api/scripts/ingest-directory.ts",
+    "ops:health": "tsx scripts/ops-health-snapshot.ts",
+    "ops:governance": "tsx scripts/ops-governance-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
