@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS evidence_assets (
   last_upload_at  TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE (tenant_id, checksum_sha256) NULLS NOT DISTINCT
+  UNIQUE (tenant_id, checksum_sha256)
 );
 
 CREATE INDEX IF NOT EXISTS evidence_assets_tenant_status_idx

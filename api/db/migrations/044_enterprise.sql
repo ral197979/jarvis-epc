@@ -50,7 +50,7 @@ CREATE TABLE integration_jobs (
   idempotency_key text,
   created_at      timestamptz NOT NULL DEFAULT now(),
   completed_at    timestamptz,
-  UNIQUE(tenant_id, idempotency_key) NULLS NOT DISTINCT
+  UNIQUE(tenant_id, idempotency_key)
 );
 
 -- ─── Export Jobs ──────────────────────────────────────────────────────────────
