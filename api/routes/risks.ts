@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Risks API Route
+ * Denver Engineering — Risks API Route
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.28.0 — Implements the risks table defined in 002_epc_core.sql.
  *

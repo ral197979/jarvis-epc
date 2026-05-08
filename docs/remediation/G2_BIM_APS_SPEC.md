@@ -9,7 +9,7 @@
 
 ## Target end-state
 
-Users attach a model URN to any project. They can view the model in-app, click any element, and link that element to an RFI, issue, or submittal — round-tripping the reference back to existing EPC workflows. JARVIS EPC does **not** implement a native BIM engine; it integrates with Autodesk Platform Services (formerly Forge).
+Users attach a model URN to any project. They can view the model in-app, click any element, and link that element to an RFI, issue, or submittal — round-tripping the reference back to existing EPC workflows. Denver Engineering does **not** implement a native BIM engine; it integrates with Autodesk Platform Services (formerly Forge).
 
 ---
 

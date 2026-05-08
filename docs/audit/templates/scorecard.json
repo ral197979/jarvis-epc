@@ -1,0 +1,88 @@
+{
+  "product_architecture": {
+    "score": 0,
+    "justification": ""
+  },
+  "frontend_ux": {
+    "score": 0,
+    "justification": ""
+  },
+  "backend_api_quality": {
+    "score": 0,
+    "justification": ""
+  },
+  "data_model_quality": {
+    "score": 0,
+    "justification": ""
+  },
+  "auth_and_authorization": {
+    "score": 0,
+    "justification": ""
+  },
+  "tenant_project_isolation": {
+    "score": 0,
+    "justification": ""
+  },
+  "security_hardening": {
+    "score": 0,
+    "justification": ""
+  },
+  "document_control_integrity": {
+    "score": 0,
+    "justification": ""
+  },
+  "engineering_data_traceability": {
+    "score": 0,
+    "justification": ""
+  },
+  "commissioning_workflow_completeness": {
+    "score": 0,
+    "justification": ""
+  },
+  "test_pack_generation_quality": {
+    "score": 0,
+    "justification": ""
+  },
+  "turnover_dossier_readiness": {
+    "score": 0,
+    "justification": ""
+  },
+  "reliability_operational_maturity": {
+    "score": 0,
+    "justification": ""
+  },
+  "observability_logging": {
+    "score": 0,
+    "justification": ""
+  },
+  "performance_scalability": {
+    "score": 0,
+    "justification": ""
+  },
+  "testing_depth": {
+    "score": 0,
+    "justification": ""
+  },
+  "deployment_readiness": {
+    "score": 0,
+    "justification": ""
+  },
+  "mobile_offline_field_readiness": {
+    "score": 0,
+    "justification": ""
+  },
+  "ai_safety_usefulness": {
+    "score": 0,
+    "justification": ""
+  },
+  "maintainability_code_health": {
+    "score": 0,
+    "justification": ""
+  },
+  "documentation_handover_readiness": {
+    "score": 0,
+    "justification": ""
+  },
+  "overall_weighted_score": 0,
+  "final_verdict": "NO-GO"
+}

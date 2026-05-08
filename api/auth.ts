@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — JWT Authentication Module (v4.26.0)
+ * Denver Engineering — JWT Authentication Module (v4.26.0)
  * ──────────────────────────────────────────────────
  * Extends v4.23 auth with multi-tenant support.
  *

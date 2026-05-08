@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DashboardMainView  ·  Operations Dashboard
+ * Denver Engineering — DashboardMainView  ·  Operations Dashboard
  */
 import React from 'react'
 import { HubView } from './HubView'

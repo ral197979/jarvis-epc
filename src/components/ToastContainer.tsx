@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ToastContainer
+ * Denver Engineering — ToastContainer
  * Utility: Notification toast host element.
  * Status: Extraction in progress — renders empty host until Phase 18 implementation.
  * v4.23.0 P1 remediation

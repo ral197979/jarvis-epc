@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Knowledge Base Ingest (v4.31.0)
+ * Denver Engineering — Knowledge Base Ingest (v4.31.0)
  *
  * Pipeline:
  *   1. CLI or admin UI registers a source: creates knowledge_sources row

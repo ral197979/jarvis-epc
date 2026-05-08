@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DocumentsSubView  ·  Document Sub-Panel (compact recent docs list)
+ * Denver Engineering — DocumentsSubView  ·  Document Sub-Panel (compact recent docs list)
  */
 import React from 'react'
 import { useBizStore, selectDocuments } from '../modules/biz/store'

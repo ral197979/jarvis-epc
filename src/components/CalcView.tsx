@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — CalcView  ·  Engineering Calculator & Analysis
+ * Denver Engineering — CalcView  ·  Engineering Calculator & Analysis
  *
  * v4.28.0 — Denver Engineering Suite integration
  * Two top-level panels:

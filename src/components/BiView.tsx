@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — BiView  ·  Bid Items
+ * Denver Engineering — BiView  ·  Bid Items
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore } from '../modules/biz/store'

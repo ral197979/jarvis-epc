@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Knowledge embed handler (v4.31.0)
+ * Denver Engineering — Knowledge embed handler (v4.31.0)
  *
  * Scheduler-backed batch embedder. Job payload: { sourceId? }.
  *   - sourceId present → embed all un-embedded chunks for that source

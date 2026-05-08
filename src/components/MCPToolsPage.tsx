@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — MCPToolsPage  (v4.28.0)
+ * Denver Engineering — MCPToolsPage  (v4.28.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Extends v4.27.0 MCPToolsPage with live tool execution.
  *

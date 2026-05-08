@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Typed Dispatch Bridge
+ * Denver Engineering — Typed Dispatch Bridge
  * ─────────────────────────────────────
  * Phase 7: Typed replacement for JarvisCore._dispatch().
  *

@@ -1,5 +1,5 @@
 /**
- * denver-bridge.js  —  Jarvis EPC ↔ Denver Suite iframe bridge
+ * denver-bridge.js  —  Denver Engineering ↔ Denver Suite iframe bridge
  *
  * Injected into each Denver HTML file (before </body>).
  * Each file must also set DENVER_TOOL_ID and DENVER_TOOL_VERSION before this script:

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — CmdPalette
+ * Denver Engineering — CmdPalette
  * Utility: Command palette overlay shell.
  * Status: Extraction in progress — hidden shell until Phase 17 implementation.
  * v4.23.0 P1 remediation

@@ -1,5 +1,5 @@
 /**
- * Jarvis EPC (Enterprise Process Control) v4.0
+ * Denver Engineering (Enterprise Process Control) v4.0
  * AI-powered business automation and monitoring dashboard
  *
  * PHASE 2 - Module Extraction
@@ -1018,7 +1018,7 @@ export default function JarvisCore() {
         }
     }, React.createElement(_JarvisErrorBoundary, null, React.createElement("div", {
         role: "application",
-        "aria-label": "JARVIS EPC v4 Engineering Management System",
+        "aria-label": "Denver Engineering v4 Engineering Management System",
         style: {
             background: "var(--jarvis-bg)",
             color: "var(--jarvis-tx)",

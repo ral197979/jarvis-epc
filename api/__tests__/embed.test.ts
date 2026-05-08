@@ -42,8 +42,10 @@ describe('toPgVectorLiteral', () => {
 })
 
 describe('config sanity', () => {
-  it('default model is an OpenAI embeddings model name', () => {
-    expect(DEFAULT_MODEL).toMatch(/^text-embedding-/)
+  it('defaults to Together AI model when no provider env vars are set', () => {
+    // _resolveProvider() falls back to 'together' when neither EMBED_PROVIDER
+    // nor any API key env var is set — which is always the case in this test env.
+    expect(DEFAULT_MODEL).toBe('intfloat/multilingual-e5-large-instruct')
   })
   it('batch size stays under OpenAI request limits', () => {
     expect(MAX_BATCH_INPUTS).toBeGreaterThan(0)

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Project Templates tests
+ * Denver Engineering — Project Templates tests
  * Locks the v1 project-template matrix and the instantiation contract.
  */
 

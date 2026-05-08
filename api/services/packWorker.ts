@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Commissioning Pack Job Worker
+ * Denver Engineering — Commissioning Pack Job Worker
  * ─────────────────────────────────────────────
  * v4.30.0 | Poll-based async worker for draft generation and finalization.
  *
@@ -257,15 +257,13 @@ async function _failJob(job: GenerationJob, err: unknown): Promise<void> {
     UPDATE generation_jobs
     SET status     = $1,
         error_text = $2,
-        status     = $3,
-        run_after  = COALESCE($4::TIMESTAMPTZ, run_after),
+        run_after  = COALESCE($3::TIMESTAMPTZ, run_after),
         locked_at  = NULL,
         updated_at = NOW()
-    WHERE id = $5
+    WHERE id = $4
   `, [
     exhausted ? 'failed' : 'queued',
     errorText,
-    exhausted ? 'failed' : 'queued',
     runAfter,
     job.id,
   ])

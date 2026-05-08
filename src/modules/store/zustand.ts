@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Zustand Reactive Store
+ * Denver Engineering — Zustand Reactive Store
  * ──────────────────────────────────────
  * Phase 5: React-observable state management for the extracted modules.
  * Bridges the module-level singleton state (src/modules/store/index.ts)

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — PlannerView  ·  Procurement Planner
+ * Denver Engineering — PlannerView  ·  Procurement Planner
  */
 import React, { useState } from 'react'
 import { LoView }  from './LoView'

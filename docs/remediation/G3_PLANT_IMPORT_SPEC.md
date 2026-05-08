@@ -9,13 +9,13 @@
 
 ## Explicit non-build posture
 
-JARVIS EPC will **not** build:
+Denver Engineering will **not** build:
 - Native P&ID editor
 - Native 3D piping model editor
 - Stress analysis
 - Electrical single-line diagram editor
 
-These remain the domain of AVEVA, Hexagon, and Bentley. JARVIS EPC consumes their outputs via file-based handover.
+These remain the domain of AVEVA, Hexagon, and Bentley. Denver Engineering consumes their outputs via file-based handover.
 
 ---
 

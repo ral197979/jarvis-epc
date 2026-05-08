@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — App State Slice  (v4.29.0)
+ * Denver Engineering — App State Slice  (v4.29.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 19 pre-condition: migrates the 8 JarvisApp closure state variables
  * that were blocking the JarvisApp decomposition into Zustand.

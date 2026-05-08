@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Tenant Management Routes
+ * Denver Engineering — Tenant Management Routes
  * ───────────────────────────────────────
  * v4.26.0 | Tenant registration, user management, settings
  *

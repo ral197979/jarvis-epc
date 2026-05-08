@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Biz Module
+ * Denver Engineering — Biz Module
  * Barrel export for all biz domain functionality.
  *
  * Modules:

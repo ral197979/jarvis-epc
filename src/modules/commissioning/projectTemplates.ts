@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Project Templates
+ * Denver Engineering — Project Templates
  * ────────────────────────────────
  * v4.31.0 | Composite presets that bundle the equipment templates from
  * rules.ts into starter scopes for a project category.

@@ -1,4 +1,4 @@
-# JARVIS EPC — CHANGELOG
+# Denver Engineering — CHANGELOG
 
 ## v4.31.0 — Full Green: Competitor-Gap Remediation + Baseline Triage + P4 Cleanup + TS Repair + Test Completion
 **Date:** 2026-04-17
@@ -456,7 +456,7 @@ All 27 structural assertions pass:
 - `GET    /api/v1/commissioning/packs/:id/download/:format`
 
 **api/services/templateEngine.ts** (new)
-- Bridges EngineeringHub static 5-type library to JarvisEPC `rules.ts` (18+ system types)
+- Bridges EngineeringHub static 5-type library to DenverEngineering `rules.ts` (18+ system types)
 - `normaliseSystemType()` maps EngineeringHub aliases (pwtp→ro skid, wwtp→pump) + all rules.ts types
 - `buildDraftPack()`, `applyReviewEdits()`, `renderMarkdown()`, `renderHtml()`
 

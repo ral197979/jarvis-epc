@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Fix Library Service (v4.31.0)
+ * Denver Engineering — Fix Library Service (v4.31.0)
  *
  * Engineer-authored troubleshooting corpus. Retrieval ranks by:
  *   symptom_overlap_ratio × confidence_weight × asset_match × recency

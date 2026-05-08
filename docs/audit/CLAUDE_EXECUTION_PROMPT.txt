@@ -1,0 +1,42 @@
+Audit Jarvis_EPC using the attached Jarvis_EPC Audit Execution Playbook.
+
+Rules:
+- Execute the audit in the prescribed phase order.
+- Be owner-first, evidence-backed, and explicit about uncertainty.
+- Do not give generic advice detached from the repo.
+- Verify as much as possible through code inspection, commands, runtime checks, logs, and workflow validation.
+- Distinguish observed vs reproduced vs likely vs unknown.
+- Produce the required deliverables exactly:
+  1) Executive Summary
+  2) Architecture Snapshot
+  3) Scorecard
+  4) Top 5 Blockers
+  5) Workflow Audit Matrix
+  6) Detailed Findings Register
+  7) Security Review
+  8) Reliability / Ops Review
+  9) Deployment Readiness Verdict
+  10) Remediation Roadmap by Phase
+  11) Proof Appendix
+
+Severity model:
+- Critical / High / Medium / Low
+
+Final verdict must be one of:
+- GO
+- CONDITIONAL GO
+- NO-GO
+
+Extra emphasis for Jarvis_EPC:
+- EPC hierarchy realism
+- commissioning matrix integrity
+- test-pack generation truth
+- turnover/dossier completeness
+- document revision traceability
+- field execution usability
+- AI assistant safety
+- project/tenant isolation
+
+Do not mark anything fixed unless verified.
+Do not hide setup blockers.
+Do not confuse polished UI with project-delivery readiness.

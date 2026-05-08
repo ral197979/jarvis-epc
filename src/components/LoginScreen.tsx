@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — LoginScreen  (v4.30.0)
+ * Denver Engineering — LoginScreen  (v4.30.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 19a extraction: The auth gate from JarvisApp function.
  * Reads from / writes to useAppStore instead of JarvisApp closure state.
@@ -139,7 +139,7 @@ export function LoginScreen({ onSuccess, gatewayMode, backendUrl = '' }: LoginSc
         {/* Logo / brand */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ fontSize: 32, marginBottom: 8 }} aria-hidden>🔧</div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--jarvis-tx)' }}>JARVIS EPC</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--jarvis-tx)' }}>Denver Engineering</h1>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--jarvis-ts)' }}>
             {proxied ? 'Enterprise Project Controls' : 'Owner Access'}
           </p>
@@ -242,7 +242,7 @@ export function LoginScreen({ onSuccess, gatewayMode, backendUrl = '' }: LoginSc
         )}
 
         <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--jarvis-ts)', marginTop: 24, marginBottom: 0 }}>
-          JARVIS EPC v4.30 · Ava Systems LLC
+          Denver Engineering v4.30 · Ava Systems LLC
         </p>
       </div>
     </div>

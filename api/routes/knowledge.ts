@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Knowledge Base Routes (v4.31.0)
+ * Denver Engineering — Knowledge Base Routes (v4.31.0)
  *
  *   POST   /api/v1/knowledge/sources           — register a source + enqueue ingest
  *   GET    /api/v1/knowledge/sources           — list sources + status

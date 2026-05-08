@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — FeedView  ·  Finance Feed (journal/transaction activity stream)
+ * Denver Engineering — FeedView  ·  Finance Feed (journal/transaction activity stream)
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore } from '../modules/biz/store'

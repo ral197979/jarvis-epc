@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Audit Log Routes
+ * Denver Engineering — Audit Log Routes
  * ─────────────────────────────
  * v4.30.0 | GET /api/v1/audit, GET /api/v1/audit/:id
  *

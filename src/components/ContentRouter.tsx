@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ContentRouter  (v4.29.0)
+ * Denver Engineering — ContentRouter  (v4.29.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 19c extraction: the main content area / tab router from JarvisApp.
  * Previously the giant if/else chain at the bottom of JarvisCore.jsx

@@ -581,13 +581,13 @@ describe('crud — lockedCollections window path', () => {
 
   afterEach(() => {
     // Clean up window.__JARVIS_DIAG
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     delete (window as any).__JARVIS_DIAG
   })
 
   it('blocks write to locked collection via window.__JARVIS_DIAG', () => {
     const { state } = makeDeps()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     ;(window as any).__JARVIS_DIAG = {
       _oCfg: { lockedCollections: { leads: true } },
     }
@@ -597,7 +597,7 @@ describe('crud — lockedCollections window path', () => {
 
   it('allows write when collection is not locked', () => {
     const { state } = makeDeps()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     ;(window as any).__JARVIS_DIAG = {
       _oCfg: { lockedCollections: { contracts: true } },
     }
@@ -607,7 +607,7 @@ describe('crud — lockedCollections window path', () => {
 
   it('allows write when __JARVIS_DIAG has no _oCfg', () => {
     const { state } = makeDeps()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     ;(window as any).__JARVIS_DIAG = {}
     crud('add', 'leads', { id: 'LC-3', name: 'No oCfg' })
     expect(state['leads']).toHaveLength(1)

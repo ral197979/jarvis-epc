@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Gateway Module
+ * Denver Engineering — Gateway Module
  * ────────────────────────────
  * Unified API client abstraction. Supports direct and proxied modes.
  *

@@ -55,7 +55,7 @@ export default defineConfig({
       ],
     },
 
-    exclude: ['**/node_modules/**', '**/dist/**', 'src/jarvis/**', 'e2e/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'src/jarvis/**', 'e2e/**', '.claude/**'],
   },
 
   resolve: {

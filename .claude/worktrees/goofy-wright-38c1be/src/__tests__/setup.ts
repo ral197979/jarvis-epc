@@ -1,0 +1,45 @@
+/// <reference types="vitest/globals" />
+/**
+ * JARVIS EPC — Vitest Global Setup
+ * ──────────────────────────────────
+ * Runs before every test file.
+ * Extends expect() with jest-dom matchers.
+ */
+
+import '@testing-library/jest-dom'
+import { configureAxe } from 'jest-axe'
+
+// Configure axe defaults for the test environment.
+// CSS custom properties (--jarvis-*) resolve to empty strings in jsdom,
+// making color-contrast checks unreliable — disabled globally, validated manually.
+configureAxe({
+  rules: {
+    'color-contrast': { enabled: false },
+  },
+})
+
+// Polyfill crypto.getRandomValues for jsdom environment
+// (used by secureId, csrfToken generation in store/auth modules)
+if (typeof (globalThis as unknown as Record<string, unknown>).crypto === 'undefined') {
+  ;(globalThis as unknown as Record<string, unknown>).crypto = {
+    getRandomValues: (arr: Uint8Array) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 256)
+      }
+      return arr
+    },
+  } as unknown as Crypto
+}
+
+// Note: console suppression in tests is handled per-test using vi.spyOn()
+// Global vitest helpers (describe, it, expect, beforeEach, vi, etc.)
+// are available globally via the vitest.config.ts `globals: true` setting.
+
+// ResizeObserver mock for Recharts in jsdom environment
+if (typeof window !== 'undefined' && !window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    observe()   { /* noop */ }
+    unobserve() { /* noop */ }
+    disconnect(){ /* noop */ }
+  }
+}

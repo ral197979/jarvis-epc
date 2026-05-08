@@ -1,7 +1,7 @@
 /**
- * JARVIS EPC — Production Backend Server
+ * Denver Engineering — Production Backend Server
  * ─────────────────────────────────────────
- * v4.30.0 — Full production API with:
+ * v9.0.0 — Full production API with:
  *   - PostgreSQL via pool + migrations
  *   - Multi-tenant auth (JWT + tenant resolution)
  *   - Projects, Procurement, File management, Integrations
@@ -53,6 +53,7 @@ import { initPool, poolHealthy, poolStats } from './db/pool'
 import { runMigrations } from './db/migrate'
 import { tenantQuery } from './db/pool'
 import { TenantRequest } from './middleware/tenant'
+import { registerUuidParamGuards, validateUuidQueryParams } from './middleware/validateUuidParams'
 import projectsRouter   from './routes/projects'
 import tenantsRouter    from './routes/tenants'
 import {
@@ -71,6 +72,11 @@ import { bimRouter          } from './routes/bim'           // v4.31.0
 import { budgetsRouter      } from './routes/budgets'       // v4.31.0
 import { inspectionsRouter  } from './routes/inspections'   // v4.32.0
 import { punchListsRouter   } from './routes/punchLists'    // v4.32.0
+import { systemsRouter       } from './routes/systems'       // v4.32.0: EPC hierarchy (F05)
+import { testPacksRouter     } from './routes/testPacks'     // v4.32.0: real test packs (F05)
+import { testResultsRouter   } from './routes/testResults'   // v4.32.0: per-step results (F01)
+import { deficienciesRouter  } from './routes/deficiencies'  // v4.32.0: test-traced deficiencies (F01)
+import { commissioningItemsRouter } from './routes/commissioningItems' // v4.32.0: CX checklist items (P2)
 import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import automationRouter       from './routes/automation'    // v4.31.0
@@ -91,9 +97,39 @@ import { registerIntegrationSync } from './services/integrationSync' // v4.31.0
 import { registerKpiSnapshotHandler } from './services/kpiSnapshot'  // v4.31.0
 import { registerComplianceWatcher } from './services/complianceWatcher' // v4.31.0
 import { registerAuditRetentionHandler } from './services/auditRetention' // v4.31.0
+import { actionsRouter } from './routes/actions'                          // v4.33.0 Ava
+import { registerSlaEngine } from './services/slaEngine'                  // v4.33.0 Ava
+import { registerNotificationWorker } from './services/notifications/notificationWorker'     // v4.34.0 Ava
+import { registerAnalyticsSnapshotHandler } from './services/actions/actionAnalyticsService' // v4.34.0 Ava
 import { registerKnowledgeIngestHandler } from './services/knowledgeIngest' // v4.31.0
 import { registerFixExtractorHandler }    from './services/fixExtractor'    // v4.31.0
 import { registerKnowledgeEmbedHandler }  from './services/knowledgeEmbed'  // v4.31.0
+import { opsRouter       } from './routes/ops'                              // v4.35.0 Ava Phase 3
+import { readinessRouter } from './routes/readiness'                        // v4.35.0 Ava Phase 3
+import { syncRouter      } from './routes/sync'                             // v4.35.0 Ava Phase 3
+import { evidenceRouter  } from './routes/evidence'                         // v4.35.0 Ava Phase 3
+import { registerWebSocketGateway } from './realtime/wsGateway'            // v4.35.0 Ava Phase 3
+import { registerReadinessSnapshotHandler } from './services/readiness/readinessSnapshots' // v4.35.0 Ava Phase 3
+import { runbooksRouter       } from './routes/runbooks'                    // v4.40.0 Ava Phase 4
+import { aiGovernanceRouter   } from './routes/aiGovernance'               // v4.40.0 Ava Phase 4
+import { simulationRouter     } from './routes/simulation'                  // v4.40.0 Ava Phase 4
+import { policiesRouter       } from './routes/policies'                    // v4.40.0 Ava Phase 4
+import { executiveRouter      } from './routes/executive'                   // v4.40.0 Ava Phase 4
+import { integrationHubRouter } from './routes/integrationHub'             // v4.40.0 Ava Phase 4
+import { exportsRouter        } from './routes/exports'                     // v4.40.0 Ava Phase 4
+import { auditVerificationRouter } from './routes/auditVerification'       // v4.40.0 Ava Phase 4
+import { agentsRouter           } from './routes/agents'                    // v5.0.0 Ava Phase 5
+import { agentApprovalsRouter   } from './routes/agentApprovals'            // v5.0.0 Ava Phase 5
+import { agentMemoryRouter      } from './routes/agentMemory'               // v5.0.0 Ava Phase 5
+import { agentRiskRouter        } from './routes/agentRisk'                 // v5.0.0 Ava Phase 5
+import { agentReadinessRouter   } from './routes/agentReadiness'            // v5.0.0 Ava Phase 5
+import twinRouter                  from './routes/twin'                      // v6.0.0 Ava Phase 6: Digital Twin
+import portfolioRouter             from './routes/portfolio'                 // v6.0.0 Ava Phase 6: Portfolio Intelligence
+import scenariosRouter             from './routes/scenarios'                 // v6.0.0 Ava Phase 6: Scenario Simulation
+import adaptiveRouter              from './routes/adaptive'                   // v7.0.0 Ava Phase 7: Adaptive Intelligence
+import optimizationRouter          from './routes/optimization'               // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
+import enterpriseRouter            from './routes/enterprise'                 // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
+import ecosystemRouter             from './routes/ecosystem'                  // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem Platform
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -102,7 +138,7 @@ const log = pino({
   ...(process.env['NODE_ENV'] !== 'production'
     ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
     : {}),
-  base: { service: 'jarvis-epc-api', version: '4.30.0', env: process.env['NODE_ENV'] },
+  base: { service: 'denver-engineering-api', version: '9.0.0', env: process.env['NODE_ENV'] },
 })
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -133,6 +169,19 @@ app.use(cors({
 app.use(express.json({ limit: '2mb' }))
 app.use(express.urlencoded({ extended: true, limit: '2mb' }))
 app.use(cookieParser())
+
+// ─── Correlation ID + Request ID middleware (v4.34.0) ────────────────────────
+// Propagates X-Correlation-ID for cross-service tracing. Falls back to
+// X-Request-ID. Both are echoed in the response headers.
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const correlationId = (req.headers['x-correlation-id'] as string)
+    ?? (req.headers['x-request-id'] as string)
+    ?? randomBytes(8).toString('hex')
+  ;(req as Record<string, unknown>)['correlationId'] = correlationId
+  res.setHeader('X-Correlation-ID', correlationId)
+  next()
+})
 
 // ─── Request ID + structured logging ─────────────────────────────────────────
 
@@ -235,7 +284,7 @@ app.get('/api/v1/health', async (_req: Request, res: Response) => {
   const dbOk = poolHealthy()
   res.status(dbOk ? 200 : 503).json({
     status:  dbOk ? 'ok' : 'degraded',
-    version: '4.30.0',
+    version: '9.0.0',
     uptime:  Math.floor(process.uptime()),
     ts:      new Date().toISOString(),
     db:      dbOk ? { ...poolStats() } : 'unavailable',
@@ -269,6 +318,11 @@ app.get('/api/v1/admin/sessions', requireAuth as never, (req: Request, res: Resp
 // ─── Tenant routes ────────────────────────────────────────────────────────────
 
 app.use('/api/v1/tenants', tenantsRouter)
+
+// ─── UUID param guard ─────────────────────────────────────────────────────────
+
+registerUuidParamGuards(app)
+app.use('/api/v1', validateUuidQueryParams)
 
 // ─── Domain routes ────────────────────────────────────────────────────────────
 
@@ -305,7 +359,37 @@ app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models +
 app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
 app.use('/api/v1',                inspectionsRouter)    // v4.32.0: Inspection templates + records
 app.use('/api/v1',                punchListsRouter)     // v4.32.0: Punch lists + items
+app.use('/api/v1',                systemsRouter)        // v4.32.0: EPC hierarchy (F05)
+app.use('/api/v1',                testPacksRouter)      // v4.32.0: real test packs (F05)
+app.use('/api/v1',                testResultsRouter)    // v4.32.0: per-step results (F01)
+app.use('/api/v1',                deficienciesRouter)          // v4.32.0: test-traced deficiencies (F01)
+app.use('/api/v1',                commissioningItemsRouter)    // v4.32.0: CX checklist items (P2)
 app.use('/api/v1/audit',          auditRouter)          // v4.30.0: Audit log read API
+app.use('/api/v1/actions',        actionsRouter)        // v4.33.0 Ava: Global Action Center
+app.use('/api/v1/ops',           opsRouter)            // v4.35.0 Ava Phase 3: Operations Center
+app.use('/api/v1/readiness',     readinessRouter)      // v4.35.0 Ava Phase 3: Readiness Engine
+app.use('/api/v1/sync',          syncRouter)           // v4.35.0 Ava Phase 3: Mobile Offline Sync
+app.use('/api/v1/evidence',      evidenceRouter)       // v4.35.0 Ava Phase 3: Field Evidence Pipeline
+app.use('/api/v1/runbooks',      runbooksRouter)       // v4.40.0 Ava Phase 4: Autonomous Runbook Engine
+app.use('/api/v1/ai',            aiGovernanceRouter)   // v4.40.0 Ava Phase 4: AI Governance Queue
+app.use('/api/v1/simulation',    simulationRouter)     // v4.40.0 Ava Phase 4: Simulation + Replay Engine
+app.use('/api/v1/policies',      policiesRouter)       // v4.40.0 Ava Phase 4: Enterprise Policy Engine
+app.use('/api/v1/executive',     executiveRouter)      // v4.40.0 Ava Phase 4: Executive Command Dashboard
+app.use('/api/v1/integrations/hub', integrationHubRouter) // v4.40.0 Ava Phase 4: Integration Hub
+app.use('/api/v1/exports',       exportsRouter)        // v4.40.0 Ava Phase 4: Data Warehouse Exports
+app.use('/api/v1/audit/verify',  auditVerificationRouter) // v4.40.0 Ava Phase 4: Audit Chain Verification
+app.use('/api/v1/agents',                agentsRouter)            // v5.0.0 Ava Phase 5: Multi-Agent System
+app.use('/api/v1/agents/approvals',      agentApprovalsRouter)    // v5.0.0 Ava Phase 5: Agent Approval Queue
+app.use('/api/v1/agents/memory',         agentMemoryRouter)       // v5.0.0 Ava Phase 5: Agent Memory Store
+app.use('/api/v1/agents/risk',           agentRiskRouter)         // v5.0.0 Ava Phase 5: Risk Agent
+app.use('/api/v1/agents/readiness',      agentReadinessRouter)    // v5.0.0 Ava Phase 5: Readiness Agent
+app.use('/api/v1/twins',                 twinRouter)              // v6.0.0 Ava Phase 6: Digital Twin Registry + Graph
+app.use('/api/v1/portfolio',             portfolioRouter)         // v6.0.0 Ava Phase 6: Portfolio Intelligence
+app.use('/api/v1/scenarios',             scenariosRouter)         // v6.0.0 Ava Phase 6: Scenario Simulation + Temporal
+app.use('/api/v1/adaptive',             adaptiveRouter)          // v7.0.0 Ava Phase 7: Learning Feedback + Calibration
+app.use('/api/v1/optimization',         optimizationRouter)      // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
+app.use('/api/v1/enterprise',           enterpriseRouter)        // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
+app.use('/api/v1/ecosystem',            ecosystemRouter)         // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
@@ -396,6 +480,10 @@ async function start(): Promise<void> {
   registerIntegrationSync()
   registerKpiSnapshotHandler()
   registerComplianceWatcher()
+  registerSlaEngine()                   // v4.33.0 Ava: SLA escalation worker
+  registerNotificationWorker()          // v4.34.0 Ava: notification delivery queue
+  registerAnalyticsSnapshotHandler()    // v4.34.0 Ava: nightly analytics aggregation
+  registerReadinessSnapshotHandler()   // v4.35.0 Ava Phase 3: nightly readiness snapshots
   registerAuditRetentionHandler()
   registerKnowledgeIngestHandler()
   registerFixExtractorHandler()
@@ -407,8 +495,11 @@ async function start(): Promise<void> {
   }, 60 * 60 * 1000)  // every hour
 
   const server = app.listen(PORT, () => {
-    log.info(`[startup] JARVIS EPC API v4.30.0 listening on port ${PORT}`)
+    log.info(`[startup] Denver Engineering API v4.40.0 listening on port ${PORT}`)
   })
+
+  // v4.35.0 Ava Phase 3: WebSocket gateway for real-time event streaming
+  registerWebSocketGateway(server)
 
   // Graceful shutdown
   for (const sig of ['SIGTERM','SIGINT']) {

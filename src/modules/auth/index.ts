@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Auth Module
+ * Denver Engineering — Auth Module
  * ─────────────────────────
  * JWT management, policy engine, role/persona definitions,
  * session timeout, CSRF, and ARIA live-region announcements.

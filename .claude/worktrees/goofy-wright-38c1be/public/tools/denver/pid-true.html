@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TRUE P&amp;ID — ISA-5.1 — Denver Suite</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f9fafb;color:#111;font-size:13px}
+#toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;background:#fff;border-bottom:1px solid #e5e7eb}
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:#f3e8ff;color:#6b21a8;flex-shrink:0}
+label{font-size:11px;color:#6b7280;display:block;margin-bottom:3px}
+select,input[type=text]{font-size:12px;padding:5px 8px;border:1px solid #d1d5db;border-radius:5px;background:#fff;color:#111;height:30px}
+.btn{font-size:12px;font-weight:600;padding:0 12px;height:30px;border:none;border-radius:5px;cursor:pointer;flex-shrink:0}
+.btn-gen{background:#7c3aed;color:#fff}.btn-gen:hover{background:#6d28d9}.btn-gen:disabled{background:#c4b5fd;cursor:not-allowed}
+.btn-save{background:#059669;color:#fff}.btn-save:hover{background:#047857}
+.btn-dxf{background:#1d4ed8;color:#fff}.btn-dxf:hover{background:#1e40af}
+.status{font-size:11px;color:#6b7280;flex:1;text-align:right}
+.status.ok{color:#059669}.status.err{color:#dc2626}
+#options-bar{display:flex;gap:16px;flex-wrap:wrap;padding:6px 14px;background:#faf5ff;border-bottom:1px solid #e5e7eb}
+.check-item{display:flex;align-items:center;gap:4px;font-size:11px;color:#6b7280}
+.check-item input{margin:0}
+#canvas-area{padding:16px;overflow:auto;min-height:calc(100vh - 90px)}
+#pid-output{background:#fff;border:1px solid #e5e7eb;border-radius:8px;min-height:520px;padding:12px;overflow:auto}
+#pid-output svg{max-width:100%;height:auto}
+#empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:520px;color:#9ca3af;gap:8px}
+#empty-state .icon{font-size:48px}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <span class="badge">ISA-5.1</span>
+  <div>
+    <label>System type</label>
+    <select id="system-type">
+      <option value="water">Water Treatment (PWTP)</option>
+      <option value="wwtp">Wastewater Treatment (WWTP)</option>
+      <option value="hvac">HVAC / Chilled Water</option>
+      <option value="fuel">Fuel System</option>
+      <option value="chemical">Chemical Dosing</option>
+      <option value="cooling">Cooling Tower</option>
+      <option value="compressed-air">Compressed Air</option>
+    </select>
+  </div>
+  <div>
+    <label>Project / facility</label>
+    <input type="text" id="proj-name" value="New Project" style="width:170px">
+  </div>
+  <div>
+    <label>Drawing no.</label>
+    <input type="text" id="dwg-no" value="P&ID-001" style="width:90px">
+  </div>
+  <div>
+    <label>Rev.</label>
+    <input type="text" id="revision" value="A" style="width:40px">
+  </div>
+  <button class="btn btn-gen" id="gen-btn" onclick="generate()">Generate P&amp;ID</button>
+  <button class="btn btn-save" id="save-btn" onclick="sendToJarvis()" style="display:none">Save to Jarvis ↗</button>
+  <button class="btn btn-dxf"  id="dxf-btn"  onclick="exportDXF()"   style="display:none">DXF Export</button>
+  <span class="status" id="status"></span>
+</div>
+
+<div id="options-bar">
+  <label style="font-size:10px;font-weight:600;color:#6b21a8;margin-bottom:0;margin-right:4px">Include:</label>
+  <span class="check-item"><input type="checkbox" id="inc-instruments" checked> Instrument bubbles</span>
+  <span class="check-item"><input type="checkbox" id="inc-valves" checked> Valve symbols + actuators</span>
+  <span class="check-item"><input type="checkbox" id="inc-loops" checked> Control loops (FIC, PIC, LIC)</span>
+  <span class="check-item"><input type="checkbox" id="inc-linespec" checked> Line specifications</span>
+  <span class="check-item"><input type="checkbox" id="inc-titleblock" checked> Title block</span>
+</div>
+
+<div id="canvas-area">
+  <div id="pid-output">
+    <div id="empty-state">
+      <span class="icon">📋</span>
+      <p>Select system type and fill project details, then click <strong>Generate P&amp;ID</strong></p>
+      <p style="font-size:11px">ISA-5.1 — valve symbols, instrument bubbles, control loops, title block</p>
+    </div>
+  </div>
+</div>
+
+<script src="TRUE-PID-GENERATOR.js"></script>
+<script>window.DENVER_TOOL_ID='pid-true';window.DENVER_TOOL_VERSION='v2.1'</script>
+<script src="denver-bridge.js"></script>
+<script>
+var lastSvg=null
+var TYPE_MAP={'water-treatment':'water','wastewater':'wwtp','wwtp':'wwtp','pwtp':'water','hvac':'hvac','fuel':'fuel'}
+
+document.addEventListener('jarvis:context',function(e){
+  var ctx=e.detail
+  if(ctx.projectName) document.getElementById('proj-name').value=ctx.projectName
+  var sys=TYPE_MAP[(ctx.projectType||'').toLowerCase()]
+  if(sys) document.getElementById('system-type').value=sys
+})
+
+function opts(){return{instruments:document.getElementById('inc-instruments').checked,valves:document.getElementById('inc-valves').checked,loops:document.getElementById('inc-loops').checked,linespec:document.getElementById('inc-linespec').checked,titleblock:document.getElementById('inc-titleblock').checked}}
+function setStatus(msg,type){var el=document.getElementById('status');el.textContent=msg;el.className='status '+(type||'')}
+
+function generate(){
+  var sys=document.getElementById('system-type').value
+  var name=document.getElementById('proj-name').value
+  var dwg=document.getElementById('dwg-no').value
+  var rev=document.getElementById('revision').value
+  var o=opts()
+  document.getElementById('gen-btn').disabled=true
+  setStatus('Generating ISA-5.1 P&ID…')
+  try{
+    var svg=null
+    if(typeof generateTruePID==='function')       svg=generateTruePID(sys,name,dwg,rev,o)
+    else if(typeof TruePIDGenerator==='function') svg=new TruePIDGenerator().generate(sys,name,dwg,rev,o)
+    else if(typeof DenverTruePID!=='undefined')   svg=DenverTruePID.generate(sys,name,dwg,rev,o)
+    else { svg=_fallback(name,sys,dwg,rev); console.warn('[pid-true] generator not found — fallback') }
+    if(!svg) throw new Error('Generator returned empty SVG')
+    var es=document.getElementById('empty-state')
+    if(es) es.style.display='none'
+    document.getElementById('pid-output').innerHTML=svg
+    lastSvg=svg
+    document.getElementById('save-btn').style.display='inline-flex'
+    document.getElementById('dxf-btn').style.display='inline-flex'
+    setStatus('ISA-5.1 P&ID generated ✓','ok')
+  }catch(err){setStatus('Error: '+err.message,'err');console.error(err)}
+  finally{document.getElementById('gen-btn').disabled=false}
+}
+
+function sendToJarvis(){
+  if(!lastSvg)return
+  window.JARVIS_SEND_RESULT({system_type:document.getElementById('system-type').value,project:document.getElementById('proj-name').value,drawing_no:document.getElementById('dwg-no').value,revision:document.getElementById('revision').value,standard:'ISA-5.1',tool:'TRUE P&ID'},lastSvg)
+  setStatus('P&ID sent to Jarvis ✓','ok')
+}
+
+function exportDXF(){
+  if(!lastSvg)return
+  if(typeof exportToPIDDXF==='function'){
+    try{exportToPIDDXF(lastSvg);setStatus('DXF export triggered ✓','ok')}
+    catch(err){setStatus('DXF error: '+err.message,'err')}
+  }else{
+    var blob=new Blob([lastSvg],{type:'image/svg+xml'})
+    var url=URL.createObjectURL(blob)
+    var a=document.createElement('a')
+    a.href=url;a.download=(document.getElementById('dwg-no').value||'P&ID')+'.svg';a.click()
+    URL.revokeObjectURL(url)
+    setStatus('Downloaded as SVG (open in Inkscape/AI for DXF)','ok')
+  }
+}
+
+function _fallback(name,sys,dwg,rev){
+  var W=900,H=600,now=new Date().toLocaleDateString()
+  return '<svg width="'+W+'" height="'+H+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<rect width="'+W+'" height="'+H+'" fill="#fff" rx="4"/>'
+    +'<rect x="1" y="1" width="'+(W-2)+'" height="'+(H-80)+'" fill="none" stroke="#374151" stroke-width="1" rx="4"/>'
+    +'<rect x="0" y="'+(H-80)+'" width="'+W+'" height="80" fill="#f3f4f6" stroke="#374151" stroke-width="1"/>'
+    +'<line x1="300" y1="'+(H-80)+'" x2="300" y2="'+H+'" stroke="#374151" stroke-width="0.5"/>'
+    +'<line x1="600" y1="'+(H-80)+'" x2="600" y2="'+H+'" stroke="#374151" stroke-width="0.5"/>'
+    +'<line x1="750" y1="'+(H-80)+'" x2="750" y2="'+H+'" stroke="#374151" stroke-width="0.5"/>'
+    +'<text x="150" y="'+(H-50)+'" font-family="system-ui" font-size="14" fill="#111" text-anchor="middle" font-weight="600">'+name+'</text>'
+    +'<text x="150" y="'+(H-30)+'" font-family="system-ui" font-size="11" fill="#6b7280" text-anchor="middle">'+sys.toUpperCase()+' — P&amp;ID (ISA-5.1)</text>'
+    +'<text x="450" y="'+(H-40)+'" font-family="system-ui" font-size="14" fill="#111" text-anchor="middle" font-weight="600">'+dwg+'</text>'
+    +'<text x="675" y="'+(H-40)+'" font-family="system-ui" font-size="14" fill="#111" text-anchor="middle" font-weight="600">'+rev+'</text>'
+    +'<text x="825" y="'+(H-40)+'" font-family="system-ui" font-size="11" fill="#374151" text-anchor="middle">'+now+'</text>'
+    +'<text x="'+(W/2)+'" y="'+(H/2-20)+'" font-family="system-ui" font-size="13" fill="#9ca3af" text-anchor="middle">TRUE-PID-GENERATOR.js loaded — generator ready</text>'
+    +'</svg>'
+}
+</script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * JARVIS EPC — Playwright E2E Configuration
+ * Denver Engineering — Playwright E2E Configuration
  * ──────────────────────────────────────────
  * Phase 4: Critical workflow smoke tests.
  *

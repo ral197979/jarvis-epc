@@ -1,4 +1,4 @@
-# JARVIS EPC — Component Registry
+# Denver Engineering — Component Registry
 
 > **Owner visibility document.** Maps every UI component in `src/components/` to its
 > EPC domain, functional status, and view ID. Updated as part of v4.23.0 P1 remediation.

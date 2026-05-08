@@ -51,7 +51,7 @@ vi.mock('../../modules/biz/store', () => {
 // v4.31.0 TS fix: `typeof patch.__setState` resolved to `unknown[]` because
 // the patch type is Record<string, unknown[]>. Annotate the setter as an
 // actual function type so the call is valid.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const setState = (patch: Record<string, unknown[]>) =>
   (vi.mocked(useBizStore) as unknown as { __setState?: (p: Record<string, unknown[]>) => void }).__setState?.(patch) ??
   // fall through to the module export

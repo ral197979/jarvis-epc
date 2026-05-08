@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ScView  ·  Schedule Intelligence (EVM-driven schedule analysis)
+ * Denver Engineering — ScView  ·  Schedule Intelligence (EVM-driven schedule analysis)
  */
 import React from 'react'
 import { useBizStore, selectContracts, selectEVMProjects } from '../modules/biz/store'

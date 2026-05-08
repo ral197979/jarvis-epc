@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — SafetyView Component
+ * Denver Engineering — SafetyView Component
  * ───────────────────────────────────
  * Phase 9: Extraction of JarvisCore `kn()` — the unified Safety module.
  *

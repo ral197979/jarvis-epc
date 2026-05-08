@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Business Domain Reducer
+ * Denver Engineering — Business Domain Reducer
  * ──────────────────────────────────────
  * Phase 6: Typed TypeScript extraction of `_domainReducer` from JarvisCore.jsx.
  *

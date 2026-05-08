@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Scheduled Integration Sync
+ * Denver Engineering — Scheduled Integration Sync
  * ────────────────────────────────────────────
  * v4.31.0 | Periodic sync for external systems (Procore, SAP, etc.)
  *

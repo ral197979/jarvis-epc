@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Agent Mode Middleware (v4.31.0)
+ * Denver Engineering — Agent Mode Middleware (v4.31.0)
  *
  * Gates agent-originated mutations based on projects.agent_mode:
  *   auto         → pass through

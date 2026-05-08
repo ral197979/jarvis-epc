@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Daily Logs API Route
+ * Denver Engineering — Daily Logs API Route
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.31.0 — Procore-parity daily field log.
  *
@@ -16,6 +16,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -77,7 +78,17 @@ router.post('/projects/:projectId/daily-logs', async (req: Request, res: Respons
        j('incidents'), b.quality_notes ?? null, j('photos'),
        b.status ?? 'draft', (r as any).auth?.sub ?? null]
     )
-    res.status(201).json({ log: result.rows[0] })
+    const row = result.rows[0]
+    void createAction(r.tenantId!, {
+      title:         `Daily Log: ${row.log_date}`,
+      action_type:   'DAILY_LOG',
+      source_module: 'daily_logs',
+      source_id:     row.id,
+      project_id:    projectId ?? null,
+      priority:      'medium',
+      created_by:    (r as any).auth?.sub ?? null,
+    })
+    res.status(201).json({ log: row })
   } catch (e: any) {
     if (e?.code === '23505') return res.status(409).json({ error: 'A log already exists for that date' })
     console.error('[daily-logs] create error', e)

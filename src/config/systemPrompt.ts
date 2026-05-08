@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — System Prompt Configuration  (v4.28.0)
+ * Denver Engineering — System Prompt Configuration  (v4.28.0)
  * ─────────────────────────────────────────────────────
  * Phase 18c extraction: `en` variable from JarvisCore.jsx → typed export.
  *

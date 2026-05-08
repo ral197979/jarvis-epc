@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — E2E Smoke Tests
+ * Denver Engineering — E2E Smoke Tests
  * ─────────────────────────────
  * Critical path tests. Run against the production build (npm run preview).
  *

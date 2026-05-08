@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — E2E Procurement Flow Tests
+ * Denver Engineering — E2E Procurement Flow Tests
  * ─────────────────────────────────────────
  * Phase 11 Track 6: Playwright smoke tests for the procurement workflow.
  *

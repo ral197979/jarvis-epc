@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ResourcesView  ·  Resources Overview
+ * Denver Engineering — ResourcesView  ·  Resources Overview
  */
 import React from 'react'
 import { LiView }  from './LiView'

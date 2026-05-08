@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Commissioning Intelligence Types
+ * Denver Engineering — Commissioning Intelligence Types
  * ───────────────────────────────────────────────
  * Implements the Continuum Commissioning data model.
  *

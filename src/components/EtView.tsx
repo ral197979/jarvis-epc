@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — EtView  ·  Equipment Tracking
+ * Denver Engineering — EtView  ·  Equipment Tracking
  */
 import React, { useState } from 'react'
 import { useBizStore } from '../modules/biz/store'

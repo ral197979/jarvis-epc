@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ComingSoonView
+ * Denver Engineering — ComingSoonView
  * ─────────────────────────────
  * Shared "Coming Soon" placeholder for views under active extraction.
  * Replaces opaque "Panel Xx view — Phase Xb" stubs with owner-communicative UX.

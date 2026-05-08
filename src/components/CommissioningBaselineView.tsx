@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — CommissioningBaselineView
+ * Denver Engineering — CommissioningBaselineView
  * ────────────────────────────────────────
  * Phase 21: The Commissioning Intelligence UI layer.
  *
@@ -633,6 +633,7 @@ function BaselinePanel({
 
 function ChangeTimelinePanel({ truth }: { truth: AssetTruthView | null }) {
   const [filter, setFilter] = useState<string>('all')
+  const dispatch = useBizStore(s => s.dispatch)
 
   if (!truth) return <EmptyCI message="Select an asset from the Asset Truth View." />
 
@@ -645,8 +646,6 @@ function ChangeTimelinePanel({ truth }: { truth: AssetTruthView | null }) {
 
   const statuses = ['all', ...Array.from(new Set(allChanges.map(c => c.status)))]
   const filtered = filter === 'all' ? allChanges : allChanges.filter(c => c.status === filter)
-
-  const dispatch = useBizStore(s => s.dispatch)
 
   const handleApprove = (ce: CIChangeEvent) => {
     dispatch({

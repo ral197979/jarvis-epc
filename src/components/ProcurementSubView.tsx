@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ProcurementSubView  ·  Procurement Sub-Panel (compact)
+ * Denver Engineering — ProcurementSubView  ·  Procurement Sub-Panel (compact)
  */
 import React from 'react'
 import { useBizStore } from '../modules/biz/store'

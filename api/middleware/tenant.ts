@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Tenant Resolution Middleware
+ * Denver Engineering — Tenant Resolution Middleware
  * ──────────────────────────────────────────
  * v4.26.0 — Extracts and validates tenant context on every request.
  *

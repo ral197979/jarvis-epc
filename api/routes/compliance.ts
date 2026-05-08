@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Compliance Tasks Routes
+ * Denver Engineering — Compliance Tasks Routes
  * ─────────────────────────────────────────
  * v4.31.0 | CRUD for compliance_tasks.
  *
@@ -18,6 +18,7 @@
 
 import { Router, Response } from 'express'
 import { tenantQuery } from '../db/pool'
+import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 
@@ -130,7 +131,18 @@ router.post('/', async (req: Req, res: Response) => {
     req.auth?.sub           ?? null,
     JSON.stringify(b['metadata'] ?? {}),
   ])
-  res.status(201).json({ data: result.rows[0] })
+  const row = result.rows[0]
+  void createAction(tenantId, {
+    title:               `Compliance: ${row.title}`,
+    action_type:         'COMPLIANCE_TASK',
+    source_module:       'compliance_tasks',
+    source_id:           row.id,
+    project_id:          row.project_id ?? null,
+    priority:            'medium',
+    assigned_to_user_id: row.assigned_to ?? null,
+    created_by:          row.created_by ?? null,
+  })
+  res.status(201).json({ data: row })
 })
 
 // ─── PATCH update ─────────────────────────────────────────────────────────────

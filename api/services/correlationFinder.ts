@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Event Proximity Correlation Finder (v4.31.0)
+ * Denver Engineering — Event Proximity Correlation Finder (v4.31.0)
  *
  * Given a subject event (test failure, pack finalized, punch opened),
  * returns a time-proximity ranked list of other tenant events that

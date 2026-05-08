@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Navigation Configuration  (v4.28.0)
+ * Denver Engineering — Navigation Configuration  (v4.28.0)
  * ─────────────────────────────────────────────────
  * Phase 18b extraction: Ci array from JarvisCore.jsx → typed NavItem[].
  * Import this instead of the inline Ci literal in JarvisCore.

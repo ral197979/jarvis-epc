@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — KPI Snapshot Handler
+ * Denver Engineering — KPI Snapshot Handler
  * ──────────────────────────────────────
  * v4.31.0 | Writes tenant-wide metric rollups for trending.
  *

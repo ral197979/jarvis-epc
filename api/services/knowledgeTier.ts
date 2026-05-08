@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Knowledge Source Tier Classifier (v4.31.0)
+ * Denver Engineering — Knowledge Source Tier Classifier (v4.31.0)
  *
  * Heuristically classifies a source title into one of four tiers so
  * retrieval can boost authoritative content above noise:

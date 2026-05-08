@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — NavSidebar (v4.30.0 UI refresh)
+ * Denver Engineering — NavSidebar (v4.30.0 UI refresh)
  * Clean sidebar with lucide icons, grouped sections, hover states, smooth motion.
  */
 import React from 'react'
@@ -96,7 +96,7 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
         </div>
         {!collapsed && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0, lineHeight: 1.2 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--jarvis-tx)', letterSpacing: '-0.01em' }}>JARVIS EPC</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--jarvis-tx)', letterSpacing: '-0.01em' }}>Denver Engineering</span>
             <span style={{ fontSize: 10, color: 'var(--jarvis-ts)', fontFamily: 'var(--jarvis-font-mono)' }}>v4.30.0</span>
           </div>
         )}

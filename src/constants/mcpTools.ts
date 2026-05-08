@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — MCP Tool & Resource Definitions
+ * Denver Engineering — MCP Tool & Resource Definitions
  * ─────────────────────────────────────────────
  * Single source of truth for the 43 registered MCP tools and 4 MCP resources.
  * Previously inlined inside JarvisCore (variables `oi` / `Ai`).

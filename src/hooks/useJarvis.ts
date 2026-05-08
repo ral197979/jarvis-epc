@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — useJarvis Hook
+ * Denver Engineering — useJarvis Hook
  * ─────────────────────────────
  * Phase 7: Typed replacement for the untyped `useJarvis()` in JarvisCore.jsx.
  *

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Inspections API Route
+ * Denver Engineering — Inspections API Route
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.31.0 — Inspection templates and records with checklist evaluation and results.
  *
@@ -17,6 +17,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -193,7 +194,18 @@ router.post('/projects/:projectId/inspections', async (req: Request, res: Respon
         (r as any).auth?.sub ?? null
       ]
     )
-    res.status(201).json({ inspection: result.rows[0] })
+    const row = result.rows[0]
+    void createAction(r.tenantId!, {
+      title:               `Inspection ${row.inspection_number}: ${row.title}`,
+      action_type:         'INSPECTION',
+      source_module:       'inspections',
+      source_id:           row.id,
+      project_id:          projectId ?? null,
+      priority:            'medium',
+      assigned_to_user_id: row.inspector_id ?? null,
+      created_by:          (r as any).auth?.sub ?? null,
+    })
+    res.status(201).json({ inspection: row })
   } catch (e) {
     console.error('[inspections] create error', e)
     res.status(500).json({ error: 'Failed to create inspection' })

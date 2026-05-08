@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — PlanView  ·  Planning (schedule view with Gantt-style milestones)
+ * Denver Engineering — PlanView  ·  Planning (schedule view with Gantt-style milestones)
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore, selectContracts } from '../modules/biz/store'

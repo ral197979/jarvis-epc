@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Default State Seed Data  (v4.28.0)
+ * Denver Engineering — Default State Seed Data  (v4.28.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Phase 18d extraction: `$i()` function from JarvisCore.jsx → typed export.
  *

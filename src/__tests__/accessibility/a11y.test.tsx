@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Accessibility Tests (P1-D)
+ * Denver Engineering — Accessibility Tests (P1-D)
  * ─────────────────────────────────────────
  * Automated WCAG 2.1 / axe-core audit for key components.
  * Runs in CI via `npm test` — zero axe violations required.

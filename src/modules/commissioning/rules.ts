@@ -1,7 +1,7 @@
 /**
- * JARVIS EPC — Commissioning Rules Engine
+ * Denver Engineering — Commissioning Rules Engine
  * ─────────────────────────────────────────
- * Ported and extended from the JarvisEPC MVP.
+ * Ported and extended from the DenverEngineering MVP.
  *
  * Pure functions — no React, no store, no side effects.
  * All logic runs client-side; results dispatched to Zustand store.

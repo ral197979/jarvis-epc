@@ -1,10 +1,10 @@
-# JARVIS EPC — 90-Day Competitor-Gap Remediation Roadmap
+# Denver Engineering — 90-Day Competitor-Gap Remediation Roadmap
 
 **Versions:** v4.31.0 → v4.33.0
 **Time horizon:** 2026-04-17 → 2026-07-16 (90 days, three 30-day release slots)
 **Status:** DRAFT — Owner approval required before any sprint executes
 **Authority model:** Owner-First. Every sprint is advisory until the OWNER checkpoint is explicitly approved.
-**Source inputs:** `Jarvis_EPC/JARVIS_EPC_vs_Top5_Competitors.xlsx`, `EXTRACTION_ROADMAP.md`, `CHANGELOG.md`, `COMPONENT_MAP.md`, v4.30.0 repo state.
+**Source inputs:** `Denver_Engineering/DENVER_ENGINEERING_vs_Top5_Competitors.xlsx`, `EXTRACTION_ROADMAP.md`, `CHANGELOG.md`, `COMPONENT_MAP.md`, v4.30.0 repo state.
 
 ---
 
@@ -98,7 +98,7 @@ Each gap follows the same structure: **Target end-state · Approach · Effort ·
 
 ### G3 — Plant engineering (integration posture, not build)
 
-- **Target end-state:** Accept P&ID tag lists, equipment schedules, and handover packages from AVEVA / Hexagon Smart P&ID / Bentley OpenPlant via file-based connectors. JARVIS EPC does **not** build native plant engineering.
+- **Target end-state:** Accept P&ID tag lists, equipment schedules, and handover packages from AVEVA / Hexagon Smart P&ID / Bentley OpenPlant via file-based connectors. Denver Engineering does **not** build native plant engineering.
 - **Approach:**
   1. Document `PlantDataImport` schema (tag, unit, service, line size, from/to, PID, rev).
   2. Add CSV / Excel import endpoint: `POST /api/v1/import/plant` with dry-run + commit phases.
@@ -223,11 +223,11 @@ Week 11–12 (v4.33.0 end)    P3 (readiness pack) + P5 (coverage)            + r
 
 ## 8. Post-Remediation Scorecard Projection
 
-After 90 days, projected weighted scores (from `Jarvis_EPC/JARVIS_EPC_vs_Top5_Competitors.xlsx` methodology):
+After 90 days, projected weighted scores (from `Denver_Engineering/DENVER_ENGINEERING_vs_Top5_Competitors.xlsx` methodology):
 
 | Product | Current | Projected v4.33.0 | Δ |
 |---|---|---|---|
-| JARVIS EPC | 4.32 | **4.72** | +0.40 |
+| Denver Engineering | 4.32 | **4.72** | +0.40 |
 | AVEVA Unified Project Execution | 3.64 | 3.64 | — |
 | InEight | 3.59 | 3.59 | — |
 | Primavera + Aconex | 3.29 | 3.29 | — |

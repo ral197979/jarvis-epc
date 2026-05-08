@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DocumentsView Component
+ * Denver Engineering — DocumentsView Component
  * ───────────────────────────────────────
  * Phase 10: Extraction of JarvisCore `vn()` — the Documents module.
  *
@@ -466,7 +466,8 @@ export function DocumentsView({
   onToast,
 }: DocumentsViewProps) {
   const allDocs = useBizStore(selectDocuments) as Document[]
-  const transmittals: Transmittal[] = transmittalsProp ?? (useBizStore(s => s.biz.transmittals ?? []) as Transmittal[])
+  const transmittalsFromStore = useBizStore(s => s.biz.transmittals ?? []) as Transmittal[]
+  const transmittals: Transmittal[] = transmittalsProp ?? transmittalsFromStore
 
   const [activeTab,       setActiveTab]       = useState<DocumentsTab>('register')
   const [selectedDoc,     setSelectedDoc]     = useState<Document | null>(null)

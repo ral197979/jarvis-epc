@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — CRMLeads Component
+ * Denver Engineering — CRMLeads Component
  * ─────────────────────────────────
  * Phase 8: Second full view extracted from JarvisCore.jsx (function `ln`).
  *

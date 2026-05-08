@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — HbAdminView  ·  Hub Admin / Settings
+ * Denver Engineering — HbAdminView  ·  Hub Admin / Settings
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore } from '../modules/biz/store'

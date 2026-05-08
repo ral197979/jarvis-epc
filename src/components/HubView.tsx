@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — HubView  ·  Project Hub (unified cross-domain summary)
+ * Denver Engineering — HubView  ·  Project Hub (unified cross-domain summary)
  */
 import React from 'react'
 import { useBizStore, selectContracts, selectLeads, selectDocuments, selectIncidents, selectActionItems, selectPunchItems } from '../modules/biz/store'

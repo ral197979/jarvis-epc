@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — AI Data Sanitizer
+ * Denver Engineering — AI Data Sanitizer
  * ─────────────────────────────────
  * Extracted from JarvisCore.jsx Phase 19 — P2-A monolith reduction.
  *

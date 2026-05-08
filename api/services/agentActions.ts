@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Agent Action Log (v4.31.0)
+ * Denver Engineering — Agent Action Log (v4.31.0)
  *
  * Thin wrapper over the `agent_actions` table. Every automated decision
  * writes one row: ciArbiter records each arbitration, morning digest

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — TokenStore
+ * Denver Engineering — TokenStore
  * ─────────────────────────
  * Phase 11: Persistent JWT token store with Redis backend and in-memory fallback.
  *
@@ -97,7 +97,7 @@ export class RedisTokenStore implements ITokenStore {
 
   private _connect(url: string): void {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const Redis = require('ioredis').default ?? require('ioredis')
       this.redis = new Redis(url, {
         maxRetriesPerRequest: 3,

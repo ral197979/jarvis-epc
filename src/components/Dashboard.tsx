@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Dashboard Component
+ * Denver Engineering — Dashboard Component
  * ──────────────────────────────────
  * Phase 7: First full TypeScript extraction from JarvisCore.jsx (function `an`).
  *

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Formatters
+ * Denver Engineering — Formatters
  * ───────────────────────
  * Pure formatting and calculation utilities.
  * No dependencies, no side effects. Fully unit-testable.

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — File Storage Abstraction
+ * Denver Engineering — File Storage Abstraction
  * ───────────────────────────────────────
  * v4.26.0 — Pluggable storage backend.
  *
@@ -179,13 +179,13 @@ class S3Storage implements IStorage {
   private _bucket: string
 
   constructor() {
-    this._bucket = process.env['S3_BUCKET'] ?? 'jarvis-epc'
+    this._bucket = process.env['S3_BUCKET'] ?? 'denver-engineering'
     this._init()
   }
 
   private _init(): void {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const { S3Client } = require('@aws-sdk/client-s3')
       this._client = new S3Client({
         region:   process.env['AWS_REGION'] ?? 'us-east-1',
@@ -204,9 +204,9 @@ class S3Storage implements IStorage {
   }
 
   async presignUpload(key: string, opts?: PresignUploadOptions): Promise<PresignUploadResult> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { PutObjectCommand }  = require('@aws-sdk/client-s3')
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { getSignedUrl }      = require('@aws-sdk/s3-request-presigner')
     const expiresIn  = TOKEN_TTL
     const expiresAt  = new Date(Date.now() + expiresIn * 1000)
@@ -220,9 +220,9 @@ class S3Storage implements IStorage {
   }
 
   async presignDownload(key: string, ttlSeconds = 3600): Promise<PresignDownloadResult> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { GetObjectCommand } = require('@aws-sdk/client-s3')
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { getSignedUrl }     = require('@aws-sdk/s3-request-presigner')
     const cmd = new GetObjectCommand({ Bucket: this._bucket, Key: key })
     const downloadUrl = await getSignedUrl(this._client, cmd, { expiresIn: ttlSeconds })
@@ -230,13 +230,13 @@ class S3Storage implements IStorage {
   }
 
   async deleteObject(key: string): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { DeleteObjectCommand } = require('@aws-sdk/client-s3')
     await this._client.send(new DeleteObjectCommand({ Bucket: this._bucket, Key: key }))
   }
 
   async copyObject(srcKey: string, dstKey: string): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { CopyObjectCommand } = require('@aws-sdk/client-s3')
     await this._client.send(new CopyObjectCommand({
       Bucket:     this._bucket,
@@ -246,7 +246,7 @@ class S3Storage implements IStorage {
   }
 
   async objectExists(key: string): Promise<boolean> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { HeadObjectCommand } = require('@aws-sdk/client-s3')
     try {
       await this._client.send(new HeadObjectCommand({ Bucket: this._bucket, Key: key }))
@@ -255,7 +255,7 @@ class S3Storage implements IStorage {
   }
 
   async getMetadata(key: string): Promise<ObjectMetadata | null> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { HeadObjectCommand } = require('@aws-sdk/client-s3')
     try {
       const res = await this._client.send(new HeadObjectCommand({ Bucket: this._bucket, Key: key }))
@@ -274,7 +274,7 @@ class S3Storage implements IStorage {
     stream: NodeJS.ReadableStream,
     mimeType?: string,
   ): Promise<{ sizeBytes: number; etag: string }> {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const { Upload } = require('@aws-sdk/lib-storage')
     const upload = new Upload({
       client: this._client,

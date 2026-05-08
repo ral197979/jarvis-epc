@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Audit Log Retention Handler
+ * Denver Engineering — Audit Log Retention Handler
  * ────────────────────────────────────────────
  * v4.31.0 | Deletes audit_log rows older than the tenant's configured
  *          audit_retention_days window.

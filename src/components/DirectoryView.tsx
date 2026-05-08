@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DirectoryView Component
+ * Denver Engineering — DirectoryView Component
  * Phase 11: Extraction of JarvisCore xn() — the Directory module.
  *
  * Two tabs: Vendors and Customers.

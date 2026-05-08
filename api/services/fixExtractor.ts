@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Fix Library Auto-Extractor (v4.31.0)
+ * Denver Engineering — Fix Library Auto-Extractor (v4.31.0)
  *
  * Phase 2 of the "make Jarvis smarter" plan. For each ingested source,
  * we batch its chunks through Claude with a tool-use schema that forces

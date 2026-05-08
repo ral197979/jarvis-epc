@@ -1,4 +1,4 @@
-# JARVIS EPC — Remediation Artifact Index
+# Denver Engineering — Remediation Artifact Index
 
 **Program:** 90-day competitor-gap closure, v4.31.0 → v4.33.0
 **Parent doc:** `../../REMEDIATION_ROADMAP.md`

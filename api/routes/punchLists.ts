@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Punch Lists API Route
+ * Denver Engineering — Punch Lists API Route
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.31.0 — Quality closeout punch lists with item tracking, verification, and closure.
  *
@@ -20,6 +20,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -226,7 +227,18 @@ router.post('/punch-lists/:id/items', async (req: Request, res: Response) => {
         (r as any).auth?.sub ?? null
       ]
     )
-    res.status(201).json({ item: result.rows[0] })
+    const row = result.rows[0]
+    void createAction(r.tenantId!, {
+      title:               `Punch Item ${row.item_number}: ${row.title}`,
+      action_type:         'PUNCH_ITEM',
+      source_module:       'punch_items',
+      source_id:           row.id,
+      project_id:          row.project_id ?? null,
+      priority:            (row.priority as 'low'|'medium'|'high'|'critical') ?? 'medium',
+      assigned_to_user_id: row.assigned_to ?? null,
+      created_by:          (r as any).auth?.sub ?? null,
+    })
+    res.status(201).json({ item: row })
   } catch (e) {
     console.error('[punch-items] create error', e)
     res.status(500).json({ error: 'Failed to create punch item' })

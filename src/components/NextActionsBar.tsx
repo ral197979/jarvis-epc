@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — NextActionsBar
+ * Denver Engineering — NextActionsBar
  * ────────────────────────────
  * Cross-domain "what to do right now" widget.
  * Shown above the active module content on every page.

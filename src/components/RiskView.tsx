@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — RiskView  ·  Risk Register
+ * Denver Engineering — RiskView  ·  Risk Register
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore } from '../modules/biz/store'

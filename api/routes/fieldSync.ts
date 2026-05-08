@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Field Sync Routes
+ * Denver Engineering — Field Sync Routes
  * ─────────────────────────────────
  * v4.31.0 | Offline-first mutation replay for field workflows.
  *

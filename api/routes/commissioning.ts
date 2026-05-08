@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Commissioning Pack Routes
+ * Denver Engineering — Commissioning Pack Routes
  * ────────────────────────────────────────
  * v4.30.0 | Integrated from EngineeringHub v11
  *
@@ -198,6 +198,33 @@ router.post('/generate-draft', async (req: Req, res: Response) => {
   const jobId = jobRes.rows[0]!.id
   slog('INFO', 'commissioning', '[draft] Job queued', { jobId, systemType, tenantId })
   res.status(202).json({ success: true, jobId })
+})
+
+// ─── POST /packs/manual ───────────────────────────────────────────────────────
+// Persist a rules-engine generated CxPack without going through the AI worker.
+// Stores the full CxPack as payload_json so CxWorkflowView can re-hydrate it.
+
+router.post('/packs/manual', async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const { title, systemType, projectId, payload } =
+    req.body as { title?: string; systemType?: string; projectId?: string; payload?: unknown }
+
+  if (!title || !systemType) {
+    res.status(400).json({ error: 'validation', message: 'title and systemType are required' })
+    return
+  }
+
+  const result = await tenantQuery<{ id: string; title: string; status: string; created_at: string }>(
+    tenantId, `
+    INSERT INTO commissioning_packs
+      (tenant_id, created_by, project_id, title, system_type, status, payload_json)
+    VALUES ($1, $2, $3, $4, $5, 'draft', $6)
+    RETURNING id, title, status, created_at
+  `, [tenantId, req.auth!.sub, projectId ?? null, title, systemType, payload ? JSON.stringify({ cx_pack: payload }) : null])
+
+  res.status(201).json({ item: result.rows[0] })
 })
 
 // ─── GET /packs ───────────────────────────────────────────────────────────────

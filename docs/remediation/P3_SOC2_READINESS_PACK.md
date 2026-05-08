@@ -17,7 +17,7 @@ Secondary objective: ISO 27001 Annex A gap assessment (documentation only; forma
 
 ## Trust Service Criteria in scope
 
-For SOC 2 Type II, JARVIS EPC will target the following TSCs:
+For SOC 2 Type II, Denver Engineering will target the following TSCs:
 
 | TSC | Status | Notes |
 |---|---|---|
@@ -124,7 +124,7 @@ Post-certification, the following cadence sustains the attestation:
 
 ## ISO 27001 gap assessment (scoping only)
 
-JARVIS EPC's existing controls align well with ISO 27001 Annex A. A formal certification is out of 90-day scope, but the following docs overlap:
+Denver Engineering's existing controls align well with ISO 27001 Annex A. A formal certification is out of 90-day scope, but the following docs overlap:
 
 | ISO 27001 domain | SOC 2 evidence that satisfies |
 |---|---|

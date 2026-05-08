@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Theme Module
+ * Denver Engineering — Theme Module
  * ─────────────────────────
  * Single source of truth for all design tokens.
  * Pure constants — no dependencies, no side effects.

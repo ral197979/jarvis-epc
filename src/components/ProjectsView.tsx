@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ProjectsView Component
+ * Denver Engineering — ProjectsView Component
  * ─────────────────────────────────────
  * Phase 9: Extraction of JarvisCore `sn()` (projects list) and
  * the project workspace panels embedded in `un()`.

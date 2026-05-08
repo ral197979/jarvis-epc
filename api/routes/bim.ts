@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — BIM Models API Route
+ * Denver Engineering — BIM Models API Route
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.31.0 — Autodesk-parity 3D coordination model register + clash/issue tracker.
  *
@@ -17,6 +17,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -141,7 +142,18 @@ router.post('/projects/:projectId/bim-issues', async (req: Request, res: Respons
        b.description ?? null, b.severity ?? 'minor', b.status ?? 'open',
        JSON.stringify(b.element_ids ?? []), JSON.stringify(b.viewpoint ?? {}),
        b.assigned_to ?? null, (r as any).auth?.sub ?? null])
-    res.status(201).json({ issue: result.rows[0] })
+    const row = result.rows[0]
+    void createAction(r.tenantId!, {
+      title:               `BIM Issue: ${row.title}`,
+      action_type:         'BIM_ISSUE',
+      source_module:       'bim_issues',
+      source_id:           row.id,
+      project_id:          req.params.projectId ?? null,
+      priority:            row.severity === 'critical' ? 'critical' : row.severity === 'major' ? 'high' : 'medium',
+      assigned_to_user_id: row.assigned_to ?? null,
+      created_by:          (r as any).auth?.sub ?? null,
+    })
+    res.status(201).json({ issue: row })
   } catch (e) {
     console.error('[bim-issues] create error', e)
     res.status(500).json({ error: 'Failed to create BIM issue' })

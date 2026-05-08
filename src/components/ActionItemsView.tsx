@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ActionItemsView Component
+ * Denver Engineering — ActionItemsView Component
  * ────────────────────────────────────────
  * Phase 11: Extraction of JarvisCore `Cn()` — the Action Items register.
  *

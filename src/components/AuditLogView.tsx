@@ -102,7 +102,7 @@ export default function AuditLogView({ onToast, onAudit }: AuditLogViewProps) {
     } catch { /* keep DEFAULT_ACTIONS */ }
   }
 
-  useEffect(() => { loadActions(); load(1); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { loadActions(); load(1);   }, []);
 
   function applyFilters(e: React.FormEvent) {
     e.preventDefault();

@@ -66,7 +66,7 @@ export default function ComplianceView({ onToast }: ComplianceViewProps) {
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load(1)   }, [])
 
   const stats = useMemo(() => ({
     pending:   rows.filter(r => r.status === 'pending').length,

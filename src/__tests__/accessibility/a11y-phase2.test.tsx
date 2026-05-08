@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Phase 2 Accessibility Audit
+ * Denver Engineering — Phase 2 Accessibility Audit
  * ──────────────────────────────────────────
  * WCAG 2.1 AA automated audit for all components NOT covered in a11y.test.tsx.
  * (Dashboard, StatusBadge, KpiCard, DirectoryView are tested in a11y.test.tsx.)

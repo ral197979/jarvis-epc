@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 /**
- * JARVIS EPC — Vitest Global Setup
+ * Denver Engineering — Vitest Global Setup
  * ──────────────────────────────────
  * Runs before every test file.
  * Extends expect() with jest-dom matchers.

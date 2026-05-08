@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Generic Scheduler + Background Job Runner
+ * Denver Engineering — Generic Scheduler + Background Job Runner
  * ──────────────────────────────────────────────────────────
  * v4.31.0 | Cron-style recurring jobs on top of Pack Worker pattern.
  *

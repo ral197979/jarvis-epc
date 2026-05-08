@@ -146,7 +146,7 @@ function ScheduledJobsTab({
     } catch { /* best-effort */ }
   }
 
-  useEffect(() => { loadHandlers(); load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { loadHandlers(); load(1)   }, [])
 
   async function toggle(row: ScheduledJob) {
     try {
@@ -366,7 +366,7 @@ function BackgroundJobsTab({
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load(1)   }, [])
 
   async function retry(row: BackgroundJob) {
     try {
@@ -553,7 +553,7 @@ function KpiHistoryTab({
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load(1)   }, [])
 
   // Pick the union of metric keys across rows so new fields show up automatically
   // when the handler starts emitting them.
@@ -713,7 +713,7 @@ function McpMarketplaceTab({
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load()   }, [])
 
   async function toggle(name: string) {
     const isDisabled = disabled.has(name)
@@ -834,7 +834,7 @@ function AutosignRulesTab({
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load(1)   }, [])
 
   async function toggle(row: AutosignRule) {
     try {
@@ -970,7 +970,7 @@ function AgentActionsTab({
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showUnreviewed])
+  useEffect(() => { load(1)   }, [showUnreviewed])
 
   async function review(row: AgentAction, outcome: 'confirmed'|'overridden'|'reversed') {
     try {
@@ -1159,7 +1159,7 @@ function BaselinesTab({
     } finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load(1)   }, [])
 
   async function reset(row: Baseline) {
     if (!confirm(`Reset baseline for ${row.system_type} · ${row.criteria_name}? This drops all observations and restarts warmup.`)) return

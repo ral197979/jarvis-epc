@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Calculation Sessions Routes
+ * Denver Engineering — Calculation Sessions Routes
  * GET/POST /api/v1/projects/:projectId/calc-sessions
  * GET/PATCH/DELETE /api/v1/calc-sessions/:id
  */

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — MCP Bridge Route
+ * Denver Engineering — MCP Bridge Route
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.28.0 — Denver release
  *
@@ -96,7 +96,7 @@ const NATIVE_TOOLS = [
 // v4.31.0 TS fix: AVA_ONLY_TOOLS reference catalogue kept as documentation;
 // prefix with `void` to acknowledge intentional non-use and satisfy both
 // loose and strict typechecks (the strict config raises noUnusedLocals).
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 const AVA_ONLY_TOOLS = [
   'bash','file_read','file_write','file_search','glob',
   'process_list','process_kill','clipboard_read','clipboard_write',

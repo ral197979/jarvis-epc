@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Shared State Store
+ * Denver Engineering — Shared State Store
  * ─────────────────────────────────
  * Central repository for all shared mutable state.
  * Module-level singleton — no framework dependency.
@@ -154,7 +154,7 @@ export function setMaintenanceMode(enabled: boolean): void {
 export interface ToastItem { id: number; msg: string; type: string; ts: number }
 export type ToastListener = (queue: ToastItem[]) => void
 
-export let toastQueue: ToastItem[]      = []
+export const toastQueue: ToastItem[]      = []
 export const toastListeners: ToastListener[] = []
 
 // ─── Undo Stack ───────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — SubmittalsView (REST upgrade)
+ * Denver Engineering — SubmittalsView (REST upgrade)
  * ─────────────────────────────────────────────────────────────────────────────
  * v4.32.0 — Full submittal workflow against /api/v1/submittals.
  *

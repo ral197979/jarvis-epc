@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Webhook Dispatch Handler
+ * Denver Engineering — Webhook Dispatch Handler
  * ──────────────────────────────────────────
  * v4.31.0 | Durable, retryable webhook emission on top of the scheduler.
  *

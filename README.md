@@ -1,26 +1,26 @@
-# JARVIS EPC v4
+# Denver Engineering v4
 
 **AI-powered EPC project management platform** — Engineering, Procurement, and Construction workflow automation with an integrated AI operations layer.
 
-[![CI](https://github.com/your-org/jarvis-epc/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/jarvis-epc/actions/workflows/ci.yml)
+[![CI](https://github.com/your-org/denver-engineering/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/denver-engineering/actions/workflows/ci.yml)
 > **v4.23.0** — SEC-01 httpOnly cookie JWT, SEC-02 real auth gate, P1 stub UX remediation.
 
-[![Tests](https://img.shields.io/badge/tests-1800%2B%20passing-brightgreen)](https://github.com/your-org/jarvis-epc)
+[![Tests](https://img.shields.io/badge/tests-1800%2B%20passing-brightgreen)](https://github.com/your-org/denver-engineering)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org/)
-[![Coverage](https://img.shields.io/badge/coverage-79%25-green)](https://github.com/your-org/jarvis-epc)
+[![Coverage](https://img.shields.io/badge/coverage-79%25-green)](https://github.com/your-org/denver-engineering)
 
 ---
 
 ## Overview
 
-JARVIS EPC provides a unified interface for managing the complete EPC project lifecycle: CRM and tendering through procurement, field engineering, commissioning, and project closeout — with an integrated Claude AI layer for data analysis and workflow automation.
+Denver Engineering provides a unified interface for managing the complete EPC project lifecycle: CRM and tendering through procurement, field engineering, commissioning, and project closeout — with an integrated Claude AI layer for data analysis and workflow automation.
 
 ---
 
 ## Architecture
 
 ```
-jarvis-epc/
+denver-engineering/
 ├── api/                       Express backend proxy (TypeScript)
 │   ├── server.ts              HTTP server, routes, security middleware
 │   ├── auth.ts                JWT auth — issuance, rotation, revocation
@@ -186,4 +186,4 @@ npm run e2e              # Playwright tests
 
 ---
 
-*JARVIS EPC v4 — Proprietary. All rights reserved.*
+*Denver Engineering v4 — Proprietary. All rights reserved.*

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DrawingsView · Plans Register + PDF Viewer  (v4.31.0)
+ * Denver Engineering — DrawingsView · Plans Register + PDF Viewer  (v4.31.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Autodesk/Procore-parity: sheet list with discipline filter, revisions,
  * in-browser PDF.js viewer with rectangle/text markup overlay.

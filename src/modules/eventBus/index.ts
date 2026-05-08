@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — JIP (Jarvis Interop Protocol) Event Bus
+ * Denver Engineering — JIP (Jarvis Interop Protocol) Event Bus
  * ─────────────────────────────────────────────────────
  * Typed pub/sub messaging for decoupled component communication.
  * Pure module — no dependencies, no side effects beyond its own state.

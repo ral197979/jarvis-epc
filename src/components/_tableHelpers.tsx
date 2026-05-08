@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Shared table/form helpers (internal, not exported from index)
+ * Denver Engineering — Shared table/form helpers (internal, not exported from index)
  * Used by the 54 new domain view components to avoid repetition.
  */
 import React, { useState } from 'react'

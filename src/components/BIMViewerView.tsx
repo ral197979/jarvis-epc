@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — BIMViewerView · 3D Model Viewer + Clash Issues  (v4.31.0)
+ * Denver Engineering — BIMViewerView · 3D Model Viewer + Clash Issues  (v4.31.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Autodesk-parity: IFC/glTF model register, web-based 3D viewer via xeokit CDN
  * iframe, clash/coordination issue tracker.

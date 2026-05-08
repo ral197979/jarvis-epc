@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — SafetyMainView  ·  Safety Main Dashboard (full HSE overview)
+ * Denver Engineering — SafetyMainView  ·  Safety Main Dashboard (full HSE overview)
  * Wraps SafetyView with additional executive-level stats
  */
 import React from 'react'

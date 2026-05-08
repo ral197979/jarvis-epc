@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — FinanceView  ·  Finance Overview
+ * Denver Engineering — FinanceView  ·  Finance Overview
  * Tabs: Summary | Invoices | Expenses | Journal
  */
 import React, { useState, useMemo } from 'react'

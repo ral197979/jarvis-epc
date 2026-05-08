@@ -67,7 +67,7 @@ New file: `api/data/marketplace-registry.json`
       "category": "AI",
       "capability_scopes": ["read:projects", "read:budgets", "read:costs"],
       "mcp_endpoint": "https://partners.example-analytics.co/mcp",
-      "icon_url": "https://cdn.jarvis-epc.io/marketplace/cost-analytics.png",
+      "icon_url": "https://cdn.denver-engineering.io/marketplace/cost-analytics.png",
       "vetted_by": "rommel",
       "vetted_at": "2026-07-01"
     }

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Grounded RAG Ask Builder (v4.31.0)
+ * Denver Engineering — Grounded RAG Ask Builder (v4.31.0)
  *
  * Full pipeline behind POST /api/v1/ask:
  *

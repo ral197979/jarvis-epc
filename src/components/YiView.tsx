@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — YiView  ·  Yield & Financial Performance KPIs
+ * Denver Engineering — YiView  ·  Yield & Financial Performance KPIs
  */
 import React from 'react'
 import { useBizStore, selectEVMProjects, selectInvoices, selectExpenses } from '../modules/biz/store'

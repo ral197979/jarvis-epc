@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Bulk knowledge ingest CLI (v4.31.0)
+ * Denver Engineering — Bulk knowledge ingest CLI (v4.31.0)
  *
  * Walks a directory recursively, registers every matching file as a
  * knowledge_sources row, and enqueues an ingest_pdf job for each. The

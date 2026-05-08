@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ProcurementView Component
+ * Denver Engineering — ProcurementView Component
  * ─────────────────────────────────────────
  * Phase 10: Extraction of JarvisCore `fn()` — the Procurement module.
  *

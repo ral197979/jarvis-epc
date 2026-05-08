@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Commissioning Intelligence Module
+ * Denver Engineering — Commissioning Intelligence Module
  * ────────────────────────────────────────────────
  * Business logic, selectors, and helpers for the Commissioning Intelligence layer.
  *

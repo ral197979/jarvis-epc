@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Knowledge Base Bulk Ingest Service (v4.31.0)
+ * Denver Engineering — Knowledge Base Bulk Ingest Service (v4.31.0)
  *
  * Walks a directory tree, registers every matching file as a
  * knowledge_sources row (deduped by SHA256 within the tenant), and

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DailyLogsView · Procore-parity Daily Log  (v4.31.0)
+ * Denver Engineering — DailyLogsView · Procore-parity Daily Log  (v4.31.0)
  * ─────────────────────────────────────────────────────────────────────────────
  * Field daily log: weather, manpower, equipment, work performed, delays,
  * safety notes, incidents, photos. Draft → submitted → approved lifecycle.

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Procurement Routes
+ * Denver Engineering — Procurement Routes
  * ──────────────────────────────────
  * v4.26.0 | Vendors, Purchase Orders, RFIs, Submittals
  *
@@ -15,6 +15,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { createAction, completeAction } from '../services/actionService'  // v4.33.0 Ava
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -303,7 +304,19 @@ rfisRouter.post('/', async (req: Req, res: Response) => {
     VALUES (current_setting('app.current_tenant_id',true)::uuid,$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     RETURNING *
   `, [b['project_id'],b['rfi_number'],b['title'],b['description']??null,'open',b['priority']??'medium',b['discipline']??null,req.auth?.sub??null,b['assigned_to']??null,b['due_date']??null,JSON.stringify(b['metadata']??{})])
-  res.status(201).json({ data: result.rows[0] })
+  const row = result.rows[0]
+  // Ava Phase 1B: emit unified action (fire-and-forget, non-blocking)
+  void createAction(tenantId, {
+    title:               `RFI ${row.rfi_number}: ${row.title}`,
+    action_type:         'RFI',
+    source_module:       'rfis',
+    source_id:           row.id,
+    project_id:          row.project_id,
+    priority:            (row.priority as 'low'|'medium'|'high'|'critical') ?? 'medium',
+    assigned_to_user_id: row.assigned_to ?? null,
+    created_by:          req.auth?.sub ?? null,
+  })
+  res.status(201).json({ data: row })
 })
 
 rfisRouter.post('/:id/respond', async (req: Req, res: Response) => {
@@ -368,7 +381,19 @@ submittalsRouter.post('/', async (req: Req, res: Response) => {
     VALUES (current_setting('app.current_tenant_id',true)::uuid,$1,$2,$3,$4,'draft',$5,$6,$7,$8,$9)
     RETURNING *
   `, [b['project_id'],b['submittal_number'],b['title'],b['type']??null,b['discipline']??null,b['spec_section']??null,req.auth?.sub??null,b['due_date']??null,JSON.stringify(b['metadata']??{})])
-  res.status(201).json({ data: result.rows[0] })
+  const row = result.rows[0]
+  // Ava Phase 1B: emit unified action
+  void createAction(tenantId, {
+    title:               `Submittal ${row.submittal_number}: ${row.title}`,
+    action_type:         'SUBMITTAL',
+    source_module:       'submittals',
+    source_id:           row.id,
+    project_id:          row.project_id,
+    priority:            'medium',
+    assigned_to_user_id: null,
+    created_by:          req.auth?.sub ?? null,
+  })
+  res.status(201).json({ data: row })
 })
 
 submittalsRouter.patch('/:id', async (req: Req, res: Response) => {

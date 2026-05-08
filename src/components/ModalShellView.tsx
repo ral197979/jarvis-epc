@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — ModalShellView  ·  Modal Shell (generic detail/form host)
+ * Denver Engineering — ModalShellView  ·  Modal Shell (generic detail/form host)
  */
 import React from 'react'
 import type { PolicyConfig } from '../modules/biz/dispatch'

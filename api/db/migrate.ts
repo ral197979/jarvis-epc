@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Migration Runner
+ * Denver Engineering — Migration Runner
  * ───────────────────────────────
  * v4.26.0 — Runs SQL migration files in sequence.
  *

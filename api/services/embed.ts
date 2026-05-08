@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Embedding service (v4.31.0)
+ * Denver Engineering — Embedding service (v4.31.0)
  *
  * Thin wrapper around OpenAI-compatible embeddings APIs with batching,
  * retry, and strict dimension enforcement. No SDK dependency — plain

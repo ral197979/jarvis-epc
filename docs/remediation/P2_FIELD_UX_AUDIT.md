@@ -107,7 +107,7 @@ Every changed surface must maintain:
 
 ## Before/after mockup guide
 
-Mockups are delivered via Figma (file to be created in the Jarvis EPC Figma workspace, not embedded here). Link to be added once designer is assigned. In the interim, engineer implementing the changes should reference this doc as the spec.
+Mockups are delivered via Figma (file to be created in the Denver Engineering Figma workspace, not embedded here). Link to be added once designer is assigned. In the interim, engineer implementing the changes should reference this doc as the spec.
 
 ---
 

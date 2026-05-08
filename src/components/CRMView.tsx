@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — CRMView  ·  CRM Overview (pipeline summary + quick stats)
+ * Denver Engineering — CRMView  ·  CRM Overview (pipeline summary + quick stats)
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore, selectLeads, selectCustomers, selectProposals } from '../modules/biz/store'

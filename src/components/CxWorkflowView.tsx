@@ -1,7 +1,7 @@
 /**
- * JARVIS EPC — CxWorkflowView
+ * Denver Engineering — CxWorkflowView
  * ────────────────────────────
- * Full commissioning workflow integrated from the JarvisEPC MVP.
+ * Full commissioning workflow integrated from the DenverEngineering MVP.
  *
  * Tabs: Scope → Matrix → Packs → Execute → Deficiencies → Turnover
  *
@@ -12,8 +12,8 @@
  * Zero API calls. Pure client-side commissioning engine.
  */
 
-import React, { useState, useMemo, useCallback } from 'react'
-import { useBizStore }                           from '../modules/biz/store'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useBizStore, selectProjects }           from '../modules/biz/store'
 import { JARVIS_ACTIONS }                        from '../modules/biz/reducer'
 import { createDispatch, type PolicyConfig }     from '../modules/biz/dispatch'
 import { StatusBadge }                           from './StatusBadge'
@@ -1007,9 +1007,34 @@ const TABS: { id: WorkflowTab; label: string; icon: string }[] = [
   { id: 'turnover',     label: 'Turnover',     icon: '🏁' },
 ]
 
+async function fetchWithRetry(url: string): Promise<unknown> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) await new Promise<void>(r => setTimeout(r, 300))
+    try {
+      const res = await fetch(url)
+      if (res.ok) return res.json()
+    } catch { /* retry on next attempt */ }
+  }
+  return null
+}
+
 export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps) {
   const [tab, setTab]         = useState<WorkflowTab>('project')
   const [selectedPack, setSP] = useState<CxPack | null>(null)
+
+  // ── Project context (for API persistence) ────────────────────────────────────
+  const projects   = useBizStore(selectProjects) as Array<{ id: string; name: string }>
+  const [projectId, setProjectId] = useState<string>('')
+  // Map local deficiency id → DB deficiency id (populated on successful API create)
+  const [defDbIds, setDefDbIds] = useState<Record<string, string>>({})
+  const [isLoading, setIsLoading]               = useState(false)
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false)
+  const [syncError, setSyncError]               = useState<string | null>(null)
+  const coldFetchFired = useRef(false)
+
+  useEffect(() => {
+    if (projects?.length && !projectId) setProjectId(String(projects[0]?.id ?? ''))
+  }, [projects])
 
   const scopeResults  = useCxCollection<CxScopeResult>('cx_scope_results')
   const matrixRows    = useCxCollection<CxMatrixRow>('cx_matrix_rows')
@@ -1046,6 +1071,88 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
   function updateCollection(key: string, items: unknown[]) {
     dispatch({ type: JARVIS_ACTIONS.UPDATE_COLLECTION, data: { collection: key, items } })
   }
+
+  // ── N2: seed project selector from API on cold load (biz store empty) ─────────
+  useEffect(() => {
+    if (projects?.length || coldFetchFired.current) return
+    coldFetchFired.current = true
+    setIsLoadingProjects(true)
+    fetchWithRetry('/api/v1/projects?limit=100')
+      .then(data => {
+        const d = data as { data?: Array<{ id: string; name: string }> } | null
+        if (d?.data?.length) {
+          dispatch({ type: JARVIS_ACTIONS.UPDATE_COLLECTION, data: { collection: 'projects', items: d.data } })
+        }
+      })
+      .finally(() => setIsLoadingProjects(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // ── F01: restore persisted data from API when project is selected ────────────
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    setIsLoading(true)
+    setSyncError(null)
+    Promise.all([
+      fetchWithRetry(`/api/v1/commissioning/packs?project_id=${projectId}&limit=100`),
+      fetchWithRetry(`/api/v1/projects/${projectId}/deficiencies`),
+      fetchWithRetry(`/api/v1/projects/${projectId}/systems`),
+    ]).then(([packsData, defsData, systemsData]) => {
+      if (cancelled) return
+      type Row = Record<string, unknown>
+      const failed: string[] = []
+
+      if ((packsData as { items?: unknown[] } | null)?.items?.length) {
+        const pd = packsData as { items: Row[] }
+        const restored: CxPack[] = pd.items
+          .map(p => ((p['payload_json'] as Row | null)?.['cx_pack']) as CxPack | undefined)
+          .filter((p): p is CxPack => !!p)
+        if (restored.length)
+          dispatch({ type: JARVIS_ACTIONS.UPDATE_COLLECTION, data: { collection: 'cx_packs', items: restored } })
+      } else if (packsData === null) { failed.push('packs') }
+
+      if ((defsData as { items?: unknown[] } | null)?.items?.length) {
+        const dd = defsData as { items: Row[] }
+        const restored: CxDeficiency[] = dd.items.map(d => ({
+          id:          String(d['id']),
+          packId:      '',
+          title:       String(d['title']),
+          description: String(d['description'] ?? ''),
+          severity:    (d['severity'] ?? 'medium') as DefSeverity,
+          status:      (d['status'] ?? 'open') as CxDeficiency['status'],
+          createdAt:   String(d['created_at']),
+        }))
+        dispatch({ type: JARVIS_ACTIONS.UPDATE_COLLECTION, data: { collection: 'cx_deficiencies', items: restored } })
+        const ids: Record<string, string> = {}
+        dd.items.forEach(d => { ids[String(d['id'])] = String(d['id']) })
+        setDefDbIds(ids)
+      } else if (defsData === null) { failed.push('deficiencies') }
+
+      if ((systemsData as { items?: unknown[] } | null)?.items?.length) {
+        const sd = systemsData as { items: Row[] }
+        const restored = sd.items.map(s => ({
+          id:      String(s['id']),
+          project: String(s['name']),
+          type:    String(s['status'] ?? ''),
+        }))
+        dispatch({ type: JARVIS_ACTIONS.UPDATE_COLLECTION, data: { collection: 'contracts', items: restored } })
+      } else if (systemsData === null) { failed.push('systems') }
+
+      if (failed.length) {
+        const msg = `Could not load: ${failed.join(', ')}. Data may be incomplete.`
+        setSyncError(msg)
+        onToast?.(msg, 'warn')
+      }
+    }).catch(() => {
+      if (!cancelled) {
+        const msg = 'Sync failed — check your connection.'
+        setSyncError(msg)
+        onToast?.(msg, 'error')
+      }
+    }).finally(() => { if (!cancelled) setIsLoading(false) })
+    return () => { cancelled = true }
+  }, [projectId, dispatch, setDefDbIds, onToast])
 
   // ── Project Setup ────────────────────────────────────────────────────────────
 
@@ -1101,11 +1208,18 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
   const handleGeneratePack = useCallback((row: CxMatrixRow) => {
     const pack = generatePack(row)
     updateCollection('cx_packs', [...packs, pack])
-    // Mark matrix row as in_progress
     const updatedMatrix = matrixRows.map(r => r.id === row.id ? { ...r, status: 'in_progress' as const } : r)
     updateCollection('cx_matrix_rows', updatedMatrix)
     onToast?.(`Pack created: ${pack.title}`, 'success')
-  }, [packs, matrixRows, dispatch, onToast])
+    // Persist to DB (fire-and-forget; local state is already updated)
+    if (projectId) {
+      fetch('/api/v1/commissioning/packs/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: pack.title, systemType: pack.assetTag, projectId, payload: pack }),
+      }).catch(() => {})
+    }
+  }, [packs, matrixRows, dispatch, onToast, projectId])
 
   // ── Execution ────────────────────────────────────────────────────────────────
 
@@ -1151,10 +1265,29 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     if (newDefs.length > 0) {
       updateCollection('cx_deficiencies', [...deficiencies, ...newDefs])
       onToast?.(`Execution submitted — ${newDefs.length} deficiency${newDefs.length > 1 ? 's' : ''} raised`, 'warn')
+      // Persist deficiencies to DB
+      if (projectId) {
+        newDefs.forEach(def => {
+          const code = `DEF-${def.id.slice(-6).toUpperCase()}`
+          fetch('/api/v1/deficiencies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId, code, title: def.title,
+              description: def.description, severity: def.severity, status: def.status,
+            }),
+          })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              if (data?.item?.id) setDefDbIds(prev => ({ ...prev, [def.id]: data.item.id }))
+            })
+            .catch(() => {})
+        })
+      }
     } else {
       onToast?.('Execution complete — all steps passed ✓', 'success')
     }
-  }, [packs, executions, deficiencies, dispatch, onToast])
+  }, [packs, executions, deficiencies, dispatch, onToast, projectId])
 
   // ── Deficiencies ─────────────────────────────────────────────────────────────
 
@@ -1176,7 +1309,16 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     const updated = deficiencies.map(d => d.id === id ? { ...d, status } : d)
     updateCollection('cx_deficiencies', updated)
     onToast?.(`Deficiency ${status}`, 'info')
-  }, [deficiencies, dispatch, onToast])
+    // Mirror to DB if we have a DB ID for this deficiency
+    const dbId = defDbIds[id]
+    if (dbId) {
+      fetch(`/api/v1/deficiencies/${dbId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      }).catch(() => {})
+    }
+  }, [deficiencies, dispatch, onToast, defDbIds])
 
   // ── Turnover ──────────────────────────────────────────────────────────────────
 
@@ -1218,6 +1360,31 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
           />
         </div>
       )}
+
+      {/* Project selector — loading skeleton / empty state / selector based on store state */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <label className="jarvis-small" htmlFor="cx-project-select" style={{ flexShrink: 0 }}>Project</label>
+        {isLoadingProjects
+          ? <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', fontSize: 11 }}>Loading projects…</span>
+          : projects?.length > 0
+            ? <>
+                <select
+                  id="cx-project-select"
+                  className="jarvis-select"
+                  value={projectId}
+                  onChange={e => setProjectId(e.target.value)}
+                  style={{ fontSize: 11, flex: '0 0 auto', maxWidth: 260 }}
+                >
+                  <option value="">— none (local only) —</option>
+                  {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+                {isLoading && <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', fontSize: 10 }}>syncing…</span>}
+                {projectId && !isLoading && !syncError && <span className="jarvis-small" style={{ color: 'var(--jarvis-grn)', fontSize: 10 }}>● cloud sync on</span>}
+                {projectId && !isLoading && syncError && <span className="jarvis-small" title={syncError} style={{ color: 'var(--jarvis-warn)', fontSize: 10 }}>⚠ partial sync</span>}
+              </>
+            : <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', fontSize: 11 }}>No projects found — contact your administrator.</span>
+        }
+      </div>
 
       {/* Tab bar */}
       <div role="tablist" aria-label="Commissioning workflow" style={{

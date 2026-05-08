@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Field Sync Batch Processor
+ * Denver Engineering — Field Sync Batch Processor
  * ───────────────────────────────────────────
  * v4.31.0 | Idempotent replay of offline-captured mutations
  *

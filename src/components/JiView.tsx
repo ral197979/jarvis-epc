@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — JiView  ·  Job Items
+ * Denver Engineering — JiView  ·  Job Items
  */
 import React, { useState } from 'react'
 import { useBizStore } from '../modules/biz/store'

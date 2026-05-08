@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Critical Path (CPM-lite)
+ * Denver Engineering — Critical Path (CPM-lite)
  * ──────────────────────────────────────────
  * v4.31.0 | Pure computation — no DB, no IO.
  *

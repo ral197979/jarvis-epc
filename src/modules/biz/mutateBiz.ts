@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — mutateBiz Typed Bridge
+ * Denver Engineering — mutateBiz Typed Bridge
  * ──────────────────────────────────────
  * Phase 22: Typed replacement for JarvisCore's legacy `_dispatch(action, data)` API.
  *

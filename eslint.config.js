@@ -1,68 +1,93 @@
-import js from '@eslint/js'
-import globals from 'globals'
+import js         from '@eslint/js'
+import globals    from 'globals'
+import tsParser   from '@typescript-eslint/parser'
+import tsPlugin   from '@typescript-eslint/eslint-plugin'
+import reactPlugin from 'eslint-plugin-react'
+import hooksPlugin from 'eslint-plugin-react-hooks'
 
 export default [
-  // Base JS recommended rules
+  // ── Ignores ──────────────────────────────────────────────────────────────────
+  {
+    ignores: ['dist/**', 'node_modules/**', 'src/jarvis/**', 'coverage/**', '.claude/**'],
+  },
+
+  // ── Base JS rules for plain JS/JSX files ─────────────────────────────────────
   {
     ...js.configs.recommended,
-    files: ['**/*.{js,mjs,cjs,jsx,ts,tsx}'],
+    files: ['**/*.{js,mjs,cjs,jsx}'],
+    languageOptions: {
+      ecmaVersion:  'latest',
+      sourceType:   'module',
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: { ...globals.browser, ...globals.es2020, ...globals.node },
+    },
   },
 
-  // TypeScript modules only — strict rules
+  // ── JSX files — React variable usage (prevents false "unused" on JSX tags) ──
+  {
+    files: ['**/*.jsx'],
+    plugins: { react: reactPlugin },
+    rules: { 'react/jsx-uses-vars': 'error' },
+  },
+
+  // ── TypeScript + React (src + api) ───────────────────────────────────────────
+  // Adds @typescript-eslint/parser so .ts/.tsx files are parsed correctly.
+  {
+    files: ['src/**/*.{ts,tsx}', 'api/**/*.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion:  'latest',
+        sourceType:   'module',
+        ecmaFeatures: { jsx: true },
+      },
+      globals: { ...globals.browser, ...globals.es2020, ...globals.node },
+    },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      react:                reactPlugin,
+      'react-hooks':        hooksPlugin,
+    },
+    rules: {
+      // TypeScript — warn (not error) so existing codebase doesn't fail immediately
+      '@typescript-eslint/no-explicit-any':    'warn',
+      '@typescript-eslint/no-unused-vars':     ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      // React hooks correctness
+      'react-hooks/rules-of-hooks':  'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      // Turn off base rule replaced by TS variant
+      'no-unused-vars': 'off',
+    },
+  },
+
+  // ── src/modules — additional strict rules ────────────────────────────────────
   {
     files: ['src/modules/**/*.ts'],
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        ...globals.es2020,
-      },
-    },
     rules: {
-      // Prevent accidental use of console.log in production modules
-      // (slog() is the correct mechanism)
-      'no-debugger': 'error',
-      'no-alert':    'error',
-
-      // Catch common bugs
+      'no-debugger':          'error',
+      'no-alert':             'error',
       'no-duplicate-imports': 'error',
-      'no-unused-expressions': 'error',
-      'no-use-before-define': ['warn', { functions: false, classes: true }],
-
-      // Code style
-      'prefer-const': 'error',
-      'no-var': 'error',
+      'prefer-const':         'error',
+      'no-var':               'error',
     },
   },
 
-  // Test files — more relaxed rules
+  // ── Test files — relaxed rules ────────────────────────────────────────────────
   {
-    files: ['src/__tests__/**/*.ts'],
+    files: ['src/__tests__/**/*.{ts,tsx}', 'api/__tests__/**/*.ts'],
     languageOptions: {
       globals: {
         ...globals.browser,
         ...globals.es2020,
-        describe: 'readonly',
-        it:       'readonly',
-        expect:   'readonly',
-        vi:       'readonly',
-        beforeEach: 'readonly',
-        afterEach:  'readonly',
-        beforeAll:  'readonly',
-        afterAll:   'readonly',
+        ...globals.node,
+        describe: 'readonly', it: 'readonly', expect: 'readonly',
+        vi: 'readonly', beforeEach: 'readonly', afterEach: 'readonly',
+        beforeAll: 'readonly', afterAll: 'readonly',
       },
     },
     rules: {
-      'no-unused-expressions': 'off',
+      'no-unused-expressions':              'off',
+      '@typescript-eslint/no-explicit-any': 'off',
     },
-  },
-
-  // Ignore
-  {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'src/jarvis/**', // JarvisCore monolith — not linted in Phase 3
-      'coverage/**',
-    ],
   },
 ]

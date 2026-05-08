@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Zustand Biz Store
+ * Denver Engineering — Zustand Biz Store
  * ────────────────────────────────
  * Phase 6: Reactive wrapper around bizReducer for React components.
  *

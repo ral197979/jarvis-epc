@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — JobsView  ·  Jobs Register
+ * Denver Engineering — JobsView  ·  Jobs Register
  */
 import React, { useState, useMemo } from 'react'
 import { useBizStore } from '../modules/biz/store'

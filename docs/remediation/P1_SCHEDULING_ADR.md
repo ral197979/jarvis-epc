@@ -1,4 +1,4 @@
-# P1 — ADR: CPM Scheduling Engine for JARVIS EPC
+# P1 — ADR: CPM Scheduling Engine for Denver Engineering
 
 **Status:** DRAFT — awaiting owner approval
 **Release slot:** v4.32.0
@@ -8,7 +8,7 @@
 
 ## Context
 
-JARVIS EPC has basic gantt + WBS (from existing `src/components/Dashboard.tsx` primitives and biz reducer). It lacks:
+Denver Engineering has basic gantt + WBS (from existing `src/components/Dashboard.tsx` primitives and biz reducer). It lacks:
 
 - Critical Path Method (CPM) computation — early/late start, early/late finish, total float, free float
 - Baseline snapshots vs. current schedule variance

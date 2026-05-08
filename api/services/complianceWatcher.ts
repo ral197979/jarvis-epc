@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Compliance Watcher
+ * Denver Engineering — Compliance Watcher
  * ────────────────────────────────────
  * v4.31.0 | Scans compliance_tasks each tick and fires webhook events
  *          when tasks enter their notification window or become overdue.

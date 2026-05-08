@@ -1,4 +1,4 @@
-/* JARVIS EPC — Service Worker v4.31.0
+/* Denver Engineering — Service Worker v4.31.0
  *
  * Responsibilities:
  *   1. Offline app shell — cache the HTML/JS/CSS needed to boot the SPA

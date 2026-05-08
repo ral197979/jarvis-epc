@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Observability Module
+ * Denver Engineering — Observability Module
  * ───────────────────────────────────
  * Structured logging, activity tracking, health heartbeat,
  * performance budgets, data retention, and security utilities.
@@ -302,7 +302,7 @@ export function exportDiagnostics(
 ): ReturnType<typeof redactSensitive> {
   const health = stateHealth(biz)
   const bundle = redactSensitive({
-    version:     'JARVIS EPC v4.3',
+    version:     'Denver Engineering v4.3',
     exportedAt:  new Date().toISOString(),
     session:     sessionMetrics,
     errors:      _errorLog,

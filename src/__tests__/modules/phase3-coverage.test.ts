@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Phase 3: Zustand Migration + Architecture Coverage
+ * Denver Engineering — Phase 3: Zustand Migration + Architecture Coverage
  * ────────────────────────────────────────────────────────────────
  * Targets remaining branch/statement coverage gaps identified after Phase 2:
  *
@@ -301,7 +301,7 @@ describe('computeEvidenceHash — Web Crypto SHA-256 (lines 377-383)', () => {
     // The actual value: b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b9bfe4c2f11e89bf
     // Actually it is: b94d27b9934d3e08a52e52d7da7dabfac484efe04294e576b9bfe4c2f11e89bf
     // Let's compute it fresh and just verify format+stability
-    const file = new Blob(['jarvis-epc-test'], { type: 'text/plain' })
+    const file = new Blob(['denver-engineering-test'], { type: 'text/plain' })
     const hash1 = await computeEvidenceHash(file)
     const hash2 = await computeEvidenceHash(file)
     // Deterministic — same input produces same hash
@@ -327,7 +327,7 @@ describe('computeEvidenceHash — Web Crypto SHA-256 (lines 377-383)', () => {
 
 describe('computeStringHash — SHA-256 of text input (lines 386-391)', () => {
   it('returns a 64-char lowercase hex string', async () => {
-    const hash = await computeStringHash('JARVIS EPC commissioning audit')
+    const hash = await computeStringHash('Denver Engineering commissioning audit')
     expect(hash).toHaveLength(64)
     expect(hash).toMatch(/^[0-9a-f]+$/)
   })

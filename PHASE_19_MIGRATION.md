@@ -1,4 +1,4 @@
-# JARVIS EPC v4.29.0 — Phase 19 JarvisCore Migration Guide
+# Denver Engineering v4.29.0 — Phase 19 JarvisCore Migration Guide
 # ─────────────────────────────────────────────────────────────────────────────
 # Apply these changes to src/jarvis/JarvisCore.jsx to complete Phase 19.
 # After applying, JarvisCore.jsx shrinks from ~6,535 lines to ~500 lines.

@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — HeartbeatBar  (v4.30.0)
+ * Denver Engineering — HeartbeatBar  (v4.30.0)
  * ──────────────────────────────────────────────────────────────────────────────
  * System status header bar — amber-accent refresh, lucide icons.
  */
@@ -85,7 +85,7 @@ export function HeartbeatBar({ backendUrl = '', version = '4.30.0' }: HeartbeatB
       {/* Brand */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 600, color: 'var(--jarvis-tx)', fontSize: 13, letterSpacing: '-0.01em' }}>
         <ShieldCheck size={16} color='var(--jarvis-ac)' strokeWidth={2.2} />
-        <span>JARVIS EPC</span>
+        <span>Denver Engineering</span>
         <span style={{
           fontSize: 10, fontWeight: 500, color: 'var(--jarvis-ac)',
           padding: '2px 8px', borderRadius: 4,

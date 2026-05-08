@@ -125,7 +125,7 @@ export default function AskJarvisView({ onToast }: Props) {
     } catch (e) { onToast?.(String(e), 'error') }
   }
 
-  useEffect(() => { loadSessions() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { loadSessions()   }, [])
 
   // Auto-scroll to bottom when messages update.
   useEffect(() => {
@@ -415,7 +415,7 @@ function CitationBadge({
       setPreview(lines.slice(0, 400))
     }
   }
-  useEffect(() => { if (showPreview) handleHover() /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showPreview])
+  useEffect(() => { if (showPreview) handleHover()   }, [showPreview])
 
   const tierCls = citation.tier === 'oem'    ? 'bg-indigo-100 text-indigo-800'
                 : citation.tier === 'record' ? 'bg-blue-100 text-blue-800'

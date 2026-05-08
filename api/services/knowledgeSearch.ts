@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Knowledge Base Retrieval (v4.31.0)
+ * Denver Engineering — Knowledge Base Retrieval (v4.31.0)
  *
  * v1 retrieval: PostgreSQL full-text search with ts_rank_cd scoring,
  * filtered by tenant + optional tags/asset_system/source_ids. Returns

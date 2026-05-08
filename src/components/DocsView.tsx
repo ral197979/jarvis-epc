@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — DocsView  ·  Documents Overview (wraps DocumentsView + transmittals summary)
+ * Denver Engineering — DocsView  ·  Documents Overview (wraps DocumentsView + transmittals summary)
  */
 import React from 'react'
 import { useBizStore, selectDocuments } from '../modules/biz/store'

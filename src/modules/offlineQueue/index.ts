@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Offline Mutation Queue  (v4.31.0)
+ * Denver Engineering — Offline Mutation Queue  (v4.31.0)
  * ────────────────────────────────────────────────
  * IndexedDB-backed queue for offline-captured field mutations.
  * Pairs with the server's /api/v1/field-sync/batch endpoint:

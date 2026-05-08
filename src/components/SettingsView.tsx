@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — SettingsView  ·  Application Settings
+ * Denver Engineering — SettingsView  ·  Application Settings
  */
 import React, { useState } from 'react'
 import { useBizStore } from '../modules/biz/store'
@@ -69,7 +69,7 @@ export function SettingsView({ policy: pProp, onToast }: SettingsViewProps) {
         <div className="jarvis-card" style={{ padding: 20 }}>
           <h4 className="jarvis-label" style={{ marginBottom: 12 }}>System Information</h4>
           {[
-            ['Version',      'JARVIS EPC v4.23.0'],
+            ['Version',      'Denver Engineering v4.23.0'],
             ['Role',          policy.activeRole ?? 'viewer'],
             ['Writes',        policy.writesEnabled ? 'Enabled' : 'Disabled'],
             ['AI Chat',       policy.chatEnabled ? 'Enabled' : 'Disabled'],

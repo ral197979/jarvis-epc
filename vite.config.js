@@ -32,9 +32,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Manual chunk splitting — expand as we extract further modules
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-recharts': ['recharts'],
+        // Vite 8 (Rolldown) requires a function; object form is no longer supported.
+        manualChunks(id) {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) return 'vendor-react'
+          if (id.includes('node_modules/recharts')) return 'vendor-recharts'
         },
       },
     },

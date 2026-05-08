@@ -1,0 +1,130 @@
+/**
+ * JARVIS EPC — Design Tokens (v4.30.0 refresh)
+ * Inter/JetBrains Mono fonts, refined dark palette, elevation, motion.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Surfaces (zinc-based, warm dark) ───────────────────────────────── */
+  --jarvis-bg:   #0a0b0f;
+  --jarvis-bg2:  #0e1015;
+  --jarvis-sf:   #14161d;
+  --jarvis-sf2:  #1a1d26;
+  --jarvis-cd:   #13161d;
+  --jarvis-bd:   #242836;
+  --jarvis-bd2:  #2d3242;
+  --jarvis-bl:   #333848;
+
+  /* ── Accent (amber JARVIS) ──────────────────────────────────────────── */
+  --jarvis-ac:        #f59e0b;
+  --jarvis-ac-hover:  #fbbf24;
+  --jarvis-ac-dim:    #b45309;
+
+  /* ── Text ───────────────────────────────────────────────────────────── */
+  --jarvis-tx:   #f4f4f5;
+  --jarvis-tx2:  #d4d4d8;
+  --jarvis-ts:   #a1a1aa;
+  --jarvis-td:   #52525b;
+
+  /* ── Semantic ───────────────────────────────────────────────────────── */
+  --jarvis-blue: #3b82f6;
+  --jarvis-grn:  #10b981;
+  --jarvis-red:  #ef4444;
+  --jarvis-amb:  #f59e0b;
+  --jarvis-pur:  #a78bfa;
+  --jarvis-cyn:  #06b6d4;
+  --jarvis-pnk:  #ec4899;
+  --jarvis-org:  #f97316;
+
+  /* ── Spacing ────────────────────────────────────────────────────────── */
+  --jarvis-sp-1: 4px;
+  --jarvis-sp-2: 8px;
+  --jarvis-sp-3: 12px;
+  --jarvis-sp-4: 16px;
+  --jarvis-sp-5: 20px;
+  --jarvis-sp-6: 24px;
+  --jarvis-sp-8: 32px;
+  --jarvis-sp-10: 40px;
+  --jarvis-sp-12: 48px;
+
+  /* ── Radius ─────────────────────────────────────────────────────────── */
+  --jarvis-r-sm: 6px;
+  --jarvis-r-md: 8px;
+  --jarvis-r-lg: 12px;
+  --jarvis-r-xl: 16px;
+  --jarvis-r-2xl: 20px;
+
+  /* ── Type ───────────────────────────────────────────────────────────── */
+  --jarvis-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --jarvis-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  --jarvis-font-size-xs:  11px;
+  --jarvis-font-size-sm:  12px;
+  --jarvis-font-size-md:  13px;
+  --jarvis-font-size-base:14px;
+  --jarvis-font-size-lg:  16px;
+  --jarvis-font-size-xl:  20px;
+  --jarvis-font-size-2xl: 24px;
+  --jarvis-font-size-3xl: 30px;
+  --jarvis-font-size-4xl: 36px;
+
+  /* ── Elevation ──────────────────────────────────────────────────────── */
+  --jarvis-shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --jarvis-shadow-sm: 0 2px 4px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --jarvis-shadow-md: 0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
+  --jarvis-shadow-lg: 0 12px 32px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4);
+  --jarvis-shadow-xl: 0 24px 64px rgba(0,0,0,0.7);
+  --jarvis-shadow-accent: 0 0 0 1px var(--jarvis-ac), 0 0 24px rgba(245,158,11,0.2);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --jarvis-t-fast:   120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --jarvis-t-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --jarvis-t-slow:   320ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Z-index ────────────────────────────────────────────────────────── */
+  --jarvis-z-base:    0;
+  --jarvis-z-raised:  10;
+  --jarvis-z-sticky:  50;
+  --jarvis-z-overlay: 100;
+  --jarvis-z-modal:   200;
+  --jarvis-z-toast:   300;
+  --jarvis-z-tooltip: 400;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--jarvis-ac);
+  outline-offset: 2px;
+  border-radius: var(--jarvis-r-sm);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--jarvis-bd2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--jarvis-bl); }
+
+::selection {
+  background: rgba(245, 158, 11, 0.35);
+  color: var(--jarvis-tx);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--jarvis-bg);
+  color: var(--jarvis-tx);
+  font-family: var(--jarvis-font-sans);
+  font-size: var(--jarvis-font-size-base);
+  line-height: 1.5;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.jarvis-num, .num {
+  font-family: var(--jarvis-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}

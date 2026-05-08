@@ -155,7 +155,7 @@ function BookmarkletSetup({ onClose }: { onClose: () => void }) {
         hits Jarvis&apos;s servers.
       </p>
       <div className="flex items-center gap-3 mb-3">
-        {/* eslint-disable-next-line react/jsx-no-target-blank */}
+        { }
         <a href={bookmarkletHref}
           className="inline-block px-3 py-2 bg-indigo-600 text-white rounded text-sm font-medium shadow hover:bg-indigo-700 cursor-grab active:cursor-grabbing"
           onClick={(e) => {
@@ -205,7 +205,7 @@ function BrowseTab({ authHeaders, onToast }: { authHeaders: Record<string,string
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load(1) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [])
+  useEffect(() => { load(1)   }, [])
 
   return (
     <>

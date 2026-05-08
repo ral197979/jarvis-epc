@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Pin Utilities
+ * Denver Engineering — Pin Utilities
  * ─────────────────────────────
  * Extracted from JarvisCore.jsx Phase 19 — P2-A monolith reduction.
  *

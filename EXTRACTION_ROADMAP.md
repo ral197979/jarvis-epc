@@ -1,4 +1,4 @@
-# JARVIS EPC — JarvisCore.jsx Extraction Roadmap
+# Denver Engineering — JarvisCore.jsx Extraction Roadmap
 
 **v4.23.0 | P2-A | Status: In Progress**
 

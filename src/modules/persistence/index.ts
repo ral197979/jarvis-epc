@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC — Persistence Module
+ * Denver Engineering — Persistence Module
  * ─────────────────────────────────
  * Universal CRUD layer, input sanitization, rate limiting,
  * undo/redo, collection inventory, validators, bulk actions.
@@ -234,6 +234,7 @@ export function bulkDeleteAction(collection: string, arrSetter: React.Dispatch<R
     label: '🗑 Delete Selected',
     color: e.red,
     fn(ids) {
+      // eslint-disable-next-line no-alert
       if (!confirm(`Delete ${ids.length} ${collection} items? This cannot be undone.`)) return
       arrSetter(prev => prev.filter(r => !ids.includes(String(r.id ?? ''))))
       ids.forEach(id => crud('delete', collection, null, id))

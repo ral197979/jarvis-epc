@@ -1,5 +1,5 @@
 /**
- * JARVIS EPC v4 — App Shell
+ * Denver Engineering v4 — App Shell
  *
  * Architecture (Phase 20+):
  * ─────────────────────────
