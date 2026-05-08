@@ -3,7 +3,7 @@
 // Immutable export log with SHA-256 integrity.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 
 // ─── Certification types ──────────────────────────────────────────────────────

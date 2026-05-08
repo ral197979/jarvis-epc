@@ -1,7 +1,7 @@
 // Denver Engineering — Uptime Monitor (v10.0.0)
 // Tracks API latency, websocket uptime, queue lag, replay failures, and more.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { UptimeRecord, UptimeMetricType, UptimeSummary } from './phase10Types'
 
 // ─── Record uptime checks ─────────────────────────────────────────────────────

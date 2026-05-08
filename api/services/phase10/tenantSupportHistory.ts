@@ -1,7 +1,7 @@
 // Denver Engineering — Tenant Support History (v10.0.0)
 // Tracks support tickets, escalations, and resolution history per tenant.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import { SupportTicket, TicketStatus, TicketPriority, TicketEscalation } from './phase10Types'
 

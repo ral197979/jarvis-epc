@@ -2,7 +2,7 @@
 // Seeds industry-specific demo tenants with realistic data for sales/pilot use.
 
 import { randomUUID } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import { DemoTenant } from './enterpriseTypes'
 import { provisionTenant } from './tenantProvisioningService'

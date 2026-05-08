@@ -1,7 +1,7 @@
 // Denver Engineering — Governance Validation Engine (v10.0.0)
 // Validates AI governance controls: audit completeness, policy coverage, traceability.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   GovernanceValidationRun, GovernanceValidationResult,

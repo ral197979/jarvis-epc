@@ -2,7 +2,7 @@
 // Cross-tenant benchmarks without data leakage: suppressed small cohorts,
 // aggregate bands only, no identifiable tenant ranking.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   BenchmarkMetric, BenchmarkCohort, TenantBenchmarkResult, MIN_BENCHMARK_COHORT,

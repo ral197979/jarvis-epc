@@ -2,7 +2,7 @@
 // Verifies that event replay is fully deterministic across multiple passes.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   ReplayVerificationRun, ReplayVerificationStatus,

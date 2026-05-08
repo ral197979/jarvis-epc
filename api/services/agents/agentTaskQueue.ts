@@ -1,7 +1,7 @@
 // Denver Engineering — Agent Task Queue (v5.0.0)
 // Durable, tenant-isolated task queue with idempotency and FOR UPDATE SKIP LOCKED.
 
-import pool, { tenantQuery } from '../../db/pool'
+import { pool, tenantQuery  } from '../../db/pool'
 import { CreateTaskInput, AgentTask, AgentType, TaskStatus } from './agentTypes'
 
 // ─── Enqueue ──────────────────────────────────────────────────────────────────

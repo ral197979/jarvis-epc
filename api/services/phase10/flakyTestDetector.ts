@@ -1,7 +1,7 @@
 // Denver Engineering — Flaky Test Detector (v10.0.0)
 // Detects non-deterministic tests by tracking outcome flips across runs.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import {
   TestRunOutcome, FlakyTestReport, TestOutcome,
   FLAKY_FLIP_THRESHOLD,

@@ -1,7 +1,7 @@
 // Denver Engineering — Tenant Archival Service (v8.0.0)
 // Safe tenant archival pipeline with data preservation and recovery support.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import { TenantSubscription, TenantLifecycleEvent } from './enterpriseTypes'
 import { transitionLifecycle, getSubscription } from './tenantProvisioningService'

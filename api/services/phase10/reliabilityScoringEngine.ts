@@ -1,7 +1,7 @@
 // Denver Engineering — Reliability Scoring Engine (v10.0.0)
 // Computes composite SLO scores from uptime, latency, and error-rate signals.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import {
   ReliabilityScore, SLOViolation, SLOPeriod,
   RELIABILITY_SLO_DEFAULT,

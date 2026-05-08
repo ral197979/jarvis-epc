@@ -2,7 +2,7 @@
 // Secure extension system: explicit permissions, version pinning, rollback, kill switch.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   Plugin, PluginVersion, TenantPluginInstall, PluginPermission,

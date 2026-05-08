@@ -1,7 +1,7 @@
 // Denver Engineering — AI Explainability Validator (v10.0.0)
 // Validates that AI decisions are auditable, documented, and explainable.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   ExplainabilityReport, ExplainabilityCheck, ExplainabilityStatus,

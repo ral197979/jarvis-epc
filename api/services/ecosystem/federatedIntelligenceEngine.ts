@@ -3,7 +3,7 @@
 
 import { createHash, randomBytes } from 'crypto'
 import { tenantQuery } from '../../db/pool'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import {
   FederatedContribution, FederatedContributionType, FederatedPattern,
   FederatedModelVersion, FederatedPrivacyAudit, K_ANONYMITY_MIN,

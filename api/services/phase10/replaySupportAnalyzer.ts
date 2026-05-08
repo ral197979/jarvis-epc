@@ -2,7 +2,7 @@
 // Analyzes replay failures to assist support triage and root-cause identification.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   ReplayIncident, ReplayIncidentStatus, ReplayRootCause,

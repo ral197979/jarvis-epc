@@ -3,7 +3,7 @@
 // validation before output, approval gates for high-impact actions.
 
 import { createHash, randomBytes, createHmac } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import { ExternalAgent, ExternalAgentExecution, ExternalAgentStatus } from './ecosystemTypes'
 

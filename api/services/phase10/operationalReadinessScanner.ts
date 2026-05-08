@@ -1,7 +1,7 @@
 // Denver Engineering — Operational Readiness Scanner (v10.0.0)
 // Evaluates platform readiness across all operational dimensions.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import {
   OperationalReadinessScan, ReadinessScanResult,
   ReadinessDimension, ReadinessLevel,

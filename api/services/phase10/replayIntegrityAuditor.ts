@@ -2,7 +2,7 @@
 // Audits replay integrity across event streams; produces immutable audit trails.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   ReplayIntegrityAudit, IntegrityAuditStatus, IntegrityViolation,

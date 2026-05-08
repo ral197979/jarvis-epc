@@ -2,7 +2,7 @@
 // Health checks, rolling upgrade drain support, and deployment observability.
 
 import { tenantQuery } from '../../db/pool'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import {
   DeploymentHealthCheck, DeploymentHealthReport,
 } from './enterpriseTypes'

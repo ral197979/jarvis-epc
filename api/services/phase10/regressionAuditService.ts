@@ -2,7 +2,7 @@
 // Tracks, classifies, and reports on test failures across CI runs.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   RegressionAuditRun, RegressionFailure, FailureClassification,

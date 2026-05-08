@@ -2,7 +2,7 @@
 // Generates diagnostic reports for support escalations and incident triage.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   SupportDiagnosticReport, DiagnosticCheck, DiagnosticSeverity,

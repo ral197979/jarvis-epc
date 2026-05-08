@@ -2,7 +2,7 @@
 // Immutable deployment tracking: versions, migrations, health, rollback safety.
 
 import { createHash } from 'crypto'
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { DeploymentAudit, DeploymentAuditStatus } from './phase10Types'
 
 // ─── Deployment Audit CRUD ────────────────────────────────────────────────────

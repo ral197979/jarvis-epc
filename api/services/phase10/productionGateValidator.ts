@@ -1,7 +1,7 @@
 // Denver Engineering — Production Gate Validator (v10.0.0)
 // Deterministic gate checks for production deployment readiness.
 
-import { default as pool } from '../../db/pool'
+import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import {
   ProductionGateRun, ProductionGateCheck,
