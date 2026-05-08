@@ -130,6 +130,7 @@ import adaptiveRouter              from './routes/adaptive'                   //
 import optimizationRouter          from './routes/optimization'               // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
 import enterpriseRouter            from './routes/enterprise'                 // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
 import ecosystemRouter             from './routes/ecosystem'                  // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem Platform
+import { estimatingRouter         } from './routes/estimating'                // v10.0.0: BIM Element Layer + Estimating Engine
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -390,6 +391,7 @@ app.use('/api/v1/adaptive',             adaptiveRouter)          // v7.0.0 Ava P
 app.use('/api/v1/optimization',         optimizationRouter)      // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
 app.use('/api/v1/enterprise',           enterpriseRouter)        // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
 app.use('/api/v1/ecosystem',            ecosystemRouter)         // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem
+app.use('/api/v1',                      estimatingRouter)        // v10.0.0: BIM Element Layer + Estimating Engine
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
