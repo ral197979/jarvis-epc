@@ -3,95 +3,117 @@
 
 -- ─── Enums ───────────────────────────────────────────────────────────────────
 
-CREATE TYPE tenant_lifecycle_status AS ENUM (
-  'trial',
-  'onboarding',
-  'active',
-  'suspended',
-  'cancelled',
-  'archived'
-);
+DO $$ BEGIN
+  CREATE TYPE tenant_lifecycle_status AS ENUM (
+    'trial',
+    'onboarding',
+    'active',
+    'suspended',
+    'cancelled',
+    'archived'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE subscription_tier AS ENUM (
-  'starter',
-  'professional',
-  'enterprise',
-  'custom'
-);
+DO $$ BEGIN
+  CREATE TYPE subscription_tier AS ENUM (
+    'starter',
+    'professional',
+    'enterprise',
+    'custom'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE subscription_status AS ENUM (
-  'trialing',
-  'active',
-  'past_due',
-  'cancelled',
-  'paused'
-);
+DO $$ BEGIN
+  CREATE TYPE subscription_status AS ENUM (
+    'trialing',
+    'active',
+    'past_due',
+    'cancelled',
+    'paused'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE billing_event_type AS ENUM (
-  'usage',
-  'seat',
-  'storage',
-  'ai_tokens',
-  'api_calls',
-  'simulation',
-  'adjustment',
-  'credit'
-);
+DO $$ BEGIN
+  CREATE TYPE billing_event_type AS ENUM (
+    'usage',
+    'seat',
+    'storage',
+    'ai_tokens',
+    'api_calls',
+    'simulation',
+    'adjustment',
+    'credit'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE onboarding_stage AS ENUM (
-  'organization_setup',
-  'project_import',
-  'role_assignment',
-  'integrations',
-  'feature_activation',
-  'training_completion',
-  'completed'
-);
+DO $$ BEGIN
+  CREATE TYPE onboarding_stage AS ENUM (
+    'organization_setup',
+    'project_import',
+    'role_assignment',
+    'integrations',
+    'feature_activation',
+    'training_completion',
+    'completed'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE onboarding_task_status AS ENUM (
-  'pending',
-  'in_progress',
-  'completed',
-  'skipped',
-  'failed'
-);
+DO $$ BEGIN
+  CREATE TYPE onboarding_task_status AS ENUM (
+    'pending',
+    'in_progress',
+    'completed',
+    'skipped',
+    'failed'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE support_ticket_status AS ENUM (
-  'open',
-  'in_progress',
-  'waiting_customer',
-  'resolved',
-  'closed'
-);
+DO $$ BEGIN
+  CREATE TYPE support_ticket_status AS ENUM (
+    'open',
+    'in_progress',
+    'waiting_customer',
+    'resolved',
+    'closed'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE support_ticket_priority AS ENUM (
-  'low',
-  'medium',
-  'high',
-  'critical'
-);
+DO $$ BEGIN
+  CREATE TYPE support_ticket_priority AS ENUM (
+    'low',
+    'medium',
+    'high',
+    'critical'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE export_format AS ENUM (
-  'csv',
-  'json',
-  'pdf',
-  'parquet'
-);
+DO $$ BEGIN
+  CREATE TYPE export_format AS ENUM (
+    'csv',
+    'json',
+    'pdf',
+    'parquet'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE export_status AS ENUM (
-  'pending',
-  'running',
-  'completed',
-  'failed',
-  'expired'
-);
+DO $$ BEGIN
+  CREATE TYPE export_status AS ENUM (
+    'pending',
+    'running',
+    'completed',
+    'failed',
+    'expired'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE api_key_status AS ENUM (
-  'active',
-  'revoked',
-  'expired',
-  'suspended'
-);
+DO $$ BEGIN
+  CREATE TYPE api_key_status AS ENUM (
+    'active',
+    'revoked',
+    'expired',
+    'suspended'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ─── Tenant Subscriptions ─────────────────────────────────────────────────────
 

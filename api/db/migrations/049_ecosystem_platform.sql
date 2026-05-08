@@ -5,47 +5,67 @@
 
 -- ─── Enums ────────────────────────────────────────────────────────────────────
 
-CREATE TYPE federated_contribution_status AS ENUM (
-  'pending', 'privacy_checked', 'published', 'rejected', 'withdrawn'
-);
+DO $$ BEGIN
+  CREATE TYPE federated_contribution_status AS ENUM (
+    'pending', 'privacy_checked', 'published', 'rejected', 'withdrawn'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE playbook_status AS ENUM (
-  'draft', 'review', 'approved', 'published', 'deprecated', 'archived'
-);
+DO $$ BEGIN
+  CREATE TYPE playbook_status AS ENUM (
+    'draft', 'review', 'approved', 'published', 'deprecated', 'archived'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE plugin_status AS ENUM (
-  'draft', 'review', 'approved', 'published', 'suspended', 'revoked'
-);
+DO $$ BEGIN
+  CREATE TYPE plugin_status AS ENUM (
+    'draft', 'review', 'approved', 'published', 'suspended', 'revoked'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE plugin_type AS ENUM (
-  'data_connector', 'dashboard_widget', 'runbook_step', 'agent_capability',
-  'notification_channel', 'export_format', 'validation_rule', 'policy_rule'
-);
+DO $$ BEGIN
+  CREATE TYPE plugin_type AS ENUM (
+    'data_connector', 'dashboard_widget', 'runbook_step', 'agent_capability',
+    'notification_channel', 'export_format', 'validation_rule', 'policy_rule'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE external_agent_status AS ENUM (
-  'registered', 'active', 'suspended', 'revoked'
-);
+DO $$ BEGIN
+  CREATE TYPE external_agent_status AS ENUM (
+    'registered', 'active', 'suspended', 'revoked'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE edge_node_status AS ENUM (
-  'provisioning', 'active', 'degraded', 'offline', 'decommissioned'
-);
+DO $$ BEGIN
+  CREATE TYPE edge_node_status AS ENUM (
+    'provisioning', 'active', 'degraded', 'offline', 'decommissioned'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE workflow_status AS ENUM (
-  'draft', 'testing', 'published', 'paused', 'archived'
-);
+DO $$ BEGIN
+  CREATE TYPE workflow_status AS ENUM (
+    'draft', 'testing', 'published', 'paused', 'archived'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE workflow_trigger_type AS ENUM (
-  'event', 'schedule', 'webhook', 'manual', 'ai_recommended'
-);
+DO $$ BEGIN
+  CREATE TYPE workflow_trigger_type AS ENUM (
+    'event', 'schedule', 'webhook', 'manual', 'ai_recommended'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE automation_adapter_type AS ENUM (
-  'zapier', 'make', 'n8n', 'power_automate', 'slack_workflow',
-  'teams_workflow', 'custom_webhook'
-);
+DO $$ BEGIN
+  CREATE TYPE automation_adapter_type AS ENUM (
+    'zapier', 'make', 'n8n', 'power_automate', 'slack_workflow',
+    'teams_workflow', 'custom_webhook'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TYPE edge_sync_status AS ENUM (
-  'pending', 'syncing', 'completed', 'conflict', 'failed'
-);
+DO $$ BEGIN
+  CREATE TYPE edge_sync_status AS ENUM (
+    'pending', 'syncing', 'completed', 'conflict', 'failed'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ─── Federated Intelligence ───────────────────────────────────────────────────
 
