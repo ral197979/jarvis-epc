@@ -131,6 +131,8 @@ import optimizationRouter          from './routes/optimization'               //
 import enterpriseRouter            from './routes/enterprise'                 // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
 import ecosystemRouter             from './routes/ecosystem'                  // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem Platform
 import { estimatingRouter         } from './routes/estimating'                // v10.0.0: BIM Element Layer + Estimating Engine
+import { monteCarloRouter         } from './routes/monteCarlo'                // v10.1.0: Monte Carlo Risk Simulation
+import { transmittalsRouter       } from './routes/transmittals'              // v10.1.0: Transmittal / Doc Control
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -392,6 +394,8 @@ app.use('/api/v1/optimization',         optimizationRouter)      // v7.0.0 Ava P
 app.use('/api/v1/enterprise',           enterpriseRouter)        // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
 app.use('/api/v1/ecosystem',            ecosystemRouter)         // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem
 app.use('/api/v1',                      estimatingRouter)        // v10.0.0: BIM Element Layer + Estimating Engine
+app.use('/api/v1/monte-carlo',          monteCarloRouter)        // v10.1.0: Monte Carlo Risk Simulation
+app.use('/api/v1/transmittals',         transmittalsRouter)      // v10.1.0: Transmittal / Doc Control
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
