@@ -207,14 +207,36 @@ export async function withdrawContribution(
 
 // ─── Privacy helpers ──────────────────────────────────────────────────────────
 
+// ─── Laplace differential privacy ────────────────────────────────────────────
+
+function _laplaceSample(scale: number): number {
+  const u = Math.random() - 0.5
+  const sign = u >= 0 ? 1 : -1
+  return -scale * sign * Math.log(1 - 2 * Math.abs(u))
+}
+
+function _addDpNoise(value: number, sensitivity: number, epsilon = 1.0): number {
+  return Math.max(0, value + _laplaceSample(sensitivity / epsilon))
+}
+
 function _anonymize(raw: Record<string, unknown>): Record<string, unknown> {
-  // Remove identifying fields, preserve statistical shape
+  // Remove all identifying fields
   const stripped = { ...raw }
-  for (const key of ['tenant_id', 'tenantId', 'project_id', 'projectId', 'user_id', 'userId']) {
+  for (const key of ['tenant_id', 'tenantId', 'project_id', 'projectId',
+                     'user_id', 'userId', 'email', 'name', 'ip']) {
     delete stripped[key]
   }
-  // Add differential-privacy noise placeholder (production: use Laplace mechanism)
-  return { ...stripped, _dp_noise_applied: true, _salt: randomBytes(4).toString('hex') }
+  // Apply Laplace noise to all numeric fields (epsilon=1.0, sensitivity proportional)
+  const noisy: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(stripped)) {
+    if (typeof v === 'number') {
+      const sensitivity = Math.max(1, Math.abs(v) * 0.1)
+      noisy[k] = Math.round(_addDpNoise(v, sensitivity) * 100) / 100
+    } else {
+      noisy[k] = v
+    }
+  }
+  return { ...noisy, _dp_noise_applied: true, _dp_epsilon: 1.0, _salt: randomBytes(4).toString('hex') }
 }
 
 function _hashData(data: string): string {

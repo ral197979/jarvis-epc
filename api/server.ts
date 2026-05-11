@@ -133,6 +133,8 @@ import ecosystemRouter             from './routes/ecosystem'                  //
 import { estimatingRouter         } from './routes/estimating'                // v10.0.0: BIM Element Layer + Estimating Engine
 import { monteCarloRouter         } from './routes/monteCarlo'                // v10.1.0: Monte Carlo Risk Simulation
 import { transmittalsRouter       } from './routes/transmittals'              // v10.1.0: Transmittal / Doc Control
+import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
+import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -494,6 +496,8 @@ async function start(): Promise<void> {
   registerKnowledgeIngestHandler()
   registerFixExtractorHandler()
   registerKnowledgeEmbedHandler()
+  startIfcParseWorker()                // v10.2.0: IFC parse queue (polls every 15s)
+  startFederatedAggregationWorker()    // v10.2.0: Federated DP aggregation (every 5min)
 
   // Periodic cleanup
   setInterval(() => {
@@ -511,8 +515,10 @@ async function start(): Promise<void> {
   for (const sig of ['SIGTERM','SIGINT']) {
     process.on(sig, () => {
       log.info(`[shutdown] ${sig} received — draining connections...`)
-      stopScheduler()  // v4.31.0
-      stopPackWorker() // v4.30.0
+      stopScheduler()                     // v4.31.0
+      stopPackWorker()                    // v4.30.0
+      stopIfcParseWorker()                // v10.2.0
+      stopFederatedAggregationWorker()    // v10.2.0
       server.close(() => {
         log.info('[shutdown] HTTP server closed')
         process.exit(0)

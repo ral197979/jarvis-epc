@@ -18,6 +18,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
+import { getApsViewerToken, fromStorageKey } from '../services/bim/apsViewerService' // v10.2.0
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -108,6 +109,28 @@ router.delete('/bim-models/:id', async (req: Request, res: Response) => {
   }
 })
 
+// ─── APS Viewer token ────────────────────────────────────────────────────────
+// Returns a short-lived APS 2-legged token + URN for the embedded Forge viewer.
+// The viewer runs entirely in the browser; this endpoint only provides auth.
+router.get('/bim-models/:id/viewer-token', async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  try {
+    const modelRes = await tenantQuery(r.tenantId!,
+      'SELECT storage_key FROM bim_models WHERE id=$1 AND tenant_id=$2',
+      [req.params.id, r.tenantId!])
+    if (!modelRes.rows[0]) { res.status(404).json({ error: 'Model not found' }); return }
+
+    const { access_token, expires_in, configured } = await getApsViewerToken()
+    const urn = modelRes.rows[0].storage_key
+      ? fromStorageKey(modelRes.rows[0].storage_key as string)
+      : null
+
+    res.json({ access_token, expires_in, configured, urn })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to get viewer token' })
+  }
+})
+
 // ─── BIM Issues ──────────────────────────────────────────────────────────────
 router.get('/projects/:projectId/bim-issues', async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
@@ -148,7 +171,7 @@ router.post('/projects/:projectId/bim-issues', async (req: Request, res: Respons
       action_type:         'BIM_ISSUE',
       source_module:       'bim_issues',
       source_id:           row.id,
-      project_id:          req.params.projectId ?? null,
+      project_id:          (Array.isArray(req.params.projectId) ? req.params.projectId[0] : req.params.projectId) ?? null,
       priority:            row.severity === 'critical' ? 'critical' : row.severity === 'major' ? 'high' : 'medium',
       assigned_to_user_id: row.assigned_to ?? null,
       created_by:          (r as any).auth?.sub ?? null,
