@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useBizStore, selectProjects } from '../modules/biz/store'
 import type { PolicyConfig } from '../modules/biz/dispatch'
+import { ApsViewer } from './bim/ApsViewer'
 
 interface BimModel {
   id: string; name: string; discipline?: string; format: string; document_id?: string
@@ -119,20 +120,7 @@ export function BIMViewerView({ policy }: BIMViewerViewProps) {
                 </div>
                 <button onClick={() => setSelected(null)}>Close</button>
               </div>
-              <div style={{ height: 420, background: '#1a1a1a', border: '1px solid var(--jarvis-bd)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888' }}>
-                {selected.document_id ? (
-                  <iframe
-                    src={`https://xeokit.github.io/xeokit-sdk/examples/loading/#loading_IFC_Duplex?src=${encodeURIComponent(`/api/v1/documents/${selected.document_id}/file`)}`}
-                    style={{ width: '100%', height: '100%', border: 0, background: '#1a1a1a' }}
-                    title="BIM Viewer" allow="fullscreen"
-                  />
-                ) : (
-                  <div style={{ textAlign: 'center' }}>
-                    <div>3D viewer ready.</div>
-                    <div style={{ fontSize: 11 }}>Upload an IFC/glTF document and link via API to render.</div>
-                  </div>
-                )}
-              </div>
+              <ApsViewer modelId={selected.id} height={460} />
             </div>
           ) : (
             <div style={{ color: 'var(--jarvis-ts)', padding: 40, textAlign: 'center' }}>Select a model to view.</div>
