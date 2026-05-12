@@ -56,6 +56,7 @@ const PlannerView       = lazy(() => import('./PlannerView'))
 const ResourcesView     = lazy(() => import('./ResourcesView'))
 const EVMDashboard        = lazy(() => import('./evm/EVMDashboard'))
 const ScheduleImportView  = lazy(() => import('./schedule/ScheduleImportView'))
+const IoTDashboard        = lazy(() => import('./iot/IoTDashboard'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   bim:           BIMViewerView,
   evm:              EVMDashboard,
   scheduleimport:   ScheduleImportView,
+  iot:              IoTDashboard,
   budget:           BudgetView,
   safety:        SafetyView,
   commissioning: CommissioningView,
