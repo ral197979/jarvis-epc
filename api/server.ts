@@ -133,6 +133,7 @@ import ecosystemRouter             from './routes/ecosystem'                  //
 import { estimatingRouter         } from './routes/estimating'                // v10.0.0: BIM Element Layer + Estimating Engine
 import { monteCarloRouter         } from './routes/monteCarlo'                // v10.1.0: Monte Carlo Risk Simulation
 import { transmittalsRouter       } from './routes/transmittals'              // v10.1.0: Transmittal / Doc Control
+import { evmRouter                    } from './routes/evm'                                               // v10.3.0: Earned Value Management
 import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 
@@ -398,6 +399,7 @@ app.use('/api/v1/ecosystem',            ecosystemRouter)         // v9.0.0 Ava P
 app.use('/api/v1',                      estimatingRouter)        // v10.0.0: BIM Element Layer + Estimating Engine
 app.use('/api/v1/monte-carlo',          monteCarloRouter)        // v10.1.0: Monte Carlo Risk Simulation
 app.use('/api/v1/transmittals',         transmittalsRouter)      // v10.1.0: Transmittal / Doc Control
+app.use('/api/v1',                      evmRouter)               // v10.3.0: Earned Value Management
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 

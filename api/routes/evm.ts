@@ -1,0 +1,162 @@
+/**
+ * Denver Engineering — EVM API Routes (v10.3.0)
+ *
+ * POST   /api/v1/projects/:projectId/evm/baselines          — create baseline
+ * GET    /api/v1/projects/:projectId/evm/baselines          — list baselines
+ * POST   /api/v1/evm/baselines/:baselineId/wbs              — upsert WBS entries
+ * GET    /api/v1/evm/baselines/:baselineId/wbs              — list WBS entries
+ * POST   /api/v1/projects/:projectId/evm/actuals            — record actual cost
+ * GET    /api/v1/projects/:projectId/evm/actuals            — list actuals
+ * POST   /api/v1/projects/:projectId/evm/progress           — record % complete
+ * GET    /api/v1/projects/:projectId/evm/metrics            — current EVM metrics
+ * POST   /api/v1/projects/:projectId/evm/snapshot           — take period snapshot
+ * GET    /api/v1/projects/:projectId/evm/scurve             — S-curve time series
+ */
+import { Router, Request, Response } from 'express'
+import { requireAuth, type AuthenticatedRequest } from '../auth'
+import { requireTenant, type TenantRequest } from '../middleware/tenant'
+import {
+  createBaseline, listBaselines,
+  upsertWbsEntries, listWbsEntries,
+  recordActual, listActuals,
+  recordProgress,
+  computeEvmMetrics, takeSnapshot, getScurveData,
+} from '../services/evm/evmService'
+
+type R = Request & AuthenticatedRequest & TenantRequest
+const qs = (v: string | string[] | undefined) => Array.isArray(v) ? v[0] : v
+const p  = (req: Request, key: string) =>
+  qs((req.params as Record<string, string | string[]>)[key]) ?? ''
+
+export const evmRouter = Router()
+evmRouter.use(requireAuth   as never)
+evmRouter.use(requireTenant() as never)
+
+// ─── Baselines ────────────────────────────────────────────────────────────────
+
+evmRouter.post('/projects/:projectId/evm/baselines', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const baseline = await createBaseline(r.tenantId!, {
+      projectId:  p(req, 'projectId'),
+      ...req.body,
+    })
+    res.status(201).json({ baseline })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to create baseline', detail: (e as Error).message })
+  }
+})
+
+evmRouter.get('/projects/:projectId/evm/baselines', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const baselines = await listBaselines(r.tenantId!, p(req, 'projectId'))
+    res.json({ baselines })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to list baselines' })
+  }
+})
+
+// ─── WBS entries ──────────────────────────────────────────────────────────────
+
+evmRouter.post('/evm/baselines/:baselineId/wbs', async (req: Request, res: Response) => {
+  const r = req as R
+  const { projectId, entries } = req.body as { projectId: string; entries: unknown[] }
+  if (!projectId || !Array.isArray(entries)) {
+    res.status(400).json({ error: 'projectId and entries[] required' }); return
+  }
+  try {
+    const wbs = await upsertWbsEntries(r.tenantId!, p(req, 'baselineId'), projectId, entries as never)
+    res.status(201).json({ wbs })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to upsert WBS entries', detail: (e as Error).message })
+  }
+})
+
+evmRouter.get('/evm/baselines/:baselineId/wbs', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const wbs = await listWbsEntries(r.tenantId!, p(req, 'baselineId'))
+    res.json({ wbs })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to list WBS entries' })
+  }
+})
+
+// ─── Actuals ──────────────────────────────────────────────────────────────────
+
+evmRouter.post('/projects/:projectId/evm/actuals', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const actual = await recordActual(r.tenantId!, {
+      projectId: p(req, 'projectId'),
+      recordedBy: r.auth?.sub,
+      ...req.body,
+    })
+    res.status(201).json({ actual })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to record actual', detail: (e as Error).message })
+  }
+})
+
+evmRouter.get('/projects/:projectId/evm/actuals', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const actuals = await listActuals(r.tenantId!, p(req, 'projectId'))
+    res.json({ actuals })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to list actuals' })
+  }
+})
+
+// ─── Progress ─────────────────────────────────────────────────────────────────
+
+evmRouter.post('/projects/:projectId/evm/progress', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const progress = await recordProgress(r.tenantId!, {
+      projectId: p(req, 'projectId'),
+      recordedBy: r.auth?.sub,
+      ...req.body,
+    })
+    res.status(201).json({ progress })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to record progress', detail: (e as Error).message })
+  }
+})
+
+// ─── Metrics + S-curve ────────────────────────────────────────────────────────
+
+evmRouter.get('/projects/:projectId/evm/metrics', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const statusDate = qs(req.query['status_date'] as string | undefined)
+    const metrics = await computeEvmMetrics(r.tenantId!, p(req, 'projectId'), statusDate)
+    if (!metrics) { res.status(404).json({ error: 'No active EVM baseline for this project' }); return }
+    res.json({ metrics })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to compute EVM metrics', detail: (e as Error).message })
+  }
+})
+
+evmRouter.post('/projects/:projectId/evm/snapshot', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const statusDate = req.body.status_date as string | undefined
+    const metrics = await takeSnapshot(r.tenantId!, p(req, 'projectId'), statusDate)
+    if (!metrics) { res.status(404).json({ error: 'No active EVM baseline for this project' }); return }
+    res.status(201).json({ metrics })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to take snapshot', detail: (e as Error).message })
+  }
+})
+
+evmRouter.get('/projects/:projectId/evm/scurve', async (req: Request, res: Response) => {
+  const r = req as R
+  try {
+    const data = await getScurveData(r.tenantId!, p(req, 'projectId'))
+    res.json({ scurve: data })
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to get S-curve data' })
+  }
+})

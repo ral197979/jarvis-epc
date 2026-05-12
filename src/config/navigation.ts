@@ -34,6 +34,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'compliance',    label: 'Compliance',  icon: '🛡️', domain: 'construction'  },
   { id: 'fixlibrary',    label: 'Fix Library', icon: '🔧', domain: 'engineering'   },
   { id: 'knowledge',     label: 'Knowledge',   icon: '📚', domain: 'system'        },
+  { id: 'evm',           label: 'EVM',        icon: '📊',  domain: 'finance'       },
   { id: 'budget',        label: 'Budget',     icon: '💰',  domain: 'finance'       },
   { id: 'proposals',     label: 'Proposals',  icon: '📄',  domain: 'crm'           },
   { id: 'calc',          label: 'Calcs',      icon: '🧮',  domain: 'engineering'   },
