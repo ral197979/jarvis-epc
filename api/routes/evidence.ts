@@ -11,7 +11,7 @@
  */
 import { Router, type Response } from 'express'
 import type { Request } from '../middleware/tenant'
-import { pool } from '../db/pool'
+import { tenantQuery } from '../db/pool'
 import {
   initiateUpload, confirmUpload, linkEvidence,
   getEvidenceForEntity, retryUpload,
@@ -112,7 +112,7 @@ evidenceRouter.get('/:id', async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const evidenceId = req.params['id']!
 
-  const res2 = await pool.query(
+  const res2 = await tenantQuery(tenantId,
     `SELECT * FROM evidence_assets WHERE id = $1 AND tenant_id = $2`,
     [evidenceId, tenantId],
   )
@@ -132,7 +132,7 @@ evidenceRouter.post('/assets/:id/scan', async (req: Request, res: Response) => {
     geolocation?: { lat: number; lng: number }; scan_context?: string
   }
 
-  await pool.query(`
+  await tenantQuery(tenantId, `
     INSERT INTO asset_scan_events
       (tenant_id, asset_id, asset_type, scan_method, scanned_by, device_id, geolocation, scan_context)
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)

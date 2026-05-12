@@ -214,6 +214,7 @@ const envInt = (k: string, def: number) => { const v = parseInt(process.env[k] ?
 const globalLimiter = rateLimit({ windowMs: 60_000,      max: envInt('RATE_LIMIT_GLOBAL_MAX', 600), standardHeaders: true, legacyHeaders: false })
 const authLimiter   = rateLimit({ windowMs: 15 * 60_000, max: envInt('RATE_LIMIT_AUTH_MAX',   200), standardHeaders: true, legacyHeaders: false })
 const aiLimiter     = rateLimit({ windowMs: 60_000,      max: envInt('RATE_LIMIT_AI_MAX',      30), standardHeaders: true, legacyHeaders: false })
+const agentLimiter  = rateLimit({ windowMs: 60_000,      max: envInt('RATE_LIMIT_AGENT_MAX',   20), standardHeaders: true, legacyHeaders: false })
 
 app.use('/api/', globalLimiter)
 app.use('/api/v1/auth/', authLimiter)
@@ -376,8 +377,8 @@ app.use('/api/v1/audit',          auditRouter)          // v4.30.0: Audit log re
 app.use('/api/v1/actions',        actionsRouter)        // v4.33.0 Ava: Global Action Center
 app.use('/api/v1/ops',           opsRouter)            // v4.35.0 Ava Phase 3: Operations Center
 app.use('/api/v1/readiness',     readinessRouter)      // v4.35.0 Ava Phase 3: Readiness Engine
-app.use('/api/v1/sync',          syncRouter)           // v4.35.0 Ava Phase 3: Mobile Offline Sync
-app.use('/api/v1/evidence',      evidenceRouter)       // v4.35.0 Ava Phase 3: Field Evidence Pipeline
+app.use('/api/v1/sync',          requireAuth as never, requireTenant() as never, syncRouter)     // v4.35.1: added auth
+app.use('/api/v1/evidence',      requireAuth as never, requireTenant() as never, evidenceRouter) // v4.35.1: added auth
 app.use('/api/v1/runbooks',      runbooksRouter)       // v4.40.0 Ava Phase 4: Autonomous Runbook Engine
 app.use('/api/v1/ai',            aiGovernanceRouter)   // v4.40.0 Ava Phase 4: AI Governance Queue
 app.use('/api/v1/simulation',    simulationRouter)     // v4.40.0 Ava Phase 4: Simulation + Replay Engine
@@ -386,10 +387,10 @@ app.use('/api/v1/executive',     executiveRouter)      // v4.40.0 Ava Phase 4: E
 app.use('/api/v1/integrations/hub', integrationHubRouter) // v4.40.0 Ava Phase 4: Integration Hub
 app.use('/api/v1/exports',       exportsRouter)        // v4.40.0 Ava Phase 4: Data Warehouse Exports
 app.use('/api/v1/audit/verify',  auditVerificationRouter) // v4.40.0 Ava Phase 4: Audit Chain Verification
-app.use('/api/v1/agents',                agentsRouter)            // v5.0.0 Ava Phase 5: Multi-Agent System
-app.use('/api/v1/agents/approvals',      agentApprovalsRouter)    // v5.0.0 Ava Phase 5: Agent Approval Queue
-app.use('/api/v1/agents/memory',         agentMemoryRouter)       // v5.0.0 Ava Phase 5: Agent Memory Store
-app.use('/api/v1/agents/risk',           agentRiskRouter)         // v5.0.0 Ava Phase 5: Risk Agent
+app.use('/api/v1/agents',                agentLimiter, agentsRouter)            // v5.0.1 Ava Phase 5: Multi-Agent System
+app.use('/api/v1/agents/approvals',      agentLimiter, agentApprovalsRouter)    // v5.0.1 Ava Phase 5: Agent Approval Queue
+app.use('/api/v1/agents/memory',         agentLimiter, agentMemoryRouter)       // v5.0.1 Ava Phase 5: Agent Memory Store
+app.use('/api/v1/agents/risk',           agentLimiter, agentRiskRouter)         // v5.0.1 Ava Phase 5: Risk Agent
 app.use('/api/v1/agents/readiness',      agentReadinessRouter)    // v5.0.0 Ava Phase 5: Readiness Agent
 app.use('/api/v1/twins',                 requireAuth as never, requireTenant() as never, twinRouter)              // v6.0.0 Ava Phase 6: Digital Twin Registry + Graph
 app.use('/api/v1/portfolio',             portfolioRouter)         // v6.0.0 Ava Phase 6: Portfolio Intelligence

@@ -311,15 +311,16 @@ export async function createIngestToken(
   tenantId: string,
   label: string,
   edgeNodeId?: string,
-): Promise<{ token: string; id: string }> {
+  ttlDays = 90,
+): Promise<{ token: string; id: string; expiresAt: string }> {
   const token = randomBytes(32).toString('hex')
   const hash  = createHash('sha256').update(token).digest('hex')
   const res = await tenantQuery(tenantId,
-    `INSERT INTO sensor_ingest_tokens (tenant_id, edge_node_id, token_hash, label)
-     VALUES ($1,$2,$3,$4) RETURNING id`,
-    [tenantId, edgeNodeId ?? null, hash, label],
+    `INSERT INTO sensor_ingest_tokens (tenant_id, edge_node_id, token_hash, label, expires_at)
+     VALUES ($1,$2,$3,$4, now() + ($5 || ' days')::interval) RETURNING id, expires_at`,
+    [tenantId, edgeNodeId ?? null, hash, label, ttlDays],
   )
-  return { token, id: res.rows[0].id as string }
+  return { token, id: res.rows[0].id as string, expiresAt: res.rows[0].expires_at as string }
 }
 
 export async function resolveIngestToken(
@@ -329,7 +330,9 @@ export async function resolveIngestToken(
   const res = await pool.query(
     `UPDATE sensor_ingest_tokens
      SET last_used_at=now()
-     WHERE token_hash=$1 AND revoked_at IS NULL
+     WHERE token_hash=$1
+       AND revoked_at IS NULL
+       AND (expires_at IS NULL OR expires_at > now())
      RETURNING tenant_id, edge_node_id`,
     [hash],
   )

@@ -19,6 +19,7 @@
  */
 import { pool } from '../../db/pool'
 import { K_ANONYMITY_MIN } from './ecosystemTypes'
+import { log } from '../../lib/logger'
 
 // ─── Laplace mechanism ────────────────────────────────────────────────────────
 
@@ -140,7 +141,7 @@ async function recordAudit(
       `INSERT INTO federated_privacy_audits (contribution_id, audit_type, passed, details)
        VALUES ($1,$2,$3,$4)`,
       [id, auditType, passed, JSON.stringify(details)],
-    ).catch(() => {})
+    ).catch(err => log.warn({ err, contributionId: id, auditType }, 'Failed to write federated privacy audit'))
   }
 }
 

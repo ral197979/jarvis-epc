@@ -1,5 +1,5 @@
 /**
- * Denver Engineering — Readiness Routes (v4.35.0)
+ * Denver Engineering — Readiness Routes (v4.35.1)
  * ──────────────────────────────────────────────────
  * Ava Phase 3
  *   GET /readiness/project/:id
@@ -9,7 +9,7 @@
  */
 import { Router, type Response } from 'express'
 import type { Request } from '../middleware/tenant'
-import { pool } from '../db/pool'
+import { tenantQuery } from '../db/pool'
 import {
   computeReadiness, persistReadinessScore, type ReadinessDomain,
 } from '../services/readiness/readinessEngine'
@@ -23,8 +23,7 @@ readinessRouter.get('/project/:id', async (req: Request, res: Response) => {
   const projectId = req.params['id']!
   const domain    = (req.query['domain'] as ReadinessDomain) ?? 'project'
 
-  // Check project ownership
-  const projRes = await pool.query(
+  const projRes = await tenantQuery(tenantId,
     `SELECT id, name FROM projects WHERE id = $1 AND tenant_id = $2`,
     [projectId, tenantId],
   )
@@ -49,7 +48,7 @@ readinessRouter.get('/system/:id', async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const systemId = req.params['id']!
 
-  const sysRes = await pool.query(
+  const sysRes = await tenantQuery(tenantId,
     `SELECT id, name FROM systems WHERE id = $1 AND tenant_id = $2`,
     [systemId, tenantId],
   )
@@ -81,7 +80,7 @@ readinessRouter.get('/project/:id/history', async (req: Request, res: Response) 
   const domain    = (req.query['domain'] as string) ?? 'project'
   const days      = Math.min(parseInt(req.query['days'] as string ?? '30', 10), 90)
 
-  const res2 = await pool.query(`
+  const res2 = await tenantQuery(tenantId, `
     SELECT snapshot_date, readiness_score, readiness_state, blocking_factors, component_scores
     FROM readiness_snapshots
     WHERE tenant_id = $1 AND entity_id = $2 AND domain = $3
@@ -97,8 +96,7 @@ readinessRouter.get('/project/:id/history', async (req: Request, res: Response) 
 readinessRouter.get('/overview', async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
 
-  // Return cached readiness scores for all projects
-  const res2 = await pool.query(`
+  const res2 = await tenantQuery(tenantId, `
     SELECT rs.entity_id, rs.domain, rs.readiness_score, rs.readiness_state,
            rs.blocking_factors, rs.computed_at,
            p.name AS entity_name

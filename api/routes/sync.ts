@@ -10,7 +10,7 @@
  */
 import { Router, type Response } from 'express'
 import type { Request } from '../middleware/tenant'
-import { pool } from '../db/pool'
+import { tenantQuery } from '../db/pool'
 import { processSyncUpload, pullDelta } from '../services/mobile/syncEngine'
 import { resolveConflict, listUnresolvedConflicts } from '../services/mobile/conflictResolver'
 
@@ -32,7 +32,7 @@ syncRouter.post('/register', async (req: Request, res: Response) => {
   if (!device_token) { res.status(400).json({ error: 'device_token required' }); return }
   if (!userId)       { res.status(401).json({ error: 'unauthorized' }); return }
 
-  const res2 = await pool.query(`
+  const res2 = await tenantQuery(tenantId, `
     INSERT INTO mobile_devices
       (tenant_id, user_id, device_token, device_name, device_platform, app_version, push_token, last_seen_at)
     VALUES ($1,$2,$3,$4,$5,$6,$7,NOW())
@@ -65,14 +65,14 @@ syncRouter.post('/upload', async (req: Request, res: Response) => {
   }
 
   // Validate device belongs to tenant
-  const deviceRes = await pool.query(
+  const deviceRes = await tenantQuery(tenantId,
     `SELECT id, user_id FROM mobile_devices WHERE id = $1 AND tenant_id = $2 AND is_active = TRUE`,
     [device_id, tenantId],
   )
   if (!deviceRes.rows[0]) { res.status(404).json({ error: 'device_not_found' }); return }
 
   // Update last_seen
-  void pool.query(`UPDATE mobile_devices SET last_seen_at = NOW() WHERE id = $1`, [device_id])
+  void tenantQuery(tenantId, `UPDATE mobile_devices SET last_seen_at = NOW() WHERE id = $1`, [device_id])
 
   const result = await processSyncUpload({
     tenantId,

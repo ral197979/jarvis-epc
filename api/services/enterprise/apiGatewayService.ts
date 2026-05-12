@@ -3,6 +3,7 @@
 
 import { randomBytes, createHash } from 'crypto'
 import { tenantQuery } from '../../db/pool'
+import { log } from '../../lib/logger'
 import {
   ApiKey, ApiKeyWithSecret, CreateApiKeyInput, ApiKeyStatus,
 } from './enterpriseTypes'
@@ -61,7 +62,7 @@ export async function authenticateApiKey(
     tenantId,
     `UPDATE api_keys SET last_used_at = now() WHERE id = $1`,
     [res.rows[0].id],
-  ).catch(() => {})
+  ).catch(err => log.warn({ err, keyId: res.rows[0].id }, 'Failed to update api_key last_used_at'))
 
   return _mapApiKey(res.rows[0])
 }

@@ -124,8 +124,8 @@ authRouter.post('/sensors/alerts/:alertId/acknowledge', async (req: Request, res
 authRouter.post('/sensors/tokens', async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const { label = 'ingest-token', edgeNodeId } = req.body as Record<string, string>
-    const result = await createIngestToken(r.tenantId!, label, edgeNodeId)
+    const { label = 'ingest-token', edgeNodeId, ttlDays } = req.body as Record<string, string>
+    const result = await createIngestToken(r.tenantId!, label, edgeNodeId, ttlDays ? parseInt(ttlDays, 10) : 90)
     res.status(201).json({ ...result, warning: 'Store this token securely — it will not be shown again.' })
   } catch (e) { res.status(500).json({ error: 'Failed to create token' }) }
 })

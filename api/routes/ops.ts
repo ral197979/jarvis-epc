@@ -15,7 +15,7 @@
  */
 import { Router, type Response } from 'express'
 import type { Request } from '../middleware/tenant'
-import { pool } from '../db/pool'
+import { tenantQuery } from '../db/pool'
 import { computeReadiness } from '../services/readiness/readinessEngine'
 import { generateInboxRecommendations, fetchRecommendationInputs } from '../services/ops/recommendationEngine'
 import { batchPredictBreaches, getHistoricalBaseline } from '../services/ops/predictiveSla'
@@ -32,7 +32,7 @@ opsRouter.get('/overview', async (req: Request, res: Response) => {
   const projectId = req.query['project_id'] as string | undefined
 
   const [actions, incidents, notifications] = await Promise.all([
-    pool.query(`
+    tenantQuery(tenantId, `
       SELECT
         COUNT(*) FILTER (WHERE status NOT IN ('completed','cancelled')) AS open,
         COUNT(*) FILTER (WHERE due_at < NOW() AND status NOT IN ('completed','cancelled')) AS overdue,
@@ -49,12 +49,12 @@ opsRouter.get('/overview', async (req: Request, res: Response) => {
       FROM actions a
       WHERE tenant_id = $1 ${projectId ? 'AND project_id = $2' : ''}
     `, projectId ? [tenantId, projectId] : [tenantId]),
-    pool.query(`
+    tenantQuery(tenantId, `
       SELECT COUNT(*) FILTER (WHERE status NOT IN ('resolved','mitigated')) AS active
       FROM ops_incidents
       WHERE tenant_id = $1 ${projectId ? 'AND project_id = $2' : ''}
     `, projectId ? [tenantId, projectId] : [tenantId]),
-    pool.query(`
+    tenantQuery(tenantId, `
       SELECT COUNT(*) AS dead_letter_count
       FROM notification_dead_letters ndl
       JOIN notification_jobs nj ON nj.id = ndl.original_job_id
@@ -97,7 +97,7 @@ opsRouter.get('/readiness', async (req: Request, res: Response) => {
   const projectId = req.query['project_id'] as string | undefined
 
   // Get all projects and compute readiness
-  const projectsRes = await pool.query(`
+  const projectsRes = await tenantQuery(tenantId, `
     SELECT id, name FROM projects
     WHERE tenant_id = $1 ${projectId ? 'AND id = $2' : ''}
       AND status NOT IN ('archived','cancelled')
@@ -120,7 +120,7 @@ opsRouter.get('/escalations', async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const limit    = Math.min(parseInt(req.query['limit'] as string ?? '50', 10), 200)
 
-  const res2 = await pool.query(`
+  const res2 = await tenantQuery(tenantId, `
     SELECT a.id, a.title, a.action_type, a.priority, a.status,
            a.max_escalation_level AS escalation_level,
            a.due_at, a.project_id,
@@ -144,7 +144,7 @@ opsRouter.get('/escalations', async (req: Request, res: Response) => {
 opsRouter.get('/blockers', async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
 
-  const res2 = await pool.query(`
+  const res2 = await tenantQuery(tenantId, `
     SELECT
       a.id, a.title, a.status, a.priority,
       COUNT(ar.id) AS blocker_count,
@@ -178,7 +178,7 @@ opsRouter.post('/reassign', async (req: Request, res: Response) => {
     return
   }
 
-  const cmdRes = await pool.query(`
+  const cmdRes = await tenantQuery(tenantId, `
     INSERT INTO ops_commands
       (tenant_id, command_type, issued_by, target_action_ids, target_user_id, reason, status)
     VALUES ($1,'reassign',$2,$3,$4,$5,'executing')
@@ -187,7 +187,7 @@ opsRouter.post('/reassign', async (req: Request, res: Response) => {
   const commandId = cmdRes.rows[0].id as string
 
   // Apply reassignment
-  await pool.query(`
+  await tenantQuery(tenantId, `
     UPDATE actions SET assigned_to_user_id = $3, updated_at = NOW()
     WHERE tenant_id = $1 AND id = ANY($2::uuid[])
   `, [tenantId, action_ids, target_user_id])
@@ -200,7 +200,7 @@ opsRouter.post('/reassign', async (req: Request, res: Response) => {
       subscription_scope: 'action', scope_id: actionId })
   }
 
-  await pool.query(`UPDATE ops_commands SET status = 'completed', executed_at = NOW() WHERE id = $1`, [commandId])
+  await tenantQuery(tenantId, `UPDATE ops_commands SET status = 'completed', executed_at = NOW() WHERE id = $1`, [commandId])
 
   res.json({ data: { command_id: commandId, affected: action_ids.length } })
 })
@@ -217,14 +217,14 @@ opsRouter.post('/escalate', async (req: Request, res: Response) => {
     return
   }
 
-  const cmdRes = await pool.query(`
+  const cmdRes = await tenantQuery(tenantId, `
     INSERT INTO ops_commands
       (tenant_id, command_type, issued_by, target_action_ids, reason, status)
     VALUES ($1,'bulk_escalate',$2,$3,$4,'executing')
     RETURNING id
   `, [tenantId, issuedBy, action_ids, reason])
 
-  await pool.query(`
+  await tenantQuery(tenantId, `
     UPDATE actions SET
       max_escalation_level = COALESCE(max_escalation_level, 0) + 1,
       escalation_status = 'escalated', updated_at = NOW()
@@ -237,7 +237,7 @@ opsRouter.post('/escalate', async (req: Request, res: Response) => {
       payload: { action_id: actionId }, subscription_scope: 'escalation', scope_id: actionId })
   }
 
-  await pool.query(`UPDATE ops_commands SET status = 'completed', executed_at = NOW() WHERE id = $1`, [cmdRes.rows[0].id])
+  await tenantQuery(tenantId, `UPDATE ops_commands SET status = 'completed', executed_at = NOW() WHERE id = $1`, [cmdRes.rows[0].id])
   res.json({ data: { command_id: cmdRes.rows[0].id, escalated: action_ids.length } })
 })
 
@@ -253,14 +253,14 @@ opsRouter.post('/freeze', async (req: Request, res: Response) => {
     return
   }
 
-  await pool.query(`
+  await tenantQuery(tenantId, `
     INSERT INTO ops_commands
       (tenant_id, command_type, issued_by, target_action_ids, reason, status, executed_at)
     VALUES ($1,'freeze',$2,$3,$4,'completed',NOW())
   `, [tenantId, issuedBy, action_ids, reason])
 
   // Pause SLA for all frozen actions
-  await pool.query(`
+  await tenantQuery(tenantId, `
     INSERT INTO action_sla_state (tenant_id, action_id, sla_status, paused_at)
     SELECT $1, id, 'paused', NOW() FROM actions
     WHERE tenant_id = $1 AND id = ANY($2::uuid[])
@@ -287,7 +287,7 @@ opsRouter.post('/unfreeze', async (req: Request, res: Response) => {
     return
   }
 
-  await pool.query(`
+  await tenantQuery(tenantId, `
     UPDATE action_sla_state SET
       sla_status = 'active',
       paused_duration_mins = COALESCE(paused_duration_mins, 0) +
@@ -314,7 +314,7 @@ opsRouter.post('/incident', async (req: Request, res: Response) => {
 
   if (!title) { res.status(400).json({ error: 'title is required' }); return }
 
-  const res2 = await pool.query(`
+  const res2 = await tenantQuery(tenantId, `
     INSERT INTO ops_incidents
       (tenant_id, title, description, severity, reported_by, project_id, related_action_ids)
     VALUES ($1,$2,$3,$4,$5,$6,$7)

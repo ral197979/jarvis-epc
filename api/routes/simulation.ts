@@ -9,6 +9,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { createSimulationSession, runReplay, runWhatIf, getSimulationResults } from '../services/simulation/replayEngine'
 import { tenantQuery } from '../db/pool'
+import { log } from '../lib/logger'
 
 export const simulationRouter = Router()
 const auth = requireAuth as never
@@ -25,7 +26,7 @@ simulationRouter.post('/replay', async (req: Request, res: Response) => {
     projectId: project_id, limit,
   })
   // Run async; return session ID immediately
-  runReplay(sessionId, r.tenantId).catch(() => {})
+  runReplay(sessionId, r.tenantId).catch(err => log.warn({ err, sessionId }, 'Replay session failed'))
   res.status(202).json({ data: { session_id: sessionId, status: 'running' } })
 })
 

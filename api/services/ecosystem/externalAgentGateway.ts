@@ -5,6 +5,7 @@
 import { createHash, randomBytes, createHmac } from 'crypto'
 import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
+import { log } from '../../lib/logger'
 import { ExternalAgent, ExternalAgentExecution, ExternalAgentStatus } from './ecosystemTypes'
 
 // ─── Registration ─────────────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ export async function authenticateAgent(rawKey: string): Promise<ExternalAgent |
   pool.query(
     `UPDATE external_agents SET last_executed_at = now() WHERE id = $1`,
     [res.rows[0].id],
-  ).catch(() => {})
+  ).catch(err => log.warn({ err, agentId: res.rows[0].id }, 'Failed to update external_agent last_executed_at'))
   return _mapAgent(res.rows[0])
 }
 
