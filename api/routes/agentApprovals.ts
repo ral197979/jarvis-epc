@@ -1,5 +1,8 @@
-// Denver Engineering — Agent Approval Routes (v5.0.0)
+// Denver Engineering — Agent Approval Routes (v5.0.1)
 import { Router, Request, Response } from 'express'
+import { requireAuth, type AuthenticatedRequest } from '../auth'
+import { requireTenant, type TenantRequest } from '../middleware/tenant'
+import { type AgentType } from '../services/agents/agentTypes'
 import {
   listPendingApprovals,
   getApproval,
@@ -9,26 +12,31 @@ import {
 } from '../services/agents/agentGovernanceService'
 import { resumeFromApproval } from '../services/agents/agentTaskQueue'
 
+type R = Request & AuthenticatedRequest & TenantRequest
+const p = (req: Request, key: string) => {
+  const v = (req.params as Record<string, string | string[]>)[key]
+  return Array.isArray(v) ? v[0] : (v ?? '')
+}
+
 export const agentApprovalsRouter = Router()
+agentApprovalsRouter.use(requireAuth as never, requireTenant() as never)
 
 // GET /api/v1/agents/approvals — list pending approvals
 agentApprovalsRouter.get('/', async (req: Request, res: Response) => {
-  const { tenantId, agentType } = req.query
-  if (!tenantId) return res.status(400).json({ error: 'tenantId required' })
+  const r = req as R
+  const { agentType } = req.query
 
   const approvals = await listPendingApprovals(
-    tenantId as string,
-    agentType as string | undefined
+    r.tenantId!,
+    agentType as AgentType | undefined
   )
   res.json({ approvals })
 })
 
 // GET /api/v1/agents/approvals/:id — get approval detail
 agentApprovalsRouter.get('/:id', async (req: Request, res: Response) => {
-  const { tenantId } = req.query
-  if (!tenantId) return res.status(400).json({ error: 'tenantId required' })
-
-  const approval = await getApproval(req.params.id, tenantId as string)
+  const r = req as R
+  const approval = await getApproval(p(req, 'id'), r.tenantId!)
   if (!approval) return res.status(404).json({ error: 'Approval not found' })
   res.json(approval)
 })
@@ -36,15 +44,16 @@ agentApprovalsRouter.get('/:id', async (req: Request, res: Response) => {
 // POST /api/v1/agents/approvals/:id/approve
 agentApprovalsRouter.post('/:id/approve', async (req: Request, res: Response) => {
   try {
-    const { tenantId, reviewedBy, notes } = req.body
-    if (!tenantId || !reviewedBy) {
-      return res.status(400).json({ error: 'tenantId, reviewedBy required' })
+    const r = req as R
+    const { reviewedBy, notes } = req.body
+    if (!reviewedBy) {
+      return res.status(400).json({ error: 'reviewedBy required' })
     }
 
-    const approval = await approveAction(req.params.id, tenantId, reviewedBy, notes)
+    const approval = await approveAction(p(req, 'id'), r.tenantId!, reviewedBy, notes)
 
     // Resume the blocked task
-    await resumeFromApproval(approval.taskId, tenantId)
+    await resumeFromApproval(approval.taskId, r.tenantId!)
 
     res.json(approval)
   } catch (err: unknown) {
@@ -55,12 +64,13 @@ agentApprovalsRouter.post('/:id/approve', async (req: Request, res: Response) =>
 // POST /api/v1/agents/approvals/:id/reject
 agentApprovalsRouter.post('/:id/reject', async (req: Request, res: Response) => {
   try {
-    const { tenantId, reviewedBy, notes } = req.body
-    if (!tenantId || !reviewedBy) {
-      return res.status(400).json({ error: 'tenantId, reviewedBy required' })
+    const r = req as R
+    const { reviewedBy, notes } = req.body
+    if (!reviewedBy) {
+      return res.status(400).json({ error: 'reviewedBy required' })
     }
 
-    const approval = await rejectAction(req.params.id, tenantId, reviewedBy, notes)
+    const approval = await rejectAction(p(req, 'id'), r.tenantId!, reviewedBy, notes)
     res.json(approval)
   } catch (err: unknown) {
     res.status(400).json({ error: (err as Error).message })
@@ -69,9 +79,7 @@ agentApprovalsRouter.post('/:id/reject', async (req: Request, res: Response) => 
 
 // POST /api/v1/agents/approvals/expire — expire stale approvals (admin/cron)
 agentApprovalsRouter.post('/expire', async (req: Request, res: Response) => {
-  const { tenantId } = req.body
-  if (!tenantId) return res.status(400).json({ error: 'tenantId required' })
-
-  const expired = await expireStaleApprovals(tenantId)
+  const r = req as R
+  const expired = await expireStaleApprovals(r.tenantId!)
   res.json({ expired })
 })

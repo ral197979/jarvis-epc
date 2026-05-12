@@ -52,7 +52,7 @@ import {
 import { initPool, poolHealthy, poolStats } from './db/pool'
 import { runMigrations } from './db/migrate'
 import { tenantQuery } from './db/pool'
-import { TenantRequest } from './middleware/tenant'
+import { requireTenant, TenantRequest } from './middleware/tenant'
 import { registerUuidParamGuards, validateUuidQueryParams } from './middleware/validateUuidParams'
 import projectsRouter   from './routes/projects'
 import tenantsRouter    from './routes/tenants'
@@ -391,11 +391,11 @@ app.use('/api/v1/agents/approvals',      agentApprovalsRouter)    // v5.0.0 Ava 
 app.use('/api/v1/agents/memory',         agentMemoryRouter)       // v5.0.0 Ava Phase 5: Agent Memory Store
 app.use('/api/v1/agents/risk',           agentRiskRouter)         // v5.0.0 Ava Phase 5: Risk Agent
 app.use('/api/v1/agents/readiness',      agentReadinessRouter)    // v5.0.0 Ava Phase 5: Readiness Agent
-app.use('/api/v1/twins',                 twinRouter)              // v6.0.0 Ava Phase 6: Digital Twin Registry + Graph
+app.use('/api/v1/twins',                 requireAuth as never, requireTenant() as never, twinRouter)              // v6.0.0 Ava Phase 6: Digital Twin Registry + Graph
 app.use('/api/v1/portfolio',             portfolioRouter)         // v6.0.0 Ava Phase 6: Portfolio Intelligence
-app.use('/api/v1/scenarios',             scenariosRouter)         // v6.0.0 Ava Phase 6: Scenario Simulation + Temporal
+app.use('/api/v1/scenarios',             requireAuth as never, requireTenant() as never, scenariosRouter)         // v6.0.0 Ava Phase 6: Scenario Simulation + Temporal
 app.use('/api/v1/adaptive',             adaptiveRouter)          // v7.0.0 Ava Phase 7: Learning Feedback + Calibration
-app.use('/api/v1/optimization',         optimizationRouter)      // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
+app.use('/api/v1/optimization',         requireAuth as never, requireTenant() as never, optimizationRouter)      // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
 app.use('/api/v1/enterprise',           enterpriseRouter)        // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
 app.use('/api/v1/ecosystem',            ecosystemRouter)         // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem
 app.use('/api/v1',                      estimatingRouter)        // v10.0.0: BIM Element Layer + Estimating Engine
