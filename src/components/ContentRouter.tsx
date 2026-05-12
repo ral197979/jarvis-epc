@@ -54,7 +54,8 @@ const AskJarvisView     = lazy(() => import('./AskJarvisView'))
 const JobsView          = lazy(() => import('./JobsView'))
 const PlannerView       = lazy(() => import('./PlannerView'))
 const ResourcesView     = lazy(() => import('./ResourcesView'))
-const EVMDashboard      = lazy(() => import('./evm/EVMDashboard'))
+const EVMDashboard        = lazy(() => import('./evm/EVMDashboard'))
+const ScheduleImportView  = lazy(() => import('./schedule/ScheduleImportView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,8 +90,9 @@ const TAB_MAP: Record<string, ViewEntry> = {
   dailylogs:     DailyLogsView,
   drawings:      DrawingsView,
   bim:           BIMViewerView,
-  evm:           EVMDashboard,
-  budget:        BudgetView,
+  evm:              EVMDashboard,
+  scheduleimport:   ScheduleImportView,
+  budget:           BudgetView,
   safety:        SafetyView,
   commissioning: CommissioningView,
   procurement:   ProcurementView,
