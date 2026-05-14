@@ -35,7 +35,7 @@ UPDATE sensor_ingest_tokens
 SET expires_at = created_at + INTERVAL '90 days'
 WHERE revoked_at IS NULL AND expires_at IS NULL;
 
--- Index for expiry lookups
+-- Index for expiry lookups (expires_at check is at query time — now() is not IMMUTABLE)
 CREATE INDEX IF NOT EXISTS idx_sensor_ingest_tokens_expiry
-  ON sensor_ingest_tokens (token_hash)
-  WHERE revoked_at IS NULL AND (expires_at IS NULL OR expires_at > now());
+  ON sensor_ingest_tokens (token_hash, expires_at)
+  WHERE revoked_at IS NULL;
