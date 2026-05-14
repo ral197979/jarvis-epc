@@ -28,6 +28,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'drawings',        label: 'Drawings',      icon: '📐',  domain: 'construction'  },
   { id: 'scheduleimport',  label: 'Import Schedule', icon: '📅',  domain: 'construction'  },
   { id: 'subcontracts',   label: 'Subcontracts',    icon: '🏗️',  domain: 'construction'  },
+  { id: 'meetings',       label: 'Meetings',        icon: '📋',  domain: 'construction'  },
   { id: 'bim',           label: 'BIM',        icon: '🏢',  domain: 'construction'  },
   { id: 'iot',           label: 'IoT Sensors', icon: '📡', domain: 'construction'  },
   { id: 'rfis',          label: 'RFIs',       icon: '❓',  domain: 'construction'  },
