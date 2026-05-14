@@ -75,17 +75,22 @@ const BLANK_FORM = {
 
 // ─── Summary bar ──────────────────────────────────────────────────────────────
 
-function SummaryBar({ summary }: { summary: Summary }) {
+function SummaryBar({ summary, onFilter }: { summary: Summary; onFilter: (type: CostEntryType | 'all') => void }) {
   const types: CostEntryType[] = ['labor', 'material', 'equipment', 'subcontract', 'other']
+  const tile: React.CSSProperties = { borderRadius: 8, padding: '10px 16px', cursor: 'pointer' }
+  const hover = (e: React.MouseEvent<HTMLDivElement>) => (e.currentTarget.style.opacity = '.75')
+  const leave = (e: React.MouseEvent<HTMLDivElement>) => (e.currentTarget.style.opacity = '1')
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-      <div style={{ background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '10px 16px', flex: '1 1 120px' }}>
+      <div onClick={() => onFilter('all')} onMouseEnter={hover} onMouseLeave={leave}
+        style={{ ...tile, background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', flex: '1 1 120px' }}>
         <div style={{ fontSize: 10, color: 'var(--jarvis-ts)', textTransform: 'uppercase', letterSpacing: '.05em' }}>ACWP Posted</div>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#22c55e' }}>{fmt(summary.totalPosted)}</div>
         <div style={{ fontSize: 10, color: 'var(--jarvis-ts)', marginTop: 2 }}>{summary.postedCount} entries · {summary.draftCount} drafts</div>
       </div>
       {types.map(t => (
-        <div key={t} style={{ background: 'var(--jarvis-s2)', border: `1px solid ${TYPE_COLOR[t]}33`, borderRadius: 8, padding: '10px 16px', flex: '1 1 100px' }}>
+        <div key={t} onClick={() => onFilter(t)} onMouseEnter={hover} onMouseLeave={leave}
+          style={{ ...tile, background: 'var(--jarvis-s2)', border: `1px solid ${TYPE_COLOR[t]}33`, flex: '1 1 100px' }}>
           <div style={{ fontSize: 10, color: TYPE_COLOR[t], textTransform: 'uppercase', letterSpacing: '.05em', fontWeight: 600 }}>{TYPE_LABELS[t]}</div>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--jarvis-t)' }}>{fmt(summary.byType[t] ?? 0)}</div>
         </div>
@@ -343,7 +348,7 @@ export default function CostEntryView({ biz }: Props) {
       </div>
 
       {/* Summary */}
-      {summary && <SummaryBar summary={summary} />}
+      {summary && <SummaryBar summary={summary} onFilter={setFilterType} />}
 
       {/* Layout: form left, table right */}
       <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>

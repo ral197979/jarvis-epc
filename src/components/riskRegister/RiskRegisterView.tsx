@@ -443,8 +443,9 @@ export default function RiskRegisterView({ biz }: Props) {
   const [selected,   setSelected]   = useState<Risk | null>(null)
   const [showAdd,    setShowAdd]    = useState(false)
   const [loading,    setLoading]    = useState(false)
-  const [filterStatus, setFilterStatus] = useState<RiskStatus | 'all'>('all')
-  const [view,       setView]       = useState<'matrix' | 'list'>('matrix')
+  const [filterStatus,   setFilterStatus]   = useState<RiskStatus | 'all'>('all')
+  const [filterSeverity, setFilterSeverity] = useState<'all'|'critical'|'high'|'medium'|'low'>('all')
+  const [view,           setView]           = useState<'matrix' | 'list'>('matrix')
 
   const load = useCallback(async () => {
     if (!projectId) return
@@ -479,6 +480,14 @@ export default function RiskRegisterView({ biz }: Props) {
     await load()
     setSelected(null)
   }
+
+  const displayRisks = risks.filter(r => {
+    if (filterSeverity === 'critical') return r.riskScore >= 15
+    if (filterSeverity === 'high')     return r.riskScore >= 9 && r.riskScore < 15
+    if (filterSeverity === 'medium')   return r.riskScore >= 4 && r.riskScore < 9
+    if (filterSeverity === 'low')      return r.riskScore < 4
+    return true
+  })
 
   const btnS = (active: boolean): React.CSSProperties => ({
     padding: '5px 12px', borderRadius: 5, fontSize: 12, cursor: 'pointer',
@@ -519,17 +528,21 @@ export default function RiskRegisterView({ biz }: Props) {
       {/* Summary strip */}
       {summary && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-          {[
-            ['Total Risks',     String(summary.total),                              'var(--jarvis-t)'],
-            ['Critical',        String(summary.critical),                            '#dc2626'],
-            ['High',            String(summary.high),                               '#f97316'],
-            ['Medium',          String(summary.medium),                             '#f59e0b'],
-            ['Low',             String(summary.low),                                '#22c55e'],
-            ['Exposure',        fmt$(summary.totalExposure > 0 ? summary.totalExposure : null), '#ef4444'],
-            ['Open',            String(summary.open),                               '#3b82f6'],
-            ['Mitigating',      String(summary.mitigating),                         '#f59e0b'],
-          ].map(([label, val, color]) => (
-            <div key={label} style={{ flex: '1 1 80px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '8px 12px' }}>
+          {([
+            ['Total Risks', String(summary.total),     'var(--jarvis-t)', () => { setFilterStatus('all'); setFilterSeverity('all') }],
+            ['Critical',    String(summary.critical),  '#dc2626',         () => { setFilterSeverity('critical'); setView('list') }],
+            ['High',        String(summary.high),      '#f97316',         () => { setFilterSeverity('high');     setView('list') }],
+            ['Medium',      String(summary.medium),    '#f59e0b',         () => { setFilterSeverity('medium');   setView('list') }],
+            ['Low',         String(summary.low),       '#22c55e',         () => { setFilterSeverity('low');      setView('list') }],
+            ['Exposure',    fmt$(summary.totalExposure > 0 ? summary.totalExposure : null), '#ef4444', null],
+            ['Open',        String(summary.open),      '#3b82f6',         () => { setFilterStatus('open');       setFilterSeverity('all') }],
+            ['Mitigating',  String(summary.mitigating),'#f59e0b',         () => { setFilterStatus('mitigating'); setFilterSeverity('all') }],
+          ] as [string, string, string, (() => void) | null][]).map(([label, val, color, action]) => (
+            <div key={label} onClick={action ?? undefined}
+              style={{ flex: '1 1 80px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '8px 12px', cursor: action ? 'pointer' : 'default' }}
+              onMouseEnter={action ? e => (e.currentTarget.style.opacity = '.75') : undefined}
+              onMouseLeave={action ? e => (e.currentTarget.style.opacity = '1') : undefined}
+            >
               <div style={{ fontSize: 10, color: 'var(--jarvis-ts)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{label}</div>
               <div style={{ fontSize: 18, fontWeight: 700, color, marginTop: 2 }}>{val}</div>
             </div>
@@ -544,7 +557,7 @@ export default function RiskRegisterView({ biz }: Props) {
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jarvis-t)', marginBottom: 10 }}>
               5×5 Risk Matrix <span style={{ fontWeight: 400, color: 'var(--jarvis-ts)', fontSize: 11 }}>click a dot to view</span>
             </div>
-            <RiskMatrix risks={risks} onSelect={setSelected} />
+            <RiskMatrix risks={displayRisks} onSelect={setSelected} />
             <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
               {[['Critical','#dc2626'],['High','#f97316'],['Medium','#f59e0b'],['Low','#22c55e']].map(([label, color]) => (
                 <span key={label} style={{ fontSize: 10, color: 'var(--jarvis-ts)', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -556,7 +569,7 @@ export default function RiskRegisterView({ biz }: Props) {
           {/* Top risks sidebar */}
           <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jarvis-t)' }}>Top Risks by Score</div>
-            {risks.filter(r => r.status !== 'closed').slice(0, 8).map(r => (
+            {displayRisks.filter(r => r.status !== 'closed').slice(0, 8).map(r => (
               <div key={r.id} onClick={() => setSelected(r)}
                 style={{ background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '10px 12px', cursor: 'pointer', display: 'flex', gap: 10, alignItems: 'center' }}>
                 <span style={{ fontSize: 13, fontWeight: 700, minWidth: 28, textAlign: 'center', color: scoreColor(r.riskScore), background: `${scoreColor(r.riskScore)}22`, borderRadius: 4, padding: '2px 4px' }}>
@@ -571,7 +584,7 @@ export default function RiskRegisterView({ biz }: Props) {
                 </span>
               </div>
             ))}
-            {risks.filter(r => r.status !== 'closed').length === 0 && !loading && (
+            {displayRisks.filter(r => r.status !== 'closed').length === 0 && !loading && (
               <div style={{ fontSize: 12, color: 'var(--jarvis-ts)', padding: '20px 0', textAlign: 'center' }}>No open risks. Add one above.</div>
             )}
           </div>
@@ -590,7 +603,7 @@ export default function RiskRegisterView({ biz }: Props) {
               </tr>
             </thead>
             <tbody>
-              {risks.map(r => (
+              {displayRisks.map(r => (
                 <tr key={r.id} onClick={() => setSelected(r)} style={{ borderBottom: '1px solid var(--jarvis-b)', cursor: 'pointer' }}>
                   <td style={{ padding: '8px 10px', color: 'var(--jarvis-ts)' }}>R-{String(r.riskNumber).padStart(3,'0')}</td>
                   <td style={{ padding: '8px 10px', color: 'var(--jarvis-t)', fontWeight: 500, maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</td>

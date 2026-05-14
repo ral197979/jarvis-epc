@@ -205,8 +205,9 @@ export default function TimesheetsView({ biz, onNavigate }: Props) {
   const [weekStart, setWeekStart] = useState(() => toMonday(new Date()))
   const [timesheets, setTimesheets] = useState<Timesheet[]>([])
   const [summary,    setSummary]   = useState<WeeklySummary[]>([])
-  const [loading,    setLoading]   = useState(false)
-  const [saving,     setSaving]    = useState<string | null>(null)
+  const [loading,      setLoading]      = useState(false)
+  const [saving,       setSaving]       = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<string>('all')
   const [localHrs,   setLocalHrs]  = useState<Record<string, Partial<Record<string, number | null>>>>({})
 
   const load = useCallback(async () => {
@@ -303,13 +304,17 @@ export default function TimesheetsView({ biz, onNavigate }: Props) {
 
       {/* Week summary strip */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        {[
-          ['Total Hours',    weekTotals.hours > 0 ? `${weekTotals.hours}h` : '—',   'var(--jarvis-t)'],
-          ['Est. Labor Cost', fmt$(weekTotals.cost > 0 ? weekTotals.cost : null),    '#22c55e'],
-          ['Pending Approval', String(weekTotals.submitted),                          weekTotals.submitted > 0 ? '#f59e0b' : 'var(--jarvis-ts)'],
-          ['Members',         String(timesheets.length),                             'var(--jarvis-ts)'],
-        ].map(([label, val, color]) => (
-          <div key={label} style={{ flex: '1 1 110px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '10px 14px' }}>
+        {([
+          ['Total Hours',     weekTotals.hours > 0 ? `${weekTotals.hours}h` : '—', 'var(--jarvis-t)', 'all'],
+          ['Est. Labor Cost', fmt$(weekTotals.cost > 0 ? weekTotals.cost : null),   '#22c55e',         ''],
+          ['Pending Approval', String(weekTotals.submitted),                         weekTotals.submitted > 0 ? '#f59e0b' : 'var(--jarvis-ts)', 'submitted'],
+          ['Members',         String(timesheets.length),                            'var(--jarvis-ts)', 'all'],
+        ] as [string, string, string, string][]).map(([label, val, color, filter]) => (
+          <div key={label} onClick={filter ? () => setFilterStatus(filter) : undefined}
+            style={{ flex: '1 1 110px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '10px 14px', cursor: filter ? 'pointer' : 'default' }}
+            onMouseEnter={filter ? e => (e.currentTarget.style.opacity = '.75') : undefined}
+            onMouseLeave={filter ? e => (e.currentTarget.style.opacity = '1') : undefined}
+          >
             <div style={{ fontSize: 10, color: 'var(--jarvis-ts)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
             <div style={{ fontSize: 20, fontWeight: 700, color, marginTop: 2 }}>{val}</div>
           </div>
@@ -343,7 +348,7 @@ export default function TimesheetsView({ biz, onNavigate }: Props) {
               </tr>
             </thead>
             <tbody>
-              {timesheets.map(ts => (
+              {timesheets.filter(ts => filterStatus === 'all' || ts.status === filterStatus).map(ts => (
                 <TimesheetRow
                   key={ts.id}
                   ts={mergedTs(ts)}

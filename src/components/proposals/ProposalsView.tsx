@@ -406,8 +406,9 @@ export default function ProposalsView(_: Props) {
   const [summary,   setSummary]   = useState<PipelineSummary | null>(null)
   const [selected,  setSelected]  = useState<Proposal | null>(null)
   const [showCreate, setShowCreate] = useState(false)
-  const [view,      setView]      = useState<'kanban' | 'list'>('kanban')
-  const [loading,   setLoading]   = useState(false)
+  const [view,         setView]         = useState<'kanban' | 'list'>('kanban')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [loading,      setLoading]      = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -462,13 +463,18 @@ export default function ProposalsView(_: Props) {
       {summary && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           {([
-            ['Weighted Pipeline', fmt(summary.weightedPipeline), '#6366f1', 'Prob-adjusted open bids'],
-            ['Won',              fmt(summary.byStatus.won.value),  '#22c55e', `${summary.byStatus.won.count} deals`],
-            ['Submitted',        fmt(summary.byStatus.submitted.value), '#3b82f6', `${summary.byStatus.submitted.count} open`],
-            ['Win Rate',         `${summary.winRate}%`,               summary.winRate >= 50 ? '#22c55e' : '#ef4444', 'Won vs decided'],
-            ['Avg Deal',         fmt(summary.avgDealSize),            'var(--jarvis-t)', 'Won deals avg'],
-          ] as [string, string, string, string][]).map(([label, val, color, sub]) => (
-            <div key={label} style={{ flex: '1 1 120px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '10px 14px' }}>
+            ['Weighted Pipeline', fmt(summary.weightedPipeline), '#6366f1', 'Prob-adjusted open bids', ''],
+            ['Won',              fmt(summary.byStatus.won.value),  '#22c55e', `${summary.byStatus.won.count} deals`,   'won'],
+            ['Submitted',        fmt(summary.byStatus.submitted.value), '#3b82f6', `${summary.byStatus.submitted.count} open`, 'submitted'],
+            ['Win Rate',         `${summary.winRate}%`,               summary.winRate >= 50 ? '#22c55e' : '#ef4444', 'Won vs decided', ''],
+            ['Avg Deal',         fmt(summary.avgDealSize),            'var(--jarvis-t)', 'Won deals avg', ''],
+          ] as [string, string, string, string, string][]).map(([label, val, color, sub, filter]) => (
+            <div key={label}
+              onClick={filter ? () => { setFilterStatus(filter); setView('list') } : undefined}
+              style={{ flex: '1 1 120px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 8, padding: '10px 14px', cursor: filter ? 'pointer' : 'default' }}
+              onMouseEnter={filter ? e => (e.currentTarget.style.opacity = '.75') : undefined}
+              onMouseLeave={filter ? e => (e.currentTarget.style.opacity = '1') : undefined}
+            >
               <div style={{ fontSize: 10, color: 'var(--jarvis-ts)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
               <div style={{ fontSize: 18, fontWeight: 700, color, margin: '2px 0' }}>{val}</div>
               <div style={{ fontSize: 10, color: 'var(--jarvis-ts)' }}>{sub}</div>
@@ -519,7 +525,7 @@ export default function ProposalsView(_: Props) {
               </tr>
             </thead>
             <tbody>
-              {proposals.map(p => (
+              {proposals.filter(p => filterStatus === 'all' || p.status === filterStatus).map(p => (
                 <tr key={p.id} onClick={() => setSelected(p)}
                   style={{ borderBottom: '1px solid var(--jarvis-b)', cursor: 'pointer' }}>
                   <td style={{ padding: '9px 12px', color: 'var(--jarvis-ts)' }}>P-{String(p.proposalNumber).padStart(3,'0')}</td>

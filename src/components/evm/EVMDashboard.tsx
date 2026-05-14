@@ -103,14 +103,18 @@ function SCurve({ data }: { data: ScurvePoint[] }) {
 
 // ─── Metric card ─────────────────────────────────────────────────────────────
 
-function Metric({ label, value, sub, color }: {
-  label: string; value: string; sub?: string; color?: string
+function Metric({ label, value, sub, color, onClick }: {
+  label: string; value: string; sub?: string; color?: string; onClick?: () => void
 }) {
   return (
-    <div style={{
+    <div onClick={onClick} style={{
       background: 'var(--jarvis-bg2)', border: '1px solid var(--jarvis-bd)',
       borderRadius: 6, padding: '10px 14px', minWidth: 110,
-    }}>
+      cursor: onClick ? 'pointer' : 'default',
+    }}
+    onMouseEnter={onClick ? e => (e.currentTarget.style.opacity = '.75') : undefined}
+    onMouseLeave={onClick ? e => (e.currentTarget.style.opacity = '1') : undefined}
+    >
       <div style={{ fontSize: 10, color: 'var(--jarvis-ts)', marginBottom: 2 }}>{label}</div>
       <div style={{ fontSize: 18, fontWeight: 700, color: color ?? 'var(--jarvis-fg)' }}>{value}</div>
       {sub && <div style={{ fontSize: 10, color: 'var(--jarvis-ts)' }}>{sub}</div>}
@@ -120,7 +124,7 @@ function Metric({ label, value, sub, color }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function EVMDashboard() {
+export function EVMDashboard({ onNavigate }: { onNavigate?: (tab: string) => void } = {}) {
   const projects = useBizStore(selectProjects)
   const [projectId, setProjectId] = useState('')
   const [metrics, setMetrics]     = useState<EvmMetrics | null>(null)
@@ -230,16 +234,16 @@ export function EVMDashboard() {
 
           {/* Key indices */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-            <Metric label="CPI (cost)"     value={fmtIdx(metrics.cpi)}  sub={metrics.cpi != null ? (metrics.cpi >= 1 ? 'Under budget' : 'Over budget') : undefined} color={indexColor(metrics.cpi)} />
+            <Metric label="CPI (cost)"     value={fmtIdx(metrics.cpi)}  sub={metrics.cpi != null ? (metrics.cpi >= 1 ? 'Under budget' : 'Over budget') : undefined} color={indexColor(metrics.cpi)} onClick={() => onNavigate?.('costcontrol')} />
             <Metric label="SPI (schedule)" value={fmtIdx(metrics.spi)}  sub={metrics.spi != null ? (metrics.spi >= 1 ? 'Ahead'         : 'Behind')       : undefined} color={indexColor(metrics.spi)} />
             <Metric label="BCWP (EV)"  value={fmt$(metrics.bcwp)} />
             <Metric label="BCWS (PV)"  value={fmt$(metrics.bcws)} />
-            <Metric label="ACWP (AC)"  value={fmt$(metrics.acwp)} />
+            <Metric label="ACWP (AC)"  value={fmt$(metrics.acwp)} onClick={() => onNavigate?.('costentry')} />
             <Metric label="CV"  value={fmt$(metrics.cv)}  color={metrics.cv >= 0 ? '#2ecc71' : '#e74c3c'} />
             <Metric label="SV"  value={fmt$(metrics.sv)}  color={metrics.sv >= 0 ? '#2ecc71' : '#e74c3c'} />
-            <Metric label="EAC" value={fmt$(metrics.eac)} sub="Estimate at completion" />
+            <Metric label="EAC" value={fmt$(metrics.eac)} sub="Estimate at completion" onClick={() => onNavigate?.('costcontrol')} />
             <Metric label="ETC" value={fmt$(metrics.etc)} sub="Estimate to complete" />
-            <Metric label="VAC" value={fmt$(metrics.vac)} color={metrics.vac != null && metrics.vac >= 0 ? '#2ecc71' : '#e74c3c'} />
+            <Metric label="VAC" value={fmt$(metrics.vac)} color={metrics.vac != null && metrics.vac >= 0 ? '#2ecc71' : '#e74c3c'} onClick={() => onNavigate?.('costcontrol')} />
             <Metric label="TCPI" value={fmtIdx(metrics.tcpi)} sub="To-complete perf. index" />
           </div>
 

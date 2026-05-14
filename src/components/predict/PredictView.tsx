@@ -406,14 +406,18 @@ export default function PredictView({ onNavigate }: Props) {
                 <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', marginTop: 2 }}>{summary.projects.length} projects analyzed</div>
               </div>
             </div>
-            {[
-              ['🔴 At Risk',   String(summary.atRisk),    '#ef4444'],
-              ['🟡 Watchlist', String(summary.watchlist), '#f59e0b'],
-              ['🟢 Healthy',   String(summary.healthy),   '#22c55e'],
-              ['Avg CPI',     summary.avgCpi.toFixed(2),  summary.avgCpi >= 1 ? '#22c55e' : '#ef4444'],
-              ['Avg SPI',     summary.avgSpi.toFixed(2),  summary.avgSpi >= 1 ? '#22c55e' : '#f59e0b'],
-            ].map(([label, val, color]) => (
-              <div key={label} style={{ flex: '1 1 90px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 10, padding: '14px 16px' }}>
+            {([
+              ['🔴 At Risk',   String(summary.atRisk),    '#ef4444', 'red'   as const],
+              ['🟡 Watchlist', String(summary.watchlist), '#f59e0b', 'amber' as const],
+              ['🟢 Healthy',   String(summary.healthy),   '#22c55e', 'green' as const],
+              ['Avg CPI',     summary.avgCpi.toFixed(2),  summary.avgCpi >= 1 ? '#22c55e' : '#ef4444', null],
+              ['Avg SPI',     summary.avgSpi.toFixed(2),  summary.avgSpi >= 1 ? '#22c55e' : '#f59e0b', null],
+            ] as [string, string, string, 'red'|'amber'|'green'|null][]).map(([label, val, color, filter]) => (
+              <div key={label} onClick={filter ? () => setFilterRisk(filter) : undefined}
+                style={{ flex: '1 1 90px', background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 10, padding: '14px 16px', cursor: filter ? 'pointer' : 'default' }}
+                onMouseEnter={filter ? e => (e.currentTarget.style.opacity = '.75') : undefined}
+                onMouseLeave={filter ? e => (e.currentTarget.style.opacity = '1') : undefined}
+              >
                 <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
                 <div style={{ fontSize: 24, fontWeight: 700, color, marginTop: 2 }}>{val}</div>
               </div>

@@ -90,13 +90,18 @@ const subStatusColor: Record<string, string> = {
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
 function KpiCard({
-  label, value, sub, accent = 'var(--jarvis-a)',
-}: { label: string; value: string; sub?: string; accent?: string }) {
+  label, value, sub, accent = 'var(--jarvis-a)', onClick,
+}: { label: string; value: string; sub?: string; accent?: string; onClick?: () => void }) {
   return (
-    <div style={{
+    <div onClick={onClick} style={{
       background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)',
       borderRadius: 10, padding: '14px 18px', flex: '1 1 140px', minWidth: 120,
-    }}>
+      cursor: onClick ? 'pointer' : 'default',
+      transition: onClick ? 'opacity .15s' : undefined,
+    }}
+    onMouseEnter={onClick ? e => (e.currentTarget.style.opacity = '.8') : undefined}
+    onMouseLeave={onClick ? e => (e.currentTarget.style.opacity = '1') : undefined}
+    >
       <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
       <div style={{ fontSize: 22, fontWeight: 700, color: accent }}>{value}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', marginTop: 3 }}>{sub}</div>}
@@ -226,7 +231,7 @@ interface Props {
 
 const DEMO_PROJECT = 'demo'
 
-export default function CostControlDashboard({ biz }: Props) {
+export default function CostControlDashboard({ biz, onNavigate }: Props) {
   const [projectId, setProjectId] = useState<string>(DEMO_PROJECT)
   const [snap,      setSnap]      = useState<Snapshot | null>(null)
   const [loading,   setLoading]   = useState(false)
@@ -298,13 +303,13 @@ export default function CostControlDashboard({ biz }: Props) {
           {/* ── KPI Strip ────────────────────────────────────────────────── */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
             <KpiCard label="Original BAC"    value={fmt(snap.originalBac)}   />
-            <KpiCard label="Approved COs"    value={fmt(snap.approvedCo)}    accent="#22c55e" />
+            <KpiCard label="Approved COs"    value={fmt(snap.approvedCo)}    accent="#22c55e" onClick={() => onNavigate?.('changeorders')} />
             <KpiCard label="Revised Budget"  value={fmt(snap.revisedBudget)} accent="#6366f1" />
-            <KpiCard label="ACWP"            value={fmt(snap.acwp)}          accent="#ef4444" sub={`${snap.pctSpent}% of revised budget`} />
-            <KpiCard label="EAC"             value={fmt(snap.eac)}           accent={snap.eac && snap.eac > snap.revisedBudget ? '#ef4444' : '#22c55e'} />
-            <KpiCard label="VAC"             value={fmt(snap.vac)}           accent={snap.vac !== null && snap.vac < 0 ? '#ef4444' : '#22c55e'} />
-            <KpiCard label="CPI"             value={fmtN(snap.cpi)}          accent={snap.cpi !== null && snap.cpi < 1 ? '#ef4444' : '#22c55e'} sub={snap.cpi !== null && snap.cpi < 1 ? 'Over budget' : 'On budget'} />
-            <KpiCard label="Pending COs"     value={fmt(snap.pendingCo)}     accent="#f59e0b" />
+            <KpiCard label="ACWP"            value={fmt(snap.acwp)}          accent="#ef4444" sub={`${snap.pctSpent}% of revised budget`} onClick={() => onNavigate?.('costentry')} />
+            <KpiCard label="EAC"             value={fmt(snap.eac)}           accent={snap.eac && snap.eac > snap.revisedBudget ? '#ef4444' : '#22c55e'} onClick={() => onNavigate?.('evm')} />
+            <KpiCard label="VAC"             value={fmt(snap.vac)}           accent={snap.vac !== null && snap.vac < 0 ? '#ef4444' : '#22c55e'} onClick={() => onNavigate?.('evm')} />
+            <KpiCard label="CPI"             value={fmtN(snap.cpi)}          accent={snap.cpi !== null && snap.cpi < 1 ? '#ef4444' : '#22c55e'} sub={snap.cpi !== null && snap.cpi < 1 ? 'Over budget' : 'On budget'} onClick={() => onNavigate?.('evm')} />
+            <KpiCard label="Pending COs"     value={fmt(snap.pendingCo)}     accent="#f59e0b" onClick={() => onNavigate?.('changeorders')} />
           </div>
 
           {/* ── Waterfall + Trend (side by side) ─────────────────────────── */}

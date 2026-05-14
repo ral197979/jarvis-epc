@@ -87,22 +87,27 @@ function StatusBadge({ status }: { status: CoStatus }) {
 
 // ─── Summary bar ─────────────────────────────────────────────────────────────
 
-function SummaryBar({ summary }: { summary: CoSummary }) {
+function SummaryBar({ summary, onFilter }: { summary: CoSummary; onFilter: (status: string) => void }) {
   const tiles = [
-    { label: 'Total COs',          value: summary.total,                        color: '#aaa' },
-    { label: 'Submitted',          value: summary.byStatus.submitted,            color: '#0d6efd' },
-    { label: 'Approved',           value: summary.byStatus.approved,             color: '#198754' },
-    { label: 'Approved Cost Δ',    value: fmt$(summary.approvedCostImpact),      color: summary.approvedCostImpact >= 0 ? '#e74c3c' : '#27ae60' },
-    { label: 'Pending Cost Δ',     value: fmt$(summary.pendingCostImpact),       color: '#f39c12' },
-    { label: 'Schedule Δ (days)',  value: summary.approvedScheduleImpact + 'd',  color: summary.approvedScheduleImpact > 0 ? '#e74c3c' : '#27ae60' },
+    { label: 'Total COs',          value: summary.total,                        color: '#aaa',    filter: 'all' },
+    { label: 'Submitted',          value: summary.byStatus.submitted,            color: '#0d6efd', filter: 'submitted' },
+    { label: 'Approved',           value: summary.byStatus.approved,             color: '#198754', filter: 'approved' },
+    { label: 'Approved Cost Δ',    value: fmt$(summary.approvedCostImpact),      color: summary.approvedCostImpact >= 0 ? '#e74c3c' : '#27ae60', filter: '' },
+    { label: 'Pending Cost Δ',     value: fmt$(summary.pendingCostImpact),       color: '#f39c12', filter: '' },
+    { label: 'Schedule Δ (days)',  value: summary.approvedScheduleImpact + 'd',  color: summary.approvedScheduleImpact > 0 ? '#e74c3c' : '#27ae60', filter: '' },
   ]
   return (
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
       {tiles.map(t => (
-        <div key={t.label} style={{
-          background: 'var(--jarvis-surface, #1a1a1a)', border: '1px solid var(--jarvis-border, #333)',
-          borderRadius: 8, padding: '10px 16px', minWidth: 110,
-        }}>
+        <div key={t.label} onClick={t.filter ? () => onFilter(t.filter) : undefined}
+          style={{
+            background: 'var(--jarvis-surface, #1a1a1a)', border: '1px solid var(--jarvis-border, #333)',
+            borderRadius: 8, padding: '10px 16px', minWidth: 110,
+            cursor: t.filter ? 'pointer' : 'default',
+          }}
+          onMouseEnter={t.filter ? e => (e.currentTarget.style.opacity = '.75') : undefined}
+          onMouseLeave={t.filter ? e => (e.currentTarget.style.opacity = '1') : undefined}
+        >
           <div style={{ fontSize: 11, color: 'var(--jarvis-ts, #888)', marginBottom: 4 }}>{t.label}</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: t.color }}>{t.value}</div>
         </div>
@@ -447,7 +452,7 @@ export function ChangeOrdersView() {
       </div>
 
       {/* Summary tiles */}
-      {summary && <SummaryBar summary={summary} />}
+      {summary && <SummaryBar summary={summary} onFilter={setFilterStatus} />}
 
       {/* Table */}
       {loading ? (
