@@ -39,6 +39,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'fixlibrary',    label: 'Fix Library', icon: '🔧', domain: 'engineering'   },
   { id: 'knowledge',     label: 'Knowledge',   icon: '📚', domain: 'system'        },
   { id: 'changeorders',  label: 'Change Orders', icon: '🔄', domain: 'finance'      },
+  { id: 'costcontrol',   label: 'Cost Control',  icon: '📉', domain: 'finance'      },
   { id: 'evm',           label: 'EVM',        icon: '📊',  domain: 'finance'       },
   { id: 'budget',        label: 'Budget',     icon: '💰',  domain: 'finance'       },
   { id: 'proposals',     label: 'Proposals',  icon: '📄',  domain: 'crm'           },
