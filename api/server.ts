@@ -143,6 +143,7 @@ import { costControlRouter            } from './routes/costControl'             
 import { costEntryRouter              } from './routes/costEntry'                                            // v10.11.0: Field Cost Entry
 import { proposalsRouter              } from './routes/proposals'                                            // v10.12.0: Proposals & Bid Pipeline
 import { teamRouter                   } from './routes/team'                                                 // v10.13.0: Team & Workforce
+import { notificationsRouter          } from './routes/notifications'                                        // v10.14.0: Notifications
 import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 
@@ -423,6 +424,7 @@ app.use('/api/v1',                      costControlRouter)       // v10.10.0: Co
 app.use('/api/v1',                      costEntryRouter)         // v10.11.0: Field Cost Entry
 app.use('/api/v1',                      proposalsRouter)         // v10.12.0: Proposals & Bid Pipeline
 app.use('/api/v1',                      teamRouter)              // v10.13.0: Team & Workforce
+app.use('/api/v1',                      notificationsRouter)     // v10.14.0: Notifications
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
