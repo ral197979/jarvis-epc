@@ -67,6 +67,7 @@ const TeamView             = lazy(() => import('./team/TeamView'))
 const NotificationsView    = lazy(() => import('./notifications/NotificationsView'))
 const PredictView          = lazy(() => import('./predict/PredictView'))
 const TimesheetsView       = lazy(() => import('./timesheets/TimesheetsView'))
+const RiskRegisterView     = lazy(() => import('./riskRegister/RiskRegisterView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +108,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   costcontrol:      CostControlDashboard,
   costentry:        CostEntryView,
   timesheets:       TimesheetsView,
+  riskregister:     RiskRegisterView,
   proposals:        ProposalsView,
   evm:              EVMDashboard,
   scheduleimport:   ScheduleImportView,

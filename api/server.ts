@@ -146,6 +146,7 @@ import { teamRouter                   } from './routes/team'                    
 import { notificationsRouter          } from './routes/notifications'                                        // v10.14.0: Notifications
 import { predictRouter                } from './routes/predict'                                              // v10.15.0: Predict Dashboard
 import { timesheetsRouter             } from './routes/timesheets'                                           // v10.16.0: Workforce Timesheets
+import { riskRegisterRouter           } from './routes/riskRegister'                                         // v10.17.0: Risk Register
 import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 
@@ -429,6 +430,7 @@ app.use('/api/v1',                      teamRouter)              // v10.13.0: Te
 app.use('/api/v1',                      notificationsRouter)     // v10.14.0: Notifications
 app.use('/api/v1',                      predictRouter)           // v10.15.0: Predict Dashboard
 app.use('/api/v1',                      timesheetsRouter)        // v10.16.0: Workforce Timesheets
+app.use('/api/v1',                      riskRegisterRouter)      // v10.17.0: Risk Register
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
