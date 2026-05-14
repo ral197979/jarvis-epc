@@ -185,7 +185,7 @@ export async function ingestBatch(
       const ts = item.ts ?? new Date().toISOString()
 
       // Write reading
-      await pool.query(
+      await tenantQuery(tenantId,
         `INSERT INTO sensor_readings (tenant_id, sensor_id, ts, value, quality, raw)
          VALUES ($1,$2,$3,$4,$5,$6)`,
         [tenantId, sensorId, ts, item.value,
@@ -193,10 +193,10 @@ export async function ingestBatch(
       )
 
       // Update latest value cache
-      await pool.query(
-        `UPDATE sensors SET last_value=$2, last_reading_at=$3, updated_at=now()
-         WHERE id=$1`,
-        [sensorId, item.value, ts],
+      await tenantQuery(tenantId,
+        `UPDATE sensors SET last_value=$3, last_reading_at=$4, updated_at=now()
+         WHERE id=$1 AND tenant_id=$2`,
+        [sensorId, tenantId, item.value, ts],
       )
 
       // Evaluate alerts
@@ -241,13 +241,13 @@ async function _evaluateAlerts(
 
     if (thr.triggered(value, threshold)) {
       // Open alert if none open for this sensor+type+severity
-      const existing = await pool.query(
+      const existing = await tenantQuery(tenantId,
         `SELECT id FROM sensor_alerts
-         WHERE sensor_id=$1 AND alert_type=$2 AND severity=$3 AND resolved_at IS NULL LIMIT 1`,
-        [sensorId, thr.type, thr.severity],
+         WHERE tenant_id=$1 AND sensor_id=$2 AND alert_type=$3 AND severity=$4 AND resolved_at IS NULL LIMIT 1`,
+        [tenantId, sensorId, thr.type, thr.severity],
       )
       if (!existing.rows.length) {
-        await pool.query(
+        await tenantQuery(tenantId,
           `INSERT INTO sensor_alerts (tenant_id, sensor_id, alert_type, severity, triggered_value, threshold)
            VALUES ($1,$2,$3,$4,$5,$6)`,
           [tenantId, sensorId, thr.type, thr.severity, value, threshold],
@@ -256,10 +256,10 @@ async function _evaluateAlerts(
       }
     } else {
       // Auto-resolve open alerts for this threshold if value back in range
-      await pool.query(
+      await tenantQuery(tenantId,
         `UPDATE sensor_alerts SET resolved_at=now()
-         WHERE sensor_id=$1 AND alert_type=$2 AND severity=$3 AND resolved_at IS NULL`,
-        [sensorId, thr.type, thr.severity],
+         WHERE tenant_id=$1 AND sensor_id=$2 AND alert_type=$3 AND severity=$4 AND resolved_at IS NULL`,
+        [tenantId, sensorId, thr.type, thr.severity],
       )
     }
   }

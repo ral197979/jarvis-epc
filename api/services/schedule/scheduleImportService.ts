@@ -4,7 +4,6 @@
  * Orchestrates XER / MSPDI file import into schedule_tasks + schedule_dependencies.
  * Idempotent: re-importing the same external ID UPSERTs existing tasks.
  */
-import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 import { parseXer }  from './xerParser'
 import { parseMsp }  from './mspParser'
@@ -139,7 +138,7 @@ export async function importSchedule(
       // Collect all task UUIDs involved
       const taskIds = [...externalToUuid.values()]
       if (taskIds.length > 0) {
-        await pool.query(
+        await tenantQuery(tenantId,
           `DELETE FROM schedule_dependencies
            WHERE tenant_id=$1 AND predecessor_id = ANY($2) AND successor_id = ANY($2)`,
           [tenantId, taskIds],
@@ -154,7 +153,7 @@ export async function importSchedule(
           continue
         }
         try {
-          await pool.query(
+          await tenantQuery(tenantId,
             `INSERT INTO schedule_dependencies
                (tenant_id, predecessor_id, successor_id, lag_days)
              VALUES ($1,$2,$3,$4)

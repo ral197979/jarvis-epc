@@ -117,9 +117,9 @@ export function parseMsp(content: string): ImportSchedule {
       const predUid = Number(l['PredecessorUID'])
       const predExtId = uidToExternal.get(predUid)
       if (!predExtId) { warnings.push(`Unknown predecessor UID ${predUid}`); continue }
-      const lagHrs  = Number(l['LinkLag'] ?? 0) / 10  // MSP stores lag in tenths of a minute → convert: lagHrs = lag/600
-      // Actually LinkLag is in units matching the link's LagFormat. Default is hours×600 (tenths of hour)
-      const lagDays = Math.round(lagHrs / 600 / 8)
+      // LinkLag is in tenths of a minute: minutes = LinkLag/10, days = minutes/480 (8-hour workday)
+      const lagMinutes = Number(l['LinkLag'] ?? 0) / 10
+      const lagDays    = Math.round(lagMinutes / 480)
       const typeNum = Number(l['Type'] ?? 1)
       const type    = TYPE_MAP[typeNum] ?? 'FS'
       dependencies.push({ predecessorExternalId: predExtId, successorExternalId: succExtId, lagDays, type })
