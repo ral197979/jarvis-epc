@@ -63,6 +63,7 @@ const MeetingsView        = lazy(() => import('./meetings/MeetingsView'))
 const CostControlDashboard = lazy(() => import('./costControl/CostControlDashboard'))
 const CostEntryView        = lazy(() => import('./costEntry/CostEntryView'))
 const ProposalsView        = lazy(() => import('./proposals/ProposalsView'))
+const TeamView             = lazy(() => import('./team/TeamView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,7 +135,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   ask:           AskJarvisView,
   jobs:          JobsView,
   overview:      DashboardMainView,
-  team:          () => React.createElement(ComingSoonView, { label: 'Team',          domain: 'Operations', icon: '👥', viewId: 'team',          context: 'Team roster, role assignments, and labor allocation module is in active extraction from the core.' }),
+  team:          TeamView,
   predict:       () => React.createElement(ComingSoonView, { label: 'Predict',       domain: 'AI',         icon: '🔮', viewId: 'predict',       context: 'Ava ML predictions (RUL, fault classification, cost/schedule variance) will appear here once the Ava MCP bridge is connected.' }),
   integrations:  () => React.createElement(ComingSoonView, { label: 'Integrations',  domain: 'System',     icon: '🔗', viewId: 'integrations',  context: 'Outbound connectors (QuickBooks, Slack, Tractian, BACnet) are being migrated to the new integration framework.' }),
   notifications: () => React.createElement(ComingSoonView, { label: 'Notifications', domain: 'Operations', icon: '🔔', viewId: 'notifications', context: 'Real-time alert stream, subscription preferences, and delivery channels are in active extraction from the core.' }),
