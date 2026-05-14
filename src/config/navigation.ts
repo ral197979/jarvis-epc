@@ -41,6 +41,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'changeorders',  label: 'Change Orders', icon: '🔄', domain: 'finance'      },
   { id: 'costcontrol',   label: 'Cost Control',  icon: '📉', domain: 'finance'      },
   { id: 'costentry',     label: 'Cost Entry',    icon: '💵', domain: 'finance'      },
+  { id: 'timesheets',    label: 'Timesheets',    icon: '⏱️', domain: 'operations'   },
   { id: 'evm',           label: 'EVM',        icon: '📊',  domain: 'finance'       },
   { id: 'budget',        label: 'Budget',     icon: '💰',  domain: 'finance'       },
   { id: 'proposals',     label: 'Proposals',  icon: '📄',  domain: 'crm'           },
