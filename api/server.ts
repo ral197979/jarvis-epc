@@ -208,6 +208,10 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   next()
 })
 
+// ─── Trust proxy (must be set before rate limiters for correct client IP) ────
+
+app.set('trust proxy', 1)
+
 // ─── Global rate limits ───────────────────────────────────────────────────────
 
 const envInt = (k: string, def: number) => { const v = parseInt(process.env[k] ?? '', 10); return Number.isFinite(v) && v > 0 ? v : def }

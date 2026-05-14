@@ -52,7 +52,7 @@ scheduleImportRouter.post(
       )
       res.status(201).json({ import: result })
     } catch (e) {
-      res.status(500).json({ error: 'Import failed', detail: (e as Error).message })
+      res.status(500).json({ error: 'Import failed' })
     }
   },
 )

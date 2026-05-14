@@ -167,8 +167,13 @@ export async function ingestBatch(
     try {
       let sensorRow = sensorByUid.get(item.sensorUid)
 
-      // Auto-register unknown sensors as generic HTTP sensors
+      // Auto-register unknown sensors as generic HTTP sensors (IOT-003: require projectId)
       if (!sensorRow) {
+        if (!projectId) {
+          rejected++
+          errors.push(`${item.sensorUid}: unknown sensor — provide project_id query param to auto-register`)
+          continue
+        }
         const autoRes = await tenantQuery(tenantId,
           `INSERT INTO sensors
              (tenant_id, project_id, sensor_uid, name, sensor_type, unit, protocol)
@@ -234,6 +239,9 @@ async function _evaluateAlerts(
     { key: 'warn_high',  type: 'high', severity: 'warning'  as const, triggered: (v: number, t: number) => v > t },
     { key: 'warn_low',   type: 'low',  severity: 'warning'  as const, triggered: (v: number, t: number) => v < t },
   ]
+
+  // IOT-005: skip all DB queries if sensor has no thresholds configured
+  if (thresholds.every(thr => sensorRow[thr.key] == null)) return 0
 
   for (const thr of thresholds) {
     const threshold = sensorRow[thr.key] != null ? Number(sensorRow[thr.key]) : null
@@ -317,7 +325,7 @@ export async function createIngestToken(
   const hash  = createHash('sha256').update(token).digest('hex')
   const res = await tenantQuery(tenantId,
     `INSERT INTO sensor_ingest_tokens (tenant_id, edge_node_id, token_hash, label, expires_at)
-     VALUES ($1,$2,$3,$4, now() + ($5 || ' days')::interval) RETURNING id, expires_at`,
+     VALUES ($1,$2,$3,$4, now() + make_interval(days => $5::int)) RETURNING id, expires_at`,
     [tenantId, edgeNodeId ?? null, hash, label, ttlDays],
   )
   return { token, id: res.rows[0].id as string, expiresAt: res.rows[0].expires_at as string }

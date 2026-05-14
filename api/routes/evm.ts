@@ -43,7 +43,7 @@ evmRouter.post('/projects/:projectId/evm/baselines', async (req: Request, res: R
     })
     res.status(201).json({ baseline })
   } catch (e) {
-    res.status(500).json({ error: 'Failed to create baseline', detail: (e as Error).message })
+    res.status(500).json({ error: 'Failed to create baseline' })
   }
 })
 
@@ -69,7 +69,7 @@ evmRouter.post('/evm/baselines/:baselineId/wbs', async (req: Request, res: Respo
     const wbs = await upsertWbsEntries(r.tenantId!, p(req, 'baselineId'), projectId, entries as never)
     res.status(201).json({ wbs })
   } catch (e) {
-    res.status(500).json({ error: 'Failed to upsert WBS entries', detail: (e as Error).message })
+    res.status(500).json({ error: 'Failed to upsert WBS entries' })
   }
 })
 
@@ -95,7 +95,7 @@ evmRouter.post('/projects/:projectId/evm/actuals', async (req: Request, res: Res
     })
     res.status(201).json({ actual })
   } catch (e) {
-    res.status(500).json({ error: 'Failed to record actual', detail: (e as Error).message })
+    res.status(500).json({ error: 'Failed to record actual' })
   }
 })
 
@@ -121,7 +121,7 @@ evmRouter.post('/projects/:projectId/evm/progress', async (req: Request, res: Re
     })
     res.status(201).json({ progress })
   } catch (e) {
-    res.status(500).json({ error: 'Failed to record progress', detail: (e as Error).message })
+    res.status(500).json({ error: 'Failed to record progress' })
   }
 })
 
@@ -135,7 +135,7 @@ evmRouter.get('/projects/:projectId/evm/metrics', async (req: Request, res: Resp
     if (!metrics) { res.status(404).json({ error: 'No active EVM baseline for this project' }); return }
     res.json({ metrics })
   } catch (e) {
-    res.status(500).json({ error: 'Failed to compute EVM metrics', detail: (e as Error).message })
+    res.status(500).json({ error: 'Failed to compute EVM metrics' })
   }
 })
 
@@ -147,7 +147,7 @@ evmRouter.post('/projects/:projectId/evm/snapshot', async (req: Request, res: Re
     if (!metrics) { res.status(404).json({ error: 'No active EVM baseline for this project' }); return }
     res.status(201).json({ metrics })
   } catch (e) {
-    res.status(500).json({ error: 'Failed to take snapshot', detail: (e as Error).message })
+    res.status(500).json({ error: 'Failed to take snapshot' })
   }
 })
 

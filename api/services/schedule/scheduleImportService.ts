@@ -36,6 +36,8 @@ export function parseSchedule(content: string, format: ImportFormat): ImportSche
   return format === 'mspdi' ? parseMsp(content) : parseXer(content)
 }
 
+const MAX_TASKS_PER_IMPORT = 5_000
+
 // ─── Import into DB ───────────────────────────────────────────────────────────
 
 export async function importSchedule(
@@ -47,6 +49,10 @@ export async function importSchedule(
 ): Promise<ImportJobResult> {
   const format  = detectFormat(filename, content)
   const schedule = parseSchedule(content, format)
+
+  if (schedule.tasks.length > MAX_TASKS_PER_IMPORT) {
+    throw new Error(`Import exceeds ${MAX_TASKS_PER_IMPORT} task limit (file contains ${schedule.tasks.length} tasks). Split the schedule or contact support.`)
+  }
 
   // Create import job
   const jobRes = await tenantQuery(tenantId,

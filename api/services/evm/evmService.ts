@@ -10,7 +10,6 @@
  *
  * Actual Cost (ACWP): sum of evm_actuals entries up to the status date.
  */
-import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -184,6 +183,14 @@ export async function upsertWbsEntries(
     sortOrder?: number
   }>,
 ): Promise<EvmWbsEntry[]> {
+  // Validate baseline belongs to the stated project (EVM-001)
+  const blCheck = await tenantQuery(tenantId,
+    `SELECT project_id FROM evm_baselines WHERE id=$1 AND tenant_id=$2`,
+    [baselineId, tenantId],
+  )
+  if (!blCheck.rows[0]) throw new Error('Baseline not found')
+  if (blCheck.rows[0].project_id !== projectId) throw new Error('projectId does not match baseline project')
+
   const results: EvmWbsEntry[] = []
   for (const e of entries) {
     const res = await tenantQuery(tenantId,
@@ -191,7 +198,11 @@ export async function upsertWbsEntries(
          (tenant_id, baseline_id, project_id, wbs_code, name, bac,
           schedule_task_id, planned_start, planned_finish, sort_order)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-       ON CONFLICT DO NOTHING
+       ON CONFLICT (tenant_id, baseline_id, wbs_code) DO UPDATE SET
+         name=EXCLUDED.name, bac=EXCLUDED.bac,
+         schedule_task_id=EXCLUDED.schedule_task_id,
+         planned_start=EXCLUDED.planned_start, planned_finish=EXCLUDED.planned_finish,
+         sort_order=EXCLUDED.sort_order, updated_at=now()
        RETURNING *`,
       [tenantId, baselineId, projectId, e.wbsCode, e.name, e.bac,
        e.scheduleTaskId ?? null, e.plannedStart ?? null,
@@ -430,5 +441,4 @@ function _mapProgress(r: Record<string, unknown>): EvmProgress {
   }
 }
 
-// Suppress unused import warning — pool imported for future direct queries
-void pool
+
