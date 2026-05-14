@@ -137,6 +137,7 @@ import { evmRouter                    } from './routes/evm'                     
 import { scheduleImportRouter         } from './routes/scheduleImport'                                    // v10.4.0: P6 XER + MSP XML schedule import
 import { iotRouter                    } from './routes/iot'                                               // v10.5.0: IoT sensor ingest
 import { changeOrdersRouter           } from './routes/changeOrders'                                      // v10.7.0: Change Order Management
+import { subcontractsRouter           } from './routes/subcontracts'                                      // v10.8.0: Bid Packages & Subcontracts
 import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 
@@ -411,6 +412,7 @@ app.use('/api/v1',                      evmRouter)               // v10.3.0: Ear
 app.use('/api/v1',                      scheduleImportRouter)    // v10.4.0: P6 XER + MSP XML import
 app.use('/api/v1',                      iotRouter)               // v10.5.0: IoT sensor ingest
 app.use('/api/v1',                      changeOrdersRouter)      // v10.7.0: Change Order Management
+app.use('/api/v1',                      subcontractsRouter)      // v10.8.0: Bid Packages & Subcontracts
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
