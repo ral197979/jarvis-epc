@@ -141,6 +141,7 @@ import { subcontractsRouter           } from './routes/subcontracts'            
 import { meetingsRouter               } from './routes/meetings'                                           // v10.9.0: Meeting Minutes
 import { costControlRouter            } from './routes/costControl'                                         // v10.10.0: Cost Control Dashboard
 import { costEntryRouter              } from './routes/costEntry'                                            // v10.11.0: Field Cost Entry
+import { proposalsRouter              } from './routes/proposals'                                            // v10.12.0: Proposals & Bid Pipeline
 import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 
@@ -419,6 +420,7 @@ app.use('/api/v1',                      subcontractsRouter)      // v10.8.0: Bid
 app.use('/api/v1',                      meetingsRouter)          // v10.9.0: Meeting Minutes
 app.use('/api/v1',                      costControlRouter)       // v10.10.0: Cost Control Dashboard
 app.use('/api/v1',                      costEntryRouter)         // v10.11.0: Field Cost Entry
+app.use('/api/v1',                      proposalsRouter)         // v10.12.0: Proposals & Bid Pipeline
 
 // ─── AI Gateway ───────────────────────────────────────────────────────────────
 
