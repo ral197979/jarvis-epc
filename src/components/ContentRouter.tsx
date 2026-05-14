@@ -65,6 +65,7 @@ const CostEntryView        = lazy(() => import('./costEntry/CostEntryView'))
 const ProposalsView        = lazy(() => import('./proposals/ProposalsView'))
 const TeamView             = lazy(() => import('./team/TeamView'))
 const NotificationsView    = lazy(() => import('./notifications/NotificationsView'))
+const PredictView          = lazy(() => import('./predict/PredictView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,7 +138,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   jobs:          JobsView,
   overview:      DashboardMainView,
   team:          TeamView,
-  predict:       () => React.createElement(ComingSoonView, { label: 'Predict',       domain: 'AI',         icon: '🔮', viewId: 'predict',       context: 'Ava ML predictions (RUL, fault classification, cost/schedule variance) will appear here once the Ava MCP bridge is connected.' }),
+  predict:       PredictView,
   integrations:  () => React.createElement(ComingSoonView, { label: 'Integrations',  domain: 'System',     icon: '🔗', viewId: 'integrations',  context: 'Outbound connectors (QuickBooks, Slack, Tractian, BACnet) are being migrated to the new integration framework.' }),
   notifications: NotificationsView,
 }
