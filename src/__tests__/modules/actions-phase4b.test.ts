@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: {
+  pool: {
     query:   vi.fn(),
     connect: vi.fn(),
   },
@@ -23,7 +23,7 @@ vi.mock('../../../api/services/actions/actionEventPublisher', () => ({
   publishEvent:       vi.fn(),
 }))
 
-import pool, { tenantQuery } from '../../../api/db/pool'
+import { pool, tenantQuery } from '../../../api/db/pool'
 
 const mockQuery  = vi.mocked(pool.query)
 const mockTenant = vi.mocked(tenantQuery)
@@ -249,18 +249,18 @@ describe('dataWarehouse — createExportJob', () => {
   it('returns job id from DB', async () => {
     mockTenant.mockResolvedValueOnce(mockRows([{ id: 'exp1' }]))
     const mod = await import('../../../api/services/export/dataWarehouse')
-    const id = await mod.createExportJob({ tenantId: 't1', exportType: 'actions', format: 'csv', requestedBy: 'u1' })
+    const id = await mod.createExportJob({ tenantId: 't1', name: 'Test Export', exportType: 'actions', format: 'csv', filters: {}, requestedBy: 'u1' })
     expect(id).toBe('exp1')
   })
 
   it('passes export_type, format, and requested_by to query', async () => {
     mockTenant.mockResolvedValueOnce(mockRows([{ id: 'exp2' }]))
     const mod = await import('../../../api/services/export/dataWarehouse')
-    await mod.createExportJob({ tenantId: 't1', exportType: 'incidents', format: 'json', requestedBy: 'u2' })
+    await mod.createExportJob({ tenantId: 't1', name: 'Test Export', exportType: 'audit', format: 'json', filters: {}, requestedBy: 'u2' })
     expect(mockTenant).toHaveBeenCalledWith(
       't1',
       expect.any(String),
-      expect.arrayContaining(['t1', 'incidents', 'json', 'u2'])
+      expect.arrayContaining(['t1', 'audit', 'json', 'u2'])
     )
   })
 })

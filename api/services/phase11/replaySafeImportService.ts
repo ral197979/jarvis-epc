@@ -118,7 +118,7 @@ export async function checkNoReplayInterference(
     [importedEntityIds]
   )
 
-  const interferedIds = (rows as Record<string, unknown>[]).map(r => r.entity_id as string)
+  const interferedIds = (rows.rows as Record<string, unknown>[]).map(r => r.entity_id as string)
   return { safe: interferedIds.length === 0, interferedIds }
 }
 

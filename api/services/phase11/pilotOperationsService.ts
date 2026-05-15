@@ -199,7 +199,7 @@ export async function getPilotAdoptionMetrics(tenantId: string): Promise<{
   )
 
   const metrics: Record<string, number> = {}
-  for (const row of rows as Record<string, unknown>[]) {
+  for (const row of rows.rows as Record<string, unknown>[]) {
     metrics[row.metric_type as string] = Number(row.avg_value)
   }
 

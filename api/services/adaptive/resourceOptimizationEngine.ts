@@ -4,7 +4,7 @@
 import { tenantQuery } from '../../db/pool'
 import {
   ResourceAllocation, WorkloadBalancePlan, OptimizationProposal,
-  ProposeOptimizationInput,
+  ProposeOptimizationInput, OptimizationType,
 } from './adaptiveTypes'
 
 // ─── Analyze resource utilization ─────────────────────────────────────────────
@@ -221,7 +221,7 @@ function _mapProposal(row: Record<string, unknown>): OptimizationProposal {
   return {
     id: row.id as string,
     tenantId: row.tenant_id as string,
-    optimizationType: row.optimization_type as string,
+    optimizationType: row.optimization_type as OptimizationType,
     proposedBy: row.proposed_by as string,
     entityIds: (row.entity_ids as string[]) ?? [],
     entityType: row.entity_type != null ? String(row.entity_type) : undefined,

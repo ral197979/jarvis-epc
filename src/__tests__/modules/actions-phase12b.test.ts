@@ -13,13 +13,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../../../api/db/pool', () => {
   const mockPool = { query: vi.fn() }
   return {
-    default: mockPool,
     pool: mockPool,
     tenantQuery: vi.fn(),
   }
 })
 
-import { default as mockPool, tenantQuery } from '../../../api/db/pool'
+import { pool as mockPool, tenantQuery } from '../../../api/db/pool'
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 

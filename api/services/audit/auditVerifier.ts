@@ -88,8 +88,8 @@ export async function verifyChainIntegrity(
     }
   }
 
-  const chainHash    = computeChainHash(events)
-  const gapDetails   = detectGaps(events)
+  const chainHash    = computeChainHash(events as Array<{ id: unknown; sequence_number: number; event_type?: string }>)
+  const gapDetails   = detectGaps(events as Array<{ sequence_number: number }>)
   const gapsDetected = gapDetails.length
 
   // Compare against stored snapshot if available

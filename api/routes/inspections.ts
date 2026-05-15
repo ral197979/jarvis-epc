@@ -150,7 +150,7 @@ router.get('/projects/:projectId/inspections', async (req: Request, res: Respons
 
 router.post('/projects/:projectId/inspections', async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
-  const { projectId } = req.params
+  const projectId = req.params.projectId as string
   const b = req.body ?? {}
   if (!b.title) return res.status(400).json({ error: 'title required' })
 

@@ -14,7 +14,7 @@
  *   POST /ops/incident
  */
 import { Router, type Response } from 'express'
-import type { Request } from '../middleware/tenant'
+import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { computeReadiness } from '../services/readiness/readinessEngine'
 import { generateInboxRecommendations, fetchRecommendationInputs } from '../services/ops/recommendationEngine'

@@ -26,7 +26,7 @@ policiesRouter.get('/', async (req: Request, res: Response) => {
   if (type) { params.push(type); q += ` AND policy_type = $${params.length}` }
   if (scope) { params.push(scope); q += ` AND scope = $${params.length}` }
   q += ` ORDER BY priority ASC, created_at DESC`
-  const { rows } = await tenantQuery(r.tenantId, q, params)
+  const { rows } = await tenantQuery(r.tenantId!, q, params)
   res.json({ data: rows })
 })
 
@@ -37,9 +37,9 @@ policiesRouter.post('/', async (req: Request, res: Response) => {
   if (!name || !policy_type || !Array.isArray(rules)) {
     res.status(400).json({ error: 'name, policy_type, and rules[] are required' }); return
   }
-  const id = await createPolicy(r.tenantId, {
+  const id = await createPolicy(r.tenantId!, {
     name, scope, scopeId: scope_id, policyType: policy_type,
-    rules, priority, createdBy: r.auth.sub,
+    rules, priority, createdBy: r.auth!.sub,
   })
   res.status(201).json({ data: { policy_id: id } })
 })
@@ -48,7 +48,7 @@ policiesRouter.post('/', async (req: Request, res: Response) => {
 policiesRouter.patch('/:id', async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const { rules, priority, status } = req.body
-  const ok = await updatePolicy(r.tenantId, req.params['id']!, { rules, priority, status })
+  const ok = await updatePolicy(r.tenantId!, req.params['id'] as string, { rules, priority, status })
   if (!ok) { res.status(404).json({ error: 'Policy not found' }); return }
   res.json({ data: { updated: true } })
 })
@@ -61,8 +61,8 @@ policiesRouter.post('/evaluate', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'policy_type and payload required' }); return
   }
   const result = await evaluatePolicy(policy_type, {
-    tenantId: r.tenantId, projectId: project_id, module, role,
-    actorId: r.auth.sub, payload,
+    tenantId: r.tenantId!, projectId: project_id, module, role,
+    actorId: r.auth!.sub, payload,
   })
   res.json({ data: result })
 })
@@ -71,7 +71,7 @@ policiesRouter.post('/evaluate', async (req: Request, res: Response) => {
 policiesRouter.get('/audit', async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const limit = Math.min(Number(req.query['limit'] ?? 50), 200)
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT p.name as policy_name, l.event_type, l.outcome, l.actor_id, l.resource, l.occurred_at
     FROM policy_audit_log l
     JOIN governance_policies p ON p.id = l.policy_id

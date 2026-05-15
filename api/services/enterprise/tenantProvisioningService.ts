@@ -148,8 +148,8 @@ export async function listSubscriptions(opts: {
   const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : ''
 
   // Admin query — not tenant-scoped
-  const { default: pool } = await import('../../db/pool')
-  const res = await pool.query(
+  const { pool } = await import('../../db/pool')
+  const res = await pool!.query(
     `SELECT * FROM tenant_subscriptions ${where} ORDER BY created_at DESC LIMIT $${params.length}`,
     params,
   )

@@ -9,24 +9,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: { query: vi.fn(), connect: vi.fn() },
+  pool: { query: vi.fn(), connect: vi.fn() },
   tenantQuery: vi.fn(),
 }))
 
-import { default as pool, tenantQuery } from '../../../api/db/pool'
+import { pool, tenantQuery } from '../../../api/db/pool'
 const mockPool   = vi.mocked(pool.query)
 const mockTenant = vi.mocked(tenantQuery)
 
-const mockRows = (rows: Record<string, unknown>[]) => ({ rows })
-const mockRow  = (row:  Record<string, unknown>)    => ({ rows: [row] })
-const mockEmpty = () => ({ rows: [], rowCount: 0 })
+const mockRows = (rows: Record<string, unknown>[]) => ({ rows } as never)
+const mockRow  = (row:  Record<string, unknown>)    => ({ rows: [row] } as never)
+const mockEmpty = () => ({ rows: [], rowCount: 0 } as never)
 
 const NOW = '2025-01-01T00:00:00.000Z'
 
 // ─── Row factories ────────────────────────────────────────────────────────────
 
 const makeContributionRow = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
-  id: 'contrib-1', tenant_id: 'T1', contribution_type: 'performance_metric',
+  id: 'contrib-1', tenant_id: 'T1', contribution_type: 'resource_optimization',
   anonymized_data: JSON.stringify({ value: 42, _dp_noise_applied: true }),
   privacy_hash: 'abc123', k_count: 1, status: 'active', opt_in_verified: true,
   rejected_reason: null, published_at: null,
@@ -122,7 +122,7 @@ const makeAgentExecutionRow = (o: Record<string, unknown> = {}): Record<string, 
 
 const makeAdapterRow = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: 'adapter-1', tenant_id: 'T1', name: 'Slack Adapter',
-  adapter_type: 'webhook_inbound',
+  adapter_type: 'custom_webhook',
   config: JSON.stringify({ url: 'https://slack.com/hook' }),
   secret: 'shhhh', is_active: true, created_at: NOW, updated_at: NOW, ...o,
 })
@@ -136,7 +136,7 @@ const makeEventRow = (o: Record<string, unknown> = {}): Record<string, unknown> 
 })
 
 const makeKgEntityRow = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
-  id: 'entity-1', tenant_id: 'T1', entity_type: 'service',
+  id: 'entity-1', tenant_id: 'T1', entity_type: 'system',
   entity_ref: 'auth-service', label: 'Auth Service',
   properties: JSON.stringify({ version: '1.2' }),
   embedding_id: null, created_at: NOW, updated_at: NOW, ...o,
@@ -201,7 +201,7 @@ describe('federatedIntelligenceEngine mappers', () => {
     const c = __testHooks._mapContribution(makeContributionRow({ k_count: 3, published_at: NOW }))
     expect(c.id).toBe('contrib-1')
     expect(c.tenantId).toBe('T1')
-    expect(c.contributionType).toBe('performance_metric')
+    expect(c.contributionType).toBe('resource_optimization')
     expect(c.privacyHash).toBe('abc123')
     expect(c.kCount).toBe(3)
     expect(c.status).toBe('active')
@@ -569,7 +569,7 @@ describe('pluginRegistryService coverage', () => {
   it('registerPlugin query includes required_scopes', async () => {
     mockPool.mockResolvedValueOnce(mockRow(makePluginRow()))
     const { registerPlugin } = await import('../../../api/services/ecosystem/pluginRegistryService')
-    await registerPlugin({ slug: 'my-plugin', name: 'My Plugin', pluginType: 'integration', requiredScopes: ['read:tickets'] })
+    await registerPlugin({ slug: 'my-plugin', name: 'My Plugin', author: 'test', pluginType: 'data_connector', requiredScopes: ['read:tickets'] })
     expect((mockPool.mock.calls[0]![0] as string)).toContain('required_scopes')
   })
 
@@ -584,7 +584,7 @@ describe('pluginRegistryService coverage', () => {
       .mockResolvedValueOnce(mockRow(makePluginRow({ status: 'deprecated' })))
       .mockResolvedValueOnce(mockEmpty()) // _auditPlugin
     const { updatePluginStatus } = await import('../../../api/services/ecosystem/pluginRegistryService')
-    const p = await updatePluginStatus('plugin-1', 'deprecated')
+    const p = await updatePluginStatus('plugin-1', 'suspended')
     expect(p.status).toBe('deprecated')
   })
 
@@ -653,7 +653,7 @@ describe('pluginRegistryService coverage', () => {
   it('listPlugins filters by status', async () => {
     mockPool.mockResolvedValueOnce(mockRows([makePluginRow()]))
     const { listPlugins } = await import('../../../api/services/ecosystem/pluginRegistryService')
-    await listPlugins({ status: 'active' })
+    await listPlugins({ status: 'published' })
     expect((mockPool.mock.calls[0]![0] as string)).toContain('status')
   })
 
@@ -728,7 +728,7 @@ describe('automationAdapterService coverage', () => {
   it('createAdapter query targets automation_adapters', async () => {
     mockTenant.mockResolvedValueOnce(mockRow(makeAdapterRow()))
     const { createAdapter } = await import('../../../api/services/ecosystem/automationAdapterService')
-    await createAdapter('T1', { name: 'Slack', adapterType: 'webhook_inbound' })
+    await createAdapter('T1', { name: 'Slack', adapterType: 'custom_webhook' })
     expect((mockTenant.mock.calls[0]![1] as string)).toContain('automation_adapters')
   })
 
@@ -815,7 +815,7 @@ describe('knowledgeGraphService coverage', () => {
   it('upsertEntity uses ON CONFLICT on entity_type + entity_ref', async () => {
     mockTenant.mockResolvedValueOnce(mockRow(makeKgEntityRow()))
     const { upsertEntity } = await import('../../../api/services/ecosystem/knowledgeGraphService')
-    await upsertEntity('T1', { entityType: 'service', entityRef: 'auth', label: 'Auth', properties: {} })
+    await upsertEntity('T1', { entityType: 'system', entityRef: 'auth', label: 'Auth', properties: {} })
     const sql = mockTenant.mock.calls[0]![1] as string
     expect(sql).toContain('ON CONFLICT')
     expect(sql).toContain('entity_type, entity_ref')
@@ -824,9 +824,9 @@ describe('knowledgeGraphService coverage', () => {
   it('upsertEntity returns entity with correct tenantId', async () => {
     mockTenant.mockResolvedValueOnce(mockRow(makeKgEntityRow()))
     const { upsertEntity } = await import('../../../api/services/ecosystem/knowledgeGraphService')
-    const entity = await upsertEntity('T1', { entityType: 'service', entityRef: 'auth', label: 'Auth' })
+    const entity = await upsertEntity('T1', { entityType: 'system', entityRef: 'auth', label: 'Auth' })
     expect(entity.tenantId).toBe('T1')
-    expect(entity.entityType).toBe('service')
+    expect(entity.entityType).toBe('system')
   })
 
   it('getEntity returns null when not found', async () => {
@@ -838,7 +838,7 @@ describe('knowledgeGraphService coverage', () => {
   it('findEntitiesByRef returns null when not found', async () => {
     mockTenant.mockResolvedValueOnce(mockEmpty())
     const { findEntitiesByRef } = await import('../../../api/services/ecosystem/knowledgeGraphService')
-    expect(await findEntitiesByRef('T1', 'service', 'missing')).toBeNull()
+    expect(await findEntitiesByRef('T1', 'system', 'missing')).toBeNull()
   })
 
   it('searchEntities uses ILIKE for label matching', async () => {
@@ -964,7 +964,7 @@ describe('edgeNodeService coverage', () => {
   })
 
   it('flushAuditBuffer returns rows.length', async () => {
-    mockTenant.mockResolvedValueOnce({ rows: Array(7).fill({ id: 'x' }) })
+    mockTenant.mockResolvedValueOnce({ rows: Array(7).fill({ id: 'x' }) } as never)
     const { flushAuditBuffer } = await import('../../../api/services/ecosystem/edgeNodeService')
     expect(await flushAuditBuffer('T1', 'node-1')).toBe(7)
   })
@@ -1040,13 +1040,13 @@ describe('airGapModeService coverage', () => {
 
   it('createPackage+verifyPackage roundtrip returns true', async () => {
     const { createPackage, verifyPackage } = await import('../../../api/services/ecosystem/airGapModeService')
-    const pkg = createPackage('model_update', '1.0.0', { data: 'hello' })
+    const pkg = createPackage('model', '1.0.0', { data: 'hello' })
     expect(verifyPackage(pkg)).toBe(true)
   })
 
   it('verifyPackage returns false for tampered checksum', async () => {
     const { createPackage, verifyPackage } = await import('../../../api/services/ecosystem/airGapModeService')
-    const pkg = createPackage('model_update', '1.0.0', {})
+    const pkg = createPackage('model', '1.0.0', {})
     expect(verifyPackage({ ...pkg, checksum: 'bad' })).toBe(false)
   })
 
@@ -1275,7 +1275,7 @@ describe('privacy boundary integration', () => {
   it('contributeData gates on opt-in (isOptedIn=false throws)', async () => {
     mockTenant.mockResolvedValueOnce(mockRow({ enabled: false }))
     const { contributeData } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    await expect(contributeData('T1', { contributionType: 'performance_metric', rawData: { v: 1 } }))
+    await expect(contributeData('T1', { contributionType: 'resource_optimization', rawData: { v: 1 } }))
       .rejects.toThrow('not opted in')
   })
 
@@ -1285,7 +1285,7 @@ describe('privacy boundary integration', () => {
       .mockResolvedValueOnce(mockRow(makeContributionRow()))
     mockPool.mockResolvedValueOnce(mockEmpty())
     const { contributeData } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    const c = await contributeData('T1', { contributionType: 'performance_metric', rawData: { v: 42 } })
+    const c = await contributeData('T1', { contributionType: 'resource_optimization', rawData: { v: 42 } })
     expect(c.tenantId).toBe('T1')
   })
 
@@ -1326,14 +1326,14 @@ describe('edgeNodeService sync and audit', () => {
   it('completeSyncSession sets status=completed when no unresolved conflicts', async () => {
     mockTenant.mockResolvedValueOnce(mockRow({ id: 'sync-1', edge_node_id: 'node-1', tenant_id: 'T1', status: 'completed', records_synced: 10, conflicts_detected: 0, conflicts_resolved: 0, started_at: NOW, completed_at: NOW }))
     const { completeSyncSession } = await import('../../../api/services/ecosystem/edgeNodeService')
-    const s = await completeSyncSession('T1', 'sync-1', { recordsSynced: 10, conflictsDetected: 0, conflictsResolved: 0 })
+    const s = await completeSyncSession('T1', 'sync-1', { conflictsDetected: 0, conflictsResolved: 0 })
     expect(s.status).toBe('completed')
   })
 
   it('completeSyncSession sets status=conflict when conflicts exceed resolved', async () => {
     mockTenant.mockResolvedValueOnce(mockRow({ id: 'sync-1', edge_node_id: 'node-1', tenant_id: 'T1', status: 'conflict', records_synced: 5, conflicts_detected: 3, conflicts_resolved: 1, started_at: NOW, completed_at: NOW }))
     const { completeSyncSession } = await import('../../../api/services/ecosystem/edgeNodeService')
-    const s = await completeSyncSession('T1', 'sync-1', { recordsSynced: 5, conflictsDetected: 3, conflictsResolved: 1 })
+    const s = await completeSyncSession('T1', 'sync-1', { conflictsDetected: 3, conflictsResolved: 1 })
     expect(s.status).toBe('conflict')
   })
 
@@ -1372,12 +1372,12 @@ describe('automationAdapterService mapper fields', () => {
   beforeEach(() => vi.resetAllMocks())
 
   it('createAdapter returns adapter with all fields', async () => {
-    mockTenant.mockResolvedValueOnce(mockRow({ id: 'adapter-1', tenant_id: 'T1', name: 'Slack', adapter_type: 'webhook_inbound', endpoint_url: null, rate_limit_rpm: 60, metadata: '{}', signing_secret: 'secret', is_active: true, created_at: NOW, updated_at: NOW }))
+    mockTenant.mockResolvedValueOnce(mockRow({ id: 'adapter-1', tenant_id: 'T1', name: 'Slack', adapter_type: 'custom_webhook', endpoint_url: null, rate_limit_rpm: 60, metadata: '{}', signing_secret: 'secret', is_active: true, created_at: NOW, updated_at: NOW }))
     const { createAdapter } = await import('../../../api/services/ecosystem/automationAdapterService')
-    const result = await createAdapter('T1', { name: 'Slack', adapterType: 'webhook_inbound' })
+    const result = await createAdapter('T1', { name: 'Slack', adapterType: 'custom_webhook' })
     expect(result.adapter.id).toBe('adapter-1')
     expect(result.adapter.tenantId).toBe('T1')
-    expect(result.adapter.adapterType).toBe('webhook_inbound')
+    expect(result.adapter.adapterType).toBe('custom_webhook')
     expect(result.adapter.isActive).toBe(true)
     expect(typeof result.signingSecret).toBe('string')
   })

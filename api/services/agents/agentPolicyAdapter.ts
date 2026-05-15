@@ -54,8 +54,8 @@ async function _checkPolicy(
 
     return {
       policyType,
-      passed: !evalResult.blocked,
-      action: evalResult.blocked ? 'block' : evalResult.warnings.length > 0 ? 'warn' : 'allow',
+      passed: evalResult.outcome !== 'blocked',
+      action: evalResult.outcome === 'blocked' ? 'block' : evalResult.warnings.length > 0 ? 'warn' : 'allow',
       warnings: evalResult.warnings,
     }
   } catch (err: unknown) {

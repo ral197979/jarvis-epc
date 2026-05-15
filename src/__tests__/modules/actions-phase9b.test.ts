@@ -12,16 +12,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: { query: vi.fn(), connect: vi.fn() },
+  pool: { query: vi.fn(), connect: vi.fn() },
   tenantQuery: vi.fn(),
 }))
 
-import { default as pool, tenantQuery } from '../../../api/db/pool'
+import { pool, tenantQuery } from '../../../api/db/pool'
 const mockPool   = vi.mocked(pool.query)
 const mockTenant = vi.mocked(tenantQuery)
 
-const mockRows = (rows: Record<string, unknown>[]) => ({ rows })
-const mockRow  = (row: Record<string, unknown>)    => ({ rows: [row] })
+const mockRows = (rows: Record<string, unknown>[]) => ({ rows } as never)
+const mockRow  = (row: Record<string, unknown>)    => ({ rows: [row] } as never)
 
 // ─── Factories ────────────────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ describe('edgeNodeService', () => {
   })
 
   it('flushAuditBuffer marks all unsynced events as synced', async () => {
-    mockTenant.mockResolvedValueOnce({ rows: [{ id: 'b1' }, { id: 'b2' }] })
+    mockTenant.mockResolvedValueOnce({ rows: [{ id: 'b1' }, { id: 'b2' }] } as never)
     const { flushAuditBuffer } = await import('../../../api/services/ecosystem/edgeNodeService')
     const count = await flushAuditBuffer('T1', 'node-1')
     expect(count).toBe(2)

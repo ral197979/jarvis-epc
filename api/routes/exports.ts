@@ -27,7 +27,7 @@ exportsRouter.post('/', async (req: Request, res: Response) => {
     res.status(400).json({ error: `export_type must be one of: ${valid_types.join(', ')}` }); return
   }
   const jobId = await createExportJob({
-    tenantId: r.tenantId, name, exportType: export_type, format, filters, requestedBy: r.auth.sub,
+    tenantId: r.tenantId!, name, exportType: export_type, format, filters, requestedBy: r.auth!.sub,
   })
   res.status(202).json({ data: { job_id: jobId, status: 'pending' } })
 })
@@ -35,7 +35,7 @@ exportsRouter.post('/', async (req: Request, res: Response) => {
 // ─── Get export job status ────────────────────────────────────────────────────
 exportsRouter.get('/:id', async (req: Request, res: Response) => {
   const r = req as ExportReq
-  const job = await getExportJob(r.tenantId, req.params['id']!)
+  const job = await getExportJob(r.tenantId!, req.params['id'] as string)
   if (!job) { res.status(404).json({ error: 'Export job not found' }); return }
   res.json({ data: job })
 })
@@ -43,7 +43,7 @@ exportsRouter.get('/:id', async (req: Request, res: Response) => {
 // ─── Download (redirect to signed URL) ───────────────────────────────────────
 exportsRouter.get('/:id/download', async (req: Request, res: Response) => {
   const r = req as ExportReq
-  const job = await getExportJob(r.tenantId, req.params['id']!) as Record<string, unknown> | null
+  const job = await getExportJob(r.tenantId!, req.params['id'] as string) as Record<string, unknown> | null
   if (!job) { res.status(404).json({ error: 'Not found' }); return }
   if (job['status'] !== 'completed') {
     res.status(400).json({ error: `Export not ready (status: ${job['status']})` }); return

@@ -82,7 +82,7 @@ export function ForecastDriftPanel() {
   const worstDrift = Object.values(driftData)
     .flat()
     .sort((a, b) => {
-      const order = { critical: 4, significant: 3, moderate: 2, minor: 1, none: 0 }
+      const order: Record<string, number> = { critical: 4, significant: 3, moderate: 2, minor: 1, none: 0 }
       return (order[b.driftSeverity] ?? 0) - (order[a.driftSeverity] ?? 0)
     })
     .slice(0, 5)

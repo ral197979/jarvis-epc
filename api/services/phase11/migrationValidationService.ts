@@ -142,7 +142,7 @@ export async function checkForDuplicateKeys(
     `SELECT ${keyField} FROM ${tableName} WHERE ${keyField} = ANY($1)`,
     [keyValues]
   )
-  return (rows as Record<string, unknown>[]).map(r => r[keyField] as string)
+  return (rows.rows as Record<string, unknown>[]).map(r => r[keyField] as string)
 }
 
 // ─── Is Validation Passed ─────────────────────────────────────────────────────

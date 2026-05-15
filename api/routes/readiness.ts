@@ -8,7 +8,7 @@
  *   GET /readiness/project/:id/history
  */
 import { Router, type Response } from 'express'
-import type { Request } from '../middleware/tenant'
+import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import {
   computeReadiness, persistReadinessScore, type ReadinessDomain,
@@ -20,7 +20,7 @@ export const readinessRouter = Router()
 
 readinessRouter.get('/project/:id', async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
-  const projectId = req.params['id']!
+  const projectId = req.params['id'] as string
   const domain    = (req.query['domain'] as ReadinessDomain) ?? 'project'
 
   const projRes = await tenantQuery(tenantId,
@@ -46,7 +46,7 @@ readinessRouter.get('/project/:id', async (req: Request, res: Response) => {
 
 readinessRouter.get('/system/:id', async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
-  const systemId = req.params['id']!
+  const systemId = req.params['id'] as string
 
   const sysRes = await tenantQuery(tenantId,
     `SELECT id, name FROM systems WHERE id = $1 AND tenant_id = $2`,
@@ -64,7 +64,7 @@ readinessRouter.get('/system/:id', async (req: Request, res: Response) => {
 
 readinessRouter.get('/subsystem/:id', async (req: Request, res: Response) => {
   const tenantId    = req.tenantId!
-  const subsystemId = req.params['id']!
+  const subsystemId = req.params['id'] as string
 
   const result = await computeReadiness(tenantId, 'subsystem', subsystemId)
   void persistReadinessScore(tenantId, 'subsystem', subsystemId, 'subsystem', result)

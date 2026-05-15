@@ -76,7 +76,7 @@ export async function getCostRecords(
      ORDER BY recorded_at DESC`,
     [category, billingPeriod]
   )
-  return (rows as Record<string, unknown>[]).map(_mapCostRecord)
+  return (rows.rows as Record<string, unknown>[]).map(_mapCostRecord)
 }
 
 // ─── Get Total Cost for Period ────────────────────────────────────────────────
@@ -91,7 +91,7 @@ export async function getTotalCostForPeriod(
       `SELECT COALESCE(SUM(cost_usd), 0) as total FROM cost_records WHERE billing_period = $1`,
       [billingPeriod]
     )
-    return Number((rows[0] as Record<string, unknown>)?.total ?? 0)
+    return Number((rows.rows[0] as Record<string, unknown>)?.total ?? 0)
   }
 
   const result = await pool.query(

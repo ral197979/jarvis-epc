@@ -74,7 +74,7 @@ router.get('/feedback/signals/:type', async (req: Request, res: Response) => {
 
 router.get('/feedback/source/:sourceType/:sourceId', async (req: Request, res: Response) => {
   try {
-    const history = await getFeedbackHistory(tid(req), req.params.sourceType, req.params.sourceId)
+    const history = await getFeedbackHistory(tid(req), req.params.sourceType as string, req.params.sourceId as string)
     res.json(history)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
@@ -91,7 +91,7 @@ router.post('/outcomes', async (req: Request, res: Response) => {
 router.patch('/outcomes/:id/measurement', async (req: Request, res: Response) => {
   try {
     const { effectivenessScore, afterState } = req.body
-    const outcome = await updateOutcomeMeasurement(tid(req), req.params.id, effectivenessScore, afterState)
+    const outcome = await updateOutcomeMeasurement(tid(req), req.params.id as string, effectivenessScore, afterState)
     res.json(outcome)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
@@ -124,7 +124,7 @@ router.post('/forecast-accuracy', async (req: Request, res: Response) => {
 router.post('/forecast-accuracy/:id/actual', async (req: Request, res: Response) => {
   try {
     const { actualValue } = req.body
-    const record = await recordActual(tid(req), req.params.id, actualValue)
+    const record = await recordActual(tid(req), req.params.id as string, actualValue)
     res.json(record)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
@@ -200,7 +200,7 @@ router.get('/anomaly-patterns', async (req: Request, res: Response) => {
 router.get('/anomaly-patterns/:type', async (req: Request, res: Response) => {
   try {
     const { entityType } = req.query as Record<string, string>
-    const pattern = await getAnomalyPattern(tid(req), req.params.type, entityType)
+    const pattern = await getAnomalyPattern(tid(req), req.params.type as string, entityType)
     res.json(pattern)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
@@ -208,7 +208,7 @@ router.get('/anomaly-patterns/:type', async (req: Request, res: Response) => {
 router.post('/anomaly-patterns/:anomalyId/feedback', async (req: Request, res: Response) => {
   try {
     const { anomalyType, entityType, isFalsePositive } = req.body
-    await recordAnomalyFeedback(tid(req), req.params.anomalyId, anomalyType, entityType, isFalsePositive)
+    await recordAnomalyFeedback(tid(req), req.params.anomalyId as string, anomalyType, entityType, isFalsePositive)
     res.status(204).end()
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
@@ -240,10 +240,10 @@ router.get('/memory/:agentType/:scopeType/:key', async (req: Request, res: Respo
   try {
     const { scopeId } = req.query as Record<string, string>
     const memory = await recallMemory(tid(req), {
-      agentType: req.params.agentType,
-      scopeType: req.params.scopeType,
+      agentType: req.params.agentType as string,
+      scopeType: req.params.scopeType as string,
       scopeId,
-      key: req.params.key,
+      key: req.params.key as string,
     })
     if (memory == null) { res.status(404).json({ error: 'Memory not found' }); return }
     res.json(memory)

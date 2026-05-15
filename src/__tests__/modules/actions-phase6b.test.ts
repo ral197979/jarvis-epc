@@ -15,8 +15,8 @@ vi.mock('../../../api/db/pool', () => ({
 import { tenantQuery } from '../../../api/db/pool'
 const mockTenant = vi.mocked(tenantQuery)
 
-const mockRows = (rows: Record<string, unknown>[]) => ({ rows })
-const mockRow  = (row: Record<string, unknown>)   => ({ rows: [row] })
+const mockRows = (rows: Record<string, unknown>[]) => ({ rows } as never)
+const mockRow  = (row: Record<string, unknown>)   => ({ rows: [row] } as never)
 
 // ─── Anomaly Detection Engine ─────────────────────────────────────────────────
 
@@ -163,7 +163,7 @@ describe('anomalyClassificationService', () => {
 
   it('likelyFalsePositive — false for high severity regardless of score', async () => {
     const { __testHooks } = await import('../../../api/services/twin/anomalyClassificationService')
-    const a = { anomalyScore: 10, severity: 'high' as const, impactedEntities: [] } as Parameters<typeof __testHooks.likelyFalsePositive>[0]
+    const a = { anomalyScore: 10, severity: 'high' as const, impactedEntities: [] as string[] } as Parameters<typeof __testHooks.likelyFalsePositive>[0]
     expect(__testHooks.likelyFalsePositive(a)).toBe(false)
   })
 
@@ -452,9 +452,9 @@ describe('twinSync — advanced', () => {
         last_synced_at: null, sync_lag_ms: null,
         created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       }
-      mockTenant.mockResolvedValueOnce({ rows: [twinRow] })
-      mockTenant.mockResolvedValueOnce({ rows: [{ state: { x: 999 } }] }) // prev state unchanged
-      mockTenant.mockResolvedValueOnce({ rows: [] }) // sync update
+      mockTenant.mockResolvedValueOnce({ rows: [twinRow] } as never)
+      mockTenant.mockResolvedValueOnce({ rows: [{ state: { x: 999 } }] } as never) // prev state unchanged
+      mockTenant.mockResolvedValueOnce({ rows: [] } as never) // sync update
     }
     setupMocks()
     setupMocks()
@@ -565,13 +565,13 @@ describe('scenarioSimulationEngine — run', () => {
       created_at: new Date().toISOString(), completed_at: null,
     })
     // UPDATE running
-    mockTenant.mockResolvedValueOnce({ rows: [] })
+    mockTenant.mockResolvedValueOnce({ rows: [] } as never)
     // SELECT scenario
-    mockTenant.mockResolvedValueOnce({ rows: [makeScenRow('running')] })
+    mockTenant.mockResolvedValueOnce({ rows: [makeScenRow('running')] } as never)
     // resolve base state: no snapshot ID, no targetTwinId, portfolio fallback
-    mockTenant.mockResolvedValueOnce({ rows: [{ avg_readiness: '70', avg_risk: '30' }] })
+    mockTenant.mockResolvedValueOnce({ rows: [{ avg_readiness: '70', avg_risk: '30' }] } as never)
     // UPDATE completed
-    mockTenant.mockResolvedValueOnce({ rows: [makeScenRow('completed')] })
+    mockTenant.mockResolvedValueOnce({ rows: [makeScenRow('completed')] } as never)
 
     const { runScenario } = await import('../../../api/services/twin/scenarioSimulationEngine')
     const result = await runScenario('s1', 't')

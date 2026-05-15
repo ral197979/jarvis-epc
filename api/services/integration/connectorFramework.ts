@@ -101,7 +101,7 @@ export async function claimIntegrationJob(
   workerId: string
 ): Promise<unknown | null> {
   // System-level claim (not tenant-scoped) — worker processes jobs across tenants
-  const client = await (await import('../../db/pool')).default.connect()
+  const client = await (await import('../../db/pool')).pool!.connect()
   try {
     await client.query('BEGIN')
     const { rows } = await client.query(`

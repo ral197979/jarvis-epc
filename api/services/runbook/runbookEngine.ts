@@ -69,8 +69,8 @@ async function _handleCreateAction(
     RETURNING id
   `, [ctx.tenantId, config['title'], config['action_type'], config['priority'] ?? 'medium', ctx.triggeredBy])
   const actionId = result.rows[0]?.id as string
-  await publishActionEvent({ tenantId: ctx.tenantId, actionId, eventType: 'action_created',
-    triggeredBy: ctx.triggeredBy, correlationId: ctx.correlationId })
+  publishActionEvent(ctx.tenantId, actionId, 'created', ctx.triggeredBy ?? null, undefined,
+    { correlationId: ctx.correlationId })
   return { outcome: 'success', output: { action_id: actionId }, duration_ms: Date.now() - t0,
     rollback_data: { action_id: actionId, rollback_op: 'cancel_action' } }
 }
@@ -101,8 +101,8 @@ async function _handleEscalateAction(
     UPDATE actions SET max_escalation_level = max_escalation_level + 1
     WHERE id = $1 AND tenant_id = $2
   `, [config['action_id'], ctx.tenantId])
-  await publishActionEvent({ tenantId: ctx.tenantId, actionId: config['action_id'] as string,
-    eventType: 'action_escalated', triggeredBy: ctx.triggeredBy, correlationId: ctx.correlationId })
+  publishActionEvent(ctx.tenantId, config['action_id'] as string, 'escalated',
+    ctx.triggeredBy ?? null, undefined, { correlationId: ctx.correlationId })
   broadcastEvent({ event_type: 'escalation_triggered', tenant_id: ctx.tenantId,
     payload: { action_id: config['action_id'], source: 'runbook' }, subscription_scope: 'tenant' })
   return { outcome: 'success', output: { action_id: config['action_id'] }, duration_ms: Date.now() - t0,

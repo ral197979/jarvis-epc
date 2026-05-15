@@ -585,7 +585,7 @@ actionsRouter.get('/inbox', async (req: Req, res: Response) => {
   }))
 
   const nextCursor = data.length === lim
-    ? (data[data.length - 1] as { created_at: string } | undefined)?.created_at ?? null
+    ? (data[data.length - 1] as unknown as { created_at: string } | undefined)?.created_at ?? null
     : null
 
   res.json({ data, meta: { limit: lim, next_cursor: nextCursor } })
@@ -627,7 +627,7 @@ actionsRouter.post('/:id/relationships', async (req: Req, res: Response) => {
   }
 
   const { relation, error } = await createRelation(tenantId, {
-    sourceActionId: id,
+    sourceActionId: id as string,
     targetActionId: target_action_id,
     relationType:   relation_type as never,
     notes:          notes ?? null,
@@ -647,13 +647,13 @@ actionsRouter.get('/:id/relationships', async (req: Req, res: Response) => {
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const direction = (req.query['direction'] as 'inbound' | 'outbound' | 'both') ?? 'both'
-  res.json({ data: await listRelations(tenantId, id, direction) })
+  res.json({ data: await listRelations(tenantId, id as string, direction) })
 })
 
 actionsRouter.delete('/relationships/:relId', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const deleted = await deleteRelation(tenantId, req.params.relId, req.auth?.userId ?? null)
+  const deleted = await deleteRelation(tenantId, req.params.relId as string, req.auth?.userId ?? null)
   if (!deleted) { res.status(404).json({ error: 'not_found' }); return }
   res.json({ deleted: true })
 })
@@ -666,7 +666,7 @@ actionsRouter.get('/:id/timeline', async (req: Req, res: Response) => {
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const limit  = Math.min(200, parseInt(String(req.query['limit'] ?? '100'), 10))
   const before = req.query['before'] as string | undefined
-  res.json({ data: await getActionTimeline(tenantId, id, limit, before) })
+  res.json({ data: await getActionTimeline(tenantId, id as string, limit, before) })
 })
 
 // ─── Dependencies ─────────────────────────────────────────────────────────────
@@ -675,7 +675,7 @@ actionsRouter.get('/:id/dependencies', async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  res.json({ data: await buildDependencyReport(tenantId, id) })
+  res.json({ data: await buildDependencyReport(tenantId, id as string) })
 })
 
 // ─── SLA pause / resume ───────────────────────────────────────────────────────
@@ -684,9 +684,9 @@ actionsRouter.post('/:id/sla/pause', async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const paused = await pauseSla(tenantId, id)
+  const paused = await pauseSla(tenantId, id as string)
   if (!paused) { res.status(409).json({ error: 'not_active_or_not_found' }); return }
-  void publishActionEvent(tenantId, id, 'sla_paused', req.auth?.userId ?? null)
+  void publishActionEvent(tenantId, id as string, 'sla_paused', req.auth?.userId ?? null)
   res.json({ paused: true })
 })
 
@@ -694,8 +694,8 @@ actionsRouter.post('/:id/sla/resume', async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const resumed = await resumeSla(tenantId, id)
+  const resumed = await resumeSla(tenantId, id as string)
   if (!resumed) { res.status(409).json({ error: 'not_paused_or_not_found' }); return }
-  void publishActionEvent(tenantId, id, 'sla_resumed', req.auth?.userId ?? null)
+  void publishActionEvent(tenantId, id as string, 'sla_resumed', req.auth?.userId ?? null)
   res.json({ resumed: true })
 })

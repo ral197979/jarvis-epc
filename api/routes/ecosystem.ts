@@ -112,7 +112,7 @@ router.post('/federated/contribute', async (req: Request, res: Response, next: N
 // POST /api/v1/ecosystem/federated/withdraw/:id
 router.post('/federated/withdraw/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await withdrawContribution(tid(req), req.params['id']!)
+    await withdrawContribution(tid(req), req.params['id'] as string)
     res.json({ withdrawn: true })
   } catch (err) { next(err) }
 })
@@ -144,7 +144,7 @@ router.post('/federated/model-versions', async (req: Request, res: Response, nex
 // POST /api/v1/ecosystem/federated/model-versions/:id/activate (admin)
 router.post('/federated/model-versions/:id/activate', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const mv = await activateModelVersion(req.params['id']!)
+    const mv = await activateModelVersion(req.params['id'] as string)
     res.json(mv)
   } catch (err) { next(err) }
 })
@@ -195,7 +195,7 @@ router.get('/benchmarks/sla', async (_req: Request, res: Response, next: NextFun
 router.get('/marketplace/playbooks', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const playbooks = await listPlaybooks({
-      status: req.query['status'] as Parameters<typeof listPlaybooks>[0]['status'],
+      status: req.query['status'] as import('../services/ecosystem/ecosystemTypes').PlaybookStatus | undefined,
       playbookType: req.query['type'] as string | undefined,
     })
     res.json(playbooks)
@@ -213,7 +213,7 @@ router.post('/marketplace/playbooks', async (req: Request, res: Response, next: 
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/publish
 router.post('/marketplace/playbooks/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const playbook = await publishPlaybook(req.params['id']!, req.body.sandboxValidated === true)
+    const playbook = await publishPlaybook(req.params['id'] as string, req.body.sandboxValidated === true)
     res.json(playbook)
   } catch (err) { next(err) }
 })
@@ -221,7 +221,7 @@ router.post('/marketplace/playbooks/:id/publish', async (req: Request, res: Resp
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/install
 router.post('/marketplace/playbooks/:id/install', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const install = await installPlaybook(tid(req), req.params['id']!, req.body)
+    const install = await installPlaybook(tid(req), req.params['id'] as string, req.body)
     res.status(201).json(install)
   } catch (err) { next(err) }
 })
@@ -229,7 +229,7 @@ router.post('/marketplace/playbooks/:id/install', async (req: Request, res: Resp
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/uninstall
 router.post('/marketplace/playbooks/:id/uninstall', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await uninstallPlaybook(tid(req), req.params['id']!)
+    await uninstallPlaybook(tid(req), req.params['id'] as string)
     res.json({ uninstalled: true })
   } catch (err) { next(err) }
 })
@@ -237,7 +237,7 @@ router.post('/marketplace/playbooks/:id/uninstall', async (req: Request, res: Re
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/review
 router.post('/marketplace/playbooks/:id/review', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await submitPlaybookReview(tid(req), req.params['id']!, req.body.rating, req.body.reviewText)
+    await submitPlaybookReview(tid(req), req.params['id'] as string, req.body.rating, req.body.reviewText)
     res.json({ submitted: true })
   } catch (err) { next(err) }
 })
@@ -247,7 +247,7 @@ router.post('/marketplace/playbooks/:id/review', async (req: Request, res: Respo
 // GET /api/v1/ecosystem/plugins
 router.get('/plugins', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const plugins = await listPlugins({ status: req.query['status'] as Parameters<typeof listPlugins>[0]['status'] })
+    const plugins = await listPlugins({ status: req.query['status'] as import('../services/ecosystem/ecosystemTypes').PluginStatus | undefined })
     res.json(plugins)
   } catch (err) { next(err) }
 })
@@ -263,7 +263,7 @@ router.post('/plugins', async (req: Request, res: Response, next: NextFunction) 
 // POST /api/v1/ecosystem/plugins/:id/install
 router.post('/plugins/:id/install', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const install = await installPlugin(tid(req), req.params['id']!, req.body)
+    const install = await installPlugin(tid(req), req.params['id'] as string, req.body)
     res.status(201).json(install)
   } catch (err) { next(err) }
 })
@@ -271,7 +271,7 @@ router.post('/plugins/:id/install', async (req: Request, res: Response, next: Ne
 // POST /api/v1/ecosystem/plugins/:id/rollback
 router.post('/plugins/:id/rollback', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const install = await rollbackPlugin(tid(req), req.params['id']!)
+    const install = await rollbackPlugin(tid(req), req.params['id'] as string)
     res.json(install)
   } catch (err) { next(err) }
 })
@@ -279,7 +279,7 @@ router.post('/plugins/:id/rollback', async (req: Request, res: Response, next: N
 // POST /api/v1/ecosystem/plugins/:id/disable
 router.post('/plugins/:id/disable', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await disablePlugin(tid(req), req.params['id']!)
+    await disablePlugin(tid(req), req.params['id'] as string)
     res.json({ disabled: true })
   } catch (err) { next(err) }
 })
@@ -287,7 +287,7 @@ router.post('/plugins/:id/disable', async (req: Request, res: Response, next: Ne
 // POST /api/v1/ecosystem/plugins/:id/kill-switch (admin)
 router.post('/plugins/:id/kill-switch', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await triggerKillSwitch(req.params['id']!, req.body.actor ?? 'admin')
+    await triggerKillSwitch(req.params['id'] as string, req.body.actor ?? 'admin')
     res.json({ killSwitchTriggered: true })
   } catch (err) { next(err) }
 })
@@ -305,7 +305,7 @@ router.post('/external-agents/register', async (req: Request, res: Response, nex
 // POST /api/v1/ecosystem/external-agents/:id/execute
 router.post('/external-agents/:id/execute', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await executeExternalAgent(req.params['id']!, {
+    const result = await executeExternalAgent(req.params['id'] as string, {
       tenantId: tid(req),
       ...req.body,
     })
@@ -316,7 +316,7 @@ router.post('/external-agents/:id/execute', async (req: Request, res: Response, 
 // GET /api/v1/ecosystem/external-agents/:id/capabilities
 router.get('/external-agents/:id/capabilities', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const capabilities = await getAgentCapabilities(req.params['id']!)
+    const capabilities = await getAgentCapabilities(req.params['id'] as string)
     res.json({ capabilities })
   } catch (err) { next(err) }
 })
@@ -341,7 +341,7 @@ router.post('/adapters', async (req: Request, res: Response, next: NextFunction)
 // POST /api/v1/ecosystem/adapters/:id/ingest
 router.post('/adapters/:id/ingest', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const event = await ingestInboundEvent(tid(req), req.params['id']!, req.body)
+    const event = await ingestInboundEvent(tid(req), req.params['id'] as string, req.body)
     res.status(201).json(event)
   } catch (err) { next(err) }
 })
@@ -351,7 +351,7 @@ router.post('/adapters/:id/ingest', async (req: Request, res: Response, next: Ne
 // GET /api/v1/ecosystem/knowledge-graph/entities/:id
 router.get('/knowledge-graph/entities/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const entity = await getEntity(tid(req), req.params['id']!)
+    const entity = await getEntity(tid(req), req.params['id'] as string)
     if (entity == null) return res.status(404).json({ error: 'Not found' })
     res.json(entity)
   } catch (err) { next(err) }
@@ -369,7 +369,7 @@ router.post('/knowledge-graph/query', async (req: Request, res: Response, next: 
 router.get('/knowledge-graph/neighborhood/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const depth = Number(req.query['depth'] ?? 1)
-    const result = await getNeighborhood(tid(req), req.params['id']!, depth)
+    const result = await getNeighborhood(tid(req), req.params['id'] as string, depth)
     res.json(result)
   } catch (err) { next(err) }
 })
@@ -394,7 +394,7 @@ router.post('/edge-nodes', async (req: Request, res: Response, next: NextFunctio
 // POST /api/v1/ecosystem/edge-nodes/:id/heartbeat
 router.post('/edge-nodes/:id/heartbeat', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await heartbeatNode(tid(req), req.params['id']!)
+    await heartbeatNode(tid(req), req.params['id'] as string)
     res.json({ ok: true })
   } catch (err) { next(err) }
 })
@@ -402,7 +402,7 @@ router.post('/edge-nodes/:id/heartbeat', async (req: Request, res: Response, nex
 // POST /api/v1/ecosystem/edge-nodes/:id/revoke
 router.post('/edge-nodes/:id/revoke', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await revokeEdgeNode(tid(req), req.params['id']!)
+    await revokeEdgeNode(tid(req), req.params['id'] as string)
     res.json({ revoked: true })
   } catch (err) { next(err) }
 })
@@ -474,7 +474,7 @@ router.post('/workflows', async (req: Request, res: Response, next: NextFunction
 // POST /api/v1/ecosystem/workflows/:id/validate
 router.post('/workflows/:id/validate', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await validateWorkflowPolicy(tid(req), req.params['id']!)
+    const result = await validateWorkflowPolicy(tid(req), req.params['id'] as string)
     res.json(result)
   } catch (err) { next(err) }
 })
@@ -482,7 +482,7 @@ router.post('/workflows/:id/validate', async (req: Request, res: Response, next:
 // POST /api/v1/ecosystem/workflows/:id/test
 router.post('/workflows/:id/test', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await dryRunWorkflow(tid(req), req.params['id']!, req.body.testContext)
+    const result = await dryRunWorkflow(tid(req), req.params['id'] as string, req.body.testContext)
     res.json(result)
   } catch (err) { next(err) }
 })
@@ -490,7 +490,7 @@ router.post('/workflows/:id/test', async (req: Request, res: Response, next: Nex
 // POST /api/v1/ecosystem/workflows/:id/publish
 router.post('/workflows/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const wf = await publishWorkflow(tid(req), req.params['id']!, req.body.publishedBy ?? 'admin')
+    const wf = await publishWorkflow(tid(req), req.params['id'] as string, req.body.publishedBy ?? 'admin')
     res.json(wf)
   } catch (err) { next(err) }
 })
@@ -498,7 +498,7 @@ router.post('/workflows/:id/publish', async (req: Request, res: Response, next: 
 // POST /api/v1/ecosystem/workflows/:id/rollback
 router.post('/workflows/:id/rollback', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const wf = await rollbackWorkflow(tid(req), req.params['id']!, Number(req.body.targetVersion))
+    const wf = await rollbackWorkflow(tid(req), req.params['id'] as string, Number(req.body.targetVersion))
     res.json(wf)
   } catch (err) { next(err) }
 })
@@ -506,7 +506,7 @@ router.post('/workflows/:id/rollback', async (req: Request, res: Response, next:
 // GET /api/v1/ecosystem/workflows/:id/versions
 router.get('/workflows/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const versions = await getWorkflowVersions(tid(req), req.params['id']!)
+    const versions = await getWorkflowVersions(tid(req), req.params['id'] as string)
     res.json(versions)
   } catch (err) { next(err) }
 })

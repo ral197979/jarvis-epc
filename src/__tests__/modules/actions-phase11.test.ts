@@ -10,13 +10,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../../../api/db/pool', () => {
   const mockPool = { query: vi.fn() }
   return {
-    default: mockPool,
     pool: mockPool,
     tenantQuery: vi.fn(),
   }
 })
 
-import { default as mockPool, tenantQuery } from '../../../api/db/pool'
+import { pool as mockPool, tenantQuery } from '../../../api/db/pool'
 import {
   recordTelemetryEvent, getTelemetryEvents, getLatestTelemetryEvent,
   getTenantMetricSummary, purgeOldTelemetryEvents, getGlobalMetricStats,
@@ -64,7 +63,7 @@ import {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const mPool = vi.mocked(mockPool as { query: ReturnType<typeof vi.fn> })
+const mPool = vi.mocked(mockPool as unknown as { query: ReturnType<typeof vi.fn> })
 const mTQ = vi.mocked(tenantQuery as ReturnType<typeof vi.fn>)
 
 function mockRow(data: Record<string, unknown>) {

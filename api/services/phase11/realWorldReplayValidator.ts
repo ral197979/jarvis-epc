@@ -65,7 +65,7 @@ export async function validateStreamAgainstProduction(
   let failedEvents = 0
   let divergedAt: Date | null = null
 
-  for (const event of productionEvents as Record<string, unknown>[]) {
+  for (const event of productionEvents.rows as Record<string, unknown>[]) {
     const storedHash = event.replay_hash as string
     const computedHash = computeReplayHash(event.payload as Record<string, unknown>)
 
@@ -77,7 +77,7 @@ export async function validateStreamAgainstProduction(
     }
   }
 
-  const eventCount = productionEvents.length
+  const eventCount = productionEvents.rows.length
   const deterministicRate = eventCount === 0 ? 1 : passedEvents / eventCount
 
   const result = await pool.query(
@@ -114,7 +114,7 @@ export async function listValidationResults(
      ORDER BY validated_at DESC`,
     [environment]
   )
-  return (rows as Record<string, unknown>[]).map(_mapResult)
+  return (rows.rows as Record<string, unknown>[]).map(_mapResult)
 }
 
 // ─── Compute Overall Determinism Rate ────────────────────────────────────────

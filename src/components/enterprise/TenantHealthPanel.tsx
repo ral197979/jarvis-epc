@@ -2,7 +2,8 @@
 // Compact tenant health widget for embedding in dashboards and portals.
 
 import React, { useEffect, useState } from 'react'
-import { CustomerHealthScore, EntitlementSummary } from '../../../api/services/enterprise/enterpriseTypes'
+import { CustomerHealthScore } from '../../../api/services/enterprise/enterpriseTypes'
+import { EntitlementSummary } from '../../../api/services/enterprise/featureGateService'
 
 interface Props {
   tenantId: string

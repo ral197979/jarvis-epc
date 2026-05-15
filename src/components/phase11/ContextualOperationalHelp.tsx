@@ -78,7 +78,7 @@ export function OperationalHelpTooltip({ topic, children }: OperationalHelpToolt
           )}
           {/* Arrow */}
           <div style={{
-            position: 'absolute', bottom: -5, left: '50%', transform: 'translateX(-50%)',
+            position: 'absolute', bottom: -5, left: '50%',
             width: 10, height: 10, background: '#1e293b',
             borderRight: '1px solid #334155', borderBottom: '1px solid #334155',
             transform: 'translateX(-50%) rotate(45deg)',

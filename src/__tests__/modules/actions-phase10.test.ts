@@ -9,12 +9,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('../../../api/db/pool', () => {
   const mockPool = { query: vi.fn() }
   return {
-    default: mockPool,
+    pool: mockPool,
     tenantQuery: vi.fn(),
   }
 })
 
-import { default as mockPool, tenantQuery } from '../../../api/db/pool'
+import { pool as mockPool, tenantQuery } from '../../../api/db/pool'
 import {
   createAuditRun, completeAuditRun, getAuditRun, listAuditRuns,
   recordFailure, resolveFailure, getRunFailures,
@@ -114,7 +114,7 @@ describe('regressionAuditService', () => {
       started_at: NOW, completed_at: null, environment: 'ci', commit_sha: 'abc123',
       created_at: NOW,
     })
-    const run = await createAuditRun('CI #42', 'ci', 'abc123')
+    const run = await createAuditRun({ runLabel: 'CI #42', totalTests: 100, passed: 90, failed: 10, environment: 'ci', commitSha: 'abc123' })
     expect(run.runLabel).toBe('CI #42')
     expect(run.totalTests).toBe(100)
     expect(mp.query).toHaveBeenCalledOnce()
@@ -127,7 +127,7 @@ describe('regressionAuditService', () => {
       started_at: NOW, completed_at: NOW, environment: 'ci', commit_sha: null,
       created_at: NOW,
     })
-    const run = await completeAuditRun('run-1', 171, 171, 0, 0, 0, 0)
+    const run = await completeAuditRun('run-1')
     expect(run.passed).toBe(171)
     expect(run.completedAt).not.toBeNull()
   })
@@ -153,27 +153,22 @@ describe('regressionAuditService', () => {
   })
 
   it('recordFailure inserts and maps failure', async () => {
+    mockEmpty() // prior failure check
     mockRow({
       id: 'f-1', audit_run_id: 'run-1', test_file: 'auth.test.ts', test_name: 'login',
       classification: 'new_regression', error_message: 'expected true', stack_trace: null,
       is_new: true, first_seen_at: NOW, occurrence_count: 1, resolved_at: null,
       created_at: NOW,
     })
-    const f = await recordFailure('run-1', 'auth.test.ts', 'login', 'expected true', null, true)
+    const f = await recordFailure('run-1', { testFile: 'auth.test.ts', testName: 'login', classification: 'new_regression', errorMessage: 'expected true' })
     expect(f.testFile).toBe('auth.test.ts')
     expect(f.classification).toBe('new_regression')
   })
 
   it('resolveFailure marks resolved_at', async () => {
-    mockRow({
-      id: 'f-1', audit_run_id: 'run-1', test_file: 'auth.test.ts', test_name: 'login',
-      classification: 'resolved', error_message: 'expected true', stack_trace: null,
-      is_new: false, first_seen_at: NOW, occurrence_count: 1, resolved_at: NOW,
-      created_at: NOW,
-    })
-    const f = await resolveFailure('f-1')
-    expect(f.resolvedAt).not.toBeNull()
-    expect(f.classification).toBe('resolved')
+    mockEmpty()
+    await resolveFailure('f-1')
+    expect(mp.query).toHaveBeenCalledOnce()
   })
 
   it('getRunFailures returns failure list', async () => {
@@ -205,7 +200,7 @@ describe('regressionAuditService', () => {
       },
     ])
     const report = await generateRegressionReport('run-1')
-    expect(report.runId).toBe('run-1')
+    expect(report.run.id).toBe('run-1')
     expect(report.failures).toHaveLength(1)
   })
 })

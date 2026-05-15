@@ -50,8 +50,8 @@ const router = Router()
 // POST /enterprise/tenants/:tenantId/provision
 router.post('/tenants/:tenantId/provision', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { tenantId } = req.params
-    const result = await provisionTenant(tenantId!, req.body as never)
+    const tenantId = req.params.tenantId as string
+    const result = await provisionTenant(tenantId, req.body as never)
     res.status(201).json(result)
   } catch (err) {
     res.status(500).json({ error: 'provisioning_failed', message: String(err) })
@@ -61,7 +61,7 @@ router.post('/tenants/:tenantId/provision', requireAuth, async (req: Request, re
 // GET /enterprise/tenants/:tenantId/subscription
 router.get('/tenants/:tenantId/subscription', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const sub = await getSubscription(tenantId)
     if (sub == null) { res.status(404).json({ error: 'not_found' }); return }
     res.json(sub)
@@ -73,10 +73,10 @@ router.get('/tenants/:tenantId/subscription', requireAuth, requireTenant, async 
 // POST /enterprise/tenants/:tenantId/lifecycle
 router.post('/tenants/:tenantId/lifecycle', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { tenantId } = req.params
+    const tenantId = req.params.tenantId as string
     const { toStatus, actor, reason, metadata } = req.body as Record<string, unknown>
     if (!toStatus) { res.status(422).json({ error: 'validation', message: 'toStatus required' }); return }
-    const result = await transitionLifecycle(tenantId!, toStatus as never, { actor: actor as string, reason: reason as string, metadata: metadata as never })
+    const result = await transitionLifecycle(tenantId, toStatus as never, { actor: actor as string, reason: reason as string, metadata: metadata as never })
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -86,7 +86,7 @@ router.post('/tenants/:tenantId/lifecycle', requireAuth, async (req: Request, re
 // GET /enterprise/tenants/:tenantId/lifecycle/history
 router.get('/tenants/:tenantId/lifecycle/history', requireAuth, async (req: Request, res: Response) => {
   try {
-    const history = await getLifecycleHistory(req.params.tenantId!)
+    const history = await getLifecycleHistory(req.params.tenantId as string)
     res.json(history)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -97,7 +97,7 @@ router.get('/tenants/:tenantId/lifecycle/history', requireAuth, async (req: Requ
 router.post('/tenants/:tenantId/suspend', requireAuth, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
-    const result = await suspendTenant(req.params.tenantId!, { actor: actor as string, reason: reason as string })
+    const result = await suspendTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -108,7 +108,7 @@ router.post('/tenants/:tenantId/suspend', requireAuth, async (req: Request, res:
 router.post('/tenants/:tenantId/reactivate', requireAuth, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
-    const result = await reactivateTenant(req.params.tenantId!, { actor: actor as string, reason: reason as string })
+    const result = await reactivateTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -119,7 +119,7 @@ router.post('/tenants/:tenantId/reactivate', requireAuth, async (req: Request, r
 router.post('/tenants/:tenantId/archive', requireAuth, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
-    const result = await archiveTenant(req.params.tenantId!, { actor: actor as string, reason: reason as string })
+    const result = await archiveTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -142,7 +142,7 @@ router.get('/subscriptions', requireAuth, async (req: Request, res: Response) =>
 // GET /enterprise/features
 router.get('/features', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const flags = await listFeatureFlags(tenantId)
     res.json(flags)
   } catch (err) {
@@ -153,9 +153,9 @@ router.get('/features', requireAuth, requireTenant, async (req: Request, res: Re
 // GET /enterprise/features/:featureKey
 router.get('/features/:featureKey', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
-    const enabled = await isFeatureEnabled(tenantId, req.params.featureKey!)
-    const config = enabled ? await getFeatureConfig(tenantId, req.params.featureKey!) : null
+    const tenantId = (req as unknown as Req).tenantId!
+    const enabled = await isFeatureEnabled(tenantId, req.params.featureKey as string)
+    const config = enabled ? await getFeatureConfig(tenantId, req.params.featureKey as string) : null
     res.json({ featureKey: req.params.featureKey, enabled, config })
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -165,8 +165,8 @@ router.get('/features/:featureKey', requireAuth, requireTenant, async (req: Requ
 // PUT /enterprise/features/:featureKey
 router.put('/features/:featureKey', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
-    const flag = await setFeatureFlag(tenantId, { featureKey: req.params.featureKey!, ...req.body as never })
+    const tenantId = (req as unknown as Req).tenantId!
+    const flag = await setFeatureFlag(tenantId, { featureKey: req.params.featureKey as string, ...(req.body as Record<string, unknown>) } as never)
     res.json(flag)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -176,7 +176,7 @@ router.put('/features/:featureKey', requireAuth, requireTenant, async (req: Requ
 // GET /enterprise/entitlements
 router.get('/entitlements', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const summary = await resolveEntitlements(tenantId)
     res.json(summary)
   } catch (err) {
@@ -187,7 +187,7 @@ router.get('/entitlements', requireAuth, requireTenant, async (req: Request, res
 // GET /enterprise/quota/api
 router.get('/quota/api', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const result = await checkApiQuota(tenantId)
     res.json(result)
   } catch (err) {
@@ -198,7 +198,7 @@ router.get('/quota/api', requireAuth, requireTenant, async (req: Request, res: R
 // GET /enterprise/quota/seats
 router.get('/quota/seats', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const result = await checkSeatQuota(tenantId)
     res.json(result)
   } catch (err) {
@@ -211,7 +211,7 @@ router.get('/quota/seats', requireAuth, requireTenant, async (req: Request, res:
 // POST /enterprise/usage
 router.post('/usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const record = await recordUsage(tenantId, req.body as never)
     res.status(201).json(record)
   } catch (err) {
@@ -222,7 +222,7 @@ router.post('/usage', requireAuth, requireTenant, async (req: Request, res: Resp
 // GET /enterprise/usage
 router.get('/usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { eventType, limit } = req.query as Record<string, string>
     const records = await getUsageRecords(tenantId, { eventType: eventType as never, limit: limit != null ? Number(limit) : undefined })
     res.json(records)
@@ -234,7 +234,7 @@ router.get('/usage', requireAuth, requireTenant, async (req: Request, res: Respo
 // GET /enterprise/usage/summary
 router.get('/usage/summary', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const summary = await getCurrentMonthSummary(tenantId)
     res.json(summary)
   } catch (err) {
@@ -247,7 +247,7 @@ router.get('/usage/summary', requireAuth, requireTenant, async (req: Request, re
 // POST /enterprise/ai-usage
 router.post('/ai-usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const record = await recordAiUsage(tenantId, req.body as never)
     res.status(201).json(record)
   } catch (err) {
@@ -258,7 +258,7 @@ router.post('/ai-usage', requireAuth, requireTenant, async (req: Request, res: R
 // GET /enterprise/ai-usage
 router.get('/ai-usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { agentType, model, limit } = req.query as Record<string, string>
     const records = await getAiUsageRecords(tenantId, { agentType, model, limit: limit != null ? Number(limit) : undefined })
     res.json(records)
@@ -270,7 +270,7 @@ router.get('/ai-usage', requireAuth, requireTenant, async (req: Request, res: Re
 // GET /enterprise/ai-usage/budget
 router.get('/ai-usage/budget', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const status = await getAiBudgetStatus(tenantId)
     res.json(status)
   } catch (err) {
@@ -281,7 +281,7 @@ router.get('/ai-usage/budget', requireAuth, requireTenant, async (req: Request, 
 // GET /enterprise/ai-usage/by-agent
 router.get('/ai-usage/by-agent', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const breakdown = await getAiCostByAgent(tenantId)
     res.json(breakdown)
   } catch (err) {
@@ -294,7 +294,7 @@ router.get('/ai-usage/by-agent', requireAuth, requireTenant, async (req: Request
 // GET /enterprise/health-score
 router.get('/health-score', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const score = await computeHealthScore(tenantId)
     res.json(score)
   } catch (err) {
@@ -307,7 +307,7 @@ router.get('/health-score', requireAuth, requireTenant, async (req: Request, res
 // POST /enterprise/tickets
 router.post('/tickets', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const ticket = await createTicket(tenantId, req.body as never)
     res.status(201).json(ticket)
   } catch (err) {
@@ -318,7 +318,7 @@ router.post('/tickets', requireAuth, requireTenant, async (req: Request, res: Re
 // GET /enterprise/tickets
 router.get('/tickets', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { status, priority, assignee, limit } = req.query as Record<string, string>
     const tickets = await listTickets(tenantId, { status: status as never, priority: priority as never, assignee, limit: limit != null ? Number(limit) : undefined })
     res.json(tickets)
@@ -330,7 +330,7 @@ router.get('/tickets', requireAuth, requireTenant, async (req: Request, res: Res
 // GET /enterprise/tickets/sla-breaches
 router.get('/tickets/sla-breaches', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const breaches = await getSlaBreaches(tenantId)
     res.json(breaches)
   } catch (err) {
@@ -341,8 +341,8 @@ router.get('/tickets/sla-breaches', requireAuth, requireTenant, async (req: Requ
 // GET /enterprise/tickets/:id
 router.get('/tickets/:id', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
-    const ticket = await getTicket(tenantId, req.params.id!)
+    const tenantId = (req as unknown as Req).tenantId!
+    const ticket = await getTicket(tenantId, req.params.id as string)
     if (ticket == null) { res.status(404).json({ error: 'not_found' }); return }
     res.json(ticket)
   } catch (err) {
@@ -353,10 +353,10 @@ router.get('/tickets/:id', requireAuth, requireTenant, async (req: Request, res:
 // PATCH /enterprise/tickets/:id/status
 router.patch('/tickets/:id/status', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { status, assignee, reason } = req.body as Record<string, unknown>
     if (!status) { res.status(422).json({ error: 'validation', message: 'status required' }); return }
-    const ticket = await updateTicketStatus(tenantId, req.params.id!, status as never, { assignee: assignee as string, reason: reason as string })
+    const ticket = await updateTicketStatus(tenantId, req.params.id as string, status as never, { assignee: assignee as string, reason: reason as string })
     res.json(ticket)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -366,9 +366,9 @@ router.patch('/tickets/:id/status', requireAuth, requireTenant, async (req: Requ
 // POST /enterprise/tickets/:id/escalate
 router.post('/tickets/:id/escalate', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { reason } = req.body as Record<string, unknown>
-    const ticket = await escalateTicket(tenantId, req.params.id!, String(reason ?? 'Escalated'))
+    const ticket = await escalateTicket(tenantId, req.params.id as string, String(reason ?? 'Escalated'))
     res.json(ticket)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -380,7 +380,7 @@ router.post('/tickets/:id/escalate', requireAuth, requireTenant, async (req: Req
 // POST /enterprise/exports
 router.post('/exports', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const exportRec = await requestExport(tenantId, req.body as never)
     res.status(201).json(exportRec)
   } catch (err) {
@@ -393,7 +393,7 @@ router.post('/exports', requireAuth, requireTenant, async (req: Request, res: Re
 // GET /enterprise/exports
 router.get('/exports', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { status, limit } = req.query as Record<string, string>
     const exports = await listExports(tenantId, { status: status as never, limit: limit != null ? Number(limit) : undefined })
     res.json(exports)
@@ -405,8 +405,8 @@ router.get('/exports', requireAuth, requireTenant, async (req: Request, res: Res
 // GET /enterprise/exports/:id
 router.get('/exports/:id', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
-    const exportRec = await getExport(tenantId, req.params.id!)
+    const tenantId = (req as unknown as Req).tenantId!
+    const exportRec = await getExport(tenantId, req.params.id as string)
     if (exportRec == null) { res.status(404).json({ error: 'not_found' }); return }
     res.json(exportRec)
   } catch (err) {
@@ -476,7 +476,7 @@ router.get('/demo', requireAuth, async (req: Request, res: Response) => {
 // POST /enterprise/demo/:tenantId/reset
 router.post('/demo/:tenantId/reset', requireAuth, async (req: Request, res: Response) => {
   try {
-    const demo = await resetDemoTenant(req.params.tenantId!)
+    const demo = await resetDemoTenant(req.params.tenantId as string)
     res.json(demo)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })
@@ -488,7 +488,7 @@ router.post('/demo/:tenantId/reset', requireAuth, async (req: Request, res: Resp
 // POST /enterprise/api-keys
 router.post('/api-keys', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const result = await createApiKey(tenantId, req.body as never)
     res.status(201).json(result)
   } catch (err) {
@@ -499,7 +499,7 @@ router.post('/api-keys', requireAuth, requireTenant, async (req: Request, res: R
 // GET /enterprise/api-keys
 router.get('/api-keys', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { status, limit } = req.query as Record<string, string>
     const keys = await listApiKeys(tenantId, { status: status as never, limit: limit != null ? Number(limit) : undefined })
     res.json(keys)
@@ -511,9 +511,9 @@ router.get('/api-keys', requireAuth, requireTenant, async (req: Request, res: Re
 // DELETE /enterprise/api-keys/:id
 router.delete('/api-keys/:id', requireAuth, requireTenant, async (req: Request, res: Response) => {
   try {
-    const tenantId = (req as unknown as Req).tenantId
+    const tenantId = (req as unknown as Req).tenantId!
     const { revokedBy } = req.body as Record<string, unknown>
-    const key = await revokeApiKey(tenantId, req.params.id!, revokedBy as string)
+    const key = await revokeApiKey(tenantId, req.params.id as string, revokedBy as string)
     res.json(key)
   } catch (err) {
     res.status(500).json({ error: 'internal', message: String(err) })

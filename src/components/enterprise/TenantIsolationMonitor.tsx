@@ -2,7 +2,8 @@
 // Verifies RLS enforcement, API key health, and inter-tenant boundary integrity.
 
 import React, { useEffect, useState } from 'react'
-import { ApiKey, QuotaCheckResult } from '../../../api/services/enterprise/enterpriseTypes'
+import { ApiKey } from '../../../api/services/enterprise/enterpriseTypes'
+import { QuotaCheckResult } from '../../../api/services/enterprise/featureGateService'
 
 interface Props {
   tenantId: string

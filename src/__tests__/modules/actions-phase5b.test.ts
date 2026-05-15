@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: { query: vi.fn(), connect: vi.fn() },
+  pool: { query: vi.fn(), connect: vi.fn() },
   tenantQuery: vi.fn(),
 }))
 
@@ -19,7 +19,7 @@ vi.mock('../../../api/services/policy/policyEngine', () => ({
   evaluatePolicy: vi.fn(),
 }))
 
-import pool, { tenantQuery } from '../../../api/db/pool'
+import { pool, tenantQuery } from '../../../api/db/pool'
 
 const mockQuery  = vi.mocked(pool.query)
 const mockTenant = vi.mocked(tenantQuery)
@@ -701,7 +701,7 @@ describe('agentWorker — start/stop', () => {
 
   it('calling startWorker twice does not create duplicate timers', () => {
     const config = {
-      workerId: 'w1', agentTypes: ['TaskAgent'] as const,
+      workerId: 'w1', agentTypes: ['TaskAgent'] as import('../../../api/services/agents/agentTypes').AgentType[],
       pollIntervalMs: 1000, maxConcurrentTasks: 2,
       claimBatchSize: 1, staleTaskAgeMinutes: 30,
     }

@@ -16,7 +16,7 @@ export async function detectAnomalies(input: AnomalyDetectionInput): Promise<Ope
     _detectBlockerClusters(tenantId, twinId),
   ])
 
-  detected.push(...scoreAnomalies, ...velocityAnomalies, ...blockerAnomalies)
+  detected.push(...scoreAnomalies as OperationalAnomaly[], ...velocityAnomalies as OperationalAnomaly[], ...blockerAnomalies as OperationalAnomaly[])
 
   // Persist anomalies
   const saved: OperationalAnomaly[] = []

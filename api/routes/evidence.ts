@@ -10,7 +10,7 @@
  *   GET  /evidence/:id         — get evidence metadata
  */
 import { Router, type Response } from 'express'
-import type { Request } from '../middleware/tenant'
+import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import {
   initiateUpload, confirmUpload, linkEvidence,
@@ -88,8 +88,8 @@ evidenceRouter.post('/link', async (req: Request, res: Response) => {
 
 evidenceRouter.get('/entity/:type/:id', async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
-  const entityType = req.params['type']!
-  const entityId   = req.params['id']!
+  const entityType = req.params['type'] as string
+  const entityId   = req.params['id'] as string
 
   const items = await getEvidenceForEntity(tenantId, entityType, entityId)
   res.json({ data: items })
@@ -99,7 +99,7 @@ evidenceRouter.get('/entity/:type/:id', async (req: Request, res: Response) => {
 
 evidenceRouter.post('/:id/retry', async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
-  const evidenceId = req.params['id']!
+  const evidenceId = req.params['id'] as string
 
   const ok = await retryUpload(tenantId, evidenceId)
   if (!ok) { res.status(404).json({ error: 'evidence_not_found_or_not_retryable' }); return }
@@ -110,7 +110,7 @@ evidenceRouter.post('/:id/retry', async (req: Request, res: Response) => {
 
 evidenceRouter.get('/:id', async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
-  const evidenceId = req.params['id']!
+  const evidenceId = req.params['id'] as string
 
   const res2 = await tenantQuery(tenantId,
     `SELECT * FROM evidence_assets WHERE id = $1 AND tenant_id = $2`,
@@ -125,7 +125,7 @@ evidenceRouter.get('/:id', async (req: Request, res: Response) => {
 
 evidenceRouter.post('/assets/:id/scan', async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
-  const assetId   = req.params['id']!
+  const assetId   = req.params['id'] as string
   const scannedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { asset_type, scan_method, device_id, geolocation, scan_context } = req.body as {
     asset_type: string; scan_method?: string; device_id?: string;

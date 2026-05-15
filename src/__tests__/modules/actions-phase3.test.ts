@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: {
+  pool: {
     query: vi.fn(),
   },
 }))
@@ -19,7 +19,7 @@ vi.mock('../../../api/services/actions/actionEventPublisher', () => ({
   publishEvent:       vi.fn(),
 }))
 
-import pool from '../../../api/db/pool'
+import { pool } from '../../../api/db/pool'
 
 const mockQuery = vi.mocked(pool.query)
 
@@ -560,7 +560,7 @@ describe('subscriptionManager — subscription matching', () => {
       ping: vi.fn(),
       terminate: vi.fn(),
       on: vi.fn(),
-    } as never
+    } as unknown as import('ws').WebSocket
   }
 
   it('getClientCount starts at 0', () => {
@@ -854,14 +854,16 @@ describe('integration — recommendations align with predictions', () => {
 
     const preds   = batchPredictBreaches([critical, medium])
     const ranked  = scoreAndRankActions([
-      { id: 'c1', priority: 'critical', sla_remaining_minutes: -60,
-        escalation_level: 2, downstream_count: 0, action_type: 'COMPLIANCE_TASK', reopen_count: 0 },
-      { id: 'm1', priority: 'medium', sla_remaining_minutes: 1440,
-        escalation_level: 0, downstream_count: 0, action_type: 'DAILY_LOG', reopen_count: 0 },
+      { action_id: 'c1', priority: 'critical', remaining_minutes: -60,
+        escalation_level: 2, escalation_count: 2, downstream_impact_count: 0,
+        action_type: 'COMPLIANCE_TASK', due_at: null, reopen_count: 0 },
+      { action_id: 'm1', priority: 'medium', remaining_minutes: 1440,
+        escalation_level: 0, escalation_count: 0, downstream_impact_count: 0,
+        action_type: 'DAILY_LOG', due_at: null, reopen_count: 0 },
     ])
 
     // Both systems agree: critical overdue ranks first
     expect(preds[0]!.actionId).toBe('c1')
-    expect(ranked[0]!.id).toBe('c1')
+    expect(ranked[0]!.action_id).toBe('c1')
   })
 })

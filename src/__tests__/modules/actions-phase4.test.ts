@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: {
+  pool: {
     query:   vi.fn(),
     connect: vi.fn(),
   },
@@ -26,7 +26,7 @@ vi.mock('../../../api/realtime/eventBroadcaster', () => ({
   broadcastEvent: vi.fn(),
 }))
 
-import pool, { tenantQuery } from '../../../api/db/pool'
+import { pool, tenantQuery } from '../../../api/db/pool'
 
 const mockQuery  = vi.mocked(pool.query)
 const mockTenant = vi.mocked(tenantQuery)
@@ -687,7 +687,7 @@ describe('policyEngine — _evaluateRules', () => {
   })
 
   it('returns true when all rules match', () => {
-    const rules = [
+    const rules: import('../../../api/services/policy/policyEngine').PolicyRule[] = [
       { field: 'priority', operator: 'eq', value: 'critical' },
       { field: 'score', operator: 'gte', value: 80 },
     ]
@@ -695,7 +695,7 @@ describe('policyEngine — _evaluateRules', () => {
   })
 
   it('returns false when any rule fails', () => {
-    const rules = [
+    const rules: import('../../../api/services/policy/policyEngine').PolicyRule[] = [
       { field: 'priority', operator: 'eq', value: 'critical' },
       { field: 'score', operator: 'gte', value: 80 },
     ]

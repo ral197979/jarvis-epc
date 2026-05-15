@@ -273,7 +273,7 @@ async function _runSnapshot(tenantId: string): Promise<void> {
   for (const r of byPriority.rows) byPriorityJson[r.priority] = parseInt(r.cnt, 10)
 
   const bySysJson: Record<string, number> = {}
-  for (const r of bySysType.rows) bySysJson[r.system_type] = parseInt(r.cnt, 10)
+  for (const r of bySysType.rows) bySysJson[String(r.system_type)] = parseInt(r.cnt, 10)
 
   const workloadJson = workload.rows.map(r => ({
     user_id: r.user_id, open_count: parseInt(r.open_cnt, 10),

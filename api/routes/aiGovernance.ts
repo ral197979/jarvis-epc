@@ -27,7 +27,7 @@ aiGovernanceRouter.use(auth)
 aiGovernanceRouter.get('/recommendations', async (req: Request, res: Response) => {
   const r = req as AiReq
   const limit = Math.min(Number(req.query['limit'] ?? 50), 200)
-  const recs = await listPendingRecommendations(r.tenantId, limit)
+  const recs = await listPendingRecommendations(r.tenantId!, limit)
   res.json({ data: recs })
 })
 
@@ -42,7 +42,7 @@ aiGovernanceRouter.post('/recommendations', async (req: Request, res: Response) 
     res.status(400).json({ error: 'required fields missing' }); return
   }
   const result = await queueRecommendation({
-    tenantId: r.tenantId, actionId: action_id, recommendedAction: recommended_action,
+    tenantId: r.tenantId!, actionId: action_id, recommendedAction: recommended_action,
     category, confidenceScore: confidence_score, impactScore: impact_score,
     urgencyScore: urgency_score, reason, dataSignals: data_signals,
     affectedEntities: affected_entities, rollbackPlan: rollback_plan,
@@ -55,7 +55,7 @@ aiGovernanceRouter.post('/recommendations', async (req: Request, res: Response) 
 aiGovernanceRouter.get('/recommendations/:id/preview', async (req: Request, res: Response) => {
   const r = req as AiReq
   try {
-    const preview = await previewRecommendation(r.tenantId, req.params['id']!)
+    const preview = await previewRecommendation(r.tenantId!, req.params['id'] as string)
     res.json({ data: preview })
   } catch (err) {
     res.status(404).json({ error: 'Recommendation not found' })
@@ -65,7 +65,7 @@ aiGovernanceRouter.get('/recommendations/:id/preview', async (req: Request, res:
 // ─── Approve recommendation ───────────────────────────────────────────────────
 aiGovernanceRouter.post('/recommendations/:id/approve', async (req: Request, res: Response) => {
   const r = req as AiReq
-  const ok = await approveRecommendation(r.tenantId, req.params['id']!, r.auth.sub)
+  const ok = await approveRecommendation(r.tenantId!, req.params['id'] as string, r.auth!.sub)
   if (!ok) { res.status(404).json({ error: 'Not found or not pending' }); return }
   res.json({ data: { approved: true } })
 })
@@ -74,7 +74,7 @@ aiGovernanceRouter.post('/recommendations/:id/approve', async (req: Request, res
 aiGovernanceRouter.post('/recommendations/:id/reject', async (req: Request, res: Response) => {
   const r = req as AiReq
   const { reason } = req.body
-  const ok = await rejectRecommendation(r.tenantId, req.params['id']!, r.auth.sub, reason)
+  const ok = await rejectRecommendation(r.tenantId!, req.params['id'] as string, r.auth!.sub, reason)
   if (!ok) { res.status(404).json({ error: 'Not found or not pending' }); return }
   res.json({ data: { rejected: true } })
 })
@@ -82,7 +82,7 @@ aiGovernanceRouter.post('/recommendations/:id/reject', async (req: Request, res:
 // ─── Execute recommendation ───────────────────────────────────────────────────
 aiGovernanceRouter.post('/recommendations/:id/execute', async (req: Request, res: Response) => {
   const r = req as AiReq
-  const result = await executeRecommendation(r.tenantId, req.params['id']!, r.auth.sub)
+  const result = await executeRecommendation(r.tenantId!, req.params['id'] as string, r.auth!.sub)
   if (!result.executed) {
     res.status(400).json({ error: 'Cannot execute', detail: result.output }); return
   }
@@ -92,6 +92,6 @@ aiGovernanceRouter.post('/recommendations/:id/execute', async (req: Request, res
 // ─── Expire stale recommendations ────────────────────────────────────────────
 aiGovernanceRouter.post('/recommendations/expire', async (req: Request, res: Response) => {
   const r = req as AiReq
-  const expired = await expireStaleRecommendations(r.tenantId)
+  const expired = await expireStaleRecommendations(r.tenantId!)
   res.json({ data: { expired } })
 })

@@ -61,7 +61,7 @@ router.get('/proposals', async (req: Request, res: Response) => {
 router.post('/proposals/:id/approve', async (req: Request, res: Response) => {
   try {
     const { approvedBy } = req.body
-    const proposal = await approveOptimization(tid(req), req.params.id, approvedBy)
+    const proposal = await approveOptimization(tid(req), req.params.id as string, approvedBy)
     res.json(proposal)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
@@ -69,7 +69,7 @@ router.post('/proposals/:id/approve', async (req: Request, res: Response) => {
 router.post('/proposals/:id/apply', async (req: Request, res: Response) => {
   try {
     const { actualGain } = req.body
-    const proposal = await markOptimizationApplied(tid(req), req.params.id, actualGain)
+    const proposal = await markOptimizationApplied(tid(req), req.params.id as string, actualGain)
     res.json(proposal)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })

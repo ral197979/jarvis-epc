@@ -25,7 +25,7 @@ integrationHubRouter.post('/connect', async (req: Request, res: Response) => {
   const { name, type, config = {}, credential_ref } = req.body
   if (!name || !type) { res.status(400).json({ error: 'name and type required' }); return }
   const id = await registerConnector({
-    tenantId: r.tenantId, name, type, config, credentialRef: credential_ref, createdBy: r.auth.sub,
+    tenantId: r.tenantId!, name, type, config, credentialRef: credential_ref, createdBy: r.auth!.sub,
   })
   res.status(201).json({ data: { connector_id: id } })
 })
@@ -33,16 +33,16 @@ integrationHubRouter.post('/connect', async (req: Request, res: Response) => {
 // ─── List connectors ──────────────────────────────────────────────────────────
 integrationHubRouter.get('/', async (req: Request, res: Response) => {
   const r = req as IntReq
-  const connectors = await listConnectors(r.tenantId)
+  const connectors = await listConnectors(r.tenantId!)
   res.json({ data: connectors })
 })
 
 // ─── Connector health ─────────────────────────────────────────────────────────
 integrationHubRouter.get('/health', async (req: Request, res: Response) => {
   const r = req as IntReq
-  const connectors = await listConnectors(r.tenantId)
+  const connectors = await listConnectors(r.tenantId!)
   const health = await Promise.all(
-    (connectors as Array<{ id: string }>).map(c => getConnectorHealth(r.tenantId, c.id))
+    (connectors as Array<{ id: string }>).map(c => getConnectorHealth(r.tenantId!, c.id))
   )
   res.json({ data: health })
 })
@@ -50,7 +50,7 @@ integrationHubRouter.get('/health', async (req: Request, res: Response) => {
 integrationHubRouter.get('/:id/health', async (req: Request, res: Response) => {
   const r = req as IntReq
   try {
-    const h = await getConnectorHealth(r.tenantId, req.params['id']!)
+    const h = await getConnectorHealth(r.tenantId!, req.params['id'] as string)
     res.json({ data: h })
   } catch { res.status(404).json({ error: 'Connector not found' }) }
 })
@@ -60,20 +60,20 @@ integrationHubRouter.post('/sync', async (req: Request, res: Response) => {
   const r = req as IntReq
   const { connector_id, job_type = 'sync', payload = {}, idempotency_key } = req.body
   if (!connector_id) { res.status(400).json({ error: 'connector_id required' }); return }
-  const jobId = await enqueueIntegrationJob(r.tenantId, connector_id, job_type, payload, idempotency_key)
+  const jobId = await enqueueIntegrationJob(r.tenantId!, connector_id, job_type, payload, idempotency_key)
   res.status(202).json({ data: { job_id: jobId, queued: jobId !== null } })
 })
 
 // ─── Complete job (worker callback) ──────────────────────────────────────────
 integrationHubRouter.post('/jobs/:id/complete', async (req: Request, res: Response) => {
   const r = req as IntReq
-  await completeIntegrationJob(req.params['id']!, r.tenantId, req.body.result ?? {})
+  await completeIntegrationJob(req.params['id'] as string, r.tenantId!, req.body.result ?? {})
   res.json({ data: { completed: true } })
 })
 
 // ─── Fail job (worker callback) ───────────────────────────────────────────────
 integrationHubRouter.post('/jobs/:id/fail', async (req: Request, res: Response) => {
   const r = req as IntReq
-  await failIntegrationJob(req.params['id']!, r.tenantId, req.body.error ?? 'unknown')
+  await failIntegrationJob(req.params['id'] as string, r.tenantId!, req.body.error ?? 'unknown')
   res.json({ data: { failed: true } })
 })

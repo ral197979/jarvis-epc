@@ -19,8 +19,8 @@ vi.mock('../../../api/db/pool', () => ({
 import { tenantQuery } from '../../../api/db/pool'
 const mockTenant = vi.mocked(tenantQuery)
 
-const mockRows = (rows: Record<string, unknown>[]) => ({ rows })
-const mockRow  = (row: Record<string, unknown>)   => ({ rows: [row] })
+const mockRows = (rows: Record<string, unknown>[]) => ({ rows } as never)
+const mockRow  = (row: Record<string, unknown>)   => ({ rows: [row] } as never)
 
 // ─── Suite 1: forecastAccuracyTracker — advanced ──────────────────────────────
 

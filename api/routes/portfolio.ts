@@ -25,7 +25,8 @@ router.get('/readiness', async (req: Request, res: Response) => {
 router.get('/readiness/:scopeType/:scopeId', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    const { scopeType, scopeId } = req.params
+    const scopeType = req.params.scopeType as string
+    const scopeId = req.params.scopeId as string
     const horizonDays = req.query.horizonDays ? Number(req.query.horizonDays) : 30
     const forecast = await getOrComputeForecast({
       tenantId, forecastType: 'readiness', scopeType, scopeId, horizonDays,
@@ -115,7 +116,7 @@ router.post('/anomalies/detect', async (req: Request, res: Response) => {
 router.post('/anomalies/:anomalyId/resolve', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    await resolveAnomaly(req.params.anomalyId, tenantId)
+    await resolveAnomaly(req.params.anomalyId as string, tenantId)
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -125,7 +126,7 @@ router.post('/anomalies/:anomalyId/resolve', async (req: Request, res: Response)
 router.post('/anomalies/:anomalyId/false-positive', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    await markFalsePositive(req.params.anomalyId, tenantId)
+    await markFalsePositive(req.params.anomalyId as string, tenantId)
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -151,7 +152,7 @@ router.get('/maintenance/recommendations', async (req: Request, res: Response) =
 router.get('/maintenance/health/:twinId', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    const health = await computeAssetHealth(req.params.twinId, tenantId)
+    const health = await computeAssetHealth(req.params.twinId as string, tenantId)
     res.json(health)
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })

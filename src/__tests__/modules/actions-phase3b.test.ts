@@ -7,14 +7,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../../api/db/pool', () => ({
-  default: { query: vi.fn() },
+  pool: { query: vi.fn() },
 }))
 vi.mock('../../../api/services/actions/actionEventPublisher', () => ({
   publishActionEvent: vi.fn(),
   publishEvent:       vi.fn(),
 }))
 
-import pool from '../../../api/db/pool'
+import { pool } from '../../../api/db/pool'
 const mockQuery = vi.mocked(pool.query)
 function mockRows(rows: Record<string, unknown>[]) {
   return { rows, rowCount: rows.length } as never
@@ -26,41 +26,41 @@ describe('readinessEngine — edge cases and boundary values', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('score exactly 40 → at_risk not not_ready', async () => {
-    const { resolveState, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
-    expect(resolveState(40, DEFAULT_THRESHOLDS)).toBe('at_risk')
+    const { resolveState, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
+    expect(resolveState(40, __testHooks.DEFAULT_THRESHOLDS)).toBe('at_risk')
   })
 
   it('score exactly 65 → conditionally_ready', async () => {
-    const { resolveState, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
-    expect(resolveState(65, DEFAULT_THRESHOLDS)).toBe('conditionally_ready')
+    const { resolveState, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
+    expect(resolveState(65, __testHooks.DEFAULT_THRESHOLDS)).toBe('conditionally_ready')
   })
 
   it('score exactly 85 → ready', async () => {
-    const { resolveState, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
-    expect(resolveState(85, DEFAULT_THRESHOLDS)).toBe('ready')
+    const { resolveState, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
+    expect(resolveState(85, __testHooks.DEFAULT_THRESHOLDS)).toBe('ready')
   })
 
   it('score 0 → not_ready', async () => {
-    const { resolveState, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
-    expect(resolveState(0, DEFAULT_THRESHOLDS)).toBe('not_ready')
+    const { resolveState, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
+    expect(resolveState(0, __testHooks.DEFAULT_THRESHOLDS)).toBe('not_ready')
   })
 
   it('score 100 → ready', async () => {
-    const { resolveState, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
-    expect(resolveState(100, DEFAULT_THRESHOLDS)).toBe('ready')
+    const { resolveState, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
+    expect(resolveState(100, __testHooks.DEFAULT_THRESHOLDS)).toBe('ready')
   })
 
   it('weighted score is capped at 100', async () => {
-    const { computeWeightedScore, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
+    const { computeWeightedScore, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
     const components = { open_actions: 200, blockers: 200, sla_health: 200, inspections: 200, escalations: 200 }
-    const score = computeWeightedScore(components, DEFAULT_THRESHOLDS)
+    const score = computeWeightedScore(components, __testHooks.DEFAULT_THRESHOLDS)
     expect(score).toBeLessThanOrEqual(100)
   })
 
   it('weighted score is clamped to 0 minimum', async () => {
-    const { computeWeightedScore, DEFAULT_THRESHOLDS } = await import('../../../api/services/readiness/readinessEngine')
+    const { computeWeightedScore, __testHooks } = await import('../../../api/services/readiness/readinessEngine')
     const components = { open_actions: -50, blockers: -50, sla_health: -50, inspections: -50, escalations: -50 }
-    const score = computeWeightedScore(components, DEFAULT_THRESHOLDS)
+    const score = computeWeightedScore(components, __testHooks.DEFAULT_THRESHOLDS)
     expect(score).toBeGreaterThanOrEqual(0)
   })
 

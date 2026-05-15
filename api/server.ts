@@ -197,7 +197,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const correlationId = (req.headers['x-correlation-id'] as string)
     ?? (req.headers['x-request-id'] as string)
     ?? randomBytes(8).toString('hex')
-  ;(req as Record<string, unknown>)['correlationId'] = correlationId
+  ;(req as unknown as Record<string, unknown>)['correlationId'] = correlationId
   res.setHeader('X-Correlation-ID', correlationId)
   next()
 })

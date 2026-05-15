@@ -19,7 +19,7 @@ executiveRouter.use(auth)
 executiveRouter.get('/overview', async (req: Request, res: Response) => {
   const r = req as ExecReq
   const [actions, readiness, incidents, aiRecs] = await Promise.all([
-    tenantQuery(r.tenantId, `
+    tenantQuery(r.tenantId!, `
       SELECT
         COUNT(*) FILTER (WHERE status = 'open') AS open_count,
         COUNT(*) FILTER (WHERE status = 'in_progress') AS in_progress_count,
@@ -28,17 +28,17 @@ executiveRouter.get('/overview', async (req: Request, res: Response) => {
         COUNT(*) FILTER (WHERE max_escalation_level >= 1) AS escalated_count
       FROM actions WHERE tenant_id = $1
     `, [r.tenantId]),
-    tenantQuery(r.tenantId, `
+    tenantQuery(r.tenantId!, `
       SELECT state, COUNT(*) AS count
       FROM readiness_scores WHERE tenant_id = $1
       GROUP BY state
     `, [r.tenantId]),
-    tenantQuery(r.tenantId, `
+    tenantQuery(r.tenantId!, `
       SELECT severity, COUNT(*) AS count
       FROM ops_incidents WHERE tenant_id = $1 AND status = 'open'
       GROUP BY severity
     `, [r.tenantId]),
-    tenantQuery(r.tenantId, `
+    tenantQuery(r.tenantId!, `
       SELECT
         COUNT(*) FILTER (WHERE status = 'pending') AS pending_approvals,
         COUNT(*) FILTER (WHERE status = 'executed') AS executed_today
@@ -59,7 +59,7 @@ executiveRouter.get('/overview', async (req: Request, res: Response) => {
 // ─── Portfolio risk heatmap ───────────────────────────────────────────────────
 executiveRouter.get('/portfolio-risk', async (req: Request, res: Response) => {
   const r = req as ExecReq
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
       p.id AS project_id, p.name AS project_name,
       COUNT(a.id) FILTER (WHERE a.status IN ('open','in_progress')) AS open_actions,
@@ -81,7 +81,7 @@ executiveRouter.get('/portfolio-risk', async (req: Request, res: Response) => {
 // ─── Escalation hotspots ──────────────────────────────────────────────────────
 executiveRouter.get('/escalation-hotspots', async (req: Request, res: Response) => {
   const r = req as ExecReq
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
       project_id, source_module,
       COUNT(*) AS escalated_count,
@@ -99,7 +99,7 @@ executiveRouter.get('/escalation-hotspots', async (req: Request, res: Response) 
 // ─── Contractor performance ───────────────────────────────────────────────────
 executiveRouter.get('/contractor-performance', async (req: Request, res: Response) => {
   const r = req as ExecReq
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
       assignee_id,
       COUNT(*) AS total_assigned,
@@ -120,7 +120,7 @@ executiveRouter.get('/contractor-performance', async (req: Request, res: Respons
 // ─── SLA compliance ───────────────────────────────────────────────────────────
 executiveRouter.get('/sla-compliance', async (req: Request, res: Response) => {
   const r = req as ExecReq
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
       action_type,
       COUNT(*) AS total,
@@ -139,7 +139,7 @@ executiveRouter.get('/sla-compliance', async (req: Request, res: Response) => {
 // ─── AI recommendation acceptance rate ───────────────────────────────────────
 executiveRouter.get('/ai-acceptance', async (req: Request, res: Response) => {
   const r = req as ExecReq
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
       category,
       COUNT(*) AS total,
@@ -159,7 +159,7 @@ executiveRouter.get('/ai-acceptance', async (req: Request, res: Response) => {
 executiveRouter.get('/throughput', async (req: Request, res: Response) => {
   const r = req as ExecReq
   const days = Math.min(Number(req.query['days'] ?? 30), 90)
-  const { rows } = await tenantQuery(r.tenantId, `
+  const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
       DATE_TRUNC('day', created_at) AS day,
       COUNT(*) FILTER (WHERE status = 'completed') AS completed,

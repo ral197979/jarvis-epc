@@ -19,7 +19,7 @@ auditVerificationRouter.use(auth)
 auditVerificationRouter.get('/verify', async (req: Request, res: Response) => {
   const r = req as AuditReq
   const { from, to } = req.query
-  const report = await verifyChainIntegrity(r.tenantId,
+  const report = await verifyChainIntegrity(r.tenantId!,
     from as string | undefined, to as string | undefined)
   res.json({ data: report })
 })
@@ -28,14 +28,14 @@ auditVerificationRouter.get('/verify', async (req: Request, res: Response) => {
 auditVerificationRouter.get('/integrity', async (req: Request, res: Response) => {
   const r = req as AuditReq
   const days = Math.min(Number(req.query['days'] ?? 30), 90)
-  const snapshots = await getIntegritySnapshots(r.tenantId, days)
+  const snapshots = await getIntegritySnapshots(r.tenantId!, days)
   res.json({ data: snapshots })
 })
 
 // ─── Manual snapshot ──────────────────────────────────────────────────────────
 auditVerificationRouter.post('/snapshot', async (req: Request, res: Response) => {
   const r = req as AuditReq
-  await snapshotIntegrity(r.tenantId)
+  await snapshotIntegrity(r.tenantId!)
   res.json({ data: { snapshotted: true } })
 })
 
@@ -43,8 +43,8 @@ auditVerificationRouter.post('/snapshot', async (req: Request, res: Response) =>
 auditVerificationRouter.get('/export', async (req: Request, res: Response) => {
   const r = req as AuditReq
   const limit = Math.min(Number(req.query['limit'] ?? 10000), 50000)
-  const events = await exportAuditChain(r.tenantId, limit)
+  const events = await exportAuditChain(r.tenantId!, limit)
   res.setHeader('Content-Type', 'application/json')
   res.setHeader('Content-Disposition', 'attachment; filename="audit-chain.json"')
-  res.json({ data: events, meta: { count: events.length, tenant_id: r.tenantId } })
+  res.json({ data: events, meta: { count: events.length, tenant_id: r.tenantId! } })
 })

@@ -40,7 +40,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:scenarioId', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    const scenario = await getScenario(req.params.scenarioId, tenantId)
+    const scenario = await getScenario(req.params.scenarioId as string, tenantId)
     if (!scenario) return res.status(404).json({ error: 'Scenario not found' })
     res.json(scenario)
   } catch (err) {
@@ -51,7 +51,7 @@ router.get('/:scenarioId', async (req: Request, res: Response) => {
 router.post('/:scenarioId/run', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    const scenario = await runScenario(req.params.scenarioId, tenantId)
+    const scenario = await runScenario(req.params.scenarioId as string, tenantId)
     res.json(scenario)
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -61,7 +61,7 @@ router.post('/:scenarioId/run', async (req: Request, res: Response) => {
 router.post('/:scenarioId/cancel', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
-    await cancelScenario(req.params.scenarioId, tenantId)
+    await cancelScenario(req.params.scenarioId as string, tenantId)
     res.json({ success: true })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -74,7 +74,7 @@ router.get('/projection/:twinId', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const horizonDays = req.query.horizonDays ? Number(req.query.horizonDays) : 30
-    const projection = await projectTwinTimeline(req.params.twinId, tenantId, horizonDays)
+    const projection = await projectTwinTimeline(req.params.twinId as string, tenantId, horizonDays)
     res.json(projection)
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -87,7 +87,7 @@ router.get('/temporal/:twinId/at', async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     if (!req.query.ts) return res.status(400).json({ error: 'ts query param required' })
-    const state = await getStateAt(req.params.twinId, tenantId, new Date(req.query.ts as string))
+    const state = await getStateAt(req.params.twinId as string, tenantId, new Date(req.query.ts as string))
     if (!state) return res.status(404).json({ error: 'No state found at that time' })
     res.json({ state, at: req.query.ts })
   } catch (err) {
@@ -100,7 +100,7 @@ router.get('/temporal/:twinId/replay', async (req: Request, res: Response) => {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { from, to } = req.query
     if (!from || !to) return res.status(400).json({ error: 'from and to query params required' })
-    const snapshots = await replayRange(req.params.twinId, tenantId, new Date(from as string), new Date(to as string))
+    const snapshots = await replayRange(req.params.twinId as string, tenantId, new Date(from as string), new Date(to as string))
     res.json({ snapshots, count: snapshots.length })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -112,7 +112,7 @@ router.get('/temporal/:twinId/diff', async (req: Request, res: Response) => {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { from, to } = req.query
     if (!from || !to) return res.status(400).json({ error: 'from and to query params required' })
-    const diff = await diffStates(req.params.twinId, tenantId, new Date(from as string), new Date(to as string))
+    const diff = await diffStates(req.params.twinId as string, tenantId, new Date(from as string), new Date(to as string))
     res.json(diff)
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -123,7 +123,7 @@ router.get('/temporal/:twinId/velocity', async (req: Request, res: Response) => 
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const windowDays = req.query.windowDays ? Number(req.query.windowDays) : 7
-    const velocity = await computeStateVelocity(req.params.twinId, tenantId, windowDays)
+    const velocity = await computeStateVelocity(req.params.twinId as string, tenantId, windowDays)
     res.json(velocity)
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })
@@ -135,7 +135,7 @@ router.get('/temporal/:twinId/trend/:field', async (req: Request, res: Response)
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const windowDays = req.query.windowDays ? Number(req.query.windowDays) : 30
     const field = req.params.field as Parameters<typeof getScoreTrend>[2]
-    const trend = await getScoreTrend(req.params.twinId, tenantId, field, windowDays)
+    const trend = await getScoreTrend(req.params.twinId as string, tenantId, field, windowDays)
     res.json({ field, trend, windowDays })
   } catch (err) {
     res.status(500).json({ error: (err as Error).message })

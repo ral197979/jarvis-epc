@@ -20,8 +20,8 @@ vi.mock('../../../api/db/pool', () => ({
 import { tenantQuery } from '../../../api/db/pool'
 const mockTenant = vi.mocked(tenantQuery)
 
-const mockRows = (rows: Record<string, unknown>[]) => ({ rows })
-const mockRow  = (row: Record<string, unknown>)   => ({ rows: [row] })
+const mockRows = (rows: Record<string, unknown>[]) => ({ rows } as never)
+const mockRow  = (row: Record<string, unknown>)   => ({ rows: [row] } as never)
 
 // ─── Factories ────────────────────────────────────────────────────────────────
 
@@ -258,13 +258,13 @@ describe('twinSnapshotService', () => {
     const { __testHooks, verifySnapshot } = await import('../../../api/services/twin/twinSnapshotService')
     const state = { x: 42 }
     const checksum = __testHooks._checksumState(state)
-    const snap = { state, checksum } as Parameters<typeof verifySnapshot>[0]
+    const snap = { state, checksum } as unknown as Parameters<typeof verifySnapshot>[0]
     expect(verifySnapshot(snap)).toBe(true)
   })
 
   it('verifySnapshot — returns false for tampered state', async () => {
     const { verifySnapshot } = await import('../../../api/services/twin/twinSnapshotService')
-    const snap = { state: { x: 42 }, checksum: 'wrong' } as Parameters<typeof verifySnapshot>[0]
+    const snap = { state: { x: 42 }, checksum: 'wrong' } as unknown as Parameters<typeof verifySnapshot>[0]
     expect(verifySnapshot(snap)).toBe(false)
   })
 })
@@ -489,7 +489,7 @@ describe('graphTraversalService', () => {
       reverseAdj: new Map([['b', [{ fromTwinId: 'a', toTwinId: 'b', relType: 'depends_on', weight: 1, id: 'r1', tenantId: 't', metadata: {}, validFrom: new Date(), createdAt: new Date() }]]]),
       tenantId: 't',
       builtAt: new Date(),
-    }
+    } as never
     expect(__testHooks.detectCycles(graph)).toBe(false)
   })
 
@@ -547,7 +547,7 @@ describe('graphTraversalService', () => {
       reverseAdj: new Map([['b', [{ fromTwinId: 'a', toTwinId: 'b', relType: 'depends_on' as const, weight: 1, id: 'r1', tenantId: 't', metadata: {}, validFrom: new Date(), createdAt: new Date() }]]]),
       tenantId: 't',
       builtAt: new Date(),
-    }
+    } as never
     const result = bfsTraversal(graph, 'a')
     expect(result.impactedEntities).toContain('b')
     expect(result.nodes).toHaveLength(2)

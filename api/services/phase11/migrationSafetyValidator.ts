@@ -28,14 +28,14 @@ export async function checkNoOrphanedForeignKeys(
   tenantId: string
 ): Promise<MigrationSafetyCheck> {
   try {
-    const rows = await tenantQuery(
+    const result = await tenantQuery(
       tenantId,
       `SELECT COUNT(*) as count FROM information_schema.table_constraints
        WHERE constraint_type = 'FOREIGN KEY'
          AND table_schema = 'public'`,
       []
     )
-    const count = Number((rows[0] as Record<string, unknown>)?.count ?? 0)
+    const count = Number((result.rows[0] as Record<string, unknown>)?.count ?? 0)
     return {
       checkName: 'no_orphaned_foreign_keys',
       passed: true,

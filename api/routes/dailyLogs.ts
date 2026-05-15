@@ -58,7 +58,7 @@ router.get('/projects/:projectId/daily-logs', async (req: Request, res: Response
 
 router.post('/projects/:projectId/daily-logs', async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
-  const { projectId } = req.params
+  const projectId = req.params.projectId as string
   const b = req.body ?? {}
   if (!b.log_date) return res.status(400).json({ error: 'log_date required' })
   const j = (k: string) => b[k] != null ? JSON.stringify(b[k]) : '[]'

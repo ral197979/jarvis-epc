@@ -55,7 +55,7 @@ export async function getTelemetryEvents(
      ORDER BY recorded_at DESC`,
     [metricType, since]
   )
-  return rows.map(_mapTelemetryEvent)
+  return rows.rows.map(_mapTelemetryEvent)
 }
 
 // ─── Get Latest Telemetry ─────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ export async function getLatestTelemetryEvent(
      LIMIT 1`,
     [metricType]
   )
-  return rows.length > 0 ? _mapTelemetryEvent(rows[0]) : null
+  return rows.rows.length > 0 ? _mapTelemetryEvent(rows.rows[0]) : null
 }
 
 // ─── Compute Metric Average ───────────────────────────────────────────────────
@@ -106,7 +106,7 @@ export async function getTenantMetricSummary(
      WHERE metric_type = $1 AND recorded_at >= $2`,
     [metricType, since]
   )
-  const row = rows[0] ?? {}
+  const row = rows.rows[0] ?? {}
   return {
     avg: Number(row.avg ?? 0),
     min: Number(row.min ?? 0),

@@ -2,7 +2,7 @@
 // Assembles the runtime context package delivered to agents before execution.
 
 import { tenantQuery } from '../../db/pool'
-import { AgentType, AgentContext, MemoryScopeType, PolicyCheckResult } from './agentTypes'
+import { AgentType, AgentContext, AgentMemoryEntry, MemoryScopeType, PolicyCheckResult } from './agentTypes'
 
 // ─── Context assembly ─────────────────────────────────────────────────────────
 
@@ -32,7 +32,7 @@ export async function buildAgentContext(input: ContextBuildInput): Promise<Agent
     _fetchActiveAlerts(tenantId, scopeType, scopeId),
     includeMemory
       ? _fetchMemoryEntries(tenantId, agentType, scopeType, scopeId, memoryLimit)
-      : Promise.resolve([]),
+      : Promise.resolve<AgentMemoryEntry[]>([]),
   ])
 
   return {
@@ -126,7 +126,7 @@ async function _fetchMemoryEntries(
   scopeType: MemoryScopeType,
   scopeId: string,
   limit: number
-): Promise<unknown[]> {
+): Promise<AgentMemoryEntry[]> {
   const res = await tenantQuery(
     tenantId,
     `SELECT id, agent_type, scope_type, scope_id, memory_type, key, value, confidence
@@ -140,7 +140,7 @@ async function _fetchMemoryEntries(
      LIMIT $5`,
     [tenantId, agentType, scopeType, scopeId || null, limit]
   )
-  return res.rows
+  return res.rows as AgentMemoryEntry[]
 }
 
 // ─── Policy constraint injection ─────────────────────────────────────────────

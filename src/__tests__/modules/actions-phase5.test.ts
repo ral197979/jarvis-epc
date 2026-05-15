@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ─── Mock pool ────────────────────────────────────────────────────────────────
 
 vi.mock('../../../api/db/pool', () => ({
-  default: {
+  pool: {
     query:   vi.fn(),
     connect: vi.fn(),
   },
@@ -24,7 +24,7 @@ vi.mock('../../../api/services/policy/policyEngine', () => ({
   evaluatePolicy: vi.fn(),
 }))
 
-import pool, { tenantQuery } from '../../../api/db/pool'
+import { pool, tenantQuery } from '../../../api/db/pool'
 
 const mockQuery   = vi.mocked(pool.query)
 const mockTenant  = vi.mocked(tenantQuery)
