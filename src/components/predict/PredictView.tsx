@@ -355,7 +355,7 @@ export default function PredictView({ onNavigate }: Props) {
       const res  = await fetch('/api/v1/predict/portfolio')
       const data = await res.json() as { summary: PredictSummary }
       setSummary(data.summary)
-    } catch { /* ignore */ } finally { setLoading(false) }
+    } catch { /* network error — summary stays null, user can retry Refresh */ } finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])

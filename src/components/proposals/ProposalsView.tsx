@@ -421,7 +421,7 @@ export default function ProposalsView(_: Props) {
       const sData = await sRes.json() as { summary: PipelineSummary }
       setProposals(pData.proposals ?? [])
       setSummary(sData.summary)
-    } catch { /* ignore */ } finally { setLoading(false) }
+    } catch { /* network error — list stays empty, user can retry */ } finally { setLoading(false) }
   }, [])
 
   useEffect(() => { load() }, [load])

@@ -155,13 +155,14 @@ const ALL_CATEGORIES: NotifCategory[] = [
 export default function NotificationsView({ onNavigate }: Props) {
   const [notifs,     setNotifs]     = useState<Notification[]>([])
   const [loading,    setLoading]    = useState(false)
+  const [loadErr,    setLoadErr]    = useState(false)
   const [scanning,   setScanning]   = useState(false)
   const [lastScan,   setLastScan]   = useState<string | null>(null)
   const [filterCat,  setFilterCat]  = useState<NotifCategory | 'all'>('all')
   const [unreadOnly, setUnreadOnly] = useState(false)
 
   const load = useCallback(async () => {
-    setLoading(true)
+    setLoading(true); setLoadErr(false)
     try {
       const params = new URLSearchParams()
       if (unreadOnly)            params.set('unread', 'true')
@@ -169,7 +170,7 @@ export default function NotificationsView({ onNavigate }: Props) {
       const res  = await fetch(`/api/v1/notifications?${params}`)
       const data = await res.json() as { notifications: Notification[] }
       setNotifs(data.notifications ?? [])
-    } catch { /* ignore */ } finally { setLoading(false) }
+    } catch { setLoadErr(true) } finally { setLoading(false) }
   }, [filterCat, unreadOnly])
 
   useEffect(() => { load() }, [load])
@@ -288,6 +289,12 @@ export default function NotificationsView({ onNavigate }: Props) {
       <div style={{ background: 'var(--jarvis-s2)', border: '1px solid var(--jarvis-b)', borderRadius: 10, overflow: 'hidden' }}>
         {loading ? (
           <div style={{ padding: '32px', textAlign: 'center', color: 'var(--jarvis-ts)', fontSize: 13 }}>Loading…</div>
+        ) : loadErr ? (
+          <div style={{ padding: '48px', textAlign: 'center' }}>
+            <div style={{ fontSize: 32, marginBottom: 10 }}>⚠️</div>
+            <div style={{ fontSize: 14, color: '#ef4444', fontWeight: 600 }}>Failed to load notifications</div>
+            <div style={{ fontSize: 12, color: 'var(--jarvis-ts)', marginTop: 4 }}>Check your connection and try again.</div>
+          </div>
         ) : notifs.length === 0 ? (
           <div style={{ padding: '48px', textAlign: 'center' }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>✓</div>

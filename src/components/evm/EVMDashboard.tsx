@@ -166,22 +166,26 @@ export function EVMDashboard({ onNavigate }: { onNavigate?: (tab: string) => voi
   useEffect(() => { load() }, [load])
 
   const takeSnapshot = async () => {
-    await fetch(`/api/v1/projects/${projectId}/evm/snapshot`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
-    load()
+    try {
+      await fetch(`/api/v1/projects/${projectId}/evm/snapshot`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      load()
+    } catch { setError('Failed to take snapshot') }
   }
 
   const submitActual = async () => {
     if (!actualDraft.periodDate || !actualDraft.amount) return
     setSaving(true)
-    await fetch(`/api/v1/projects/${projectId}/evm/actuals`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...actualDraft, amount: parseFloat(actualDraft.amount) }),
-    })
-    setActualDraft({ periodDate: '', amount: '', description: '', reference: '' })
-    setShowActualForm(false)
-    setSaving(false)
-    load()
+    try {
+      const res = await fetch(`/api/v1/projects/${projectId}/evm/actuals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...actualDraft, amount: parseFloat(actualDraft.amount) }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setActualDraft({ periodDate: '', amount: '', description: '', reference: '' })
+      setShowActualForm(false)
+      load()
+    } catch { setError('Failed to save actual cost') } finally { setSaving(false) }
   }
 
   const healthColor = { green: '#2ecc71', yellow: '#f39c12', red: '#e74c3c' }[metrics?.health ?? 'green']

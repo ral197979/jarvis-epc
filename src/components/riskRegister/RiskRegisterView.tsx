@@ -465,20 +465,25 @@ export default function RiskRegisterView({ biz }: Props) {
   }, [projectId, filterStatus])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setFilterStatus('all'); setFilterSeverity('all') }, [projectId])
 
   const handleUpdate = async (patch: Record<string, unknown>) => {
     if (!selected) return
-    await fetch(`/api/v1/risks/${selected.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
-    })
-    await load()
-    setSelected(null)
+    try {
+      await fetch(`/api/v1/risks/${selected.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
+      })
+      await load()
+      setSelected(null)
+    } catch { /* ignore — load will show stale data */ }
   }
 
   const handleClose = async (id: string) => {
-    await fetch(`/api/v1/risks/${id}/close`, { method: 'POST' })
-    await load()
-    setSelected(null)
+    try {
+      await fetch(`/api/v1/risks/${id}/close`, { method: 'POST' })
+      await load()
+      setSelected(null)
+    } catch { /* ignore */ }
   }
 
   const displayRisks = risks.filter(r => {

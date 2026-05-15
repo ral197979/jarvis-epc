@@ -291,12 +291,11 @@ export default function CostEntryView({ biz }: Props) {
       const summaryData = await summaryRes.json() as { summary: Summary }
       setEntries(entriesData.entries ?? [])
       setSummary(summaryData.summary)
-    } catch { /* ignore */ } finally {
-      setLoading(false)
-    }
+    } catch { /* network error — entries stay empty */ } finally { setLoading(false) }
   }, [filterType, filterStatus])
 
   useEffect(() => { load(projectId) }, [load, projectId])
+  useEffect(() => { setFilterType('all'); setFilterStatus('all') }, [projectId])
 
   const handlePost = async (id: string) => {
     try {

@@ -143,7 +143,7 @@ function CoRow({ co, onSelect }: { co: ChangeOrder; onSelect: () => void }) {
 
 // ─── Create modal ─────────────────────────────────────────────────────────────
 
-function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (co: ChangeOrder) => void }) {
+function CreateModal({ projectId, onClose, onCreated }: { projectId: string; onClose: () => void; onCreated: (co: ChangeOrder) => void }) {
   const [form, setForm] = useState({
     title: '', description: '', type: 'scope' as CoType,
     costImpact: '', scheduleImpactDays: '', reason: '',
@@ -158,7 +158,6 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     if (!form.title.trim()) { setError('Title is required'); return }
     setSaving(true); setError('')
     try {
-      const projectId = localStorage.getItem('jarvis-active-project') ?? ''
       const res = await fetch(`/api/v1/projects/${projectId}/change-orders`, {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -480,7 +479,7 @@ export function ChangeOrdersView() {
         </table>
       )}
 
-      {showCreate && <CreateModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />}
+      {showCreate && <CreateModal projectId={projectId} onClose={() => setShowCreate(false)} onCreated={handleCreated} />}
       {selected && <DetailPanel co={selected} onClose={() => setSelected(null)} onUpdated={handleUpdated} />}
     </div>
   )

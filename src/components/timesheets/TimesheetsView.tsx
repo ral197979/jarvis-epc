@@ -223,10 +223,11 @@ export default function TimesheetsView({ biz, onNavigate }: Props) {
       setTimesheets(tsData.timesheets ?? [])
       setSummary(sumData.weeks ?? [])
       setLocalHrs({})
-    } catch { /* ignore */ } finally { setLoading(false) }
+    } catch { /* network error — grid stays empty */ } finally { setLoading(false) }
   }, [projectId, weekStart])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { setFilterStatus('all') }, [projectId])
 
   const handleHourChange = (id: string, day: string, val: number | null) => {
     setLocalHrs(prev => ({ ...prev, [id]: { ...(prev[id] ?? {}), [day]: val } }))
