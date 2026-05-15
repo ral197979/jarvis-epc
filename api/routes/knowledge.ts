@@ -182,6 +182,12 @@ router.post('/sources', async (req: Req, res: Response) => {
     return
   }
 
+  const pathGuard = isPathAllowed(storagePath)
+  if (!pathGuard.ok) {
+    res.status(403).json({ error: 'path_not_allowed', message: pathGuard.reason })
+    return
+  }
+
   // Inspect the file: size + sha256 for dedup. Runs server-side, so the
   // file must be readable from the API process; typically a mounted
   // shared volume, a staging dir, or (local dev) an attached drive.

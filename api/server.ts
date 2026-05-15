@@ -390,8 +390,8 @@ app.use('/api/v1',                deficienciesRouter)          // v4.32.0: test-
 app.use('/api/v1',                commissioningItemsRouter)    // v4.32.0: CX checklist items (P2)
 app.use('/api/v1/audit',          auditRouter)          // v4.30.0: Audit log read API
 app.use('/api/v1/actions',        actionsRouter)        // v4.33.0 Ava: Global Action Center
-app.use('/api/v1/ops',           opsRouter)            // v4.35.0 Ava Phase 3: Operations Center
-app.use('/api/v1/readiness',     readinessRouter)      // v4.35.0 Ava Phase 3: Readiness Engine
+app.use('/api/v1/ops',           requireAuth as never, requireTenant() as never, opsRouter)       // v4.35.0 Ava Phase 3: Operations Center
+app.use('/api/v1/readiness',     requireAuth as never, requireTenant() as never, readinessRouter) // v4.35.0 Ava Phase 3: Readiness Engine
 app.use('/api/v1/sync',          requireAuth as never, requireTenant() as never, syncRouter)     // v4.35.1: added auth
 app.use('/api/v1/evidence',      requireAuth as never, requireTenant() as never, evidenceRouter) // v4.35.1: added auth
 app.use('/api/v1/runbooks',      runbooksRouter)       // v4.40.0 Ava Phase 4: Autonomous Runbook Engine
@@ -406,14 +406,14 @@ app.use('/api/v1/agents',                agentLimiter, agentsRouter)            
 app.use('/api/v1/agents/approvals',      agentLimiter, agentApprovalsRouter)    // v5.0.1 Ava Phase 5: Agent Approval Queue
 app.use('/api/v1/agents/memory',         agentLimiter, agentMemoryRouter)       // v5.0.1 Ava Phase 5: Agent Memory Store
 app.use('/api/v1/agents/risk',           agentLimiter, agentRiskRouter)         // v5.0.1 Ava Phase 5: Risk Agent
-app.use('/api/v1/agents/readiness',      agentReadinessRouter)    // v5.0.0 Ava Phase 5: Readiness Agent
+app.use('/api/v1/agents/readiness',      requireAuth as never, requireTenant() as never, agentReadinessRouter) // v5.0.0 Ava Phase 5: Readiness Agent
 app.use('/api/v1/twins',                 requireAuth as never, requireTenant() as never, twinRouter)              // v6.0.0 Ava Phase 6: Digital Twin Registry + Graph
-app.use('/api/v1/portfolio',             portfolioRouter)         // v6.0.0 Ava Phase 6: Portfolio Intelligence
+app.use('/api/v1/portfolio',             requireAuth as never, requireTenant() as never, portfolioRouter) // v6.0.0 Ava Phase 6: Portfolio Intelligence
 app.use('/api/v1/scenarios',             requireAuth as never, requireTenant() as never, scenariosRouter)         // v6.0.0 Ava Phase 6: Scenario Simulation + Temporal
-app.use('/api/v1/adaptive',             adaptiveRouter)          // v7.0.0 Ava Phase 7: Learning Feedback + Calibration
+app.use('/api/v1/adaptive',             requireAuth as never, requireTenant() as never, adaptiveRouter) // v7.0.0 Ava Phase 7: Learning Feedback + Calibration
 app.use('/api/v1/optimization',         requireAuth as never, requireTenant() as never, optimizationRouter)      // v7.0.0 Ava Phase 7: Resource Optimization + Strategy
 app.use('/api/v1/enterprise',           enterpriseRouter)        // v8.0.0 Ava Phase 8: Enterprise Deployment Platform
-app.use('/api/v1/ecosystem',            ecosystemRouter)         // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem
+app.use('/api/v1/ecosystem',            requireAuth as never, requireTenant() as never, ecosystemRouter) // v9.0.0 Ava Phase 9: Federated Intelligence + Ecosystem
 app.use('/api/v1',                      estimatingRouter)        // v10.0.0: BIM Element Layer + Estimating Engine
 app.use('/api/v1/monte-carlo',          monteCarloRouter)        // v10.1.0: Monte Carlo Risk Simulation
 app.use('/api/v1/transmittals',         transmittalsRouter)      // v10.1.0: Transmittal / Doc Control
@@ -462,7 +462,7 @@ app.post('/api/v1/gateway', requireAuth as never, aiLimiter, async (req: Request
 
     const data = await upstream.json()
     if (!upstream.ok) {
-      res.status(upstream.status).json({ error: 'upstream_error', detail: data })
+      res.status(upstream.status).json({ error: 'upstream_error', message: 'AI request failed' })
       return
     }
     res.json(data)
