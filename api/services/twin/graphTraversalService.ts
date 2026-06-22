@@ -2,7 +2,7 @@
 // BFS/DFS traversal, critical path, cycle detection, impact analysis.
 
 import { StateGraph, StateGraphNode } from './stateGraphEngine'
-import { GraphNode, GraphEdge, GraphTraversalResult, TwinEntityType, TwinStatus } from './twinTypes'
+import { GraphNode, GraphEdge, GraphTraversalResult } from './twinTypes'
 
 // ─── BFS traversal ────────────────────────────────────────────────────────────
 

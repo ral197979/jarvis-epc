@@ -1,7 +1,7 @@
 // Denver Engineering — Agent Worker (v5.0.0)
 // Task processing loop with stale task recovery and graceful shutdown.
 
-import { AgentType, WorkerConfig, AgentTask } from './agentTypes'
+import { WorkerConfig, AgentTask } from './agentTypes'
 import { claimNextTask, markTaskRunning, completeTask, failTask, reclaimStaleTasks } from './agentTaskQueue'
 import { openExecution, closeExecution, appendExecutionEvent } from './agentExecutionLedger'
 import { buildAgentContext } from './agentContextBuilder'

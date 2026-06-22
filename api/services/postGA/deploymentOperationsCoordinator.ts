@@ -3,13 +3,7 @@
 
 import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
-import {
-  TenantLaunchRecord,
-  LaunchGate,
-  DeploymentReadinessStatus,
-  DEPLOYMENT_READINESS_THRESHOLD,
-  LAUNCH_VALIDATION_PASS_RATE,
-} from './postGATypes'
+import { TenantLaunchRecord, LaunchGate, DeploymentReadinessStatus, DEPLOYMENT_READINESS_THRESHOLD } from './postGATypes'
 
 // ─── Mapper ──────────────────────────────────────────────────────────────────
 

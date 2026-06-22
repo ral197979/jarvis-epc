@@ -1,11 +1,8 @@
 // Denver Engineering — Deployment Health Service (v8.0.0)
 // Health checks, rolling upgrade drain support, and deployment observability.
 
-import { tenantQuery } from '../../db/pool'
 import { pool } from '../../db/pool'
-import {
-  DeploymentHealthCheck, DeploymentHealthReport,
-} from './enterpriseTypes'
+import { DeploymentHealthCheck, DeploymentHealthReport } from './enterpriseTypes'
 
 // ─── Record a health check result ────────────────────────────────────────────
 

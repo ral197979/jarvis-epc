@@ -14,13 +14,8 @@
  */
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
-import { requireTenant, type TenantRequest }       from '../middleware/tenant'
-import {
-  createMember, listMembers, getMember, updateMember,
-  createAssignment, listAssignmentsByMember, listAssignmentsByProject,
-  endAssignment, getTeamSummary,
-  type MemberStatus, type AssignmentRole,
-} from '../services/team/teamService'
+import { requireTenant, type TenantRequest } from '../middleware/tenant'
+import { createMember, listMembers, getMember, updateMember, createAssignment, listAssignmentsByMember, listAssignmentsByProject, endAssignment, getTeamSummary, type MemberStatus } from '../services/team/teamService'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {

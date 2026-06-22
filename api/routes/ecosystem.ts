@@ -7,66 +7,27 @@ import { Router, Request, Response, NextFunction } from 'express'
 
 // ─── Service imports ──────────────────────────────────────────────────────────
 
-import {
-  setFederatedOptIn, isOptedIn, contributeData, publishPattern,
-  getPattern, listActivePatterns, createModelVersion, activateModelVersion,
-  withdrawContribution,
-} from '../services/ecosystem/federatedIntelligenceEngine'
+import { setFederatedOptIn, isOptedIn, contributeData, publishPattern, listActivePatterns, createModelVersion, activateModelVersion, withdrawContribution } from '../services/ecosystem/federatedIntelligenceEngine'
 
-import {
-  computeAndStoreCohort, getIndustryBenchmarks, getBenchmarkForMetric,
-  getTenantBenchmark, getReadinessBenchmarks, getSlaBenchmarks,
-} from '../services/ecosystem/benchmarkingService'
+import { getIndustryBenchmarks, getTenantBenchmark, getReadinessBenchmarks, getSlaBenchmarks } from '../services/ecosystem/benchmarkingService'
 
-import {
-  createPlaybook, getPlaybook, listPlaybooks, publishPlaybook,
-  installPlaybook, uninstallPlaybook, getTenantInstalls, submitPlaybookReview,
-  getPlaybookVersion,
-} from '../services/ecosystem/playbookMarketplaceService'
+import { createPlaybook, listPlaybooks, publishPlaybook, installPlaybook, uninstallPlaybook, submitPlaybookReview } from '../services/ecosystem/playbookMarketplaceService'
 
-import {
-  registerPlugin, getPlugin, listPlugins, updatePluginStatus, triggerKillSwitch,
-  addPluginVersion, installPlugin, rollbackPlugin, disablePlugin,
-  checkPluginPermission, getPluginAuditEvents,
-} from '../services/ecosystem/pluginRegistryService'
+import { registerPlugin, listPlugins, triggerKillSwitch, installPlugin, rollbackPlugin, disablePlugin } from '../services/ecosystem/pluginRegistryService'
 
-import {
-  registerExternalAgent, getExternalAgent, listExternalAgents,
-  updateAgentStatus, executeExternalAgent, authenticateAgent, getAgentCapabilities,
-} from '../services/ecosystem/externalAgentGateway'
+import { registerExternalAgent, executeExternalAgent, getAgentCapabilities } from '../services/ecosystem/externalAgentGateway'
 
-import {
-  createAdapter, getAdapter, listAdapters, deactivateAdapter,
-  ingestInboundEvent, sendOutboundEvent, markEventProcessed, getDeadLetterEvents,
-  listEvents,
-} from '../services/ecosystem/automationAdapterService'
+import { createAdapter, listAdapters, ingestInboundEvent } from '../services/ecosystem/automationAdapterService'
 
-import {
-  upsertEntity, getEntity, searchEntities, addRelationship,
-  getNeighborhood, queryGraph, getExplainablePath,
-} from '../services/ecosystem/knowledgeGraphService'
+import { getEntity, getNeighborhood, queryGraph } from '../services/ecosystem/knowledgeGraphService'
 
-import {
-  registerEdgeNode, getEdgeNode, listEdgeNodes, updateNodeStatus,
-  heartbeatNode, revokeEdgeNode, startSyncSession, completeSyncSession,
-  enqueueCommand, getPendingCommands, acknowledgeCommand, bufferAuditEvent,
-  flushAuditBuffer, getAllEdgeNodeStatuses,
-} from '../services/ecosystem/edgeNodeService'
+import { registerEdgeNode, listEdgeNodes, heartbeatNode, revokeEdgeNode, getAllEdgeNodeStatuses } from '../services/ecosystem/edgeNodeService'
 
-import {
-  activateLicense, getActiveLicense, revokeLicense, getAirGapStatus,
-  createPackage, verifyPackage,
-} from '../services/ecosystem/airGapModeService'
+import { activateLicense, getActiveLicense, getAirGapStatus } from '../services/ecosystem/airGapModeService'
 
-import {
-  generateCertificationEvidence, listCertificationExports, verifyExportIntegrity,
-} from '../services/ecosystem/certificationEvidenceService'
+import { generateCertificationEvidence, listCertificationExports } from '../services/ecosystem/certificationEvidenceService'
 
-import {
-  createWorkflow, getWorkflow, listWorkflows, updateWorkflowDefinition,
-  validateWorkflowPolicy, dryRunWorkflow, publishWorkflow, rollbackWorkflow,
-  getWorkflowVersions, getWorkflowRuns, pauseWorkflow,
-} from '../services/ecosystem/workflowComposerService'
+import { createWorkflow, listWorkflows, validateWorkflowPolicy, dryRunWorkflow, publishWorkflow, rollbackWorkflow, getWorkflowVersions } from '../services/ecosystem/workflowComposerService'
 
 const router = Router()
 

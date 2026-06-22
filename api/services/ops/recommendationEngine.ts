@@ -8,7 +8,6 @@
  * to upgrade recommendations without changing callers.
  */
 import { pool } from '../../db/pool'
-import { scoreAndRankActions, type ActionScoreInput } from '../actions/actionScoringService'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

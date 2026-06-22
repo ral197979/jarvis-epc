@@ -143,7 +143,7 @@ async function runDocumentationAgent(input: AgentExecutionInput): Promise<Record
 
 async function runRiskAgent(input: AgentExecutionInput): Promise<Record<string, unknown>> {
   const { task, execution } = input
-  const { tenantId, payload } = task
+  const { tenantId } = task
 
   // Query open high-priority actions as a risk proxy
   const res = await tenantQuery(tenantId,
@@ -176,8 +176,6 @@ async function runRiskAgent(input: AgentExecutionInput): Promise<Record<string, 
 // ─── SchedulingAgent ──────────────────────────────────────────────────────────
 
 async function runSchedulingAgent(input: AgentExecutionInput): Promise<Record<string, unknown>> {
-  const { task, execution } = input
-  const { tenantId } = task
 
   // Stub: real implementation would query scheduled_items and resolve conflicts
   return { scheduleUpdates: [], conflicts: [], optimized: true }
@@ -188,7 +186,7 @@ async function runSchedulingAgent(input: AgentExecutionInput): Promise<Record<st
 async function runResourceOptimizationAgent(
   input: AgentExecutionInput
 ): Promise<Record<string, unknown>> {
-  const { task, execution } = input
+  const { task } = input
   const { tenantId } = task
 
   // Query user workload
@@ -218,7 +216,7 @@ async function runIncidentResponseAgent(
   input: AgentExecutionInput
 ): Promise<Record<string, unknown>> {
   const { task, execution } = input
-  const { tenantId, payload } = task
+  const { tenantId } = task
 
   const severity = _computeSeverity(input.context.activeAlerts.length)
   const responders: string[] = []

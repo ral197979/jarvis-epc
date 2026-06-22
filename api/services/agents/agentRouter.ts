@@ -1,20 +1,8 @@
 // Denver Engineering — Agent Router (v5.0.0)
 // Routes task requests to the appropriate agent based on capability matching.
 
-import {
-  AgentType,
-  AgentCapability,
-  CreateTaskInput,
-  ExecutionPlan,
-  PlannedTask,
-} from './agentTypes'
-import {
-  getAgentForTaskType,
-  getCapabilityForTaskType,
-  getAllCapabilities,
-  requiresApprovalForTaskType,
-  getGovernanceLevel,
-} from './agentRegistry'
+import { AgentType, AgentCapability, ExecutionPlan, PlannedTask } from './agentTypes'
+import { getAgentForTaskType, getCapabilityForTaskType, getAllCapabilities, requiresApprovalForTaskType, getGovernanceLevel } from './agentRegistry'
 
 // ─── Routing ──────────────────────────────────────────────────────────────────
 

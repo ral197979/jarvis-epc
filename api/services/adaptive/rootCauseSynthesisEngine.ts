@@ -16,7 +16,7 @@ export async function synthesizeRootCause(
     anomalyIds?: string[]
   },
 ): Promise<RootCauseReport> {
-  const { entityId, entityType, windowHours = 24, anomalyIds = [] } = opts
+  const { entityId, windowHours = 24, anomalyIds = [] } = opts
 
   // Gather evidence in parallel
   const [anomalyEvidence, eventEvidence, stateEvidence] = await Promise.all([

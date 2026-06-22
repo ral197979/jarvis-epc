@@ -9,7 +9,6 @@ import { AnomalyPattern } from './adaptiveTypes'
 const DEFAULT_THRESHOLD = 2.0      // σ multiplier
 const MIN_THRESHOLD = 1.5
 const MAX_THRESHOLD = 4.0
-const LEARNING_RATE = 0.1
 
 // ─── Get or create pattern ────────────────────────────────────────────────────
 

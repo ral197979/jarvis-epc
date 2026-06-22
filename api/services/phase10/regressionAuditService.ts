@@ -3,11 +3,7 @@
 
 import { createHash } from 'crypto'
 import { pool } from '../../db/pool'
-import { tenantQuery } from '../../db/pool'
-import {
-  RegressionAuditRun, RegressionFailure, FailureClassification,
-  FLAKY_FLIP_THRESHOLD,
-} from './phase10Types'
+import { RegressionAuditRun, RegressionFailure, FailureClassification, FLAKY_FLIP_THRESHOLD } from './phase10Types'
 
 // ─── Audit Run CRUD ───────────────────────────────────────────────────────────
 

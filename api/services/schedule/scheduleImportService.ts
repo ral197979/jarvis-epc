@@ -5,9 +5,9 @@
  * Idempotent: re-importing the same external ID UPSERTs existing tasks.
  */
 import { tenantQuery } from '../../db/pool'
-import { parseXer }  from './xerParser'
-import { parseMsp }  from './mspParser'
-import type { ImportSchedule, ImportTask, ImportDependency } from './xerParser'
+import { parseXer } from './xerParser'
+import { parseMsp } from './mspParser'
+import type { ImportSchedule } from './xerParser'
 
 export type ImportFormat = 'xer' | 'mspdi'
 

@@ -2,12 +2,7 @@
 // Deterministic gate checks for production deployment readiness.
 
 import { pool } from '../../db/pool'
-import { tenantQuery } from '../../db/pool'
-import {
-  ProductionGateRun, ProductionGateCheck,
-  GateCategory, GateStatus,
-  PRODUCTION_GATE_PASS_THRESHOLD,
-} from './phase10Types'
+import { ProductionGateRun, ProductionGateCheck, GateCategory, GateStatus, PRODUCTION_GATE_PASS_THRESHOLD } from './phase10Types'
 
 // ─── Gate Runs ────────────────────────────────────────────────────────────────
 

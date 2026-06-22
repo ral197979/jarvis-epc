@@ -8,8 +8,6 @@ import { tenantQuery, tenantTransaction } from '../../db/pool'
 
 export type TimesheetStatus = 'draft' | 'submitted' | 'approved' | 'rejected'
 
-const DAYS = ['mon','tue','wed','thu','fri','sat','sun'] as const
-type Day = typeof DAYS[number]
 
 export interface Timesheet {
   id:           string

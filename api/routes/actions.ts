@@ -28,18 +28,15 @@
  */
 
 import { Router, Response } from 'express'
-import { tenantQuery, query } from '../db/pool'
+import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
-import {
-  createRelation, listRelations, deleteRelation,
-} from '../services/actions/actionRelationshipService'
-import { buildDependencyReport, batchBlockerStatus } from '../services/actions/actionDependencyGraph'
+import { createRelation, listRelations, deleteRelation } from '../services/actions/actionRelationshipService'
+import { buildDependencyReport } from '../services/actions/actionDependencyGraph'
 import { getActionTimeline, publishActionEvent } from '../services/actions/actionEventPublisher'
-import { pauseSla, resumeSla, computeRemainingMinutes } from '../services/sla/slaPolicyEngine'
+import { pauseSla, resumeSla } from '../services/sla/slaPolicyEngine'
 import { getOverview, getTrends, getWorkload } from '../services/actions/actionAnalyticsService'
-import { scoreAndRankActions, type ActionScoreInput } from '../services/actions/actionScoringService'
 
 type Req = AuthenticatedRequest & TenantRequest
 

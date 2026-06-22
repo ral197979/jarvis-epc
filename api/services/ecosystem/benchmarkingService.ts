@@ -3,10 +3,7 @@
 // aggregate bands only, no identifiable tenant ranking.
 
 import { pool } from '../../db/pool'
-import { tenantQuery } from '../../db/pool'
-import {
-  BenchmarkMetric, BenchmarkCohort, TenantBenchmarkResult, MIN_BENCHMARK_COHORT,
-} from './ecosystemTypes'
+import { BenchmarkMetric, BenchmarkCohort, TenantBenchmarkResult, MIN_BENCHMARK_COHORT } from './ecosystemTypes'
 
 // ─── Cohort computation (admin) ───────────────────────────────────────────────
 

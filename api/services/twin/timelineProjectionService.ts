@@ -12,7 +12,7 @@ export async function projectTwinTimeline(
   tenantId: string,
   horizonDays = 30
 ): Promise<TemporalProjection> {
-  const [readinessTrend, riskHistory, workloadRes] = await Promise.all([
+  const [readinessTrend, , workloadRes] = await Promise.all([
     getScoreTrend(twinId, tenantId, 'readinessScore', 30),
     getScoreTrend(twinId, tenantId, 'riskScore', 30),
     tenantQuery(

@@ -28,7 +28,7 @@
  *   })
  */
 
-import { query, tenantQuery } from '../db/pool'
+import { query } from '../db/pool'
 import { slog } from '../../src/modules/observability/index'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

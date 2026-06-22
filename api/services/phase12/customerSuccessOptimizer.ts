@@ -3,7 +3,7 @@
 
 import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
-import { CustomerSuccessScore, MaturityLevel, MATURITY_SCORE_THRESHOLD, CHURN_RISK_SCORE_THRESHOLD } from './phase12Types'
+import { CustomerSuccessScore, MaturityLevel, CHURN_RISK_SCORE_THRESHOLD } from './phase12Types'
 
 // ─── Mapper ──────────────────────────────────────────────────────────────────
 
