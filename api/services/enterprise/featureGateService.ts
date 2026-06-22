@@ -3,7 +3,7 @@
 // Middleware-compatible feature gating, quota enforcement, and entitlement resolution.
 
 import { tenantQuery } from '../../db/pool'
-import { TenantFeatureFlag, SetFeatureFlagInput, FEATURE_KEYS } from './enterpriseTypes'
+import { TenantFeatureFlag, SetFeatureFlagInput } from './enterpriseTypes'
 import { _mapFeatureFlag } from './tenantProvisioningService'
 
 // ─── Check if feature is enabled ─────────────────────────────────────────────

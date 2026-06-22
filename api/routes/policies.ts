@@ -34,7 +34,7 @@ policiesRouter.get('/', async (req: Request, res: Response) => {
 // ─── Create policy ────────────────────────────────────────────────────────────
 policiesRouter.post('/', async (req: Request, res: Response) => {
   const r = req as PolicyReq
-  const { name, description, scope = 'tenant', scope_id, policy_type, rules, priority = 100 } = req.body
+  const { name, scope = 'tenant', scope_id, policy_type, rules, priority = 100 } = req.body
   if (!name || !policy_type || !Array.isArray(rules)) {
     res.status(400).json({ error: 'name, policy_type, and rules[] are required' }); return
   }

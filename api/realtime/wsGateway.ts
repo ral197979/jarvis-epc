@@ -10,7 +10,7 @@
 import { WebSocketServer, type WebSocket } from 'ws'
 import type { IncomingMessage, Server } from 'http'
 import { randomBytes } from 'crypto'
-import { initSubscriptionManager, getSubscriptionManager } from './subscriptionManager'
+import { initSubscriptionManager } from './subscriptionManager'
 import { replayEvents } from './eventBroadcaster'
 import type { SubscriptionScope } from './eventBroadcaster'
 import { consumeWsTicket } from './wsTicket'

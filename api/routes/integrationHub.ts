@@ -8,11 +8,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
-import {
-  registerConnector, listConnectors, getConnectorHealth,
-  enqueueIntegrationJob, claimIntegrationJob,
-  completeIntegrationJob, failIntegrationJob,
-} from '../services/integration/connectorFramework'
+import { registerConnector, listConnectors, getConnectorHealth, enqueueIntegrationJob, completeIntegrationJob, failIntegrationJob } from '../services/integration/connectorFramework'
 
 export const integrationHubRouter = Router()
 const auth = requireAuth as never

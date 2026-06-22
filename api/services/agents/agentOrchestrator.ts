@@ -3,17 +3,10 @@
 // Plans multi-agent execution trees, coordinates handoffs, enforces governance.
 
 import { randomUUID } from 'crypto'
-import {
-  OrchestratorInput,
-  OrchestratorResult,
-  ExecutionPlan,
-  AgentContext,
-  PolicyCheckResult,
-} from './agentTypes'
+import { OrchestratorInput, OrchestratorResult } from './agentTypes'
 import { planExecution, RoutingHint } from './agentRouter'
 import { enqueueTask } from './agentTaskQueue'
 import { openExecution } from './agentExecutionLedger'
-import { buildAgentContext } from './agentContextBuilder'
 import { checkGovernance } from './agentGovernanceService'
 
 // ─── Objective → routing hint mappings ──────────────────────────────────────

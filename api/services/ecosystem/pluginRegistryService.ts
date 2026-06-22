@@ -5,10 +5,7 @@
 import { createHash } from 'crypto'
 import { pool } from '../../db/pool'
 import { tenantQuery } from '../../db/pool'
-import {
-  Plugin, PluginVersion, TenantPluginInstall, PluginPermission,
-  PluginAuditEvent, PluginType, PluginStatus,
-} from './ecosystemTypes'
+import { Plugin, PluginVersion, TenantPluginInstall, PluginAuditEvent, PluginType, PluginStatus } from './ecosystemTypes'
 
 // ─── Plugin registry CRUD ─────────────────────────────────────────────────────
 

@@ -3,7 +3,7 @@
 // Track go-live milestones and activation status across pilot customers
 
 import { pool } from '../../db/pool'
-import { PilotTenant, PilotStatus } from './phase11Types'
+import { PilotTenant } from './phase11Types'
 
 // ─── Go-Live Milestone ────────────────────────────────────────────────────────
 

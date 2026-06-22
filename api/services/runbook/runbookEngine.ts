@@ -14,7 +14,7 @@
  * - Every step result is immutable (insert-only)
  */
 
-import { pool, tenantQuery  } from '../../db/pool'
+import { tenantQuery } from '../../db/pool'
 import { publishActionEvent } from '../actions/actionEventPublisher'
 import { broadcastEvent } from '../../realtime/eventBroadcaster'
 

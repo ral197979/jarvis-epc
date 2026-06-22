@@ -16,7 +16,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
-import { createAction, completeAction } from '../services/actionService'  // v4.33.0 Ava
+import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type Req = AuthenticatedRequest & TenantRequest
 

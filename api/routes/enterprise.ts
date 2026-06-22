@@ -5,42 +5,17 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
-import {
-  provisionTenant, getSubscription, transitionLifecycle,
-  getLifecycleHistory, listSubscriptions,
-} from '../services/enterprise/tenantProvisioningService'
-import {
-  isFeatureEnabled, getFeatureConfig, setFeatureFlag,
-  listFeatureFlags, requireFeature, checkApiQuota, checkSeatQuota,
-  resolveEntitlements,
-} from '../services/enterprise/featureGateService'
-import {
-  recordUsage, getUsageRecords, getUsageSummary, getCurrentMonthSummary,
-} from '../services/enterprise/tenantUsageTracker'
-import {
-  recordAiUsage, getAiUsageRecords, getAiBudgetStatus, getAiCostByAgent,
-} from '../services/enterprise/aiCostTracker'
-import {
-  computeHealthScore,
-} from '../services/enterprise/customerHealthEngine'
-import {
-  createTicket, getTicket, listTickets, updateTicketStatus, escalateTicket, getSlaBreaches,
-} from '../services/enterprise/supportOperationsService'
-import {
-  requestExport, getExport, listExports,
-} from '../services/enterprise/complianceExportEngine'
-import {
-  generateHealthReport, runPlatformChecks, recordHealthCheck,
-} from '../services/enterprise/deploymentHealthService'
-import {
-  createDemoTenant, getDemoTenant, listDemoTenants, resetDemoTenant,
-} from '../services/enterprise/demoTenantGenerator'
-import {
-  createApiKey, listApiKeys, revokeApiKey,
-} from '../services/enterprise/apiGatewayService'
-import {
-  archiveTenant, suspendTenant, reactivateTenant,
-} from '../services/enterprise/tenantArchivalService'
+import { provisionTenant, getSubscription, transitionLifecycle, getLifecycleHistory, listSubscriptions } from '../services/enterprise/tenantProvisioningService'
+import { isFeatureEnabled, getFeatureConfig, setFeatureFlag, listFeatureFlags, checkApiQuota, checkSeatQuota, resolveEntitlements } from '../services/enterprise/featureGateService'
+import { recordUsage, getUsageRecords, getCurrentMonthSummary } from '../services/enterprise/tenantUsageTracker'
+import { recordAiUsage, getAiUsageRecords, getAiBudgetStatus, getAiCostByAgent } from '../services/enterprise/aiCostTracker'
+import { computeHealthScore } from '../services/enterprise/customerHealthEngine'
+import { createTicket, getTicket, listTickets, updateTicketStatus, escalateTicket, getSlaBreaches } from '../services/enterprise/supportOperationsService'
+import { requestExport, getExport, listExports } from '../services/enterprise/complianceExportEngine'
+import { generateHealthReport, runPlatformChecks, recordHealthCheck } from '../services/enterprise/deploymentHealthService'
+import { createDemoTenant, listDemoTenants, resetDemoTenant } from '../services/enterprise/demoTenantGenerator'
+import { createApiKey, listApiKeys, revokeApiKey } from '../services/enterprise/apiGatewayService'
+import { archiveTenant, suspendTenant, reactivateTenant } from '../services/enterprise/tenantArchivalService'
 
 type Req = AuthenticatedRequest & TenantRequest
 
