@@ -22,14 +22,34 @@
 | Storage controls (prod bucket: versioning/lifecycle/IAM) | 🔴 Pending (operator) |
 | Alert classes (prod firing/routing/escalation) | 🔴 Pending (operator) |
 
+## 1b. Production Certification Execution (Phases 1–7) — 2026-06-22
+
+Executed the production operations certification program. Reports in `audit/certification/`.
+**Two gating facts:** (a) PR [#1](https://github.com/ral197979/jarvis-epc/pull/1) is **not merged** — the audited release is **not deployed**, so production cannot match the release; (b) **no production/cloud access** in this environment. All production evidence is therefore PENDING (not fabricated).
+
+| Phase | Report | Local evidence | Production status |
+|---|---|---|---|
+| 1 Deployment | `PRODUCTION_DEPLOYMENT_REPORT.md` | build reproducible | ⛔ PENDING (release undeployed) |
+| 2 Monitoring | `MONITORING_CERTIFICATION_REPORT.md` | rules valid + fired | 🔴 PENDING (deploy) |
+| 3 Backup | `BACKUP_CERTIFICATION_REPORT.md` | restore drill + integrity | 🔴 PENDING (PITR/prod drill) |
+| 4 DR | `DISASTER_RECOVERY_REPORT.md` | recovery mechanics + runbooks | 🔴 PENDING (failure injection) |
+| 5 Storage | `STORAGE_CERTIFICATION_REPORT.md` | **encrypted up/down verified** | 🔴 PENDING (bucket controls) |
+| 6 Alerts | `ALERT_CERTIFICATION_REPORT.md` | 2/5 fired, all valid | 🔴 PENDING (prod trigger/route) |
+| 7 Load | `LOAD_VALIDATION_REPORT.md` | single-instance profile | 🔴 PENDING (prod-scale) |
+
 ## 2. Final Status
 
-### 🟡 OPERATIONS CERTIFIED WITH EXCEPTIONS
+### 🔴 CERTIFICATION DEFERRED
 
-Engineering certification is complete and evidence-backed. Production operations
-certification is **deferred pending the operator-gated evidence** below. This is
-**not** "Fully Enterprise Certified" — that requires all production evidence
-attached (it is not, and was not fabricated).
+Engineering certification is complete and evidence-backed (1 Critical + 8 High + OPS-001/002/004
+closed and verified; strong local/staging-equivalent evidence collected). **Production operations
+certification is DEFERRED** because production validation has not been performed: the audited
+release is not yet deployed (PR #1 open) and no production/cloud environment is accessible to this
+executor. No production evidence was fabricated.
+
+This is **not** "Operations Certified" (requires all production evidence) and **not** "Fully
+Enterprise Certified." It converts to **Operations Certified** once the §3 checklist evidence is
+collected against the deployed release, and to 🏆 thereafter.
 
 ## 3. Production Validation Checklist (operator — `audit/evidence/operator-kit.sh`)
 
