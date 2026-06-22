@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Plugin Registry Service (v9.0.0)
 // Secure extension system: explicit permissions, version pinning, rollback, kill switch.
 
@@ -240,13 +241,16 @@ export async function checkPluginPermission(
 
 export async function getPluginAuditEvents(
   pluginId: string,
-  tenantId?: string,
+  tenantId: string,
 ): Promise<PluginAuditEvent[]> {
+  // AUD-003: tenantId is mandatory. The prior `($2::uuid IS NULL OR ...)`
+  // escape allowed a null tenant to read audit events across ALL tenants.
+  if (!tenantId) throw new Error('tenantId is required')
   const res = await pool.query(
     `SELECT * FROM plugin_audit_events
-     WHERE plugin_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
+     WHERE plugin_id = $1 AND tenant_id = $2
      ORDER BY created_at DESC`,
-    [pluginId, tenantId ?? null],
+    [pluginId, tenantId],
   )
   return res.rows.map(_mapAuditEvent)
 }

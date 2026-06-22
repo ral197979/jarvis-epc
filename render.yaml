@@ -1,16 +1,49 @@
+# ─── Production Infrastructure ───────────────────────────────────────────────
+# Branch: main  |  Auto-deploy: true
+# Plans: standard-4gb DB, starter Redis (1GB noeviction), standard Web, starter Worker
+# Estimated cost: ~$110/mo (DB $85 + Redis $10 + Web $7 + Worker $7 + egress)
+
 databases:
   - name: jarvis-epc-db
     databaseName: jarvis_epc
-    plan: basic-256mb
+    plan: standard-4gb
+    postgresMajorVersion: '16'
+
+  # Phase 3: Staging environment — production-parity at reduced cost.
+  # Branch: develop (configure deploy branch in Render dashboard)
+  # Separate DB prevents staging data from touching production.
+  # standard-1gb gives the same PostgreSQL features as production (RLS,
+  # pg_vector, triggers, functions) with enough capacity for realistic test data.
+  - name: jarvis-epc-db-staging
+    databaseName: jarvis_epc_staging
+    plan: standard-1gb       # production uses standard-4gb; 1gb is sufficient for staging
     postgresMajorVersion: '16'
 
 services:
+  # ─── Production Redis ───────────────────────────────────────────────────────
+  # Phase 2G: Upgraded from free (25MB) to starter (1GB).
+  # The 25MB free plan silently evicts token revocation records at ~1k users,
+  # allowing revoked refresh tokens to be reused after eviction.
+  - type: redis
+    name: jarvis-epc-redis
+    plan: starter             # was: free — 25MB → 1GB
+    maxmemoryPolicy: noeviction  # token revocation must never be evicted silently
+
+  # ─── Staging Redis ──────────────────────────────────────────────────────────
+  # Production-parity: same plan and eviction policy as production.
+  # Ensures staging catches any token-revocation issues before they reach prod.
+  - type: redis
+    name: jarvis-epc-redis-staging
+    plan: starter
+    maxmemoryPolicy: noeviction
+
+  # ─── Production Web (HTTP API + SPA) ─────────────────────────────────────
   - type: web
     name: jarvis-epc
     runtime: node
-    plan: free
+    plan: standard
     autoDeploy: true
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install --include=dev && npm run typecheck && npm run lint && npm test -- --run && npm run build
     startCommand: npm run api:start
     healthCheckPath: /api/v1/health
     envVars:
@@ -20,9 +53,16 @@ services:
         value: '20'
       - key: SERVE_STATIC
         value: '1'
+      - key: WORKER_ONLY
+        value: 'false'        # HTTP server: worker registration handled by worker service
       - key: DATABASE_URL
         fromDatabase:
           name: jarvis-epc-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: jarvis-epc-redis
           property: connectionString
       - key: SESSION_SECRET
         generateValue: true
@@ -30,3 +70,250 @@ services:
         generateValue: true
       - key: PORT
         value: '10000'
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TOGETHER_AI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: S3_BUCKET
+        sync: false           # OPS-001: env-specific bucket name
+      - key: AWS_REGION
+        value: us-east-1      # OPS-001: adjust to bucket region
+      - key: AWS_ACCESS_KEY_ID
+        sync: false           # OPS-001: storage credential (secret)
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false           # OPS-001: storage credential (secret)
+      - key: S3_SSE
+        value: AES256         # OPS-002: server-side encryption at rest
+      - key: EMBED_PROVIDER
+        value: openai
+      - key: EMBED_DIMENSIONS
+        value: '1536'
+      - key: EMBED_MAX_INPUT_CHARS
+        value: '8000'
+      - key: MAX_FILE_SIZE_MB
+        value: '50'
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_SSL
+        value: 'true'
+      - key: DB_POOL_MIN
+        value: '2'
+      - key: DB_POOL_MAX
+        value: '20'
+      - key: API_BASE_URL
+        sync: false           # e.g. https://api.yourdomain.com — required for SAML metadata
+      - key: APP_BASE_URL
+        sync: false           # e.g. https://app.yourdomain.com — for SAML post-login redirect
+      - key: SAML_SP_CERT
+        sync: false           # PEM cert for SAML SP signing
+      - key: SAML_SP_KEY
+        sync: false           # PEM private key for SAML SP signing
+      - key: SAML_CONTACT_EMAIL
+        sync: false           # Technical contact for SP metadata
+      - key: SENTRY_DSN
+        sync: false           # Sentry error tracking DSN
+      - key: METRICS_TOKEN
+        sync: false           # Phase 3: Prometheus scrape bearer token
+
+  # ─── Staging Web (HTTP API + SPA) ────────────────────────────────────────
+  # Deploy branch: develop (set in Render dashboard under service settings)
+  # autoDeploy: false — staging deploys are triggered by CI after tests pass,
+  # not on every push. Prevents broken commits from polluting the staging URL.
+  - type: web
+    name: jarvis-epc-staging
+    runtime: node
+    plan: starter             # $7/mo — staging doesn't need production-level resources
+    autoDeploy: false         # CI triggers deploys; Render auto-deploy is off
+    buildCommand: npm install --include=dev && npm run typecheck && npm run lint && npm test -- --run && npm run build
+    startCommand: npm run api:start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: NODE_VERSION
+        value: '20'
+      - key: SERVE_STATIC
+        value: '1'
+      - key: WORKER_ONLY
+        value: 'false'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jarvis-epc-db-staging
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: jarvis-epc-redis-staging
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: '10000'
+      - key: ANTHROPIC_API_KEY
+        sync: false           # Use a separate staging API key if budget allows
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TOGETHER_AI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false           # e.g. https://staging.yourdomain.com
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: S3_BUCKET
+        sync: false           # OPS-001: env-specific bucket name
+      - key: AWS_REGION
+        value: us-east-1      # OPS-001: adjust to bucket region
+      - key: AWS_ACCESS_KEY_ID
+        sync: false           # OPS-001: storage credential (secret)
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false           # OPS-001: storage credential (secret)
+      - key: S3_SSE
+        value: AES256         # OPS-002: server-side encryption at rest
+      - key: EMBED_PROVIDER
+        value: openai
+      - key: EMBED_DIMENSIONS
+        value: '1536'
+      - key: EMBED_MAX_INPUT_CHARS
+        value: '8000'
+      - key: MAX_FILE_SIZE_MB
+        value: '50'
+      - key: LOG_LEVEL
+        value: debug          # more verbose on staging for easier debugging
+      - key: DB_SSL
+        value: 'true'
+      - key: DB_POOL_MIN
+        value: '2'
+      - key: DB_POOL_MAX
+        value: '10'           # lower than production; staging has lower concurrency
+      - key: API_BASE_URL
+        sync: false           # e.g. https://api-staging.yourdomain.com
+      - key: APP_BASE_URL
+        sync: false           # e.g. https://staging.yourdomain.com
+      - key: SAML_SP_CERT
+        sync: false           # Separate staging SP cert (don't reuse production cert)
+      - key: SAML_SP_KEY
+        sync: false
+      - key: SAML_CONTACT_EMAIL
+        sync: false
+      - key: SENTRY_DSN
+        sync: false           # Use a separate staging Sentry project / environment tag
+      - key: METRICS_TOKEN
+        sync: false           # Prometheus scrape bearer token
+
+  # ─── Production Worker ────────────────────────────────────────────────────
+  # Phase 2D: Dedicated worker process — separated from HTTP server.
+  # Benefits:
+  #   1. Workers can be restarted independently from the API
+  #   2. CPU-bound jobs (PDF, IFC parse) don't delay HTTP responses
+  #   3. Multiple API instances can share one worker (no double-fire)
+  #   4. Worker failures don't take down the HTTP server
+  - type: worker
+    name: jarvis-epc-workers
+    runtime: node
+    plan: starter
+    autoDeploy: true
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: node --experimental-vm-modules dist/api/worker.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '20'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jarvis-epc-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: jarvis-epc-redis
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false           # shared with web service via Render secret groups
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_SSL
+        value: 'true'
+      - key: DB_POOL_MIN
+        value: '1'
+      - key: DB_POOL_MAX
+        value: '5'
+      - key: SENTRY_DSN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: S3_BUCKET
+        sync: false           # OPS-001: env-specific bucket name
+      - key: AWS_REGION
+        value: us-east-1      # OPS-001: adjust to bucket region
+      - key: AWS_ACCESS_KEY_ID
+        sync: false           # OPS-001: storage credential (secret)
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false           # OPS-001: storage credential (secret)
+      - key: S3_SSE
+        value: AES256         # OPS-002: server-side encryption at rest
+
+  # ─── Staging Worker ───────────────────────────────────────────────────────
+  # Mirrors production worker architecture so background job failures
+  # are caught in staging before reaching production.
+  - type: worker
+    name: jarvis-epc-workers-staging
+    runtime: node
+    plan: starter
+    autoDeploy: false         # triggered by CI alongside staging web deploy
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: node --experimental-vm-modules dist/api/worker.js
+    envVars:
+      - key: NODE_ENV
+        value: staging
+      - key: NODE_VERSION
+        value: '20'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jarvis-epc-db-staging
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: jarvis-epc-redis-staging
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: LOG_LEVEL
+        value: debug
+      - key: DB_SSL
+        value: 'true'
+      - key: DB_POOL_MIN
+        value: '1'
+      - key: DB_POOL_MAX
+        value: '3'
+      - key: SENTRY_DSN
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: S3_BUCKET
+        sync: false           # OPS-001: env-specific bucket name
+      - key: AWS_REGION
+        value: us-east-1      # OPS-001: adjust to bucket region
+      - key: AWS_ACCESS_KEY_ID
+        sync: false           # OPS-001: storage credential (secret)
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false           # OPS-001: storage credential (secret)
+      - key: S3_SSE
+        value: AES256         # OPS-002: server-side encryption at rest

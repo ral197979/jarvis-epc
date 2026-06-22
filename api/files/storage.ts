@@ -21,7 +21,14 @@
 import fs        from 'node:fs'
 import path      from 'node:path'
 import crypto    from 'node:crypto'
+import { createRequire } from 'node:module'
 import { slog }  from '../../src/modules/observability/index'
+
+// OPS-001: this project is ESM ("type":"module"), where the bare `require` used
+// by the S3 backend's lazy SDK loading is undefined. createRequire restores a
+// working require bound to this module so the AWS SDK is loaded only when the
+// S3 backend is actually selected (no eager cost for the local backend).
+const require = createRequire(import.meta.url)
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +37,7 @@ export interface PresignUploadResult {
   uploadToken?: string // returned for local backend (replaces presigned URL)
   key:        string   // storage key to persist in DB
   expiresAt:  Date
+  requiredHeaders?: Record<string, string> // headers the client MUST send on the PUT (e.g. SSE)
 }
 
 export interface PresignDownloadResult {
@@ -68,6 +76,10 @@ export interface IStorage {
 const LOCAL_DIR   = process.env['STORAGE_LOCAL_DIR'] ?? path.join(process.cwd(), 'uploads')
 const PUBLIC_URL  = process.env['VITE_BACKEND_URL'] ?? 'http://localhost:3001'
 const TOKEN_TTL   = 3600  // 1 hour presigned token validity
+// OPS-002: enforce server-side encryption at rest on every S3 upload path.
+// 'AES256' = SSE-S3 (S3-managed keys). Set S3_SSE='aws:kms' + S3_SSE_KMS_KEY_ID
+// to use SSE-KMS instead.
+const SSE_ALGORITHM = process.env['S3_SSE'] ?? 'AES256'
 
 class LocalStorage implements IStorage {
   constructor() {
@@ -211,12 +223,15 @@ class S3Storage implements IStorage {
     const expiresIn  = TOKEN_TTL
     const expiresAt  = new Date(Date.now() + expiresIn * 1000)
     const cmd = new PutObjectCommand({
-      Bucket:      this._bucket,
-      Key:         key,
-      ContentType: opts?.mimeType,
+      Bucket:              this._bucket,
+      Key:                 key,
+      ContentType:         opts?.mimeType,
+      ServerSideEncryption: SSE_ALGORITHM,   // OPS-002: enforce encryption at rest
     })
     const uploadUrl = await getSignedUrl(this._client, cmd, { expiresIn })
-    return { uploadUrl, key, expiresAt }
+    // The SSE algorithm is a signed header on the presigned PUT; the uploading
+    // client must echo it. Surfaced here so callers can set it on the PUT.
+    return { uploadUrl, key, expiresAt, requiredHeaders: { 'x-amz-server-side-encryption': SSE_ALGORITHM } }
   }
 
   async presignDownload(key: string, ttlSeconds = 3600): Promise<PresignDownloadResult> {
@@ -278,7 +293,10 @@ class S3Storage implements IStorage {
     const { Upload } = require('@aws-sdk/lib-storage')
     const upload = new Upload({
       client: this._client,
-      params: { Bucket: this._bucket, Key: key, Body: stream, ContentType: mimeType },
+      params: {
+        Bucket: this._bucket, Key: key, Body: stream, ContentType: mimeType,
+        ServerSideEncryption: SSE_ALGORITHM,   // OPS-002: encryption at rest
+      },
     })
     const result = await upload.done()
     const meta   = await this.getMetadata(key)

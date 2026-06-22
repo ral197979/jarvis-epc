@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Integrations Routes + Webhook Dispatcher
  * ───────────────────────────────────────────────────────
@@ -25,6 +26,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { assertSafeUrl, SsrfBlockedError } from '../lib/ssrfGuard'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -109,6 +111,21 @@ async function _deliverWebhook(opts: {
 }): Promise<void> {
   const { tenantId, webhook, body, signature, timestamp, attempt } = opts
   const start = Date.now()
+
+  // AUD-004: refuse to deliver to internal/loopback/link-local (cloud metadata)
+  // targets. Record the block and do NOT retry (retrying never succeeds).
+  try {
+    await assertSafeUrl(webhook.url)
+  } catch (err) {
+    if (err instanceof SsrfBlockedError) {
+      await tenantQuery(tenantId, `
+        UPDATE webhook_deliveries SET error=$1, duration_ms=0 WHERE webhook_id=$2 AND delivered_at IS NULL ORDER BY created_at DESC LIMIT 1
+      `, [err.message, webhook.id]).catch(() => {})
+      slog('WARN', 'integrations', '[webhook] blocked SSRF target', { webhookId: webhook.id, url: webhook.url })
+      return
+    }
+    throw err
+  }
 
   try {
     const controller = new AbortController()
@@ -263,13 +280,18 @@ integrationsRouter.post('/:id/test', async (req: Req, res: Response) => {
   // Connectivity test (simple HTTP GET to base_url/health or ping)
   let ok = false; let message = 'No base_url configured'
   if (integration.base_url) {
+    const healthUrl = `${integration.base_url}/health`
     try {
+      // AUD-005: block SSRF / internal port-scanning via integration base_url.
+      await assertSafeUrl(healthUrl)
       const ctrl = new AbortController()
       const t = setTimeout(() => ctrl.abort(), 5000)
-      const r = await fetch(`${integration.base_url}/health`, { signal: ctrl.signal }).finally(() => clearTimeout(t))
+      const r = await fetch(healthUrl, { signal: ctrl.signal }).finally(() => clearTimeout(t))
       ok = r.ok
       message = `HTTP ${r.status}`
-    } catch (e) { message = (e as Error)?.message ?? 'Connection failed' }
+    } catch (e) {
+      message = e instanceof SsrfBlockedError ? 'blocked: target not permitted' : ((e as Error)?.message ?? 'Connection failed')
+    }
   }
 
   await tenantQuery(tenantId, `

@@ -194,17 +194,14 @@ describe('POST /api/v1/mcp/execute — native tools', () => {
     expect(res.body.error).toMatch(/messages/)
   })
 
-  it('executes http_fetch with open allowlist (no env var set)', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true, status: 200, text: async () => '{"hello":"world"}',
-      headers: { entries: () => [['content-type', 'application/json']] },
-    })
+  it('blocks http_fetch by default when no allowlist is set (AUD-005 default-deny)', async () => {
+    // No mockFetch queued: the request must be refused BEFORE any outbound fetch.
     const res = await request(app).post('/api/v1/mcp/execute').send({
       tool: 'http_fetch', params: { url: 'https://api.example.com/data', method: 'GET' },
     })
-    expect(res.status).toBe(200)
-    expect(res.body.ok).toBe(true)
-    expect(res.body.status).toBe(200)
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('domain_not_allowed')
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
   it('blocks http_fetch when domain not in allowlist', async () => {
@@ -237,6 +234,9 @@ describe('POST /api/v1/mcp/execute — native tools', () => {
   })
 
   it('returns 400 for http_fetch with forbidden method', async () => {
+    // Allowlist the host so the request passes the domain gate and reaches the
+    // method-validation step (which rejects CONNECT before any fetch).
+    process.env['MCP_FETCH_ALLOWLIST'] = 'example.com'
     const res = await request(app).post('/api/v1/mcp/execute').send({
       tool: 'http_fetch', params: { url: 'https://example.com', method: 'CONNECT' },
     })

@@ -102,12 +102,33 @@ export const scimOperationTotal = new client.Counter({
   registers: [registry],
 })
 
+// ─── Health / backup gauges (OPS-003: grounded series for alert rules) ─────────
+
+export const dbUp = new client.Gauge({
+  name: 'denver_db_up',
+  help: '1 if the database health check passed on the last probe, else 0',
+  registers: [registry],
+})
+
+export const backupLastSuccess = new client.Gauge({
+  name: 'denver_backup_last_success_timestamp_seconds',
+  help: 'Unix timestamp (seconds) of the last successful database backup',
+  registers: [registry],
+})
+
+/** Update the db_up gauge from a health probe result. */
+export function setDbUp(ok: boolean): void { dbUp.set(ok ? 1 : 0) }
+
+/** Record a successful backup (call from the backup job/cron). */
+export function recordBackupSuccess(epochSeconds: number): void { backupLastSuccess.set(epochSeconds) }
+
 // ─── HTTP middleware ───────────────────────────────────────────────────────────
 //
 // Mount BEFORE routes. Normalises paths so /api/v1/projects/uuid/...
 // becomes /api/v1/projects/:id/... to avoid high-cardinality label explosion.
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
+const SLUG_RE = /\/[a-z0-9-]{3,64}(\/|$)/g  // only normalise tenant slug segments
 
 function normalisePath(path: string): string {
   // Replace UUIDs with :id
@@ -133,10 +154,21 @@ export function metricsMiddleware(req: Request, res: Response, next: NextFunctio
 //   app.get('/metrics', metricsHandler)
 
 export async function metricsHandler(req: Request, res: Response): Promise<void> {
-  // Token auth when METRICS_TOKEN is configured.
-  // NOTE: base/pre-audit behavior. OPS-004 (fail-closed) is applied in PR #1.
+  // OPS-004: FAIL CLOSED. Previously, when METRICS_TOKEN was unset the endpoint
+  // served metrics to anyone (route inventory, traffic, auth-failure counts). It
+  // now requires a configured token + a matching Bearer credential in ALL cases.
   const token = process.env['METRICS_TOKEN']
-  if (token) {
+  if (!token) {
+    // Misconfiguration must not expose metrics. In non-production, allow only
+    // localhost so local dev still works; otherwise deny.
+    const isProd = process.env['NODE_ENV'] === 'production'
+    const ip = req.ip ?? req.socket?.remoteAddress ?? ''
+    const isLocal = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1'
+    if (isProd || !isLocal) {
+      res.status(503).json({ error: 'metrics_unconfigured', message: 'METRICS_TOKEN is not configured.' })
+      return
+    }
+  } else {
     const authHeader = req.headers['authorization'] ?? ''
     if (authHeader !== `Bearer ${token}`) {
       res.status(401).set('WWW-Authenticate', 'Bearer').end()
@@ -148,7 +180,7 @@ export async function metricsHandler(req: Request, res: Response): Promise<void>
     const output = await registry.metrics()
     res.set('Content-Type', registry.contentType)
     res.end(output)
-  } catch {
+  } catch (err) {
     res.status(500).end()
   }
 }

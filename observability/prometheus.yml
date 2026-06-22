@@ -1,0 +1,63 @@
+# Denver Engineering — Prometheus Scrape Configuration
+# Phase 3: wired to /metrics endpoint exposed by prom-client
+
+global:
+  scrape_interval:     15s   # how often to scrape each target
+  evaluation_interval: 15s   # how often to evaluate alerting rules
+  scrape_timeout:      10s
+
+# ─── Alert rules (OPS-003) ────────────────────────────────────────────────────
+rule_files:
+  - /etc/prometheus/alert_rules.yml
+
+# ─── Alertmanager (OPS-003: routing + escalation) ─────────────────────────────
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+# ─── Scrape targets ───────────────────────────────────────────────────────────
+
+scrape_configs:
+
+  # ── Local development (default: no METRICS_TOKEN required) ────────────────
+  - job_name: 'denver-engineering-local'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['api:3001']        # 'api' resolves via docker-compose network
+        labels:
+          env: local
+    metrics_path: /metrics
+
+  # ── Staging ───────────────────────────────────────────────────────────────
+  # Uncomment and set METRICS_TOKEN before enabling.
+  #
+  # - job_name: 'denver-engineering-staging'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets: ['api-staging.yourcompany.com:443']
+  #       labels:
+  #         env: staging
+  #   scheme: https
+  #   metrics_path: /metrics
+  #   authorization:
+  #     credentials: '<METRICS_TOKEN>'
+
+  # ── Production ────────────────────────────────────────────────────────────
+  # Uncomment and set METRICS_TOKEN before enabling.
+  #
+  # - job_name: 'denver-engineering-production'
+  #   scrape_interval: 15s
+  #   static_configs:
+  #     - targets: ['api.yourcompany.com:443']
+  #       labels:
+  #         env: production
+  #   scheme: https
+  #   metrics_path: /metrics
+  #   authorization:
+  #     credentials: '<METRICS_TOKEN>'
+
+  # ── Prometheus self-monitoring ────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

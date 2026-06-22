@@ -631,12 +631,23 @@ describe('pluginRegistryService coverage', () => {
     expect(sql).toContain('is_active = FALSE')
   })
 
-  it('getPluginAuditEvents queries plugin_audit_events', async () => {
+  it('getPluginAuditEvents queries plugin_audit_events scoped to a tenant', async () => {
     mockPool.mockResolvedValueOnce(mockRows([makePluginAuditRow()]))
     const { getPluginAuditEvents } = await import('../../../api/services/ecosystem/pluginRegistryService')
-    const events = await getPluginAuditEvents('plugin-1')
+    const events = await getPluginAuditEvents('plugin-1', 'tenant-1')
     expect(events.length).toBe(1)
     expect(events[0]!.eventType).toBe('installed')
+    // AUD-003: query must filter by tenant_id (no NULL-tenant cross-tenant read)
+    const sql = mockPool.mock.calls[0]![0] as string
+    expect(sql).toMatch(/tenant_id\s*=\s*\$2/)
+    expect(sql).not.toMatch(/IS NULL/)
+    expect(mockPool.mock.calls[0]![1]).toEqual(['plugin-1', 'tenant-1'])
+  })
+
+  it('getPluginAuditEvents rejects a missing tenantId (AUD-003)', async () => {
+    const { getPluginAuditEvents } = await import('../../../api/services/ecosystem/pluginRegistryService')
+    // empty tenantId (the old NULL-bypass entry point) must be rejected at runtime
+    await expect(getPluginAuditEvents('plugin-1', '')).rejects.toThrow(/tenantId/)
   })
 
   it('triggerKillSwitch disables kill_switch then all installs then audits', async () => {

@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Enterprise Platform Routes (v8.0.0)
 // Tenant lifecycle, feature gates, usage, AI cost, support, compliance, API keys.
 
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response, NextFunction } from 'express'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import {
@@ -45,10 +46,42 @@ type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
 
+// ─── AUD-001: tenant-lifecycle authorization ───────────────────────────────────
+// Lifecycle operations (provision/suspend/reactivate/archive/transition) are
+// privileged platform actions. Previously these routes had only `requireAuth`
+// and read the TARGET tenant from the URL, so any authenticated user could
+// suspend or archive ANY tenant. Restrict to:
+//   1. platform operators (user id listed in PLATFORM_ADMIN_USER_IDS), OR
+//   2. an owner/admin acting on their OWN tenant (param tenantId === JWT tid).
+const PLATFORM_ADMINS = new Set(
+  (process.env['PLATFORM_ADMIN_USER_IDS'] ?? '').split(',').map(s => s.trim()).filter(Boolean),
+)
+
+function requireTenantAdmin(req: Request, res: Response, next: NextFunction): void {
+  const auth = (req as AuthenticatedRequest).auth
+  if (!auth?.sub) { res.status(401).json({ error: 'unauthenticated' }); return }
+  if (PLATFORM_ADMINS.has(auth.sub)) { next(); return }
+  const targetTenant = req.params.tenantId
+  const isOwnTenant  = !!targetTenant && targetTenant === auth.tid
+  const isPrivileged = auth.role === 'owner' || auth.role === 'admin'
+  if (isOwnTenant && isPrivileged) { next(); return }
+  res.status(403).json({
+    error: 'forbidden',
+    message: 'Tenant lifecycle operations require platform-admin, or owner/admin of the target tenant.',
+  })
+}
+
+function requirePlatformAdmin(req: Request, res: Response, next: NextFunction): void {
+  const auth = (req as AuthenticatedRequest).auth
+  if (!auth?.sub) { res.status(401).json({ error: 'unauthenticated' }); return }
+  if (PLATFORM_ADMINS.has(auth.sub)) { next(); return }
+  res.status(403).json({ error: 'forbidden', message: 'Platform-admin only.' })
+}
+
 // ─── Tenant Lifecycle ─────────────────────────────────────────────────────────
 
 // POST /enterprise/tenants/:tenantId/provision
-router.post('/tenants/:tenantId/provision', requireAuth, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/provision', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const tenantId = req.params.tenantId as string
     const result = await provisionTenant(tenantId, req.body as never)
@@ -71,7 +104,7 @@ router.get('/tenants/:tenantId/subscription', requireAuth, requireTenant, async 
 })
 
 // POST /enterprise/tenants/:tenantId/lifecycle
-router.post('/tenants/:tenantId/lifecycle', requireAuth, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/lifecycle', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const tenantId = req.params.tenantId as string
     const { toStatus, actor, reason, metadata } = req.body as Record<string, unknown>
@@ -84,7 +117,7 @@ router.post('/tenants/:tenantId/lifecycle', requireAuth, async (req: Request, re
 })
 
 // GET /enterprise/tenants/:tenantId/lifecycle/history
-router.get('/tenants/:tenantId/lifecycle/history', requireAuth, async (req: Request, res: Response) => {
+router.get('/tenants/:tenantId/lifecycle/history', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const history = await getLifecycleHistory(req.params.tenantId as string)
     res.json(history)
@@ -94,7 +127,7 @@ router.get('/tenants/:tenantId/lifecycle/history', requireAuth, async (req: Requ
 })
 
 // POST /enterprise/tenants/:tenantId/suspend
-router.post('/tenants/:tenantId/suspend', requireAuth, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/suspend', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
     const result = await suspendTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
@@ -105,7 +138,7 @@ router.post('/tenants/:tenantId/suspend', requireAuth, async (req: Request, res:
 })
 
 // POST /enterprise/tenants/:tenantId/reactivate
-router.post('/tenants/:tenantId/reactivate', requireAuth, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/reactivate', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
     const result = await reactivateTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
@@ -116,7 +149,7 @@ router.post('/tenants/:tenantId/reactivate', requireAuth, async (req: Request, r
 })
 
 // POST /enterprise/tenants/:tenantId/archive
-router.post('/tenants/:tenantId/archive', requireAuth, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/archive', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
     const result = await archiveTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
@@ -127,7 +160,7 @@ router.post('/tenants/:tenantId/archive', requireAuth, async (req: Request, res:
 })
 
 // GET /enterprise/subscriptions (admin list)
-router.get('/subscriptions', requireAuth, async (req: Request, res: Response) => {
+router.get('/subscriptions', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const { lifecycleStatus, tier, limit } = req.query as Record<string, string>
     const subs = await listSubscriptions({ lifecycleStatus: lifecycleStatus as never, tier, limit: limit != null ? Number(limit) : undefined })

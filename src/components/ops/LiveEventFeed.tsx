@@ -120,10 +120,17 @@ export function LiveEventFeed({
 
   // ─── WebSocket connection ────────────────────────────────────────────────
 
-  const connectWs = useCallback(() => {
+  const connectWs = useCallback(async () => {
     try {
-      const params = new URLSearchParams({ tenant_id: tenantId, user_id: 'ui',
-        last_seq: String(lastSeq) })
+      // AUD-010: obtain a short-lived single-use connection ticket over the
+      // authenticated REST channel instead of putting a JWT in the WS URL.
+      const ticketRes = await fetch('/api/v1/realtime/ws-ticket', { credentials: 'include' })
+      if (!ticketRes.ok) { setConnected(false); return }
+      const { data } = await ticketRes.json() as { data?: { ticket?: string } }
+      const ticket = data?.ticket
+      if (!ticket) { setConnected(false); return }
+
+      const params = new URLSearchParams({ ticket, last_seq: String(lastSeq) })
       if (projectId) params.set('replay_scope', 'project')
       const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?${params}`)
 

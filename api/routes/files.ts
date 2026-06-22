@@ -35,6 +35,39 @@ router.use(requireAuth as never)
 const LOCAL_DIR = process.env['STORAGE_LOCAL_DIR'] ?? path.join(process.cwd(), 'uploads')
 const MAX_FILE_SIZE = Number(process.env['MAX_FILE_SIZE_MB'] ?? '100') * 1024 * 1024
 
+// ─── MIME allowlist & IFC size cap ───────────────────────────────────────────
+
+const ALLOWED_MIME_TYPES = new Set([
+  // Documents
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain', 'text/csv',
+  // Images — NOTE: image/svg+xml deliberately excluded (AUD-006): SVG is an
+  // active-content (script-capable) format and is an XSS vector when served
+  // from the app origin. Re-add only behind server-side SVG sanitization.
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+  // BIM / CAD
+  'application/octet-stream',   // IFC, DWG, RVT, etc. — binary opaque types
+  'model/ifc',
+  'model/gltf-binary', 'model/gltf+json',
+  // Schedule
+  'text/xml', 'application/xml',
+  // Generic archives (drawings packages)
+  'application/zip', 'application/x-zip-compressed',
+])
+
+// IFC files: hard cap at 100 MB regardless of global MAX_FILE_SIZE
+const IFC_MAX_BYTES = 100 * 1024 * 1024
+
+function _isIfcFile(filename: unknown): boolean {
+  return typeof filename === 'string' && /\.ifc$/i.test(filename)
+}
+
 // ─── POST /request-upload ─────────────────────────────────────────────────────
 // Creates a document + version record, returns a presigned upload URL.
 
@@ -51,6 +84,25 @@ router.post('/request-upload', requireTenant() as never, async (req: Req, res: R
 
   if (!filename || !sizeBytes) {
     res.status(422).json({ error: 'validation', message: 'filename and sizeBytes required' })
+    return
+  }
+
+  // ── P1-5: MIME type validation ──
+  const declaredMime = String(mimeType ?? 'application/octet-stream')
+  if (!ALLOWED_MIME_TYPES.has(declaredMime)) {
+    res.status(415).json({
+      error:   'unsupported_media_type',
+      message: `File type '${declaredMime}' is not allowed.`,
+    })
+    return
+  }
+
+  // ── P1-6: IFC file size hard cap ──
+  if (_isIfcFile(filename) && Number(sizeBytes) > IFC_MAX_BYTES) {
+    res.status(413).json({
+      error:   'file_too_large',
+      message: `IFC files are limited to ${IFC_MAX_BYTES / 1024 / 1024} MB.`,
+    })
     return
   }
 
@@ -250,6 +302,10 @@ router.get('/download/:token', async (req: Request, res: Response) => {
   if (!fs.existsSync(safePath)) { res.status(404).json({ error: 'file_not_found' }); return }
 
   fs.unlinkSync(metaPath)
+  // AUD-006: force a non-renderable content type + disable MIME sniffing so a
+  // stored HTML/SVG/polyglot cannot execute as script in the app origin.
+  res.setHeader('Content-Type', 'application/octet-stream')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
   res.setHeader('Content-Disposition', `attachment; filename="${path.basename(meta.key)}"`)
   fs.createReadStream(safePath).pipe(res)
 })

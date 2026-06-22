@@ -1,0 +1,60 @@
+# Denver Engineering — Prometheus alerting rules (OPS-003)
+# Validated with `promtool check rules`. All expressions reference series that the
+# app actually exposes: `up` (scrape), `denver_db_up`, `background_job_total{status}`,
+# `denver_backup_last_success_timestamp_seconds`, `http_requests_total`.
+groups:
+  - name: denver-engineering-availability
+    rules:
+      # 1. Application unavailable — scrape target down
+      - alert: ApplicationUnavailable
+        expr: up{job=~"denver-engineering.*"} == 0
+        for: 1m
+        labels: { severity: critical, service: denver-engineering }
+        annotations:
+          summary: "Application instance unavailable ({{ $labels.instance }})"
+          description: "Prometheus cannot scrape {{ $labels.instance }} for >1m (app down / unreachable)."
+
+      # 2. Database unavailable — health probe gauge is 0
+      - alert: DatabaseUnavailable
+        expr: denver_db_up == 0
+        for: 1m
+        labels: { severity: critical, service: denver-engineering }
+        annotations:
+          summary: "Database unavailable"
+          description: "denver_db_up has been 0 for >1m (health-check DB ping failing)."
+
+      # 3. Queue / background-job failures
+      - alert: QueueFailure
+        expr: increase(background_job_total{status=~"failed|exhausted"}[5m]) > 5
+        for: 5m
+        labels: { severity: warning, service: denver-engineering }
+        annotations:
+          summary: "Background job failures ({{ $labels.job_type }})"
+          description: ">5 jobs failed/exhausted in 5m for job_type={{ $labels.job_type }}."
+
+      # 4. Backup failure — no successful backup recently, or metric absent
+      - alert: BackupFailure
+        expr: (time() - denver_backup_last_success_timestamp_seconds) > 129600
+        for: 10m
+        labels: { severity: critical, service: denver-engineering }
+        annotations:
+          summary: "No successful backup in >36h"
+          description: "Last successful backup was {{ $value | humanizeDuration }} ago."
+      - alert: BackupMetricMissing
+        expr: absent(denver_backup_last_success_timestamp_seconds)
+        for: 30m
+        labels: { severity: warning, service: denver-engineering }
+        annotations:
+          summary: "Backup success metric missing"
+          description: "denver_backup_last_success_timestamp_seconds is absent — backup job may not be reporting."
+
+      # 5. High error rate — >5% 5xx over 5m
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m]))
+          / clamp_min(sum(rate(http_requests_total[5m])), 1) > 0.05
+        for: 5m
+        labels: { severity: critical, service: denver-engineering }
+        annotations:
+          summary: "High 5xx error rate (>5%)"
+          description: "5xx error ratio is {{ $value | humanizePercentage }} over the last 5m."

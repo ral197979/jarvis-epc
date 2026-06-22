@@ -25,28 +25,49 @@ import { slog } from '../../src/modules/observability/index'
 // ─── Build pool config ────────────────────────────────────────────────────────
 
 const DATABASE_URL = process.env['DATABASE_URL']
+// AUD-002: optional NON-OWNER application role connection string. When set,
+// tenant (request-path) queries run through this role so PostgreSQL Row Level
+// Security is actually ENFORCED. PostgreSQL exempts a table's OWNER from RLS
+// unless FORCE is set, so connecting tenant traffic as the owner silently
+// disarms every tenant_isolation policy. Provision role `jarvis_app`
+// (NOBYPASSRLS, see migration 075) and point this at it to activate the
+// database-level isolation backstop. Unset → falls back to the main pool
+// (prior behavior; app-layer WHERE clauses remain the only control).
+const DATABASE_URL_APP = process.env['DATABASE_URL_APP']
 
-const poolConfig = DATABASE_URL
-  ? {
-      connectionString: DATABASE_URL,
-      ssl: process.env['DB_SSL'] === 'true' ? { rejectUnauthorized: false } : undefined,
-    }
-  : {
-      host:     process.env['DB_HOST']     ?? 'localhost',
-      port:     Number(process.env['DB_PORT'])   || 5432,
-      database: process.env['DB_NAME']     ?? 'denver_engineering',
-      user:     process.env['DB_USER']     ?? 'jarvis',
-      password: process.env['DB_PASSWORD'] ?? '',
-      ssl:      process.env['DB_SSL'] === 'true' ? { rejectUnauthorized: false } : undefined,
-    }
+function makePoolConfig(url: string | undefined): Record<string, unknown> {
+  return url
+    ? {
+        connectionString: url,
+        ssl: process.env['DB_SSL'] === 'true' ? { rejectUnauthorized: false } : undefined,
+      }
+    : {
+        host:     process.env['DB_HOST']     ?? 'localhost',
+        port:     Number(process.env['DB_PORT'])   || 5432,
+        database: process.env['DB_NAME']     ?? 'denver_engineering',
+        user:     process.env['DB_USER']     ?? 'jarvis',
+        password: process.env['DB_PASSWORD'] ?? '',
+        ssl:      process.env['DB_SSL'] === 'true' ? { rejectUnauthorized: false } : undefined,
+      }
+}
 
-const _pool = new Pool({
-  ...poolConfig,
+const poolConfig = makePoolConfig(DATABASE_URL)
+
+const _commonPoolOpts = {
   min:             Number(process.env['DB_POOL_MIN']) || 2,
   max:             Number(process.env['DB_POOL_MAX']) || 20,
   idleTimeoutMillis:    30_000,
   connectionTimeoutMillis: 5_000,
-})
+}
+
+// Privileged/system pool — workers, migrations, cross-tenant admin (plain query()).
+const _pool = new Pool({ ...poolConfig, ..._commonPoolOpts })
+
+// Tenant request-path pool — non-owner role when DATABASE_URL_APP is provided,
+// otherwise the same pool (non-breaking default).
+const _appPool = DATABASE_URL_APP
+  ? new Pool({ ...makePoolConfig(DATABASE_URL_APP), ..._commonPoolOpts })
+  : _pool
 
 // ─── Pool error handler ────────────────────────────────────────────────────────
 
@@ -106,7 +127,7 @@ export async function tenantQuery<T extends QueryResultRow = QueryResultRow>(
   text: string,
   values?: unknown[],
 ): Promise<QueryResult<T>> {
-  const client = await _pool.connect()
+  const client = await _appPool.connect()   // AUD-002: non-owner role → RLS enforced
   try {
     await client.query('BEGIN')
     await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId])
@@ -134,7 +155,7 @@ export async function tenantTransaction<T>(
   tenantId: string,
   fn: (client: PoolClient) => Promise<T>,
 ): Promise<T> {
-  const client = await _pool.connect()
+  const client = await _appPool.connect()   // AUD-002: non-owner role → RLS enforced
   try {
     await client.query('BEGIN')
     await client.query("SELECT set_config('app.current_tenant_id', $1, true)", [tenantId])
@@ -168,6 +189,7 @@ export function poolStats() {
 process.on('SIGTERM', async () => {
   slog('INFO', 'db', '[pool] Draining connections on SIGTERM')
   await _pool.end()
+  if (_appPool !== _pool) { try { await _appPool.end() } catch { /* ignore */ } }
 })
 
 export { _pool as pool }

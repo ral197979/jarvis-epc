@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — MCP Bridge Route
  * ─────────────────────────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { tenantQuery, query }                       from '../db/pool'
+import { assertSafeUrl } from '../lib/ssrfGuard'
 import Anthropic from '@anthropic-ai/sdk'
 
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
@@ -131,7 +133,8 @@ async function fetchAva(path: string, options?: RequestInit, timeoutMs?: number)
 
 function isDomainAllowed(url: string): boolean {
   const FETCH_ALLOWLIST = getFetchAllowlist()
-  if (FETCH_ALLOWLIST.length === 0) return true  // open by default in dev
+  // AUD-005: default-DENY. An empty allowlist must not mean "fetch anything".
+  if (FETCH_ALLOWLIST.length === 0) return false
   try {
     const host = new URL(url).hostname.toLowerCase()
     return FETCH_ALLOWLIST.some(d => host === d || host.endsWith(`.${d}`))
@@ -313,6 +316,15 @@ async function executeNative(
         }
         const allowed = ['GET','POST','PUT','PATCH','DELETE','HEAD']
         if (!allowed.includes(method)) return void res.status(400).json({ error: `method must be one of ${allowed.join(', ')}` })
+
+        // AUD-005: even an allowlisted domain must not resolve to an internal
+        // IP (loopback/private/link-local/cloud-metadata). Defends DNS tricks.
+        try {
+          await assertSafeUrl(url)
+        } catch {
+          return void res.status(403).json({ error: 'ssrf_blocked', url,
+            message: 'Target resolves to a disallowed (internal/reserved) address.' })
+        }
 
         const fetchRes = await fetch(url, {
           method,

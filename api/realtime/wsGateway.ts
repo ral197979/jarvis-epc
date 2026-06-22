@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — WebSocket Gateway (v4.35.0)
  * ──────────────────────────────────────────────────
@@ -12,6 +13,7 @@ import { randomBytes } from 'crypto'
 import { initSubscriptionManager, getSubscriptionManager } from './subscriptionManager'
 import { replayEvents } from './eventBroadcaster'
 import type { SubscriptionScope } from './eventBroadcaster'
+import { consumeWsTicket } from './wsTicket'
 
 // ─── Auth validation ──────────────────────────────────────────────────────────
 
@@ -21,18 +23,25 @@ interface WsAuthContext {
   valid:    boolean
 }
 
+/**
+ * Authenticate the WebSocket upgrade via a single-use connection ticket
+ * (AUD-010). Clients first call GET /api/v1/realtime/ws-ticket over the
+ * authenticated REST channel, then connect with `?ticket=<ticket>`.
+ *
+ * The tenant/user identity is taken from the SERVER-side ticket record, never
+ * from caller-supplied query params — so a client cannot connect as another
+ * tenant by editing the URL. The ticket is consumed (single use) here.
+ */
 function _validateWsAuth(req: IncomingMessage): WsAuthContext {
-  // Extract tenant and user from query params or cookies
-  // In production: validate JWT / session token
   const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
-  const tenantId = url.searchParams.get('tenant_id')
-  const userId   = url.searchParams.get('user_id')
+  const ticket = url.searchParams.get('ticket')
 
-  if (!tenantId || !userId) {
+  const rec = consumeWsTicket(ticket)
+  if (!rec) {
     return { tenantId: '', userId: '', valid: false }
   }
 
-  return { tenantId, userId, valid: true }
+  return { tenantId: rec.tenantId, userId: rec.userId, valid: true }
 }
 
 // ─── Gateway setup ────────────────────────────────────────────────────────────

@@ -49,9 +49,8 @@ import {
   requireAuth, purgeExpiredTokens,
   type AuthenticatedRequest,
 } from './auth'
-import { initPool, poolHealthy, poolStats } from './db/pool'
+import { initPool, poolHealthy, poolStats, query, tenantQuery } from './db/pool'
 import { runMigrations } from './db/migrate'
-import { tenantQuery } from './db/pool'
 import { requireTenant, TenantRequest } from './middleware/tenant'
 import { registerUuidParamGuards, validateUuidQueryParams } from './middleware/validateUuidParams'
 import projectsRouter   from './routes/projects'
@@ -109,6 +108,8 @@ import { readinessRouter } from './routes/readiness'                        // v
 import { syncRouter      } from './routes/sync'                             // v4.35.0 Ava Phase 3
 import { evidenceRouter  } from './routes/evidence'                         // v4.35.0 Ava Phase 3
 import { registerWebSocketGateway } from './realtime/wsGateway'            // v4.35.0 Ava Phase 3
+import { issueWsTicket } from './realtime/wsTicket'                        // AUD-010: WS connection tickets
+import { handleCsrfToken, requireCsrf } from './middleware/csrf'           // P2-8: CSRF protection
 import { registerReadinessSnapshotHandler } from './services/readiness/readinessSnapshots' // v4.35.0 Ava Phase 3
 import { runbooksRouter       } from './routes/runbooks'                    // v4.40.0 Ava Phase 4
 import { aiGovernanceRouter   } from './routes/aiGovernance'               // v4.40.0 Ava Phase 4
@@ -149,12 +150,18 @@ import { timesheetsRouter             } from './routes/timesheets'              
 import { riskRegisterRouter           } from './routes/riskRegister'                                         // v10.17.0: Risk Register
 import { startIfcParseWorker,         stopIfcParseWorker         } from './services/bim/ifcParseWorker'                  // v10.2.0: IFC parse worker
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
+import samlRouter from './auth/saml/samlRoutes'                                                                          // Phase 2A: SAML 2.0 Enterprise SSO
+import { scimRouter, scimAdminRouter } from './routes/scim'                                                              // Phase 2B: SCIM 2.0 Provisioning
+import { initErrorTracking, errorTrackingMiddleware, flushErrorTracking } from './services/observability/errorTracking'  // Phase 1: Observability
+import { metricsMiddleware, metricsHandler, setDbUp } from './services/observability/metrics'                                       // Phase 3: Prometheus metrics
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
 const log = pino({
   level: process.env['LOG_LEVEL'] ?? 'info',
-  ...(process.env['NODE_ENV'] !== 'production'
+  // pino-pretty only in local development — staging and production use structured JSON
+  // for Render log drain, Datadog, and Sentry breadcrumb ingestion.
+  ...(process.env['NODE_ENV'] === 'development'
     ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
     : {}),
   base: { service: 'denver-engineering-api', version: '9.0.0', env: process.env['NODE_ENV'] },
@@ -166,9 +173,25 @@ const app = express()
 
 // ─── Security headers ─────────────────────────────────────────────────────────
 
+// P2-1: Content Security Policy — restricts what the browser can load/execute.
+// 'unsafe-inline' for style-src is required because React components use inline
+// style objects throughout. script-src stays strict ('self' only, no inline JS).
 app.use(helmet({
-  contentSecurityPolicy: false,  // handled by frontend
   crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'"],
+      styleSrc:    ["'self'", "'unsafe-inline'"],
+      imgSrc:      ["'self'", 'data:', 'blob:'],
+      fontSrc:     ["'self'", 'data:'],
+      connectSrc:  ["'self'", 'wss:', 'https://api.anthropic.com'],
+      frameSrc:    ["'none'"],
+      frameAncestors: ["'none'"],
+      objectSrc:   ["'none'"],
+      upgradeInsecureRequests: process.env['NODE_ENV'] === 'production' ? [] : null,
+    },
+  },
 }))
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
@@ -201,6 +224,13 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Correlation-ID', correlationId)
   next()
 })
+
+// ─── Prometheus metrics (Phase 3) ────────────────────────────────────────────
+//   GET /metrics — Prometheus scrape endpoint (bearer token protected when METRICS_TOKEN set)
+//   metricsMiddleware — tracks every HTTP request's method/route/status/duration
+
+app.get('/metrics', metricsHandler)
+app.use(metricsMiddleware)
 
 // ─── Request ID + structured logging ─────────────────────────────────────────
 
@@ -261,7 +291,7 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
         const resourceId = parts[3] && /^[0-9a-f-]{36}$/.test(parts[3]) ? parts[3] : undefined
 
         // v4.30.0: capture request body as new_data for create/update (redact sensitive keys)
-        const SENSITIVE = new Set(['password','token','refresh_token','secret','api_key','authorization'])
+        const SENSITIVE = new Set(['password','token','refresh_token','secret','api_key','authorization','clientsecret','client_secret','clientid','client_id'])
         const redact = (v: unknown): unknown => {
           if (!v || typeof v !== 'object') return v
           if (Array.isArray(v)) return v.map(redact)
@@ -303,15 +333,53 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
 })
 
 // ─── Health ───────────────────────────────────────────────────────────────────
+// Enterprise-grade: verifies DB connectivity with a live query ping.
+// Uptime monitors (Render, Datadog, PagerDuty) hit this every 30s.
 
 app.get('/api/v1/health', async (_req: Request, res: Response) => {
   const dbOk = poolHealthy()
-  res.status(dbOk ? 200 : 503).json({
-    status:  dbOk ? 'ok' : 'degraded',
+  let dbPing = false
+  let dbPingMs: number | null = null
+
+  if (dbOk) {
+    const t0 = Date.now()
+    try {
+      await query('SELECT 1')
+      dbPing   = true
+      dbPingMs = Date.now() - t0
+    } catch { /* dbPing stays false */ }
+  }
+
+  // Redis health check
+  let redisPing = false
+  let redisPingMs: number | null = null
+  try {
+    const { getTokenStore } = await import('./tokenStore')
+    const store = getTokenStore()
+    const t0 = Date.now()
+    await store.isRevoked('health-check-probe')
+    redisPing   = true
+    redisPingMs = Date.now() - t0
+  } catch { /* redisPing stays false */ }
+
+  const allOk = dbOk && dbPing
+  setDbUp(dbOk && dbPing)   // OPS-003: expose db health as a Prometheus gauge for alerting
+  const mem   = process.memoryUsage()
+
+  res.status(allOk ? 200 : 503).json({
+    status:  allOk ? 'ok' : 'degraded',
     version: '9.0.0',
     uptime:  Math.floor(process.uptime()),
     ts:      new Date().toISOString(),
-    db:      dbOk ? { ...poolStats() } : 'unavailable',
+    checks: {
+      db:    { ok: dbOk && dbPing, latencyMs: dbPingMs, pool: poolStats() },
+      redis: { ok: redisPing,      latencyMs: redisPingMs },
+    },
+    memory: {
+      heapUsedMb:  Math.round(mem.heapUsed  / 1024 / 1024),
+      heapTotalMb: Math.round(mem.heapTotal / 1024 / 1024),
+      rssMb:       Math.round(mem.rss       / 1024 / 1024),
+    },
     storage: process.env['STORAGE_BACKEND'] ?? 'local',
   })
 })
@@ -322,6 +390,74 @@ app.post('/api/v1/auth/login',   authLimiter, (req, res) => handleLogin(req, res
 app.post('/api/v1/auth/refresh', authLimiter, (req, res) => handleRefresh(req, res))
 app.post('/api/v1/auth/logout',  requireAuth as never, (req, res) => handleLogout(req as AuthenticatedRequest, res))
 app.get('/api/v1/auth/me',       requireAuth as never, (req, res) => handleMe(req as AuthenticatedRequest, res))
+// P2-8: CSRF token issuance (call once after login; attach X-CSRF-Token to mutations)
+app.get('/api/v1/auth/csrf',     requireAuth as never, handleCsrfToken)
+
+// AUD-010: short-lived single-use WebSocket connection ticket.
+// Replaces the prior `?token=<jwt>` query-string scheme. Client fetches a
+// ticket here (authenticated), then connects: wss://host/ws?ticket=<ticket>.
+app.get('/api/v1/realtime/ws-ticket', requireAuth as never, (req, res) => {
+  const auth = (req as AuthenticatedRequest).auth
+  if (!auth?.sub || !auth?.tid) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const { ticket, expiresInMs } = issueWsTicket(auth.sub, auth.tid)
+  res.json({ data: { ticket, expiresInMs } })
+})
+
+// Phase 2A: SAML 2.0 SSO
+//   /api/v1/auth/saml/:tenantSlug/...  — callback, login, setup, config
+//   /saml/:tenantSlug/...              — metadata (short URL for IdP import)
+app.use('/api/v1/auth/saml', authLimiter, samlRouter)
+app.use('/saml',                          samlRouter)
+
+// Phase 2B: SCIM 2.0 automated provisioning (Okta, Azure AD, OneLogin)
+//   /scim/v2/...           — RFC 7644 SCIM protocol (bearer token auth)
+//   /api/v1/scim/tokens    — admin: generate/revoke SCIM tokens
+//   /api/v1/scim/audit     — admin: SCIM operation audit log
+app.use('/scim/v2',       express.json({ limit: '1mb' }), scimRouter)
+app.use('/api/v1/scim',   scimAdminRouter)
+
+// GDPR: Right to Erasure — DELETE /api/v1/auth/me
+app.delete('/api/v1/auth/me', requireAuth as never, async (req: Request, res: Response) => {
+  const authReq = req as AuthenticatedRequest
+  const userId  = authReq.auth?.sub
+  const tenantId = authReq.auth?.tid
+  if (!userId || !tenantId) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+  try {
+    // Record deletion request (async compliance trail)
+    const emailRes = await query<{ email: string }>('SELECT email FROM users WHERE id=$1', [userId])
+    const email = emailRes.rows[0]?.email ?? ''
+
+    await query(
+      `INSERT INTO data_deletion_requests (tenant_id, user_id, email, requested_by, reason, status)
+       VALUES ($1,$2,$3,$4,$5,'pending')`,
+      [tenantId, userId, email, userId, (req.body as Record<string,unknown>)?.['reason'] ?? null]
+    )
+
+    // Immediately deactivate account; scheduled job handles full erasure
+    await query(
+      `UPDATE users SET is_active=false, email=$1, display_name='[deleted]', password_hash='[deleted]',
+       avatar_url=NULL, preferences='{}', updated_at=NOW() WHERE id=$2`,
+      [`deleted-${userId}@deleted.invalid`, userId]
+    )
+
+    // Revoke all active tokens
+    await query(`UPDATE refresh_tokens SET revoked_at=NOW() WHERE user_id=$1 AND revoked_at IS NULL`, [userId])
+
+    const clearOpts = { httpOnly: true, secure: process.env['NODE_ENV'] === 'production', sameSite: 'strict' as const }
+    res.clearCookie('jarvis_at', { ...clearOpts, path: '/' })
+    res.clearCookie('jarvis_rt', { ...clearOpts, path: '/api/v1/auth/refresh' })
+
+    log.info({ userId, tenantId, email }, '[gdpr] Account deletion initiated')
+    res.json({ data: { message: 'Account deletion initiated. Your data will be erased within 30 days per our data retention policy.' } })
+  } catch (err) {
+    log.error({ userId, error: String(err) }, '[gdpr] Deletion error')
+    res.status(500).json({ error: 'deletion_failed' })
+  }
+})
+
+// Apply CSRF check to all v1 mutations (Bearer-token clients auto-exempt inside requireCsrf)
+app.use('/api/v1', requireCsrf as never)
 
 // Owner session dashboard
 app.get('/api/v1/admin/sessions', requireAuth as never, (req: Request, res: Response) => {
@@ -490,17 +626,19 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'not_found', message: 'Endpoint not found.' })
 })
 
-// ─── Global error handler ─────────────────────────────────────────────────────
+// ─── Global error handler (Phase 1: Sentry + Pino) ──────────────────────────
+// errorTrackingMiddleware captures to Sentry (if configured) then responds 500.
+// Must be last middleware — 4-argument signature marks it as an Express error handler.
 
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  log.error({ err: err.message, stack: err.stack }, 'Unhandled error')
-  res.status(500).json({ error: 'internal_error', message: process.env['NODE_ENV'] === 'production' ? 'An unexpected error occurred.' : err.message })
-})
+app.use(errorTrackingMiddleware)
 
 // ─── Startup ──────────────────────────────────────────────────────────────────
 
 async function start(): Promise<void> {
   const PORT = Number(process.env['PORT'] ?? 3001)
+
+  // Phase 1: Initialize error tracking (Sentry if SENTRY_DSN set, Pino otherwise)
+  await initErrorTracking()
 
   log.info('[startup] Connecting to PostgreSQL...')
   await initPool()
@@ -552,8 +690,9 @@ async function start(): Promise<void> {
       stopPackWorker()                    // v4.30.0
       stopIfcParseWorker()                // v10.2.0
       stopFederatedAggregationWorker()    // v10.2.0
-      server.close(() => {
+      server.close(async () => {
         log.info('[shutdown] HTTP server closed')
+        await flushErrorTracking(2000)  // Phase 1: flush Sentry before exit
         process.exit(0)
       })
     })
