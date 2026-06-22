@@ -96,7 +96,9 @@ function EventRow({ event }: { event: LiveEvent }) {
 const POLL_INTERVAL = 10_000
 
 export function LiveEventFeed({
-  tenantId, projectId, maxEvents = 100, height = 400, onEvent,
+  // AUD-010: `tenantId` prop kept in the interface for caller compatibility but
+  // no longer consumed here — tenant identity is carried by the server-side WS ticket.
+  projectId, maxEvents = 100, height = 400, onEvent,
 }: LiveEventFeedProps) {
   const [events, setEvents]     = useState<LiveEvent[]>([])
   const [connected, setConnected] = useState(false)
@@ -150,7 +152,7 @@ export function LiveEventFeed({
     } catch {
       setConnected(false)
     }
-  }, [tenantId, projectId, lastSeq, addEvents])
+  }, [projectId, lastSeq, addEvents])  // AUD-010: tenantId no longer used (ticket carries tenant server-side)
 
   // ─── Polling fallback ────────────────────────────────────────────────────
 

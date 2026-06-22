@@ -128,7 +128,6 @@ export function recordBackupSuccess(epochSeconds: number): void { backupLastSucc
 // becomes /api/v1/projects/:id/... to avoid high-cardinality label explosion.
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
-const SLUG_RE = /\/[a-z0-9-]{3,64}(\/|$)/g  // only normalise tenant slug segments
 
 function normalisePath(path: string): string {
   // Replace UUIDs with :id

@@ -1,5 +1,35 @@
 # Denver Engineering — CHANGELOG
 
+## v4.32.0 — Enterprise Audit Remediation (Security + Operations)
+**Date:** 2026-06-22
+**Type:** Security + operations remediation (no features, no architectural change)
+**Net impact:** 1 Critical + 8 High security findings closed & verified; OPS-001/002/004 closed; S3 backend made functional; RLS runtime-enforced; `npm audit` 0 critical/0 high.
+
+### Fixed — Security (engineering audit)
+- **AUD-001 (Critical):** authorization guard on enterprise tenant-lifecycle routes (cross-tenant suspend/archive).
+- **AUD-002 (High):** tenant queries via non-owner `jarvis_app` role so Postgres RLS enforces (migration 075); runtime-verified.
+- **AUD-003 (High):** removed NULL-tenant bypass in `plugin_audit_events`.
+- **AUD-004/005 (High):** central SSRF guard (`api/lib/ssrfGuard.ts`); MCP fetch default-deny.
+- **AUD-006 (High):** drop `image/svg+xml` from uploads; `nosniff` + octet-stream downloads.
+- **AUD-007 (High):** DOMPurify-sanitize LLM HTML.
+- **AUD-009 (High):** dependency remediation.
+- **AUD-010:** WebSocket single-use connection ticket (replaces `?token=`).
+- **AUD-031 (High):** migration 070 phantom-table fix — clean rebuild from scratch.
+
+### Fixed — Operations
+- **OPS-001 (High):** install AWS S3 SDK + ESM `createRequire` shim + render.yaml S3 config — S3 backend functional.
+- **OPS-002 (High):** `ServerSideEncryption=AES256` on all upload paths.
+- **OPS-004 (High):** `/metrics` fails closed when `METRICS_TOKEN` unset.
+- **OPS-003 (High):** Prometheus alert rules (5 classes) + Alertmanager routing/escalation (authored + validated; prod deploy pending).
+
+### Added — Governance / evidence
+- `RELEASE_NOTES.md`, `docs/AUDIT_CLOSURE_SUMMARY.md`, `BUILD_VERIFICATION_REPORT.md`, `docs/RELEASE_SIGNOFF.md`, `docs/runbooks/OPERATIONAL_RUNBOOKS.md`, `docs/DISASTER_RECOVERY_RUNBOOK_RENDER.md`, `audit/` reports + `audit/evidence/` (s3verify, RLS validation, operator-kit).
+
+### Status
+🟢 Enterprise Ready (Engineering) · 🟡 Pending Operations Certification (production evidence outstanding — see `docs/RELEASE_SIGNOFF.md`).
+
+---
+
 ## v4.31.0 — Full Green: Competitor-Gap Remediation + Baseline Triage + P4 Cleanup + TS Repair + Test Completion
 **Date:** 2026-04-17
 **Type:** Docs + G5 Sprint 5 extraction + test triage + P4 stub deletion + TypeScript gate repair + test-suite completion

@@ -1,0 +1,66 @@
+# Release Signoff Package & Certification Summary — v4.32.0
+
+**Date:** 2026-06-22 · **Release:** v4.32.0 security + operations remediation
+**Branch:** `audit/enterprise-remediation-2026-06-21` · PR [#1](https://github.com/ral197979/jarvis-epc/pull/1) · Commit `d8a4b5e`
+
+---
+
+## 1. Certification Summary
+
+| Domain | Status |
+|---|---|
+| Engineering security audit (AUD) | ✅ Certified — 1 Critical + 8 High closed & verified |
+| Code-level operations (OPS-001/002/004) | ✅ Closed & verified |
+| Reproducible clean build (CI) | ✅ Verified (`BUILD_VERIFICATION_REPORT.md`) |
+| Monitoring (authoring) | ✅ Authored + validated + fired locally |
+| Monitoring (production deployment) | 🔴 Pending (operator) |
+| Backup/recovery (procedure) | ✅ Restore + rebuild verified locally |
+| Backup/recovery (production PITR/RPO/RTO) | 🔴 Pending (operator) |
+| Load (single-instance) | ✅ Verified |
+| Load (production-scale) | 🔴 Pending (operator) |
+| Storage controls (code) | ✅ SSE verified (MinIO) |
+| Storage controls (prod bucket: versioning/lifecycle/IAM) | 🔴 Pending (operator) |
+| Alert classes (prod firing/routing/escalation) | 🔴 Pending (operator) |
+
+## 2. Final Status
+
+### 🟡 OPERATIONS CERTIFIED WITH EXCEPTIONS
+
+Engineering certification is complete and evidence-backed. Production operations
+certification is **deferred pending the operator-gated evidence** below. This is
+**not** "Fully Enterprise Certified" — that requires all production evidence
+attached (it is not, and was not fabricated).
+
+## 3. Production Validation Checklist (operator — `audit/evidence/operator-kit.sh`)
+
+- [ ] Render Postgres **PITR enabled** + retention ≥ 7d (screenshot)
+- [ ] **Production restore drill** → record RPO + RTO
+- [ ] **Production-scale load** (100/500/1000 + burst) + CPU/mem/net/DB/pool/cache/queue telemetry
+- [ ] Bucket: **versioning + lifecycle + default encryption + public-access-block + IAM least-privilege**
+- [ ] Render secrets set: `S3_BUCKET`, AWS creds, `METRICS_TOKEN`; (RLS) `DATABASE_URL_APP` + `jarvis_app` password
+- [ ] **Deploy** Prometheus/Grafana/Alertmanager (Grafana Cloud or hosted); mount PagerDuty/Slack secrets
+- [ ] **Fire one synthetic alert per class** (service/db/queue/backup/error-rate) → capture delivery + recovery-clear
+- [ ] Execute tabletop exercises T1–T5 (`docs/runbooks/OPERATIONAL_RUNBOOKS.md`)
+
+## 4. Risk Register (current)
+
+| ID | Sev | Status |
+|---|---|---|
+| AUD-001/002/003/004/005/006/007/009/010/031 | C/High | ✅ Closed |
+| OPS-001/002/004 | High | ✅ Closed |
+| OPS-003 | High | 🟡 Artifacts done; prod deploy pending |
+| WS1–WS4 (PITR / load / bucket / alert firing) | — | 🟡 Pending operator evidence |
+| AUD-011..030 | M/L | OPEN (hardening sprint) |
+| Pre-existing: 2 date-tests, 7 lint warnings | Low | Accepted (unrelated, documented) |
+
+## 5. Signoff
+
+| Role | Decision | Basis |
+|---|---|---|
+| Audit Coordinator | ✅ Engineering closure verified | `AUDIT_CLOSURE_SUMMARY.md` |
+| Release Manager | ✅ Release package complete | RELEASE_NOTES + CHANGELOG + build report |
+| DevOps / SRE / Ops Lead | 🟡 Conditional — prod evidence pending | §3 checklist outstanding |
+
+**Decision:** Approved to merge & tag **v4.32.0** as an engineering-certified release.
+**Production go-live** is gated on completing §3 and re-running this signoff →
+converts to 🏆 **Fully Enterprise Certified**.
