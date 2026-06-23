@@ -412,6 +412,22 @@ describe('POST /scim/v2/Users', () => {
     expect(res.body.id).toBe('user-uuid-abc')
   })
 
+  it('stores a valid bcrypt hash (not a fabricated string) for SSO users', async () => {
+    mockTenantQuery
+      .mockResolvedValueOnce({ rows: [{ count: '0' }], rowCount: 1 })
+      .mockResolvedValueOnce({ rows: [DB_USER], rowCount: 1 })
+
+    await request(makeApp())
+      .post('/scim/v2/Users')
+      .set(AUTH)
+      .send({ userName: 'hashcheck@example.com' })
+
+    const insertCall = mockTenantQuery.mock.calls.find(c => String(c[1]).includes('INSERT INTO users'))
+    const passwordHash = (insertCall?.[2] as unknown[])?.[3] as string
+    expect(passwordHash).toMatch(/^\$2[aby]\$\d{2}\$/)   // genuine bcrypt format
+    expect(passwordHash.length).toBe(60)                  // bcrypt hashes are 60 chars
+  })
+
   it('extracts userName from emails array when userName key is absent', async () => {
     mockTenantQuery
       .mockResolvedValueOnce({ rows: [{ count: '0' }], rowCount: 1 })
@@ -568,6 +584,30 @@ describe('PATCH /scim/v2/Users/:id', () => {
       .send({ Operations: [{ op: 'replace', path: 'active', value: false }] })
 
     expect(res.status).toBe(404)
+  })
+
+  it('rejects a PatchOp whose schemas array does not declare PatchOp', async () => {
+    const res = await request(makeApp())
+      .patch('/scim/v2/Users/user-uuid-abc')
+      .set(AUTH)
+      .send({
+        schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
+        Operations: [{ op: 'replace', path: 'active', value: false }],
+      })
+
+    expect(res.status).toBe(400)
+    expect(res.body.schemas?.[0]).toContain('Error')
+  })
+
+  it('accepts a PatchOp when schemas is omitted (lenient for IdP compat)', async () => {
+    mockTenantQuery.mockResolvedValue({ rows: [{ ...DB_USER, is_active: false }], rowCount: 1 })
+
+    const res = await request(makeApp())
+      .patch('/scim/v2/Users/user-uuid-abc')
+      .set(AUTH)
+      .send({ Operations: [{ op: 'replace', path: 'active', value: false }] })
+
+    expect(res.status).toBe(200)
   })
 })
 

@@ -32,6 +32,7 @@
 
 import { Router, Request, Response, NextFunction } from 'express'
 import { createHash, randomBytes } from 'node:crypto'
+import bcrypt from 'bcrypt'
 import { query, tenantQuery } from '../db/pool'
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
@@ -41,6 +42,7 @@ import { slog } from '../../src/modules/observability/index'
 
 const SCIM_USER_SCHEMA = 'urn:ietf:params:scim:schemas:core:2.0:User'
 const SCIM_LIST_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:ListResponse'
+const SCIM_PATCH_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:PatchOp'
 const SCIM_ERROR_SCHEMA = 'urn:ietf:params:scim:api:messages:2.0:Error'
 const SCIM_SP_SCHEMA    = 'urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig'
 
@@ -317,8 +319,11 @@ scimRouter.post('/Users', async (req: ScimRequest, res: Response): Promise<void>
     return
   }
 
-  // SCIM-provisioned users have no password (SAML/SSO only)
-  const passwordHash = `$2b$12$${randomBytes(22).toString('base64').slice(0, 53)}`
+  // SCIM-provisioned users authenticate via SAML/SSO only. Store a *valid* but
+  // unusable bcrypt hash of a random secret — no plaintext can ever match it.
+  // (The previous fabricated `$2b$12$<base64>` string was not a valid bcrypt
+  //  hash and would make bcrypt.compare throw on any later login attempt.)
+  const passwordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 12)
 
   try {
     // Check tenant user limit
@@ -403,6 +408,13 @@ scimRouter.patch('/Users/:id', async (req: ScimRequest, res: Response): Promise<
 
   if (!Array.isArray(body['Operations'])) {
     _scimError(400, 'Operations array required', 'invalidValue', res); return
+  }
+
+  // RFC 7644 §3.5.2: a PatchOp's `schemas` must declare PatchOp. Be lenient when
+  // omitted (some IdPs skip it), but reject a schemas array that claims otherwise.
+  const patchSchemas = body['schemas']
+  if (Array.isArray(patchSchemas) && !patchSchemas.includes(SCIM_PATCH_SCHEMA)) {
+    _scimError(400, `PatchOp requests must use schema ${SCIM_PATCH_SCHEMA}`, 'invalidValue', res); return
   }
 
   const sets: string[]  = []
