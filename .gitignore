@@ -38,5 +38,13 @@ yarn-error.log*
 .eslintcache
 *.tsbuildinfo
 
+# Test coverage reports (generated)
+coverage/
+
+# Google Stitch UI-mockup dumps (generated design scratch, not source)
+Google_Stitch_A/
+Google_Stitch_B/
+Google_Stitch_C/
+
 # Vercel
 .vercel
