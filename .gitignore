@@ -48,3 +48,6 @@ Google_Stitch_C/
 
 # Vercel
 .vercel
+
+# Local Claude Code tooling (preview server config, etc.)
+.claude/launch.json
