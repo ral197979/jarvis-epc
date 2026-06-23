@@ -1,0 +1,74 @@
+# ============================================================
+# Denver Engineering — Observability Stack
+# Phase 3: Prometheus + Grafana
+#
+# Usage (overlay on top of the main compose file):
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+#
+# Or standalone against a running local API:
+#   docker compose -f docker-compose.observability.yml up -d
+#   Then set METRICS_URL in prometheus.yml to point at your API.
+#
+# Access:
+#   Grafana:    http://localhost:3000  (admin / admin — change on first login)
+#   Prometheus: http://localhost:9090
+#
+# The Denver Engineering dashboard is auto-provisioned.
+# To import manually: Grafana → Dashboards → Import → upload
+#   observability/grafana/dashboards/denver-engineering.json
+# ============================================================
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: jarvis_prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'           # allows POST /-/reload to reload config
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - observability
+      - public                             # needs to reach the API on the public network
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: jarvis_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER:     admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP:     'false'
+      GF_SERVER_ROOT_URL:         ${GRAFANA_ROOT_URL:-http://localhost:3000}
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - observability
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  observability:
+    driver: bridge
+  public:
+    external: true          # attaches to the main docker-compose public network
+    name: ${COMPOSE_PROJECT_NAME:-denver-engineering}_public

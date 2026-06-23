@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProcessDesignPro v1.0 — AI-Driven Process Engineering</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--bg2:#111827;--bg3:#1e2738;--bd:#2a3548;--tx:#e2e8f0;--ts:#8892a4;--ac:#00d4ff;--ac2:#0ea5e9;--green:#22c55e;--amber:#fbbf24;--red:#ef4444;--purple:#a78bfa}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;background:var(--bg);color:var(--tx);height:100vh;display:flex;overflow:hidden}
+.sidebar{width:280px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column}
+.sidebar-header{padding:16px;border-bottom:1px solid var(--bd)}
+.sidebar-header h1{font-size:16px;font-weight:700;color:var(--ac)}
+.sidebar-header span{font-size:10px;color:var(--ts)}
+.tool-grid{padding:12px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1}
+.tool-btn{padding:10px 12px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;cursor:pointer;text-align:left;transition:all .15s}
+.tool-btn:hover{border-color:var(--ac);background:rgba(0,212,255,.06)}
+.tool-btn.active{border-color:var(--ac);background:rgba(0,212,255,.1)}
+.tool-btn .name{font-size:12px;font-weight:600;color:var(--tx)}
+.tool-btn .desc{font-size:10px;color:var(--ts);margin-top:2px}
+.tool-btn .icon{font-size:16px;float:left;margin-right:8px;margin-top:2px}
+.cat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ts);padding:8px 4px 4px;margin-top:4px}
+.main{flex:1;display:flex;flex-direction:column}
+.chat-header{padding:14px 20px;border-bottom:1px solid var(--bd);background:var(--bg2);display:flex;justify-content:space-between;align-items:center}
+.chat-header h2{font-size:14px;font-weight:600}
+.chat-header .badge{font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(0,212,255,.15);color:var(--ac)}
+.chat-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.msg{max-width:85%;padding:12px 16px;border-radius:12px;font-size:13px;line-height:1.6}
+.msg.user{align-self:flex-end;background:var(--ac2);color:#fff;border-bottom-right-radius:4px}
+.msg.ai{align-self:flex-start;background:var(--bg3);border:1px solid var(--bd);border-bottom-left-radius:4px}
+.msg.ai .label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ac);margin-bottom:6px}
+.msg.ai pre{background:var(--bg);padding:10px;border-radius:6px;overflow-x:auto;font-size:11px;margin:8px 0;border:1px solid var(--bd)}
+.msg.ai .warn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:6px 10px;border-radius:6px;margin-top:8px;font-size:11px;color:var(--amber)}
+.msg.ai table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}
+.msg.ai th{text-align:left;padding:4px 8px;border-bottom:1px solid var(--bd);color:var(--ac);font-weight:600;font-size:10px;text-transform:uppercase}
+.msg.ai td{padding:4px 8px;border-bottom:1px solid rgba(42,53,72,.5)}
+.msg.ai td:last-child{text-align:right;font-family:'SF Mono',monospace}
+.chat-input{padding:14px 20px;border-top:1px solid var(--bd);background:var(--bg2);display:flex;gap:10px}
+.chat-input textarea{flex:1;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:10px 14px;color:var(--tx);font-size:13px;resize:none;font-family:inherit;outline:none}
+.chat-input textarea:focus{border-color:var(--ac)}
+.chat-input textarea::placeholder{color:var(--ts)}
+.chat-input button{padding:8px 20px;background:var(--ac2);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.chat-input button:hover{background:var(--ac)}
+.chat-input button:disabled{opacity:.4;cursor:default}
+.typing{display:flex;gap:4px;align-items:center;padding:12px 16px}
+.typing span{width:6px;height:6px;background:var(--ac);border-radius:50%;animation:bounce .6s infinite alternate}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{to{opacity:.3;transform:translateY(-4px)}}
+.empty{flex:1;display:flex;align-items:center;justify-content:center}
+.empty-inner{text-align:center;max-width:500px}
+.empty-inner h3{font-size:18px;margin-bottom:8px}
+.empty-inner p{font-size:12px;color:var(--ts);margin-bottom:20px}
+.quick-prompts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qp{padding:10px 12px;background:var(--bg3);border:1px solid var(--bd);border-radius:8px;cursor:pointer;font-size:11px;color:var(--ts);text-align:left;transition:all .15s}
+.qp:hover{border-color:var(--ac);color:var(--tx)}
+</style>
+</head>
+<body>
+<script>window.DENVER_TOOL_ID='process-design'; window.DENVER_TOOL_VERSION='v1.0';</script>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h1>ProcessDesignPro</h1>
+    <span>v1.0 — AI-Driven Process Engineering</span>
+  </div>
+  <div class="tool-grid">
+    <div class="cat-label">Plant Design</div>
+    <div class="tool-btn" data-tool="process_design_pwtp">
+      <span class="icon">💧</span>
+      <div class="name">PWTP Design</div>
+      <div class="desc">Potable water treatment — coag/floc, sed, filtration, membranes</div>
+    </div>
+    <div class="tool-btn" data-tool="process_design_wwtp">
+      <span class="icon">🏭</span>
+      <div class="name">WWTP Design</div>
+      <div class="desc">Wastewater — activated sludge, BNR, clarifiers, sludge</div>
+    </div>
+
+    <div class="cat-label">Oil & Gas</div>
+    <div class="tool-btn" data-tool="process_design_separator">
+      <span class="icon">⚙️</span>
+      <div class="name">Separator Sizing</div>
+      <div class="desc">2-phase / 3-phase, Souders-Brown, ASME VIII</div>
+    </div>
+    <div class="tool-btn" data-tool="process_design_flash">
+      <span class="icon">🔥</span>
+      <div class="name">Flash Calculation</div>
+      <div class="desc">VLE, K-values, Rachford-Rice, compositions</div>
+    </div>
+
+    <div class="cat-label">Reaction Engineering</div>
+    <div class="tool-btn" data-tool="process_design_reactor">
+      <span class="icon">⚗️</span>
+      <div class="name">Reactor Design</div>
+      <div class="desc">CSTR, PFR, batch — kinetics, Arrhenius, series</div>
+    </div>
+    <div class="tool-btn" data-tool="process_design_mass_balance">
+      <span class="icon">⚖️</span>
+      <div class="name">Mass Balance</div>
+      <div class="desc">Steady-state flowsheet solver — streams & nodes</div>
+    </div>
+
+    <div class="cat-label">Equipment Sizing</div>
+    <div class="tool-btn" data-tool="process_design_pump">
+      <span class="icon">🔄</span>
+      <div class="name">Pump Sizing</div>
+      <div class="desc">Darcy-Weisbach, TDH, motor selection</div>
+    </div>
+    <div class="tool-btn" data-tool="process_design_heat_exchanger">
+      <span class="icon">🌡️</span>
+      <div class="name">Heat Exchanger</div>
+      <div class="desc">LMTD / NTU, multi-pass, fouling</div>
+    </div>
+    <div class="tool-btn" data-tool="process_design_vessel">
+      <span class="icon">🛢️</span>
+      <div class="name">Pressure Vessel</div>
+      <div class="desc">ASME VIII Div 1, shell/head, MAWP</div>
+    </div>
+    <div class="tool-btn" data-tool="process_design_pipe">
+      <span class="icon">📏</span>
+      <div class="name">Pipe Sizing</div>
+      <div class="desc">NPS selection, velocity, pressure drop</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="chat-header">
+    <h2 id="chatTitle">AI Process Design Assistant</h2>
+    <span class="badge" id="activeTool">All Tools</span>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="empty" id="emptyState">
+      <div class="empty-inner">
+        <h3>🧪 Describe your process — I'll design it.</h3>
+        <p>Ask in natural language. I'll pick the right tool, run the calculations, and show structured results with warnings.</p>
+        <div class="quick-prompts">
+          <div class="qp" onclick="sendPrompt(this.textContent)">Design a 500 m³/h PWTP for surface water with 80 NTU turbidity and 4 mg/L TOC</div>
+          <div class="qp" onclick="sendPrompt(this.textContent)">Size a 3-phase separator for 5000 bbl/day oil, 2 MMSCFD gas, 1000 bbl/day water at 200 psig</div>
+          <div class="qp" onclick="sendPrompt(this.textContent)">Design a 10,000 m³/day WWTP with nitrification and denitrification, influent BOD 250 mg/L</div>
+          <div class="qp" onclick="sendPrompt(this.textContent)">Size a pump for 120 m³/h water through 200m of 150mm steel pipe with 30m static head</div>
+          <div class="qp" onclick="sendPrompt(this.textContent)">CSTR for first-order reaction, k=0.05/s, C₀=2 mol/L, 90% conversion, feed 5 L/s</div>
+          <div class="qp" onclick="sendPrompt(this.textContent)">Size a shell-and-tube HX: hot side 150→80°C at 5000 kg/h, cold side 25°C water at 8000 kg/h, U=500 W/m²K</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="chat-input">
+    <textarea id="input" rows="2" placeholder="Describe your process design problem… (Ctrl+Enter to send)"></textarea>
+    <button id="sendBtn" onclick="send()">Send</button>
+  </div>
+</div>
+
+<script>
+const chatBody = document.getElementById('chatBody');
+const emptyState = document.getElementById('emptyState');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('sendBtn');
+const activeTool = document.getElementById('activeTool');
+let selectedTool = null;
+let busy = false;
+let messages = [];
+
+// Tool buttons
+document.querySelectorAll('.tool-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    if (selectedTool === btn.dataset.tool) {
+      selectedTool = null;
+      activeTool.textContent = 'All Tools';
+    } else {
+      btn.classList.add('active');
+      selectedTool = btn.dataset.tool;
+      activeTool.textContent = btn.querySelector('.name').textContent;
+    }
+  });
+});
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); }
+});
+
+function sendPrompt(text) { input.value = text; send(); }
+
+async function send() {
+  const q = input.value.trim();
+  if (!q || busy) return;
+  busy = true;
+  sendBtn.disabled = true;
+  input.value = '';
+  if (emptyState) emptyState.remove();
+
+  addMessage('user', q);
+  addTyping();
+
+  try {
+    const result = await callAI(q);
+    removeTyping();
+    renderResult(result);
+  } catch (e) {
+    removeTyping();
+    addMessage('ai', `<div class="label">Error</div>${e.message}`);
+  }
+  busy = false;
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+async function callAI(question) {
+  const systemPrompt = buildSystemPrompt();
+  const token = localStorage.getItem('jarvis_token') || '';
+
+  // Step 1: Ask Claude to determine tool + params
+  const planRes = await fetch('/api/v1/mcp/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    body: JSON.stringify({
+      tool: 'model_call',
+      params: {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [
+          ...messages.map(m => ({ role: m.role, content: m.text })),
+          { role: 'user', content: question }
+        ]
+      }
+    })
+  });
+  if (!planRes.ok) throw new Error('AI planning call failed: ' + planRes.status);
+  const planData = await planRes.json();
+  const aiText = planData.content?.[0]?.text || '';
+
+  // Try to extract a tool call from the response
+  const toolMatch = aiText.match(/```tool\s*\n([\s\S]*?)\n```/);
+  if (!toolMatch) {
+    return { type: 'text', content: aiText };
+  }
+
+  const toolCall = JSON.parse(toolMatch[1]);
+  const toolName = toolCall.tool;
+  const toolParams = toolCall.params;
+
+  // Step 2: Execute the tool
+  const execRes = await fetch('/api/v1/mcp/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    body: JSON.stringify({ tool: toolName, params: toolParams })
+  });
+  const execData = await execRes.json();
+
+  // Step 3: Ask Claude to explain the results
+  const explainRes = await fetch('/api/v1/mcp/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    body: JSON.stringify({
+      tool: 'model_call',
+      params: {
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: 'You are a process engineer presenting calculation results. Format results as HTML tables where appropriate. Highlight warnings. Be concise but thorough. Use engineering units. Do NOT use markdown — use HTML tags directly.',
+        messages: [
+          { role: 'user', content: question },
+          { role: 'assistant', content: `I ran ${toolName} with the parameters and got these results:\n${JSON.stringify(execData, null, 2)}` },
+          { role: 'user', content: 'Present these results clearly. Use HTML tables for numeric data. Flag any warnings.' }
+        ]
+      }
+    })
+  });
+  const explainData = await explainRes.json();
+  const explanation = explainData.content?.[0]?.text || '';
+
+  // Send result back to Denver parent
+  if (window.JARVIS_SEND_RESULT) {
+    window.JARVIS_SEND_RESULT(execData, null);
+  }
+
+  return { type: 'calc', tool: toolName, raw: execData, explanation };
+}
+
+function buildSystemPrompt() {
+  const toolHint = selectedTool ? `\nThe user has selected: ${selectedTool}. Use this tool unless clearly inappropriate.` : '';
+  return `You are an AI process design engineer inside Ava EPC ProcessDesignPro.
+Your job: parse the user's natural language description, determine which process design tool to call, extract the correct parameters, and output a tool call.
+
+Available tools and their required input structures:
+
+process_design_pwtp: { input: { designFlow (m³/h), peakFactor, rawWater: { turbidity (NTU), tds, ph, alkalinity, hardness, toc, iron, manganese, temperature (°C), sourceType }, targets: { turbidity, residualCl2 } } }
+process_design_wwtp: { input: { designFlow (m³/day), peakFactor, influent: { bod, cod, tss, tkn, tp, ph, temperature }, effluent: { bod, tss, nh3 }, processConfig: { primaryClarifier, biologicalProcess, nitrification, denitrification, bioP, tertiaryFiltration, disinfection, sludgeDigestion } } }
+process_design_separator: { input: { type, orientation, oilFlowRate (bbl/day), gasFlowRate (MMSCFD), waterFlowRate (bbl/day), operatingPressure (psig), operatingTemperature (°F), oilSpecificGravity, gasSpecificGravity, oilViscosity (cp) } }
+process_design_flash: { input: { feedComposition: [{component, moleFraction}], temperature (°F), pressure (psia) } }
+process_design_reactor: { input: { reactorType, reactionOrder, rateConstant, initialConcentration (mol/L), targetConversion, feedFlowRate (L/s) } }
+process_design_mass_balance: { input: { streams: [...], nodes: [...] } }
+process_design_pump: { input: { flowRate (m³/h), fluidDensity (kg/m³), fluidViscosity (cP), staticHead (m), pipeDiameter (mm), pipeLength (m), pipeMaterial, fittingsK } }
+process_design_heat_exchanger: { input: { method, hotInTemp (°C), hotOutTemp (°C), coldInTemp (°C), hotFlowRate (kg/h), hotCp (kJ/kg·K), coldFlowRate (kg/h), coldCp (kJ/kg·K), overallU (W/m²·K) } }
+process_design_vessel: { input: { type, designPressure (kPa), designTemperature (°C), innerDiameter (mm), cylinderLength (mm), material, headType, corrosionAllowance (mm), jointEfficiency } }
+process_design_pipe: { input: { flowRate (m³/h), fluidDensity (kg/m³), fluidViscosity (cP), material } }
+${toolHint}
+
+RULES:
+- Fill in reasonable engineering defaults for any parameters the user doesn't specify
+- For PWTP: assume typical surface water if not specified (turbidity 15, pH 7.2, alkalinity 100, etc.)
+- For WWTP: assume medium-strength domestic wastewater if not specified (BOD 250, COD 500, TSS 280, TKN 40, TP 8)
+- For separators: assume SG oil=0.85, gas=0.65, viscosity=3cp if not given
+- For pumps: assume water (1000 kg/m³, 1 cP) if not specified, fittingsK=10
+- For HX: assume Cp water=4.18 if not specified
+- For vessels: assume SA516_70, 2:1_ellipsoidal heads, CA=3mm, E=0.85
+
+OUTPUT FORMAT: Reply with a brief sentence about what you're calculating, then a tool call block:
+\`\`\`tool
+{"tool": "tool_name", "params": { "input": {...} }}
+\`\`\`
+
+If the question is conversational (not a calculation request), just answer normally without a tool block.`;
+}
+
+function addMessage(role, html) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = html;
+  chatBody.appendChild(div);
+  chatBody.scrollTop = chatBody.scrollHeight;
+  if (role === 'user') messages.push({ role: 'user', text: html });
+}
+
+function addTyping() {
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typing';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  chatBody.appendChild(div);
+  chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing');
+  if (el) el.remove();
+}
+
+function renderResult(result) {
+  if (result.type === 'text') {
+    addMessage('ai', result.content);
+    messages.push({ role: 'assistant', text: result.content });
+    return;
+  }
+
+  let html = `<div class="label">${result.tool.replace('process_design_', '').replace(/_/g, ' ').toUpperCase()}</div>`;
+  html += result.explanation;
+
+  // Append raw JSON in collapsible
+  html += `<details style="margin-top:10px"><summary style="cursor:pointer;font-size:10px;color:var(--ts)">Raw JSON output</summary>`;
+  html += `<pre>${JSON.stringify(result.raw, null, 2)}</pre></details>`;
+
+  addMessage('ai', html);
+  messages.push({ role: 'assistant', text: `Ran ${result.tool} — see results above.` });
+}
+</script>
+<script src="denver-bridge.js"></script>
+</body>
+</html>

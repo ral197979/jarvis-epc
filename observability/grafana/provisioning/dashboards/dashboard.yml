@@ -1,0 +1,13 @@
+# Grafana dashboard provisioning — auto-loads dashboards from disk on startup
+apiVersion: 1
+
+providers:
+  - name: 'Denver Engineering'
+    orgId: 1
+    folder: 'Denver Engineering'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
