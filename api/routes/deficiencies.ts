@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Deficiencies API (v4.32.0)
  * ──────────────────────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ interface PluginTrustScore {
   sandboxPassRate: number
 }
 
-interface PartnerReputation {
+interface _PartnerReputation {
   partnerId: string
   trustLevel: 'untrusted' | 'provisional' | 'trusted' | 'verified'
   reputationScore: number
@@ -30,7 +30,7 @@ interface EcosystemTrustSummary {
   trustSignalScore: number
 }
 
-const TRUST_LEVEL_COLORS: Record<string, string> = {
+const _TRUST_LEVEL_COLORS: Record<string, string> = {
   verified: '#22c55e', trusted: '#3b82f6', provisional: '#eab308', untrusted: '#ef4444',
 }
 

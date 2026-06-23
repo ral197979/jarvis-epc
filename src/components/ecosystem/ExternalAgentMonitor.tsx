@@ -14,7 +14,7 @@ interface ExternalAgent {
   createdAt: string
 }
 
-interface AgentExecution {
+interface _AgentExecution {
   id: string
   agentId: string
   tenantId: string

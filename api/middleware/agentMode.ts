@@ -123,7 +123,7 @@ export function requireAgentMode(allowed: AgentMode[] = ['auto']) {
 
 /** Redact keys that are commonly sensitive before storing in evidence. */
 function _sanitizeBody(v: unknown): unknown {
-  const SENS = new Set(['password','token','refresh_token','secret','api_key','authorization'])
+  const SENS = new Set(['password','token','refresh_token','secret','api_key','authorization','clientsecret','client_secret','clientid','client_id'])
   if (!v || typeof v !== 'object') return v
   if (Array.isArray(v)) return v.map(_sanitizeBody)
   const out: Record<string, unknown> = {}

@@ -19,7 +19,7 @@ import {
   useBizStore,
   selectActionItems,
 } from '../modules/biz/store'
-import { createDispatch, type PolicyConfig } from '../modules/biz/dispatch'
+import { type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
 
@@ -199,7 +199,7 @@ function ItemsTable({
 }
 
 // ─── ActionItemsView ──────────────────────────────────────────────────────────
-export function ActionItemsView({ policy, onNavigate, onAudit, onToast }: ActionItemsViewProps) {
+export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onAudit, onToast: _onToast }: ActionItemsViewProps) {
   const allItems = useBizStore(selectActionItems) as ActionItem[]
 
   const [statusFilter,   setStatusFilter]   = useState('all')

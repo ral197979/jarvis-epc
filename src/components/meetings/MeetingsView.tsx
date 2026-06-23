@@ -66,7 +66,7 @@ const inputStyle: React.CSSProperties = {
   background: '#1a1a1a', border: '1px solid #333', borderRadius: 6,
   padding: '7px 10px', color: '#eee', fontSize: 13, width: '100%', boxSizing: 'border-box',
 }
-const taStyle: React.CSSProperties = { ...inputStyle, resize: 'vertical' }
+const _taStyle: React.CSSProperties = { ...inputStyle, resize: 'vertical' }
 
 // ─── Create modal ─────────────────────────────────────────────────────────────
 

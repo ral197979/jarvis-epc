@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Customer Go-Live Tracker (Phase 11)
 // Track go-live milestones and activation status across pilot customers
 

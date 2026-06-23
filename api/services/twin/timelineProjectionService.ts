@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Timeline Projection Service (v6.0.0)
 // Projects future state trajectories from historical trends.
 

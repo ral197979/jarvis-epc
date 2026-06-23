@@ -103,7 +103,7 @@ export function UniversalCommandPalette({
                 <div className="px-4 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide">
                   {category}
                 </div>
-                {filtered.filter(c => c.category === category).map((cmd, idx) => {
+                {filtered.filter(c => c.category === category).map((cmd, _idx) => {
                   const globalIdx = filtered.indexOf(cmd)
                   return (
                     <button

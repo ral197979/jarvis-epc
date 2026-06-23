@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — Punch Lists API Route
  * ─────────────────────────────────────────────────────────────────────────────

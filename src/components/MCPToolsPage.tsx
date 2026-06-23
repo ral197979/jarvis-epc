@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
-import { JARVIS_MCP_TOOLS, JARVIS_MCP_RESOURCES, MCP_CATEGORY_ORDER, MCP_CATEGORY_COLOR, type MCPTool, type MCPResource } from '../constants/mcpTools'
+import { JARVIS_MCP_TOOLS, JARVIS_MCP_RESOURCES, MCP_CATEGORY_ORDER, MCP_CATEGORY_COLOR, type MCPTool } from '../constants/mcpTools'
 import type { PolicyConfig } from '../modules/biz/dispatch'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

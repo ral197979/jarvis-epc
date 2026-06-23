@@ -63,7 +63,7 @@ const PRIORITY_DOT: Record<string, string> = {
   critical: '#dc2626', high: '#f97316', medium: '#d97706', low: '#6b7280',
 }
 
-const STATUS_LABELS: Record<string, string> = {
+const _STATUS_LABELS: Record<string, string> = {
   open: 'Open', in_progress: 'In Progress', completed: 'Completed', cancelled: 'Cancelled',
 }
 

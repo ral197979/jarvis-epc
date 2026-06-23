@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Team & Workforce API Routes (v10.13.0)
  *

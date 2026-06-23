@@ -130,15 +130,12 @@ export function requireTenant() {
         tenant = await _lookupById(jwtTid)
       }
 
-      // 2 — Explicit header (API clients, admin tools)
-      if (!tenant) {
-        const headerTid = req.headers['x-tenant-id'] as string | undefined
-        if (headerTid) {
-          tenant = await _lookupById(headerTid)
-        }
-      }
+      // Note: X-Tenant-ID header fallback removed (P1-B security hardening).
+      // Tenant must be derived from the verified JWT tid claim on authenticated routes.
+      // The header fallback created a footgun where routes without requireAuth could
+      // accept an arbitrary tenant ID from the caller.
 
-      // 3 — Subdomain
+      // 2 — Subdomain (for multi-tenant SaaS routing, e.g. acme.jarvis.app)
       if (!tenant) {
         const slug = _slugFromHost(req.headers.host)
         if (slug) {

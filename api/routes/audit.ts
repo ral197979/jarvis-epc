@@ -24,7 +24,7 @@
 
 import { Router, Response } from 'express'
 import { tenantQuery } from '../db/pool'
-import { requireAuth, AuthenticatedRequest } from '../auth'
+import { requireAuth, requireRole, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 
@@ -169,5 +169,85 @@ router.get('/:id', async (req: Req, res: Response) => {
 router.get('/_meta/actions', async (_req: Req, res: Response) => {
   res.json({ actions: Array.from(ACTIONS) })
 })
+
+// ─── GET /api/v1/audit/export — Compliance export (CSV or JSON) ───────────────
+// Required for SOC 2, ISO 27001, and enterprise compliance audits.
+// Supports: ?format=csv|json, ?from=<iso>, ?to=<iso>, ?resource=<str>, max 10k rows.
+
+router.get('/export', requireRole('owner', 'admin') as never,
+  async (req: Req, res: Response) => {
+    const { tenantId } = req
+    if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+    const format   = req.query['format'] === 'csv' ? 'csv' : 'json'
+    const from     = req.query['from']     as string | undefined
+    const to       = req.query['to']       as string | undefined
+    const resource = req.query['resource'] as string | undefined
+    const limit    = Math.min(10_000, parseInt(String(req.query['limit'] ?? '10000'), 10))
+
+    const conditions: string[] = [`a.tenant_id = current_setting('app.current_tenant_id', true)::uuid`]
+    const values: unknown[]    = []
+    let   pi                   = 1
+
+    if (from)     { conditions.push(`a.created_at >= $${pi++}::timestamptz`); values.push(from) }
+    if (to)       { conditions.push(`a.created_at <= $${pi++}::timestamptz`); values.push(to) }
+    if (resource) { conditions.push(`a.resource = $${pi++}`); values.push(resource) }
+
+    values.push(limit)
+    const where = conditions.join(' AND ')
+
+    try {
+      const result = await tenantQuery(tenantId, `
+        SELECT
+          a.id,
+          a.created_at,
+          u.email        AS user_email,
+          u.display_name AS user_name,
+          a.action,
+          a.resource,
+          a.resource_id,
+          a.ip_address,
+          a.user_agent,
+          a.request_id
+        FROM audit_log a
+        LEFT JOIN users u ON u.id = a.user_id
+        WHERE ${where}
+        ORDER BY a.created_at DESC
+        LIMIT $${pi}
+      `, values)
+
+      slog('INFO', 'audit', '[export] Audit log exported', {
+        tenantId, format, rows: result.rows.length,
+      })
+
+      if (format === 'csv') {
+        const headers = ['id','created_at','user_email','user_name','action','resource','resource_id','ip_address','user_agent','request_id']
+        const escape  = (v: unknown) => {
+          const s = v == null ? '' : String(v)
+          return s.includes(',') || s.includes('"') || s.includes('\n')
+            ? `"${s.replace(/"/g, '""')}"` : s
+        }
+        const rows = result.rows.map((r: Record<string,unknown>) =>
+          headers.map(h => escape(r[h])).join(',')
+        )
+        const csv = [headers.join(','), ...rows].join('\n')
+        const filename = `audit-export-${tenantId.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.csv`
+        res.set('Content-Type', 'text/csv; charset=utf-8')
+        res.set('Content-Disposition', `attachment; filename="${filename}"`)
+        res.send(csv)
+      } else {
+        res.json({
+          data:      result.rows,
+          exported:  result.rows.length,
+          exportedAt: new Date().toISOString(),
+          filters:   { from, to, resource },
+        })
+      }
+    } catch (err) {
+      slog('ERROR', 'audit', '[export] Export failed', { err: String(err), tenantId })
+      res.status(500).json({ error: 'export_failed' })
+    }
+  }
+)
 
 export { router as auditRouter }

@@ -7,7 +7,7 @@ import type { PolicyConfig } from '../modules/biz/dispatch'
 
 export interface HbAdminViewProps { policy?: Partial<PolicyConfig>; onToast?: (m: string, t: string) => void }
 
-export function HbAdminView({ policy: _p, onToast }: HbAdminViewProps) {
+export function HbAdminView({ policy: _p, onToast: _onToast }: HbAdminViewProps) {
   // v4.31.0 fix: the previous implementation used a useBizStore selector that
   // returned a freshly-constructed array on every call, breaking Zustand's
   // Object.is identity check → infinite re-render → "Maximum update depth".

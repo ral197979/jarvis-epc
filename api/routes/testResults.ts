@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Test Results API (v4.32.0)
  * ──────────────────────────────────────────────────────────────────────────────

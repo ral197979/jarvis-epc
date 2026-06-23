@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Agent Worker (v5.0.0)
 // Task processing loop with stale task recovery and graceful shutdown.
 

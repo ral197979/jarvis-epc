@@ -104,9 +104,11 @@ export async function syncTwins(
   tenantId: string,
   updates: Array<{ twinId: string; newState: Record<string, unknown>; triggeringEventId?: string }>
 ): Promise<SyncResult[]> {
-  return Promise.all(
-    updates.map(u => syncTwin(tenantId, u.twinId, u.newState, u.triggeringEventId))
-  )
+  const results: SyncResult[] = []
+  for (const u of updates) {
+    results.push(await syncTwin(tenantId, u.twinId, u.newState, u.triggeringEventId))
+  }
+  return results
 }
 
 // ─── Register and sync entity ─────────────────────────────────────────────────

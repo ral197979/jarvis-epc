@@ -23,6 +23,7 @@ import bcrypt from 'bcrypt'
 import { query } from './db/pool'
 import { getTokenStore } from './tokenStore'
 import { slog } from '../src/modules/observability/index'
+import { authLoginTotal, authTokenRefreshTotal } from './services/observability/metrics'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -117,6 +118,7 @@ export async function handleLogin(req: Request, res: Response): Promise<void> {
   if (!user) {
     await bcrypt.compare(password, '$2b$12$invalid.hash.padding.for.timing')
     slog('WARN', 'auth', '[login] Unknown email', { email })
+    authLoginTotal.inc({ result: 'unknown_email' })
     res.status(401).json({ error: 'invalid_credentials' })
     return
   }
@@ -124,6 +126,7 @@ export async function handleLogin(req: Request, res: Response): Promise<void> {
   // Account lock check
   if (user.locked_until && new Date(user.locked_until) > new Date()) {
     slog('WARN', 'auth', '[login] Account locked', { userId: user.id })
+    authLoginTotal.inc({ result: 'account_locked' })
     res.status(423).json({ error: 'account_locked', message: 'Account temporarily locked. Try again later.' })
     return
   }
@@ -149,6 +152,7 @@ export async function handleLogin(req: Request, res: Response): Promise<void> {
       [newAttempts, lockUntil, user.id]
     )
     slog('WARN', 'auth', '[login] Invalid password', { userId: user.id, attempts: newAttempts })
+    authLoginTotal.inc({ result: 'invalid_credentials' })
     res.status(401).json({ error: 'invalid_credentials' })
     return
   }
@@ -178,6 +182,7 @@ export async function handleLogin(req: Request, res: Response): Promise<void> {
   res.cookie(COOKIE_RT_NAME, refreshToken, { ..._cookieOpts(REFRESH_TTL_SECONDS), path: '/api/v1/auth/refresh' })
 
   slog('INFO', 'auth', '[login] Success', { userId: user.id, tenantId: user.tenant_id, role: user.role })
+  authLoginTotal.inc({ result: 'success' })
 
   res.json({
     data: {
@@ -204,10 +209,16 @@ export async function handleRefresh(req: Request, res: Response): Promise<void> 
 
   const store   = getTokenStore()
   const revoked = await store.isRevoked(payload.jti)
-  if (revoked) { res.status(401).json({ error: 'token_revoked' }); return }
+  if (revoked) {
+    authTokenRefreshTotal.inc({ result: 'revoked' })
+    res.status(401).json({ error: 'token_revoked' }); return
+  }
 
   const hasToken = await store.hasRefreshToken(payload.jti)
-  if (!hasToken) { res.status(401).json({ error: 'invalid_refresh_token' }); return }
+  if (!hasToken) {
+    authTokenRefreshTotal.inc({ result: 'invalid' })
+    res.status(401).json({ error: 'invalid_refresh_token' }); return
+  }
 
   // Rotate: revoke old, issue new
   await store.revokeJti(payload.jti)
@@ -230,6 +241,7 @@ export async function handleRefresh(req: Request, res: Response): Promise<void> 
   res.cookie(COOKIE_AT_NAME, newAccess,  { ..._cookieOpts(ACCESS_TTL_SECONDS),  path: '/' })
   res.cookie(COOKIE_RT_NAME, newRefresh, { ..._cookieOpts(REFRESH_TTL_SECONDS), path: '/api/v1/auth/refresh' })
 
+  authTokenRefreshTotal.inc({ result: 'success' })
   res.json({ data: { userId: payload.sub, tenantId: payload.tid, role: payload.role } })
 }
 

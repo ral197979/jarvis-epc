@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Ecosystem Trust Operations (Post-GA)
 // Operates moderation queue and trust scoring for plugins, workflows, and partners
 

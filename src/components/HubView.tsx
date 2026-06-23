@@ -3,7 +3,6 @@
  */
 import React from 'react'
 import { useBizStore, selectContracts, selectLeads, selectDocuments, selectIncidents, selectActionItems, selectPunchItems } from '../modules/biz/store'
-import { KpiCard }     from './KpiCard'
 import { StatusBadge } from './StatusBadge'
 import type { PolicyConfig } from '../modules/biz/dispatch'
 

@@ -171,9 +171,9 @@ export async function listAccuracyRecords(
 function _classifyDrift(absError: number, baseline: number): DriftSeverity {
   const pct = baseline > 0 ? absError / baseline : 0
   if (pct < 0.05) return 'none'
-  if (pct < 0.1)  return 'minor'
-  if (pct < 0.2)  return 'moderate'
-  if (pct < 0.35) return 'significant'
+  if (pct < 0.15) return 'minor'
+  if (pct < 0.30) return 'moderate'
+  if (pct < 0.45) return 'significant'
   return 'critical'
 }
 

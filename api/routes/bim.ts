@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — BIM Models API Route
  * ─────────────────────────────────────────────────────────────────────────────

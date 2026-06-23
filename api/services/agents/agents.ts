@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Agent Implementations (v5.0.0)
 // Individual agent execution handlers dispatched by agentWorker.
 

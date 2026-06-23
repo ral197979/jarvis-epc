@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — BIMViewerView · 3D Model Viewer + Clash Issues  (v4.31.0)
  * ─────────────────────────────────────────────────────────────────────────────
@@ -32,6 +33,7 @@ export function BIMViewerView({ policy }: BIMViewerViewProps) {
   const [mDraft, setMDraft] = useState({ name: '', discipline: 'mechanical', format: 'ifc' as string, coord_system: '' })
   const [iDraft, setIDraft] = useState({ title: '', description: '', severity: 'minor' as string })
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (projects?.length && !projectId) setProjectId(projects[0].id) }, [projects])
 
   const reload = useCallback(async () => {

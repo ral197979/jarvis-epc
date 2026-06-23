@@ -116,7 +116,7 @@ export async function analyzeReplayDivergence(
 
 export function generateRecommendation(rootCause: ReplayRootCause | null): string {
   switch (rootCause) {
-    case 'nondeterministic_code': return 'Audit event handlers for random/time-dependent logic'
+    case 'nondeterministic_code': return 'audit event handlers for random/time-dependent logic'
     case 'missing_event': return 'Verify event stream completeness and ordering guarantees'
     case 'schema_mismatch': return 'Check schema migrations applied before replay window'
     case 'clock_skew': return 'Enable monotonic clock source; audit timestamp sources'

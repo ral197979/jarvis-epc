@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDeepLink } from '../hooks/useDeepLink';
 import { downloadCsv } from '../utils/csv';

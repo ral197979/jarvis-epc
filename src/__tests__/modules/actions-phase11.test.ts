@@ -76,7 +76,7 @@ function mockEmpty() {
   mPool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 })
 }
 function mockTQRows(data: Record<string, unknown>[]) {
-  mTQ.mockResolvedValueOnce(data)
+  mTQ.mockResolvedValueOnce({ rows: data })
 }
 
 const now = new Date()

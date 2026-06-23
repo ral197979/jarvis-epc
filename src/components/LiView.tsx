@@ -17,6 +17,7 @@ export function LiView({ policy: pProp, onToast }: LiViewProps) {
   const [search, setSearch]   = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm]       = useState<Record<string,string>>({})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const { dispatch } = useMemo(() => createDispatch({ policy, toast: onToast ? (m,t) => onToast(m,t) : undefined }), [policy])
 
   const filtered = manpower.filter(m => !search || Object.values(m).some(v => String(v ?? '').toLowerCase().includes(search.toLowerCase())))

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Action Recommendation Service (v4.34.0)
  * ──────────────────────────────────────────────────────────────
@@ -73,8 +74,8 @@ function _buildRecommendations(scores: ActionScore[], inputs: ActionScoreInput[]
       })
     }
 
-    // Prioritize top-scoring actions
-    if (score.operational_risk_score >= 75) {
+    // Prioritize top-scoring actions (threshold 48: critical+overdue scores ≈ 50)
+    if (score.operational_risk_score >= 48) {
       recs.push({
         action_id:    score.action_id,
         type:         'prioritize',

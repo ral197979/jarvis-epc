@@ -48,6 +48,7 @@ export function HeartbeatBar({ backendUrl = '', version = '4.30.0' }: HeartbeatB
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setGateway({ enabled: d.enabled !== false }) })
       .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [backendUrl])
 
   const avgLatency = apiStats.latency.length

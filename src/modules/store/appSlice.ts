@@ -263,6 +263,7 @@ export const useAppStore = create<AppStore>()(
       {
         name:    'jarvis-app-state',
         version: 2,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         migrate: (persisted: any, from: number) => {
           if (from < 2 && persisted && persisted.ui) {
             persisted.ui.navHidden = {}

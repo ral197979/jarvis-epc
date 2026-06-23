@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Schedule Import Service (v10.4.0)
  * ────────────────────────────────────────────────────────

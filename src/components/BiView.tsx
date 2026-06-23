@@ -20,6 +20,7 @@ export function BiView({ policy: pProp, onToast, onAudit }: BiViewProps) {
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Record<string,string>>({})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const { dispatch } = useMemo(() => createDispatch({ policy, audit: onAudit ? e => onAudit(e) : undefined, toast: onToast ? (m,t) => onToast(m,t) : undefined }), [policy])
 
   const bids     = rfqs

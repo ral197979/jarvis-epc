@@ -69,6 +69,7 @@ export function LoginScreen({ onSuccess, gatewayMode, backendUrl = '' }: LoginSc
       if (proxied) emailRef.current?.focus()
       else pinRef.current?.focus()
     }, 100)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── JWT login (proxied mode) ────────────────────────────────────────────────

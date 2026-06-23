@@ -228,6 +228,7 @@ function SourcesTab({
     finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [statusFilter])
 
   async function reingest(row: SourceRow) {

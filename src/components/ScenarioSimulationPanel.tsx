@@ -50,7 +50,7 @@ function EventRow({ event, onRemove }: { event: ScenarioEvent; onRemove: () => v
   )
 }
 
-function ResultsPanel({ results, scenario }: { results: ScenarioResult; scenario: Scenario }) {
+function ResultsPanel({ results, scenario: _scenario }: { results: ScenarioResult; scenario: Scenario }) {
   return (
     <div className="rounded-lg border border-zinc-700 bg-zinc-800/40 p-3 space-y-3">
       <div className="flex items-center justify-between">

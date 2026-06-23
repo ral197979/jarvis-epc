@@ -235,7 +235,7 @@ describe('twinSnapshotService', () => {
     mockTenant.mockResolvedValueOnce(mockRow(makeSnapshotRow({ sequence_num: 3 })))
     const { captureSnapshot } = await import('../../../api/services/twin/twinSnapshotService')
     const snap = await captureSnapshot('twin-1', 'tenant-1', { val: 1 })
-    expect(snap.sequenceNum).toBe(1) // from mock row
+    expect(snap.sequenceNum).toBe(3) // sequence_num from mock INSERT row
     expect(mockTenant).toHaveBeenCalledTimes(2)
   })
 

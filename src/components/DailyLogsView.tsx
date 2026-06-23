@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — DailyLogsView · Procore-parity Daily Log  (v4.31.0)
  * ─────────────────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ export function DailyLogsView({ policy, onToast, onAudit }: DailyLogsViewProps) 
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (projects?.length && !projectId) setProjectId(projects[0].id) }, [projects])
 
   const reload = useCallback(async () => {

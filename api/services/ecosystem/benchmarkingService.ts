@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Privacy-Safe Benchmarking Service (v9.0.0)
 // Cross-tenant benchmarks without data leakage: suppressed small cohorts,
 // aggregate bands only, no identifiable tenant ranking.

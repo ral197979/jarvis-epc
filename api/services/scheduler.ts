@@ -25,6 +25,7 @@
 
 import { query } from '../db/pool'
 import { slog } from '../../src/modules/observability/index'
+import { jobTotal, jobDurationMs } from './observability/metrics'
 import os from 'node:os'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -313,11 +314,17 @@ async function _tick(): Promise<void> {
     jobId: job.id, tenantId: job.tenant_id, attempts: job.attempts,
   })
 
+  const jobStart = Date.now()
   try {
     const result = await handler(job)
     await _completeJob(job, result)
+    const elapsed = Date.now() - jobStart
+    jobTotal.inc({ job_type: job.job_type, status: 'success' })
+    jobDurationMs.observe({ job_type: job.job_type }, elapsed)
     slog('INFO', 'scheduler', `[job] Complete ${job.job_type}`, { jobId: job.id })
   } catch (err) {
+    jobTotal.inc({ job_type: job.job_type, status: 'failed' })
+    jobDurationMs.observe({ job_type: job.job_type }, Date.now() - jobStart)
     await _failJob(job, err)
   }
 }

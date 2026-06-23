@@ -38,6 +38,7 @@ export function AgentMemoryInspector({ tenantId }: Props) {
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { void loadEntries() }, [tenantId, filterAgent, filterType, filterScope])
 
   async function loadEntries() {

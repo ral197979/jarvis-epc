@@ -26,6 +26,21 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
+// ─── Prompt injection guard ───────────────────────────────────────────────────
+
+const INJECTION_PATTERNS: RegExp[] = [
+  /ignore\s+(all\s+)?previous\s+instructions?/i,
+  /disregard\s+(your\s+)?system\s+prompt/i,
+  /you\s+are\s+now\s+a/i,
+  /forget\s+(everything|all)\s+(above|before|prior)/i,
+  /act\s+as\s+(if\s+you\s+(are|were)\s+)?(?:an?\s+)?(?:evil|unrestricted|jailbroken|unfiltered)/i,
+  /\bdan\b.*\bmode\b/i,   // "DAN mode" variants
+]
+
+function _detectInjection(question: string): boolean {
+  return INJECTION_PATTERNS.some(p => p.test(question))
+}
+
 // ─── POST /ask ────────────────────────────────────────────────────────────────
 
 router.post('/', async (req: Req, res: Response) => {
@@ -43,6 +58,10 @@ router.post('/', async (req: Req, res: Response) => {
   }
   if (question.length > 4000) {
     res.status(422).json({ error: 'validation', message: 'question too long (max 4000 chars)' })
+    return
+  }
+  if (_detectInjection(question)) {
+    res.status(422).json({ error: 'validation', message: 'Question contains disallowed content.' })
     return
   }
 

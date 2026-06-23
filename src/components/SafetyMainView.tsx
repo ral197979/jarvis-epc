@@ -5,7 +5,6 @@
 import React from 'react'
 import { useBizStore, selectIncidents, selectDaysSinceLastIncident, selectRecordableRate } from '../modules/biz/store'
 import { KpiCard }     from './KpiCard'
-import { StatusBadge } from './StatusBadge'
 import { SafetyView }  from './SafetyView'
 import type { PolicyConfig } from '../modules/biz/dispatch'
 

@@ -16,7 +16,7 @@ function pbar(pct: number) {
   </div>
 }
 
-export function WView({ policy: _p, onNavigate }: WViewProps) {
+export function WView({ policy: _p, onNavigate: _onNavigate }: WViewProps) {
   const contracts = useBizStore(selectContracts)
   const evmPjs    = useBizStore(selectEVMProjects)
   const install   = useBizStore(s => s.biz.installation ?? [])

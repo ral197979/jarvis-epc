@@ -27,11 +27,16 @@ type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
 
+// P1-C security hardening: tightened from 60/hour to 5/hour per IP.
+// Prevents automated tenant farming (~600 tenants/min with the global limiter).
+// Override via RATE_LIMIT_REGISTER_MAX env var if needed (e.g., load testing).
 const _regEnv = parseInt(process.env.RATE_LIMIT_REGISTER_MAX ?? '', 10)
 const registrationLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,  // 1 hour
-  max:      Number.isFinite(_regEnv) && _regEnv > 0 ? _regEnv : 60,
-  message:  { error: 'rate_limited', message: 'Too many registration attempts.' },
+  windowMs: 60 * 60 * 1000,  // 1 hour window
+  max:      Number.isFinite(_regEnv) && _regEnv > 0 ? _regEnv : 5,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:  { error: 'rate_limited', message: 'Too many registration attempts. Try again later.' },
 })
 
 // ─── POST /tenants — Public registration ────────────────────────────────────

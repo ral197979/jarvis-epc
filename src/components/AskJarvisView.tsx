@@ -125,6 +125,7 @@ export default function AskJarvisView({ onToast }: Props) {
     } catch (e) { onToast?.(String(e), 'error') }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadSessions()   }, [])
 
   // Auto-scroll to bottom when messages update.
@@ -415,6 +416,7 @@ function CitationBadge({
       setPreview(lines.slice(0, 400))
     }
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (showPreview) handleHover()   }, [showPreview])
 
   const tierCls = citation.tier === 'oem'    ? 'bg-indigo-100 text-indigo-800'

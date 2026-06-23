@@ -14,7 +14,7 @@ export function ScView({ policy: _p }: ScViewProps) {
   const evmProjects = useBizStore(selectEVMProjects)
   const evmMap     = new Map(evmProjects.map(e => [e.project, e]))
 
-  const withEVM    = contracts.filter(c => evmMap.has(String(c['project'] ?? '')))
+  const _withEVM    = contracts.filter(c => evmMap.has(String(c['project'] ?? '')))
   const avgSPI     = evmProjects.length ? evmProjects.reduce((s, e) => s + e.spi, 0) / evmProjects.length : null
   const behindSchedule = evmProjects.filter(e => e.spi < 1).length
   const onSchedule     = evmProjects.filter(e => e.spi >= 1).length

@@ -59,7 +59,7 @@ function _isDuplicate(key: string): boolean {
 // ─── Persist to log ───────────────────────────────────────────────────────────
 
 async function _persistEvent(event: RealtimeEvent): Promise<{ id: number; seq: number }> {
-  const seqRes = await pool.query(`SELECT nextval('realtime_event_seq') AS seq`)
+  const seqRes = await pool.query(`SELECT nextval('realtime_event_seq') AS seq`, [])
   const seq    = Number(seqRes.rows[0].seq)
 
   const res = await pool.query(`

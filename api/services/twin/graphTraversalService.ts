@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Graph Traversal Service (v6.0.0)
 // BFS/DFS traversal, critical path, cycle detection, impact analysis.
 

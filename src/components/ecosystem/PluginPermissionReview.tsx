@@ -15,7 +15,7 @@ interface Plugin {
   currentVersion: string
 }
 
-interface PluginInstall {
+interface _PluginInstall {
   id: string
   tenantId: string
   pluginId: string

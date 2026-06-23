@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — DrawingsView · Plans Register + PDF Viewer  (v4.31.0)
  * ─────────────────────────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ export function DrawingsView({ policy, onToast, onAudit }: DrawingsViewProps) {
   const [drawing, setDrawing] = useState(false)
   const [rect, setRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (projects?.length && !projectId) setProjectId(projects[0].id) }, [projects])
 
   const reload = useCallback(async () => {

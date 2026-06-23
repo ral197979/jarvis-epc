@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Regression Audit Service (v10.0.0)
 // Tracks, classifies, and reports on test failures across CI runs.
 
@@ -151,6 +152,7 @@ export function classifyFailure(
   if (lower.includes('timeout') || lower.includes('timed out')) return 'timeout'
   if (lower.includes('cannot find module') || lower.includes('import')) return 'dependency_drift'
   if (lower.includes('setup') || lower.includes('before')) return 'setup_error'
+  if (lower.includes('flaky') || lower.includes('nondeterministic')) return 'environment_flaky'
   if (isRecurring) return 'pre_existing'
   if (lower.includes('determinism') || lower.includes('replay')) return 'determinism_failure'
   return 'new_regression'

@@ -16,7 +16,7 @@ interface Props {
   tenantId: string
 }
 
-export function WorkflowVersionHistory({ workflowId, tenantId }: Props) {
+export function WorkflowVersionHistory({ workflowId, tenantId: _tenantId }: Props) {
   const [versions, setVersions] = useState<WorkflowVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +37,7 @@ export function WorkflowVersionHistory({ workflowId, tenantId }: Props) {
       .finally(() => setLoading(false))
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [workflowId])
 
   function handleRollback(targetVersion: number) {

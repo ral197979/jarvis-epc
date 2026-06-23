@@ -205,6 +205,7 @@ function BrowseTab({ authHeaders, onToast }: { authHeaders: Record<string,string
     finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [])
 
   return (
@@ -509,6 +510,7 @@ function NewTab({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Confidence</label>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <select value={confidence} onChange={e => setConfidence(e.target.value as any)}
             className="w-full border border-gray-300 rounded px-2 py-1 text-sm">
             <option value="suspected">Suspected — one occurrence, unverified</option>

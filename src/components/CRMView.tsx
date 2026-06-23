@@ -1,7 +1,7 @@
 /**
  * Denver Engineering — CRMView  ·  CRM Overview (pipeline summary + quick stats)
  */
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { useBizStore, selectLeads, selectCustomers, selectProposals } from '../modules/biz/store'
 import { KpiCard } from './KpiCard'
 import { StatusBadge } from './StatusBadge'
@@ -13,7 +13,7 @@ export interface CRMViewProps { policy?: Partial<PolicyConfig>; onAudit?: (e: un
 const STAGES = ['prospect','qualified','proposal','negotiation','won','lost']
 function fmt(n: number) { if (n >= 1_000_000) return `$${(n/1_000_000).toFixed(1)}M`; if (n >= 1_000) return `$${(n/1_000).toFixed(0)}K`; return `$${n.toFixed(0)}` }
 
-export function CRMView({ policy, onAudit, onToast, onNavigate }: CRMViewProps) {
+export function CRMView({ policy, onAudit, onToast, onNavigate: _onNavigate }: CRMViewProps) {
   const leads     = useBizStore(selectLeads)
   const customers = useBizStore(selectCustomers)
   const proposals = useBizStore(selectProposals)

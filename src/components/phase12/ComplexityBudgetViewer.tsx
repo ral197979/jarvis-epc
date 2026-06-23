@@ -27,7 +27,7 @@ interface GuardCheck {
 
 export function ComplexityBudgetViewer() {
   const [budget, setBudget] = useState<ComplexityBudget | null>(null)
-  const [trend, setTrend] = useState<ComplexityBudget[]>([])
+  const [_trend, setTrend] = useState<ComplexityBudget[]>([])
   const [guardChecks, setGuardChecks] = useState<GuardCheck[]>([])
   const [loading, setLoading] = useState(true)
 

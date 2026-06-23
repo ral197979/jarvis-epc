@@ -352,7 +352,7 @@ function LeadsTable({ leads, onSelect }: {
 }
 
 // ─── CRMLeads (main export) ───────────────────────────────────────────────────
-export function CRMLeads({ policy, onNavigate, onAudit, onToast }: CRMLeadsProps) {
+export function CRMLeads({ policy, onNavigate: _onNavigate, onAudit, onToast }: CRMLeadsProps) {
   const rawLeads     = useBizStore(selectLeads)    as Lead[]
   const rawContracts = useBizStore(selectContracts) as Contract[]
 

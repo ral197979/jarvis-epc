@@ -20,6 +20,7 @@ export function JobsView({ policy: pProp, onToast, onAudit }: JobsViewProps) {
   const [search, setSearch]   = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm]       = useState<Record<string,string>>({})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const { dispatch } = useMemo(() => createDispatch({ policy, audit: onAudit ? e => onAudit(e) : undefined, toast: onToast ? (m,t) => onToast(m,t) : undefined }), [policy])
 
   const jobs = contracts

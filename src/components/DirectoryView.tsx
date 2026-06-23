@@ -10,7 +10,6 @@
  */
 
 import React, { useState, useMemo } from 'react'
-import { useBizStore } from '../modules/biz/store'
 import { type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
@@ -339,8 +338,8 @@ function CustomersList({ customers, onSelect }: { customers: Customer[]; onSelec
 
 // ─── DirectoryView (main export) ─────────────────────────────────────────────
 export function DirectoryView({
-  policy, vendors = [], customers = [], purchaseOrders = [], contracts = [], invoices = [],
-  onNavigate,
+  policy: _policy, vendors = [], customers = [], purchaseOrders = [], contracts = [], invoices = [],
+  onNavigate: _onNavigate,
 }: DirectoryViewProps) {
   const [activeTab,      setActiveTab]      = useState<DirectoryTab>('vendors')
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)

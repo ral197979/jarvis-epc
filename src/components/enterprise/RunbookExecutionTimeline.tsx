@@ -125,7 +125,7 @@ function StepBubble({ step }: { step: RunbookStep & { result?: StepResult } }) {
   )
 }
 
-export function RunbookExecutionTimeline({ executionId, onStepApprove }: RunbookExecutionTimelineProps) {
+export function RunbookExecutionTimeline({ executionId, onStepApprove: _onStepApprove }: RunbookExecutionTimelineProps) {
   const [exec, setExec] = useState<ExecutionDetail | null>(null)
   const [loading, setLoading] = useState(true)
 

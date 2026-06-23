@@ -58,7 +58,7 @@ function NodePill({ node }: { node: DependencyNode }) {
 }
 
 export function DependencyGraphPlaceholder({
-  actionId, tenantId, report: propReport,
+  actionId, tenantId: _tenantId, report: propReport,
 }: DependencyGraphPlaceholderProps) {
   const [report, setReport]   = useState<DependencyReport | null>(propReport ?? null)
   const [loading, setLoading] = useState(!propReport)

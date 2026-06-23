@@ -146,6 +146,7 @@ function ScheduledJobsTab({
     } catch { /* best-effort */ }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadHandlers(); load(1)   }, [])
 
   async function toggle(row: ScheduledJob) {
@@ -366,6 +367,7 @@ function BackgroundJobsTab({
     } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [])
 
   async function retry(row: BackgroundJob) {
@@ -553,6 +555,7 @@ function KpiHistoryTab({
     } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [])
 
   // Pick the union of metric keys across rows so new fields show up automatically
@@ -713,6 +716,7 @@ function McpMarketplaceTab({
     } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load()   }, [])
 
   async function toggle(name: string) {
@@ -834,6 +838,7 @@ function AutosignRulesTab({
     } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [])
 
   async function toggle(row: AutosignRule) {
@@ -970,6 +975,7 @@ function AgentActionsTab({
     } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [showUnreviewed])
 
   async function review(row: AgentAction, outcome: 'confirmed'|'overridden'|'reversed') {
@@ -1159,6 +1165,7 @@ function BaselinesTab({
     } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(1)   }, [])
 
   async function reset(row: Baseline) {

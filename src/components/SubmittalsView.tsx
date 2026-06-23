@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — SubmittalsView (REST upgrade)
  * ─────────────────────────────────────────────────────────────────────────────
@@ -113,7 +114,7 @@ function StatusPill({ status }: { status: string }) {
   )
 }
 
-export default function SubmittalsView(props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void }) {
+export default function SubmittalsView(_props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void }) {
   const [projects, setProjects] = useState<Project[]>([])
   const [projectId, setProjectId] = useState<string>('')
   const [submittals, setSubmittals] = useState<Submittal[]>([])
@@ -181,6 +182,7 @@ export default function SubmittalsView(props: { policy?: any; biz?: any; onNavig
       setLoading(false)
     }
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { reload() }, [projectId])
 
   // Deep-link: open the submittal a Focus card pointed at, once loaded.

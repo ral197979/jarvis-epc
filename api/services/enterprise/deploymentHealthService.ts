@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Deployment Health Service (v8.0.0)
 // Health checks, rolling upgrade drain support, and deployment observability.
 

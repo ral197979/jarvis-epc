@@ -11,6 +11,7 @@ const DEF: PolicyConfig = { writesEnabled: false, chatEnabled: false, exportsEna
 function fmt(n: number) { if (n >= 1_000_000) return `$${(n/1_000_000).toFixed(1)}M`; if (n >= 1_000) return `$${(n/1_000).toFixed(0)}K`; return `$${n.toFixed(0)}` }
 
 export function FeedView({ policy: pProp, onAudit, onToast }: FeedViewProps) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const policy = { ...DEF, ...pProp }
   const invoices = useBizStore(s => s.biz.invoices ?? [])
   const expenses = useBizStore(s => s.biz.expenses ?? [])

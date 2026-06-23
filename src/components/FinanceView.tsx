@@ -76,6 +76,7 @@ function GenericTable({ rows, cols, ariaLabel, emptyIcon, emptyText }: {
 }
 
 export function FinanceView({ policy: policyProp, onAudit, onToast }: FinanceViewProps) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const policy = { ...DEFAULT_POLICY, ...policyProp }
   const invoices = useBizStore(s => s.biz.invoices ?? [])
   const expenses = useBizStore(s => s.biz.expenses ?? [])
@@ -95,7 +96,7 @@ export function FinanceView({ policy: policyProp, onAudit, onToast }: FinanceVie
   const totalInvoiced = invoices.reduce((s, i) => s + Number(i['amount'] ?? 0), 0)
   const totalPaid     = invoices.filter(i => i['status'] === 'paid').reduce((s, i) => s + Number(i['amount'] ?? 0), 0)
   const totalExpenses = expenses.reduce((s, e) => s + Number(e['amount'] ?? 0), 0)
-  const totalJournal  = journal.reduce((s, j) => s + Number(j['debit'] ?? 0), 0)
+  const _totalJournal  = journal.reduce((s, j) => s + Number(j['debit'] ?? 0), 0)
   const outstanding   = invoices.filter(i => i['status'] !== 'paid')
 
   function submitInvoice() {

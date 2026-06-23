@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Production Gate Validator (v10.0.0)
 // Deterministic gate checks for production deployment readiness.
 

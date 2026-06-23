@@ -70,7 +70,7 @@ function makeNode(type: NodeType): WorkflowNode {
   return { id: `node-${nodeCounter++}`, type, label: `${NODE_LABELS[type]} ${nodeCounter - 1}` }
 }
 
-export function WorkflowDesignerPage({ workflowId, tenantId }: Props) {
+export function WorkflowDesignerPage({ workflowId, tenantId: _tenantId }: Props) {
   const [meta, setMeta] = useState<WorkflowMeta | null>(null)
   const [nodes, setNodes] = useState<WorkflowNode[]>([])
   const [loading, setLoading] = useState(true)

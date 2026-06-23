@@ -7,7 +7,7 @@
  * Uses the browser's camera (via <input type=file capture=environment>
  * fallback) or manual asset ID entry for desktop.
  */
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 
 interface AssetOperation {
   id:            string

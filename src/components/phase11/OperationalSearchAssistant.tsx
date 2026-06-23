@@ -151,7 +151,7 @@ export function OperationalSearchAssistant({ onNavigate }: OperationalSearchAssi
               }}>
                 {ENTITY_ICONS[entityType]} {entityType}s
               </div>
-              {items.map((result, globalIdx) => {
+              {items.map((result, _globalIdx) => {
                 const overallIdx = results.indexOf(result)
                 const isSelected = overallIdx === selectedIdx
                 return (

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Feature Gate Service (v8.0.0)
 // Middleware-compatible feature gating, quota enforcement, and entitlement resolution.
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Infrastructure Cost Forecaster (Phase 11)
 // Project future infrastructure costs based on growth trends
 

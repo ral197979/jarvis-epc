@@ -22,7 +22,7 @@ import {
   selectActionItems,
   selectEVMProjects,
 } from '../modules/biz/store'
-import { createDispatch, actions, type PolicyConfig } from '../modules/biz/dispatch'
+import { createDispatch, type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
 
@@ -452,7 +452,7 @@ export function ProjectsView({ policy, onNavigate, onAudit, onToast }: ProjectsV
   const [selected, setSelected] = useState<(Project & { evm?: EVMData | null }) | null>(null)
   const [search,   setSearch]   = useState('')
 
-  const { dispatch } = useMemo(() => createDispatch({
+  const { dispatch: _dispatch } = useMemo(() => createDispatch({
     policy,
     audit: onAudit ? (e) => onAudit(e) : undefined,
     toast: onToast ? (m, t) => onToast(m, t) : undefined,

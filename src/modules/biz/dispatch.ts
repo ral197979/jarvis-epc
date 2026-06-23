@@ -255,6 +255,7 @@ import { useCallback, useMemo } from 'react'
 
 export function useDispatch(deps: DispatchDeps) {
   // Re-create the dispatcher only when deps change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const dispatcher = useMemo(() => createDispatch(deps), [
     deps.policy,
     deps.emit,

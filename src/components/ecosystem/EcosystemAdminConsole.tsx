@@ -215,7 +215,7 @@ function PluginsPanel() {
   }, [])
 
   function handleKillSwitch(plugin: Plugin) {
-    const action = plugin.killSwitchActive ? 'disable' : 'enable'
+    const _action = plugin.killSwitchActive ? 'disable' : 'enable'
     setToggling(plugin.id)
     setToggleError(null)
     fetch(`/api/v1/ecosystem/plugins/${plugin.id}/kill-switch`, {

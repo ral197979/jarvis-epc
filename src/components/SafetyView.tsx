@@ -14,14 +14,14 @@
  * All state from Zustand selectors, all mutations through createDispatch.
  */
 
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   useBizStore,
   selectIncidents,
   selectDaysSinceLastIncident,
   selectRecordableRate,
 } from '../modules/biz/store'
-import { createDispatch, actions, type PolicyConfig } from '../modules/biz/dispatch'
+import { type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
 
@@ -467,14 +467,14 @@ function ToolboxTab({ talks }: { talks: ToolboxTalk[] }) {
 
 // ─── SafetyView (main export) ─────────────────────────────────────────────────
 export function SafetyView({
-  policy,
+  policy: _policy,
   jhas: jhasProp,
   incidents: incidentsProp,
   permits: permitsProp,
   toolboxTalks: toolboxProp,
-  onNavigate,
-  onAudit,
-  onToast,
+  onNavigate: _onNavigate,
+  onAudit: _onAudit,
+  onToast: _onToast,
 }: SafetyViewProps) {
   // Pull from store; props override for testing
   // Note: use primitive selector paths to avoid Zustand object-equality infinite loop

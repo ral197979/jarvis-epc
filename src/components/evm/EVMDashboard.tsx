@@ -32,7 +32,7 @@ const fmt$ = (n: number | null | undefined) =>
 
 const fmtIdx = (n: number | null | undefined) => n == null ? '—' : n.toFixed(3)
 
-const fmtPct = (n: number | null | undefined) => n == null ? '—' : `${(n * 100).toFixed(1)}%`
+const _fmtPct = (n: number | null | undefined) => n == null ? '—' : `${(n * 100).toFixed(1)}%`
 
 // ─── S-curve SVG ─────────────────────────────────────────────────────────────
 
@@ -140,6 +140,7 @@ export function EVMDashboard({ onNavigate }: { onNavigate?: (tab: string) => voi
 
   useEffect(() => {
     if (projects?.length && !projectId) setProjectId(projects[0].id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects])
 
   const load = useCallback(async () => {
@@ -199,6 +200,7 @@ export function EVMDashboard({ onNavigate }: { onNavigate?: (tab: string) => voi
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ margin: 0, fontSize: 18 }}>📊 Earned Value Management</h2>
         <select value={projectId} onChange={e => setProjectId(e.target.value)} style={{ padding: 6 }}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {projects?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>

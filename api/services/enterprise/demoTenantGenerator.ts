@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Demo Tenant Generator (v8.0.0)
 // Seeds industry-specific demo tenants with realistic data for sales/pilot use.
 

@@ -60,6 +60,7 @@ export async function snapshotReadinessForTenant(tenantId: string): Promise<void
 export async function enqueueReadinessSnapshotsForAllTenants(): Promise<void> {
   const res = await pool.query(
     `SELECT id FROM tenants WHERE is_active = TRUE`,
+    [],
   )
   for (const row of res.rows) {
     void snapshotReadinessForTenant(row.id as string)

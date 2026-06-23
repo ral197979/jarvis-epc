@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — PunchListView (REST upgrade)
  * ─────────────────────────────────────────────────────────────────────────────
@@ -230,6 +231,7 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
       setLoadingLists(false)
     }
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { reloadLists() }, [projectId])
 
   // Load drawings for pin wiring
@@ -259,6 +261,7 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
       setLoadingItems(false)
     }
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { reloadItems() }, [selectedListId])
 
   // Deep-link: select the item's parent list (from the Focus payload) so its

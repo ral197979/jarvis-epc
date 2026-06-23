@@ -64,6 +64,7 @@ export function AgentRiskSummary({ tenantId, scopeType = 'global', scopeId = '',
 
   useEffect(() => {
     if (autoLoad) void triggerAnalysis()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, scopeId])
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export function AgentRiskSummary({ tenantId, scopeType = 'global', scopeId = '',
 
     const timer = setTimeout(() => void pollTask(), 2000)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [polling, task])
 
   async function triggerAnalysis() {

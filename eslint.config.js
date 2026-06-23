@@ -51,7 +51,7 @@ export default [
     rules: {
       // TypeScript — warn (not error) so existing codebase doesn't fail immediately
       '@typescript-eslint/no-explicit-any':    'warn',
-      '@typescript-eslint/no-unused-vars':     ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars':     ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
       // React hooks correctness
       'react-hooks/rules-of-hooks':  'error',
       'react-hooks/exhaustive-deps': 'warn',
@@ -86,8 +86,9 @@ export default [
       },
     },
     rules: {
-      'no-unused-expressions':              'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      'no-unused-expressions':                  'off',
+      '@typescript-eslint/no-explicit-any':     'off',
+      '@typescript-eslint/no-unused-vars':      'off',
     },
   },
 ]

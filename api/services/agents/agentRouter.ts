@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Agent Router (v5.0.0)
 // Routes task requests to the appropriate agent based on capability matching.
 

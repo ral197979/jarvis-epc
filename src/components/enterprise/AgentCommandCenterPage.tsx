@@ -46,6 +46,7 @@ export function AgentCommandCenterPage({ tenantId }: Props) {
 
   useEffect(() => {
     void loadData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, tenantId])
 
   async function loadData() {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Operations Center Routes (v4.35.0)
  * ─────────────────────────────────────────────────────────

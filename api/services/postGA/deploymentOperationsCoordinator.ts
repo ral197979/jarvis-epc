@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Deployment Operations Coordinator (Post-GA)
 // Coordinates tenant deployment readiness, onboarding verification, and launch records
 

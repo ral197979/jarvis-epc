@@ -182,7 +182,7 @@ interface ObsState {
 }
 
 export const useObsStore = create<ObsState>()(
-  subscribeWithSelector((set, get) => ({
+  subscribeWithSelector((set, _get) => ({
     heartbeatLog:   [...store.heartbeatLog],
     perfViolations: [],
     stateStatus:    'unknown',

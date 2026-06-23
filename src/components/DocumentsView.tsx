@@ -21,7 +21,7 @@ import {
   useBizStore,
   selectDocuments,
 } from '../modules/biz/store'
-import { createDispatch, actions, type PolicyConfig } from '../modules/biz/dispatch'
+import { type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
 
@@ -236,7 +236,7 @@ function TransmittalDetail({ transmittal, onBack }: { transmittal: Transmittal; 
 }
 
 // ─── Document Register tab ────────────────────────────────────────────────────
-function DocumentRegister({ docs, onSelect, canWrite }: {
+function DocumentRegister({ docs, onSelect, canWrite: _canWrite }: {
   docs:     Document[]
   onSelect: (d: Document) => void
   canWrite: boolean
@@ -461,9 +461,9 @@ function TransmittalsTab({ transmittals, onSelect }: {
 export function DocumentsView({
   policy,
   transmittals: transmittalsProp,
-  onNavigate,
-  onAudit,
-  onToast,
+  onNavigate: _onNavigate,
+  onAudit: _onAudit,
+  onToast: _onToast,
 }: DocumentsViewProps) {
   const allDocs = useBizStore(selectDocuments) as Document[]
   const transmittalsFromStore = useBizStore(s => s.biz.transmittals ?? []) as Transmittal[]

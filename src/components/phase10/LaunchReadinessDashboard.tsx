@@ -62,6 +62,7 @@ export function LaunchReadinessDashboard({
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { void fetchLatest() }, [environment])
 
   const runNewScan = async () => {

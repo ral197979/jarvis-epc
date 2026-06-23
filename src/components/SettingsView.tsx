@@ -16,6 +16,7 @@ export function SettingsView({ policy: pProp, onToast }: SettingsViewProps) {
   const [tab, setTab]   = useState<'company'|'system'|'data'>('company')
   const canWrite = policy.writesEnabled
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const { dispatch } = React.useMemo(() => createDispatch({ policy, toast: onToast ? (m,t) => onToast(m,t) : undefined }), [policy])
 
   function saveCompany() {

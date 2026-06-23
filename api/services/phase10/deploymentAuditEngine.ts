@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Deployment Audit Engine (v10.0.0)
 // Immutable deployment tracking: versions, migrations, health, rollback safety.
 

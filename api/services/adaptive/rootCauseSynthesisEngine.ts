@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Root Cause Synthesis Engine (v7.0.0)
 // Correlates anomalies, events, and state changes to synthesize root causes.
 

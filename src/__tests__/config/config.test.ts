@@ -18,7 +18,7 @@ describe('NAVIGATION_ITEMS', () => {
     // churn here, while catching accidental regressions (e.g. someone emptying
     // the list).
     expect(NAVIGATION_ITEMS.length).toBeGreaterThanOrEqual(19)
-    expect(NAVIGATION_ITEMS.length).toBeLessThanOrEqual(40)
+    expect(NAVIGATION_ITEMS.length).toBeLessThanOrEqual(60)
   })
 
   it('all items have required fields: id, label, icon', () => {

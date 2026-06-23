@@ -20,7 +20,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ─── Mock the DB pool before importing the services ──────────────────────────
 
-const mockQuery = vi.fn()
+const mockQuery = vi.hoisted(() => vi.fn())
 
 vi.mock('../../../api/db/pool', () => ({
   query:       mockQuery,
@@ -108,7 +108,7 @@ function makeOverdueRow(overrides = {}) {
 
 describe('createAction', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('creates an action and returns the row', async () => {
@@ -138,7 +138,7 @@ describe('createAction', () => {
   it('is idempotent — returns existing row on conflict', async () => {
     const existing = makeActionRow({ title: 'original title' })
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })        // delegation → none
+      // no assigned_to_user_id → delegation check skipped
       .mockResolvedValueOnce({ rows: [] })        // SLA rule → none
       .mockResolvedValueOnce({ rows: [] })        // INSERT → conflict (0 rows)
       .mockResolvedValueOnce({ rows: [existing] }) // SELECT existing
@@ -156,7 +156,7 @@ describe('createAction', () => {
   it('computes due_at from SLA rule when not provided', async () => {
     const slaRule = { id: 'sla-rule-uuid', default_duration_hours: 48, escalation_levels: [] }
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })                   // delegation → none
+      // no assigned_to_user_id → delegation check skipped
       .mockResolvedValueOnce({ rows: [slaRule] })            // SLA rule found
       .mockResolvedValueOnce({ rows: [makeActionRow()] })    // INSERT succeeds
 
@@ -182,8 +182,8 @@ describe('createAction', () => {
   it('uses provided due_at override, skips SLA lookup', async () => {
     const overrideDue = new Date('2030-01-01T00:00:00Z')
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })                  // delegation → none
-      // SLA lookup should NOT be called since due_at is provided
+      // no assigned_to_user_id → delegation check skipped
+      // due_at provided → SLA lookup also skipped
       .mockResolvedValueOnce({ rows: [makeActionRow({ due_at: overrideDue.toISOString() })] }) // INSERT
 
     await createAction(TENANT, {
@@ -194,8 +194,8 @@ describe('createAction', () => {
       due_at:        overrideDue,
     })
 
-    // Only 2 query calls: delegation + insert (no SLA lookup)
-    expect(mockQuery).toHaveBeenCalledTimes(2)
+    // Only 1 query call: INSERT (no delegation, no SLA lookup)
+    expect(mockQuery).toHaveBeenCalledTimes(1)
   })
 
   it('routes to delegate when active delegation exists', async () => {
@@ -221,7 +221,7 @@ describe('createAction', () => {
 
   it('returns null gracefully on DB error (does not throw)', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })                // delegation OK
+      // no assigned_to_user_id → delegation check skipped
       .mockResolvedValueOnce({ rows: [] })                // SLA OK
       .mockRejectedValueOnce(new Error('DB connection lost'))  // INSERT throws
 
@@ -239,7 +239,7 @@ describe('createAction', () => {
 // ─── completeAction / cancelAction ───────────────────────────────────────────
 
 describe('completeAction', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it('updates status to completed', async () => {
     mockQuery.mockResolvedValueOnce({ rowCount: 1 })
@@ -257,7 +257,7 @@ describe('completeAction', () => {
 })
 
 describe('cancelAction', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it('updates status to cancelled', async () => {
     mockQuery.mockResolvedValueOnce({ rowCount: 1 })
@@ -271,7 +271,7 @@ describe('cancelAction', () => {
 // ─── resolveEffectiveAssignee ─────────────────────────────────────────────────
 
 describe('resolveEffectiveAssignee', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it('returns delegate when active delegation exists', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ delegate_user_id: USER_B }] })
@@ -301,7 +301,7 @@ describe('resolveEffectiveAssignee', () => {
 // ─── SLA rule resolution (_resolveSlaRule) ────────────────────────────────────
 
 describe('_resolveSlaRule (via __testHooks)', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it('returns null when no rule matches', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] })
@@ -329,7 +329,7 @@ describe('_resolveSlaRule (via __testHooks)', () => {
 // ─── SLA Engine: _fireNextEscalation ─────────────────────────────────────────
 
 describe('SLA engine: _fireNextEscalation', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   const DEFAULT_LEVELS = [
     { level: 1, after_hours: 0,  notify_role: 'assigned_user' },
@@ -431,20 +431,18 @@ describe('SLA engine: _fireNextEscalation', () => {
 // ─── Duplicate action guard (integration-style) ───────────────────────────────
 
 describe('Duplicate action guard', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it('calling createAction twice returns the same action id', async () => {
     const existing = makeActionRow()
 
-    // First call: success
+    // First call: success (no user_id → delegation skipped)
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })          // delegation
       .mockResolvedValueOnce({ rows: [] })          // SLA
       .mockResolvedValueOnce({ rows: [existing] })  // INSERT → new
 
-    // Second call: conflict
+    // Second call: conflict (no user_id → delegation skipped)
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })          // delegation
       .mockResolvedValueOnce({ rows: [] })          // SLA
       .mockResolvedValueOnce({ rows: [] })          // INSERT → conflict
       .mockResolvedValueOnce({ rows: [existing] })  // SELECT existing
@@ -467,11 +465,11 @@ describe('Duplicate action guard', () => {
 // ─── system_type isolation ────────────────────────────────────────────────────
 
 describe('system_type isolation', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => vi.resetAllMocks())
 
   it('passes system_type to SLA rule lookup', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })          // delegation
+      // no assigned_to_user_id → delegation skipped
       .mockResolvedValueOnce({ rows: [] })          // SLA → none
       .mockResolvedValueOnce({ rows: [makeActionRow({ system_type: 'PWTP' })] })
 
@@ -492,8 +490,8 @@ describe('system_type isolation', () => {
 
   it('stores system_type on the action row', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
+      // no assigned_to_user_id → delegation skipped
+      .mockResolvedValueOnce({ rows: [] })           // SLA → none
       .mockResolvedValueOnce({ rows: [makeActionRow({ system_type: 'WWTP' })] })
 
     const result = await createAction(TENANT, {

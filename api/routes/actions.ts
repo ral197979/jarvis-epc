@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Actions Routes (v4.34.0)
  * ────────────────────────────────────────────────

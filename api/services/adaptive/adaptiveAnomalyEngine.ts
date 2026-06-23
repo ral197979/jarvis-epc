@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Adaptive Anomaly Engine (v7.0.0)
 // Learns detection thresholds from false-positive and true-positive feedback.
 

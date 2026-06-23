@@ -512,7 +512,7 @@ function OverviewTab({ pos, rfqs }: { pos: PurchaseOrder[]; rfqs: RFQ[] }) {
 }
 
 // ─── ProcurementView (main export) ───────────────────────────────────────────
-export function ProcurementView({ policy, onNavigate, onAudit, onToast }: ProcurementViewProps) {
+export function ProcurementView({ policy, onNavigate: _onNavigate, onAudit, onToast }: ProcurementViewProps) {
   const allPOs  = useBizStore(selectPurchaseOrders) as PurchaseOrder[]
   const allRFQs = useBizStore(selectRFQs) as RFQ[]
 

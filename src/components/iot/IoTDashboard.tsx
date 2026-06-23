@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — IoT Sensor Dashboard (v10.5.0)
  * ──────────────────────────────────────────────────────
@@ -149,6 +150,7 @@ export function IoTDashboard() {
 
   useEffect(() => {
     if (projects?.length && !projectId) setProjectId((projects as any[])[0].id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects])
 
   useEffect(() => { if (projectId) load(projectId) }, [projectId, load])

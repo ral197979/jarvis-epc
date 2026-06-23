@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Customer Success Optimizer (Phase 12)
 // Computes composite customer success scores and churn risk indicators
 

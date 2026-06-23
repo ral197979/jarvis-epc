@@ -23,7 +23,7 @@ type CalcMode = 'evm' | 'schedule' | 'manpower' | 'unit'
 interface DenverTool {
   id: string; name: string; description: string
   path: string; icon: string
-  domain: 'water' | 'mep' | 'stormwater' | 'pid'
+  domain: 'water' | 'mep' | 'stormwater' | 'pid' | 'process'
   version: string
 }
 
@@ -34,6 +34,7 @@ const DENVER_TOOLS: DenverTool[] = [
   { id:'stormwater',   name:'Stormwater',      description:'Detention/retention, LID design, runoff calculations',             path:'/tools/denver/Stormwater-Designer-v1_4-MCP-API.html', icon:'🌊', domain:'stormwater', version:'v1.4' },
   { id:'pid-universal',name:'PFD Generator',   description:'Quick process flow diagrams — ISA loops, line specs',              path:'/tools/denver/pid-universal.html',                    icon:'📐', domain:'pid',        version:'v3.5' },
   { id:'pid-true',     name:'TRUE P&ID',       description:'ISA-5.1 — valve actuators, bubbles, title blocks, DXF export',    path:'/tools/denver/pid-true.html',                        icon:'📋', domain:'pid',        version:'v2.1' },
+  { id:'processdesign',name:'ProcessDesignPro', description:'AI process design — PWTP, WWTP, O&G separators, reactors, equipment sizing', path:'/tools/denver/ProcessDesignPro-v1.0.html', icon:'🧪', domain:'process', version:'v1.0' },
 ]
 
 const DOMAIN_META = {
@@ -41,6 +42,7 @@ const DOMAIN_META = {
   mep:        { label:'MEP',                color:'#3B6D11', bg:'#EAF3DE', border:'#639922' },
   stormwater: { label:'Stormwater',         color:'#534AB7', bg:'#EEEDFE', border:'#7F77DD' },
   pid:        { label:'P&ID Generation',    color:'#854F0B', bg:'#FAEEDA', border:'#BA7517' },
+  process:    { label:'Process Design',     color:'#0891B2', bg:'#E0F7FA', border:'#06B6D4' },
 }
 
 interface DenverResult {
@@ -158,6 +160,7 @@ function DenverHub() {
       else{const b=await res.json().catch(()=>({}));setSaveMsg({text:(b?.error as string)??`Save failed (${res.status})`,ok:false})}
     }catch{setSaveMsg({text:'Network error',ok:false})}
     finally{setSaving(false)}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[pendingResult,activeProjectId,showHistory])
 
   const fetchHistory=useCallback(async()=>{

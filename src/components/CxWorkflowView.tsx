@@ -644,7 +644,7 @@ function ExecuteTab({
             <p className="jarvis-muted" style={{ fontSize: 11 }}>Complete each step. All steps must be answered before submission.</p>
           </div>
 
-          {selectedPack.steps.map((step, i) => {
+          {selectedPack.steps.map((step, _i) => {
             const res = results[step.id]
             const chosen = res?.passFail
             return (
@@ -1034,6 +1034,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
 
   useEffect(() => {
     if (projects?.length && !projectId) setProjectId(String(projects[0]?.id ?? ''))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects])
 
   const scopeResults  = useCxCollection<CxScopeResult>('cx_scope_results')
@@ -1180,6 +1181,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
       onToast?.(`Created "${system.name}" with ${newAssets.length} asset${newAssets.length === 1 ? '' : 's'}`, 'success')
       setTab('matrix')
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [contracts, ciAssets, dispatch, onToast],
   )
 
@@ -1189,6 +1191,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     const result = analyzeScope(`doc-${Date.now()}`, content)
     updateCollection('cx_scope_results', [...scopeResults, result])
     onToast?.('Scope analyzed', 'success')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scopeResults, dispatch, onToast])
 
   // ── Matrix ───────────────────────────────────────────────────────────────────
@@ -1201,6 +1204,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     const existing = matrixRows.filter(r => r.systemId !== systemId)
     updateCollection('cx_matrix_rows', [...existing, ...newRows])
     onToast?.(`Generated ${newRows.length} matrix rows`, 'success')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assets, matrixRows, dispatch, onToast])
 
   const existingPackIds = useMemo(() => new Set(packs.map(p => p.matrixRowId)), [packs])
@@ -1219,6 +1223,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
         body: JSON.stringify({ title: pack.title, systemType: pack.assetTag, projectId, payload: pack }),
       }).catch(() => {})
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packs, matrixRows, dispatch, onToast, projectId])
 
   // ── Execution ────────────────────────────────────────────────────────────────
@@ -1287,6 +1292,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     } else {
       onToast?.('Execution complete — all steps passed ✓', 'success')
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packs, executions, deficiencies, dispatch, onToast, projectId])
 
   // ── Deficiencies ─────────────────────────────────────────────────────────────
@@ -1303,6 +1309,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     updateCollection('cx_retests',      [...retests, retest])
     updateCollection('cx_deficiencies', updatedDefs)
     onToast?.('Retest created', 'success')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deficiencies, retests, dispatch, onToast])
 
   const handleUpdateDefStatus = useCallback((id: string, status: CxDeficiency['status']) => {
@@ -1318,6 +1325,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
         body: JSON.stringify({ status }),
       }).catch(() => {})
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deficiencies, dispatch, onToast, defDbIds])
 
   // ── Turnover ──────────────────────────────────────────────────────────────────
@@ -1327,12 +1335,14 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
     const newItems = generateDefaultTurnoverItems(systemId)
     updateCollection('cx_turnover_items', [...existing, ...newItems])
     onToast?.(`Seeded ${newItems.length} turnover items`, 'success')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turnoverItems, dispatch, onToast])
 
   const handleUpdateTurnover = useCallback((id: string, status: CxTurnoverItem['status']) => {
     const updated = turnoverItems.map(t => t.id === id ? { ...t, status } : t)
     updateCollection('cx_turnover_items', updated)
     onToast?.('Turnover item updated', 'success')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turnoverItems, dispatch, onToast])
 
   // ── Badge counts ──────────────────────────────────────────────────────────────
@@ -1448,7 +1458,7 @@ export function CxWorkflowView({ policy, onAudit, onToast }: CxWorkflowViewProps
         <PacksTab
           packs={packs}
           canWrite={canWrite}
-          onStartExecution={p => { setTab('execute') }}
+          onStartExecution={_p => { setTab('execute') }}
           onSelectPack={setSP}
           selectedPack={selectedPack}
         />

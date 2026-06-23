@@ -114,7 +114,7 @@ function mockEmpty() {
   mPool.query.mockResolvedValueOnce({ rows: [], rowCount: 0 })
 }
 function mockTQRows(data: Record<string, unknown>[]) {
-  mTQ.mockResolvedValueOnce(data)
+  mTQ.mockResolvedValueOnce({ rows: data })
 }
 
 const now = new Date()
@@ -792,7 +792,7 @@ describe('deploymentAutomationEngine', () => {
 
   it('shouldRollback: true when failure rate > 10%', () => {
     const plan = { deployedTenants: 50, failedTenants: 10 } as any
-    expect(automationHooks.shouldRollback(plan)).toBe(false) // 10/60 = 16.7%? Let's check: failed/(deployed+failed) = 10/60 = 16.7% > 10% = true
+    expect(automationHooks.shouldRollback(plan)).toBe(true) // failed/(deployed+failed) = 10/60 = 16.7% > 10%
   })
 
   it('finalizeRollout updates status and completedAt', async () => {

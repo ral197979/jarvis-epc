@@ -26,6 +26,7 @@ vi.mock('../auth', () => ({
     req.auth = { sub: 'user-1', tid: 'tenant-1', role: 'project_manager', jti: 'abc' }
     next()
   },
+  requireRole: (..._roles: string[]) => (_req: any, _res: any, next: any) => next(),
 }))
 
 vi.mock('../middleware/tenant', () => ({

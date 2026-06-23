@@ -41,6 +41,7 @@ export function BudgetView({ policy }: BudgetViewProps) {
   const [creatingItem, setCreatingItem] = useState(false)
   const [creatingCO, setCreatingCO] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (projects?.length && !projectId) setProjectId(projects[0].id) }, [projects])
 
   const reload = useCallback(async () => {
@@ -93,6 +94,7 @@ export function BudgetView({ policy }: BudgetViewProps) {
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ margin: 0, fontSize: 18 }}>💰 Budget & Change Orders</h2>
         <select value={projectId} onChange={e => setProjectId(e.target.value)} style={{ padding: 6 }}>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {projects?.map((p: any) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </div>

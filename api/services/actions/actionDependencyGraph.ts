@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Action Dependency Graph (v4.34.0)
  * ────────────────────────────────────────────────────────

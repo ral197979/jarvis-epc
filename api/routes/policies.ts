@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Policy Routes (v4.40.0)
  * ──────────────────────────────────────────────

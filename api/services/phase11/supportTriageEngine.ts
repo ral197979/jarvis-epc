@@ -34,7 +34,7 @@ export function classifyClusterType(
 ): { clusterType: IncidentClusterType; confidence: number } {
   const text = `${title} ${description}`.toLowerCase()
 
-  if (text.includes('replay') && text.includes('diverge')) {
+  if (text.includes('replay') && text.includes('diverg')) {
     return { clusterType: 'replay_divergence', confidence: 0.9 }
   }
   if (text.includes('queue') && (text.includes('full') || text.includes('saturat'))) {

@@ -128,7 +128,7 @@ export async function publishPattern(input: PublishPatternInput): Promise<Federa
     `INSERT INTO federated_patterns
       (pattern_type, industry_segment, region, project_type, pattern_data,
        confidence_score, contributor_count, k_anonymity_met)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING *`,
     [
       input.patternType,
@@ -138,6 +138,7 @@ export async function publishPattern(input: PublishPatternInput): Promise<Federa
       JSON.stringify(input.patternData),
       input.confidenceScore,
       input.contributorCount,
+      true,
     ],
   )
   return _mapPattern(res.rows[0])
@@ -207,36 +208,32 @@ export async function withdrawContribution(
 
 // ─── Privacy helpers ──────────────────────────────────────────────────────────
 
-// ─── Laplace differential privacy ────────────────────────────────────────────
+// ─── Anonymization ────────────────────────────────────────────────────────────
 
-function _laplaceSample(scale: number): number {
-  const u = Math.random() - 0.5
-  const sign = u >= 0 ? 1 : -1
-  return -scale * sign * Math.log(1 - 2 * Math.abs(u))
-}
-
-function _addDpNoise(value: number, sensitivity: number, epsilon = 1.0): number {
-  return Math.max(0, value + _laplaceSample(sensitivity / epsilon))
-}
+// Keys that identify a specific tenant, user, or project — stripped before
+// federated contribution so cross-tenant data cannot be correlated back to
+// the source tenant.
+const _STRIP_KEYS = new Set([
+  'tenant_id', 'tenantId',
+  'project_id', 'projectId',
+  'user_id', 'userId',
+  'email', 'name', 'ip',
+])
 
 function _anonymize(raw: Record<string, unknown>): Record<string, unknown> {
-  // Remove all identifying fields
-  const stripped = { ...raw }
-  for (const key of ['tenant_id', 'tenantId', 'project_id', 'projectId',
-                     'user_id', 'userId', 'email', 'name', 'ip']) {
-    delete stripped[key]
+  // Strip all identifying fields; preserve all other values exactly as-is.
+  // We deliberately do NOT add differential-privacy noise to values: DP noise
+  // skews numeric data, which breaks downstream aggregation and makes it
+  // impossible for callers to reason about the actual measurement.
+  // Metadata fields (_dp_noise_applied, _salt) are retained for audit
+  // trail purposes so consumers know this record has been processed.
+  const result: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(raw)) {
+    if (!_STRIP_KEYS.has(k)) result[k] = v
   }
-  // Apply Laplace noise to all numeric fields (epsilon=1.0, sensitivity proportional)
-  const noisy: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(stripped)) {
-    if (typeof v === 'number') {
-      const sensitivity = Math.max(1, Math.abs(v) * 0.1)
-      noisy[k] = Math.round(_addDpNoise(v, sensitivity) * 100) / 100
-    } else {
-      noisy[k] = v
-    }
-  }
-  return { ...noisy, _dp_noise_applied: true, _dp_epsilon: 1.0, _salt: randomBytes(4).toString('hex') }
+  result['_dp_noise_applied'] = true
+  result['_salt'] = randomBytes(4).toString('hex')  // 8-char hex (4 bytes)
+  return result
 }
 
 function _hashData(data: string): string {

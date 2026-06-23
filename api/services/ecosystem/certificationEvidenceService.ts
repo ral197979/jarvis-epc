@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Certification Evidence Service (v9.0.0)
 // SOC2, ISO 27001, AI governance, audit chain proof, tenant isolation evidence.
 // Immutable export log with SHA-256 integrity.

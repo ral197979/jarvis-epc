@@ -4,7 +4,7 @@
  */
 export function DomainReducer(
   state: Record<string, unknown>,
-  action: { type: string; data?: unknown; payload?: unknown }
+  _action: { type: string; data?: unknown; payload?: unknown }
 ): Record<string, unknown> {
   // Placeholder — delegates to stub until full implementation
   return state

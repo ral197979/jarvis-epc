@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Knowledge Graph Service (v9.0.0)
 // Tenant-isolated operational knowledge graph with entity resolution,
 // relationship management, and explainable graph paths.

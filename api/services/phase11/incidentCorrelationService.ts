@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Incident Correlation Service (Phase 11)
 // Group related incidents into clusters to surface systemic issues
 

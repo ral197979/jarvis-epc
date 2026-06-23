@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
 import { useDeepLink } from '../hooks/useDeepLink';
 
@@ -24,7 +25,7 @@ interface Project {
   name: string;
 }
 
-export default function RFIsView(props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void }) {
+export default function RFIsView(_props: { policy?: any; biz?: any; onNavigate?: (tab: string) => void }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string>('');
   const [rfis, setRfis] = useState<RFI[]>([]);

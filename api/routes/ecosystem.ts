@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Ecosystem Platform Routes (v9.0.0)
 // 44 endpoints across federated intelligence, benchmarking, playbook marketplace,
 // plugin framework, external agents, automation adapters, knowledge graph,

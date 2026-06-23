@@ -29,7 +29,7 @@ function _relativeTime(iso?: string): string {
   return `${Math.floor(diff / 3_600_000)}h ago`
 }
 
-export function OfflineSyncStatus({ deviceId, compact = false, onSync }: OfflineSyncStatusProps) {
+export function OfflineSyncStatus({ deviceId: _deviceId, compact = false, onSync }: OfflineSyncStatusProps) {
   const [status, setStatus]   = useState<SyncStatus>({
     is_online: navigator.onLine, pending_mutations: 0, unresolved_conflicts: 0,
   })

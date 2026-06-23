@@ -12,7 +12,8 @@
  * Runs as a background worker polled by the scheduler.
  */
 import * as WebIFC from 'web-ifc'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { pool } from '../../db/pool'
 import { upsertBimElements, type IfcElementInput } from './bimElementService'
 
@@ -200,7 +201,7 @@ export async function processNextIfcJob(): Promise<boolean> {
       return true
     }
 
-    const buffer = readFileSync(localPath)
+    const buffer = await readFile(localPath)
     const { parsed, errors } = await parseIfcBuffer(buffer, job.tenant_id, job.model_id)
 
     await pool.query(

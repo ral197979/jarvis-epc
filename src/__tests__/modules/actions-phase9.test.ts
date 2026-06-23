@@ -249,7 +249,7 @@ describe('federatedIntelligenceEngine', () => {
     mockPool.mockResolvedValueOnce(mockRows([makePatternRow()]))
     const { listActivePatterns } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
     await listActivePatterns()
-    const query = mockPool.mock.calls[0]![1] as string
+    const query = mockPool.mock.calls[0]![0] as string
     expect(query).toContain('is_active = TRUE')
     expect(query).toContain('k_anonymity_met = TRUE')
   })
@@ -408,7 +408,7 @@ describe('benchmarkingService', () => {
     mockPool.mockResolvedValueOnce(mockRows([makeCohortRow()]))
     const { getIndustryBenchmarks } = await import('../../../api/services/ecosystem/benchmarkingService')
     await getIndustryBenchmarks()
-    const query = mockPool.mock.calls[0]![1] as string
+    const query = mockPool.mock.calls[0]![0] as string
     expect(query).toContain('suppressed = FALSE')
   })
 
@@ -458,7 +458,7 @@ describe('playbookMarketplaceService', () => {
     const pb = await publishPlaybook('pb-1', true)
     expect(pb.status).toBe('published')
     expect(pb.sandboxValidated).toBe(true)
-    const versionQuery = mockPool.mock.calls[0]![1] as string
+    const versionQuery = mockPool.mock.calls[0]![0] as string
     expect(versionQuery).toContain('is_immutable = TRUE')
   })
 
@@ -483,7 +483,7 @@ describe('playbookMarketplaceService', () => {
     expect(install.isActive).toBe(true)
     expect(install.version).toBe('1.0.0')
     // Verify install_count update was called
-    const countQuery = mockPool.mock.calls[1]![1] as string
+    const countQuery = mockPool.mock.calls[1]![0] as string
     expect(countQuery).toContain('install_count = install_count + 1')
   })
 
@@ -512,7 +512,7 @@ describe('playbookMarketplaceService', () => {
     const { submitPlaybookReview } = await import('../../../api/services/ecosystem/playbookMarketplaceService')
     await submitPlaybookReview('T1', 'pb-1', 5, 'Excellent')
     expect(mockPool).toHaveBeenCalledTimes(1)
-    const ratingQuery = mockPool.mock.calls[0]![1] as string
+    const ratingQuery = mockPool.mock.calls[0]![0] as string
     expect(ratingQuery).toContain('avg_rating')
   })
 
@@ -569,9 +569,9 @@ describe('pluginRegistryService', () => {
     mockPool.mockResolvedValueOnce(mockRows([]))  // _auditPlugin
     const { triggerKillSwitch } = await import('../../../api/services/ecosystem/pluginRegistryService')
     await triggerKillSwitch('plugin-1', 'admin')
-    const killQuery = mockPool.mock.calls[0]![1] as string
+    const killQuery = mockPool.mock.calls[0]![0] as string
     expect(killQuery).toContain('kill_switch = TRUE')
-    const installQuery = mockPool.mock.calls[1]![1] as string
+    const installQuery = mockPool.mock.calls[1]![0] as string
     expect(installQuery).toContain('is_active = FALSE')
   })
 
@@ -773,7 +773,7 @@ describe('automationAdapterService', () => {
     await ingestInboundEvent('T1', 'adapter-1', {
       eventType: 'action.created', payload: {}, idempotencyKey: 'key-1',
     })
-    const query = mockTenant.mock.calls[1]![1] as string
+    const query = mockTenant.mock.calls[0]![1] as string
     expect(query).toContain('ON CONFLICT (adapter_id, idempotency_key)')
     expect(query).toContain('WHERE idempotency_key IS NOT NULL')
   })

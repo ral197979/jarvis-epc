@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — AI Next-Best-Action Engine (v4.35.0)
  * ──────────────────────────────────────────────────────────
@@ -163,18 +164,15 @@ export function generateRecommendations(inputs: RecommendationInput[]): Recommen
   const recs: Recommendation[] = []
 
   for (const input of inputs) {
-    // Apply all matching rules — take the highest urgency recommendation per action
+    // Apply all matching rules — collect all that fire
     const matching = RULES.filter(r => r.matches(input))
-    if (matching.length === 0) continue
-
-    // Sort by a combo of urgency + impact, take first
-    const best = matching
-      .map(r => ({ ...r.build(input), action_id: input.actionId }))
-      .sort((a, b) => (b.urgency_score + b.impact_score) - (a.urgency_score + a.impact_score))[0]
-
-    recs.push(best)
+    for (const rule of matching) {
+      recs.push({ ...rule.build(input), action_id: input.actionId })
+    }
   }
 
+  // Sort by urgency_score descending
+  recs.sort((a, b) => b.urgency_score - a.urgency_score)
   return recs
 }
 

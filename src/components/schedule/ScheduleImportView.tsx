@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — Schedule Import View (v10.4.0)
  * ─────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — Calculation Sessions Routes
  * GET/POST /api/v1/projects/:projectId/calc-sessions

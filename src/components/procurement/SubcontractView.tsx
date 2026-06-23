@@ -107,7 +107,7 @@ function SummaryBar({ s }: { s: Summary }) {
 
 // ─── Bid Packages tab ─────────────────────────────────────────────────────────
 
-function BidPackagesTab({ projectId, tenantId }: { projectId: string; tenantId?: string }) {
+function BidPackagesTab({ projectId, tenantId: _tenantId }: { projectId: string; tenantId?: string }) {
   const [packages, setPackages]   = useState<BidPackage[]>([])
   const [selected, setSelected]   = useState<BidPackage | null>(null)
   const [subs, setSubs]           = useState<BidSubmission[]>([])
@@ -352,6 +352,7 @@ function InvoicesTab({ projectId }: { projectId: string }) {
         setSubcontracts(scs)
         if (scs.length > 0 && !selectedSc) setSelectedSc(scs[0].id)
       })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
 
   const loadInvoices = useCallback(async () => {

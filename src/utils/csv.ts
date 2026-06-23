@@ -20,6 +20,7 @@ export function toCsv(rows: CsvRow[], columns?: string[]): string {
   const cols = columns && columns.length ? columns : Object.keys(rows[0])
   const lines: string[] = []
   lines.push(cols.map(csvCell).join(','))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of rows) lines.push(cols.map(c => csvCell((r as any)[c])).join(','))
   return lines.join('\n')
 }

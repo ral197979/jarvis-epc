@@ -36,6 +36,7 @@ export function IncidentReplayWorkbench({ incidentId, tenantId }: IncidentReplay
     }
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadSessions() }, [incidentId])
 
   const startSession = async () => {

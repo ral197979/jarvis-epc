@@ -430,7 +430,7 @@ function AssetTruthPanel({
 // ─── Panel 2: Baseline Viewer ─────────────────────────────────────────────────
 
 function BaselinePanel({
-  truth, onPanel,
+  truth, onPanel: _onPanel,
 }: {
   truth: AssetTruthView | null
   onPanel: (p: CIPanel) => void
@@ -917,7 +917,7 @@ function AuditPanel({ truth }: { truth: AssetTruthView | null }) {
             {!pkg.evidence_chain.length ? (
               <div style={{ color: 'var(--jarvis-td)', fontSize: 11 }}>No hashed evidence records.</div>
             ) : (
-              pkg.evidence_chain.map((ev, i) => (
+              pkg.evidence_chain.map((ev, _i) => (
                 <div key={ev.id} style={{
                   background: 'var(--jarvis-cd)', border: '1px solid var(--jarvis-bd)',
                   borderRadius: 4, padding: '8px 10px', marginBottom: 6,
@@ -978,7 +978,7 @@ function AuditPanel({ truth }: { truth: AssetTruthView | null }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function CommissioningBaselineView({
-  policy, onAudit, onToast, onNavigate,
+  policy, onAudit: _onAudit, onToast, onNavigate: _onNavigate,
 }: CommissioningBaselineViewProps) {
   const [panel, setPanel] = useState<CIPanel>('truth')
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
