@@ -73,6 +73,7 @@ import { payApplicationsRouter } from './routes/payApplications' // v4.45.0: AIA
 import { rfiCopilotRouter    } from './routes/rfiCopilot'      // v4.46.0: RFI Copilot
 import { submittalReviewRouter } from './routes/submittalReview' // v4.47.0: Submittal review assistant
 import { fieldAssistantRouter } from './routes/fieldAssistant'   // v4.48.0: AI Field Assistant
+import { autoCoordinationRouter } from './routes/autoCoordination' // v4.49.0: Autonomous Coordination
 import { inspectionsRouter  } from './routes/inspections'   // v4.32.0
 import { punchListsRouter   } from './routes/punchLists'    // v4.32.0
 import { systemsRouter       } from './routes/systems'       // v4.32.0: EPC hierarchy (F05)
@@ -526,6 +527,7 @@ app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models +
 app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
 app.use('/api/v1',                payApplicationsRouter) // v4.45.0: AIA G702/G703 pay applications
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
+app.use('/api/v1',                autoCoordinationRouter) // v4.49.0: Autonomous Coordination (recommend → approve → execute)
 app.use('/api/v1',                inspectionsRouter)    // v4.32.0: Inspection templates + records
 app.use('/api/v1',                punchListsRouter)     // v4.32.0: Punch lists + items
 app.use('/api/v1',                systemsRouter)        // v4.32.0: EPC hierarchy (F05)
