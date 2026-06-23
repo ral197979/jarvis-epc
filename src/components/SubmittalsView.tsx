@@ -14,6 +14,7 @@
  */
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useDeepLink } from '../hooks/useDeepLink'
+import SubmittalReviewPanel from './submittal/SubmittalReviewPanel'
 
 interface Submittal {
   id: string
@@ -553,6 +554,8 @@ export default function SubmittalsView(_props: { policy?: any; biz?: any; onNavi
               <div style={{ whiteSpace: 'pre-wrap' }}>{selected.review_notes}</div>
             </div>
           )}
+          <SubmittalReviewPanel submittalId={selected.id} />
+
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
             {selected.status === 'draft' && (
               <button

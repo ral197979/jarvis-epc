@@ -71,6 +71,7 @@ import { bimRouter          } from './routes/bim'           // v4.31.0
 import { budgetsRouter      } from './routes/budgets'       // v4.31.0
 import { payApplicationsRouter } from './routes/payApplications' // v4.45.0: AIA G702/G703 billing
 import { rfiCopilotRouter    } from './routes/rfiCopilot'      // v4.46.0: RFI Copilot
+import { submittalReviewRouter } from './routes/submittalReview' // v4.47.0: Submittal review assistant
 import { inspectionsRouter  } from './routes/inspections'   // v4.32.0
 import { punchListsRouter   } from './routes/punchLists'    // v4.32.0
 import { systemsRouter       } from './routes/systems'       // v4.32.0: EPC hierarchy (F05)
@@ -495,6 +496,7 @@ app.use('/api/v1/purchase-orders', purchaseOrdersRouter)
 app.use('/api/v1/rfis',           rfisRouter)
 app.use('/api/v1/rfis',           rfiCopilotRouter)    // v4.46.0: RFI Copilot (precedent/responder/impact)
 app.use('/api/v1/submittals',     submittalsRouter)
+app.use('/api/v1/submittals',     submittalReviewRouter) // v4.47.0: Submittal review assistant
 app.use('/api/v1/files',          filesRouter)
 app.use('/api/v1/integrations',   integrationsRouter)
 app.use('/api/v1/webhooks',       webhooksRouter)
