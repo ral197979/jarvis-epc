@@ -22,6 +22,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'focus',         label: 'Focus',        icon: '🧭',  domain: 'ai'            },
   { id: 'coordination',  label: 'Coordination', icon: '🔗',  domain: 'ai'            },
   { id: 'executive',     label: 'Executive',    icon: '📋',  domain: 'ai'            },
+  { id: 'portfolioiq',   label: 'Portfolio IQ', icon: '🗂️',  domain: 'ai'            },
   { id: 'ask',           label: 'Ask Jarvis',   icon: '🤖',  domain: 'ai'            },
   { id: 'crm',           label: 'CRM',        icon: '🎯',  domain: 'crm'           },
   { id: 'feed',          label: 'FEED',       icon: '🔬',  domain: 'engineering'   },

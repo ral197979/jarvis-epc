@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Target, FlaskConical, ListChecks, HardHat, FileText, Calculator,
   Wrench, Users, Wallet, Sparkles, Zap, Hammer, Archive, BookOpen, Plug, Link2,
-  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, Workflow, ShieldAlert, Lightbulb, Library, Bot, Compass, Network, ClipboardList
+  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, Workflow, ShieldAlert, Lightbulb, Library, Bot, Compass, Network, ClipboardList, FolderKanban
 } from 'lucide-react'
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
 import { NAVIGATION_ITEMS, type NavItem } from '../config/navigation'
@@ -17,7 +17,7 @@ import { NAVIGATION_ITEMS, type NavItem } from '../config/navigation'
 const ICON_MAP: Record<string, LucideIcon> = {
   dash: LayoutDashboard, crm: Target, feed: FlaskConical, projects: ListChecks,
   construction: HardHat, proposals: FileText, calc: Calculator, hub: Wrench,
-  team: Users, portfolio: Wallet, predict: Sparkles, focus: Compass, coordination: Network, executive: ClipboardList, actions: Zap, field: Hammer,
+  team: Users, portfolio: Wallet, predict: Sparkles, focus: Compass, coordination: Network, executive: ClipboardList, portfolioiq: FolderKanban, actions: Zap, field: Hammer,
   ask: Bot, docs: Archive, directory: BookOpen, mcp: Plug, automation: Workflow,
   compliance: ShieldAlert, fixlibrary: Lightbulb, knowledge: Library, integrations: Link2,
   notifications: Bell, system: Settings,

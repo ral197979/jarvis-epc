@@ -16,6 +16,7 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildProjectFocus, buildPortfolioFocus } from '../services/copilot/projectCopilotService'
 import { buildProjectCoordination, buildPortfolioCoordination } from '../services/copilot/coordinationService'
 import { buildProjectReport, buildPortfolioReport } from '../services/copilot/executiveReportService'
+import { buildPortfolioInsights } from '../services/copilot/portfolioInsightsService'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -96,6 +97,18 @@ router.get('/copilot/report', async (_req: Request, res: Response) => {
     res.json({ data: report })
   } catch (err) {
     res.status(500).json({ error: 'Failed to build portfolio report', detail: (err as Error).message })
+  }
+})
+
+// ── Portfolio Copilot: cross-project comparison & resource conflicts ──────────
+
+router.get('/copilot/portfolio', async (_req: Request, res: Response) => {
+  const r = _req as AuthTenantReq
+  try {
+    const insights = await buildPortfolioInsights(r.tenantId!, new Date())
+    res.json({ data: insights })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build portfolio insights', detail: (err as Error).message })
   }
 })
 
