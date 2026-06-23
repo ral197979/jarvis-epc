@@ -73,6 +73,7 @@ const TransmittalsView     = lazy(() => import('./TransmittalsView'))
 const IntegrationsView     = lazy(() => import('./IntegrationsView'))
 const CopilotView          = lazy(() => import('./copilot/CopilotView'))
 const CoordinationView     = lazy(() => import('./copilot/CoordinationView'))
+const ExecutiveView        = lazy(() => import('./copilot/ExecutiveView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -183,6 +184,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   predict:       PredictView,
   focus:         CopilotView,
   coordination:  CoordinationView,
+  executive:     ExecutiveView,
   integrations:  IntegrationsView,
   notifications: NotificationsView,
 }

@@ -15,6 +15,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildProjectFocus, buildPortfolioFocus } from '../services/copilot/projectCopilotService'
 import { buildProjectCoordination, buildPortfolioCoordination } from '../services/copilot/coordinationService'
+import { buildProjectReport, buildPortfolioReport } from '../services/copilot/executiveReportService'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -72,6 +73,29 @@ router.get('/copilot/coordination', async (req: Request, res: Response) => {
     res.json({ data: briefing })
   } catch (err) {
     res.status(500).json({ error: 'Failed to build portfolio coordination', detail: (err as Error).message })
+  }
+})
+
+// ── Executive Copilot: deterministic board / project briefings ────────────────
+
+router.get('/copilot/projects/:projectId/report', async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  try {
+    const report = await buildProjectReport(r.tenantId!, String(req.params.projectId), new Date())
+    if (!report) return res.status(404).json({ error: 'Project not found' })
+    res.json({ data: report })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build project report', detail: (err as Error).message })
+  }
+})
+
+router.get('/copilot/report', async (_req: Request, res: Response) => {
+  const r = _req as AuthTenantReq
+  try {
+    const report = await buildPortfolioReport(r.tenantId!, new Date())
+    res.json({ data: report })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build portfolio report', detail: (err as Error).message })
   }
 })
 
