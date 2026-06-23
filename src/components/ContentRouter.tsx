@@ -75,6 +75,7 @@ const CopilotView          = lazy(() => import('./copilot/CopilotView'))
 const CoordinationView     = lazy(() => import('./copilot/CoordinationView'))
 const ExecutiveView        = lazy(() => import('./copilot/ExecutiveView'))
 const PortfolioIQView       = lazy(() => import('./copilot/PortfolioIQView'))
+const BillingView           = lazy(() => import('./billing/BillingView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -187,6 +188,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   coordination:  CoordinationView,
   executive:     ExecutiveView,
   portfolioiq:   PortfolioIQView,
+  billing:       BillingView,
   integrations:  IntegrationsView,
   notifications: NotificationsView,
 }
