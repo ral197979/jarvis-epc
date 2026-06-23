@@ -19,8 +19,9 @@ export interface NavItem {
 
 export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'dash',          label: 'Dashboard',  icon: '📊',  domain: 'operations'    },
-  { id: 'focus',         label: 'Focus',      icon: '🧭',  domain: 'ai'            },
-  { id: 'ask',           label: 'Ask Jarvis', icon: '🤖',  domain: 'ai'            },
+  { id: 'focus',         label: 'Focus',        icon: '🧭',  domain: 'ai'            },
+  { id: 'coordination',  label: 'Coordination', icon: '🔗',  domain: 'ai'            },
+  { id: 'ask',           label: 'Ask Jarvis',   icon: '🤖',  domain: 'ai'            },
   { id: 'crm',           label: 'CRM',        icon: '🎯',  domain: 'crm'           },
   { id: 'feed',          label: 'FEED',       icon: '🔬',  domain: 'engineering'   },
   { id: 'projects',      label: 'Projects',   icon: '📋',  domain: 'operations'    },

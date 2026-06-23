@@ -14,6 +14,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildProjectFocus, buildPortfolioFocus } from '../services/copilot/projectCopilotService'
+import { buildProjectCoordination, buildPortfolioCoordination } from '../services/copilot/coordinationService'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -46,6 +47,31 @@ router.get('/copilot/focus', async (req: Request, res: Response) => {
     res.json({ data: briefing })
   } catch (err) {
     res.status(500).json({ error: 'Failed to build portfolio focus', detail: (err as Error).message })
+  }
+})
+
+// ── Coordination Copilot: where the project is blocked / out of sync ──────────
+
+router.get('/copilot/projects/:projectId/coordination', async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  const limit = parseLimit(req.query['limit'], 50)
+  try {
+    const briefing = await buildProjectCoordination(r.tenantId!, String(req.params.projectId), new Date(), limit)
+    if (!briefing) return res.status(404).json({ error: 'Project not found' })
+    res.json({ data: briefing })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build coordination briefing', detail: (err as Error).message })
+  }
+})
+
+router.get('/copilot/coordination', async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  const limit = parseLimit(req.query['limit'], 50)
+  try {
+    const briefing = await buildPortfolioCoordination(r.tenantId!, new Date(), limit)
+    res.json({ data: briefing })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build portfolio coordination', detail: (err as Error).message })
   }
 })
 
