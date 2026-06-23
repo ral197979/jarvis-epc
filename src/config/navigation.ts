@@ -59,6 +59,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'predict',       label: 'Predict',    icon: '🔮',  domain: 'ai'            },
   { id: 'actions',       label: 'Actions',    icon: '⚡',  domain: 'operations'    },
   { id: 'field',         label: 'Field Svc',  icon: '🛠️',  domain: 'field'         },
+  { id: 'fieldai',       label: 'Field Asst', icon: '🦺',  domain: 'field'         },
   { id: 'transmittals',  label: 'Transmittals', icon: '📬', domain: 'documents'     },
   { id: 'docs',          label: 'Documents',  icon: '🗄️',  domain: 'documents'     },
   { id: 'directory',     label: 'Directory',  icon: '📚',  domain: 'procurement'   },
