@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
+    "paths": {
+      "@/*": ["frontend/src/*"],
+      "@ds": ["design-system/src/index.ts"],
+      "@ds/*": ["design-system/src/*"],
+      "@adapters": ["backend-adapters/src/index.ts"],
+      "@adapters/*": ["backend-adapters/src/*"]
+    }
+  },
+  "include": ["frontend", "design-system", "backend-adapters", "vite.config.ts", "vitest.config.ts", "vitest.setup.ts"]
+}
