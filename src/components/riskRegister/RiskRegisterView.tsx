@@ -3,7 +3,8 @@
  *
  * 5×5 probability/impact matrix (SVG) · Register table · Detail panel
  */
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
+import { useDeepLink } from '../../hooks/useDeepLink'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -446,6 +447,8 @@ export default function RiskRegisterView({ biz }: Props) {
   const [filterStatus,   setFilterStatus]   = useState<RiskStatus | 'all'>('all')
   const [filterSeverity, setFilterSeverity] = useState<'all'|'critical'|'high'|'medium'|'low'>('all')
   const [view,           setView]           = useState<'matrix' | 'list'>('matrix')
+  const deepLink = useDeepLink('risk')
+  const deepLinkOpened = useRef(false)
 
   const load = useCallback(async () => {
     if (!projectId) return
@@ -466,6 +469,16 @@ export default function RiskRegisterView({ biz }: Props) {
 
   useEffect(() => { load() }, [load])
   useEffect(() => { setFilterStatus('all'); setFilterSeverity('all') }, [projectId])
+
+  // Deep-link: switch to the target project, then open the risk once loaded.
+  useEffect(() => {
+    if (deepLink?.projectId && deepLink.projectId !== projectId) setProjectId(deepLink.projectId)
+  }, [deepLink]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (deepLinkOpened.current || !deepLink?.sourceId || risks.length === 0) return
+    const target = risks.find(r => r.id === deepLink.sourceId)
+    if (target) { setSelected(target); deepLinkOpened.current = true }
+  }, [deepLink, risks])
 
   const handleUpdate = async (patch: Record<string, unknown>) => {
     if (!selected) return

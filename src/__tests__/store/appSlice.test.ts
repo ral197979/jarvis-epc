@@ -38,7 +38,7 @@ function resetStore() {
     ui: {
       activeTab: 'dash', ownerPanelOpen: false, cmdPaletteOpen: false,
       cmdQuery: '', navOrder: [], navHidden: {}, sidebarCollapsed: false,
-      theme: 'dark', toasts: [],
+      theme: 'dark', toasts: [], deepLink: null,
     },
   })
 }
@@ -120,6 +120,30 @@ describe('UI state', () => {
   it('setTab updates window.location.hash', () => {
     useAppStore.getState().setTab('projects')
     expect(mockLocation.hash).toBe('projects')
+  })
+
+  it('openRecord sets the active tab and a deep-link target', () => {
+    useAppStore.getState().openRecord({ tab: 'rfis', source: 'rfi', sourceId: 'rfi-9', projectId: 'p-1' })
+    const ui = useAppStore.getState().ui
+    expect(ui.activeTab).toBe('rfis')
+    expect(ui.deepLink).toEqual({ source: 'rfi', sourceId: 'rfi-9', projectId: 'p-1', parentId: null })
+    expect(mockLocation.hash).toBe('rfis')
+  })
+
+  it('openRecord carries a parentId for nested records (punch item → list)', () => {
+    useAppStore.getState().openRecord({ tab: 'punch', source: 'punch', sourceId: 'pi-3', projectId: 'p-1', parentId: 'list-9' })
+    expect(useAppStore.getState().ui.deepLink).toEqual({ source: 'punch', sourceId: 'pi-3', projectId: 'p-1', parentId: 'list-9' })
+  })
+
+  it('openRecord pre-selects the project via localStorage', () => {
+    useAppStore.getState().openRecord({ tab: 'riskregister', source: 'risk', sourceId: 'k-2', projectId: 'p-7' })
+    expect(localStorage.getItem('jarvis-active-project')).toBe('p-7')
+  })
+
+  it('clearDeepLink resets the pending target', () => {
+    useAppStore.getState().openRecord({ tab: 'rfis', source: 'rfi', sourceId: 'rfi-9', projectId: 'p-1' })
+    useAppStore.getState().clearDeepLink()
+    expect(useAppStore.getState().ui.deepLink).toBeNull()
   })
 
   it('setOwnerPanel opens and closes panel', () => {

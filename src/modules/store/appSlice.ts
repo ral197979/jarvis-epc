@@ -75,6 +75,14 @@ export interface GatewayState {
   lastCheck:string | null
 }
 
+/** A pending deep-link: the destination view claims it on mount to open a record. */
+export interface DeepLinkTarget {
+  source:    string         // 'rfi' | 'submittal' | 'risk' | 'inspection' | 'punch' | ...
+  sourceId:  string | null  // record id to open, if any
+  projectId: string | null  // project the record belongs to
+  parentId?: string | null  // parent record (e.g. punch item's list) so the view can pre-select it
+}
+
 export interface UIState {
   activeTab:       string
   ownerPanelOpen:  boolean
@@ -85,6 +93,7 @@ export interface UIState {
   sidebarCollapsed:boolean
   theme:           'dark' | 'light' | 'auto'
   toasts:          Toast[]
+  deepLink:        DeepLinkTarget | null  // ephemeral — set by openRecord, cleared on claim
 }
 
 export interface Toast {
@@ -121,6 +130,7 @@ const DEFAULT_UI: UIState = {
   sidebarCollapsed:false,
   theme:           'dark',
   toasts:          [],
+  deepLink:        null,
 }
 
 // ─── Store interface ──────────────────────────────────────────────────────────
@@ -142,6 +152,8 @@ interface AppStore {
 
   // ── Navigation / UI ───────────────────────────────────────────────────────
   setTab:          (tab: string) => void
+  openRecord:      (target: { tab: string } & DeepLinkTarget) => void
+  clearDeepLink:   () => void
   setOwnerPanel:   (open: boolean) => void
   setCmdPalette:   (open: boolean, query?: string) => void
   setCmdQuery:     (q: string) => void
@@ -191,6 +203,13 @@ export const useAppStore = create<AppStore>()(
           set(s => ({ ui: { ...s.ui, activeTab: tab } }), false, 'setTab')
           try { window.location.hash = tab } catch { /* SSR safe */ }
         },
+        openRecord: ({ tab, source, sourceId, projectId, parentId = null }) => {
+          // Pre-select the project via the shared convention destination views read.
+          if (projectId) { try { localStorage.setItem('jarvis-active-project', projectId) } catch { /* ignore */ } }
+          set(s => ({ ui: { ...s.ui, activeTab: tab, deepLink: { source, sourceId, projectId, parentId } } }), false, 'openRecord')
+          try { window.location.hash = tab } catch { /* SSR safe */ }
+        },
+        clearDeepLink: () => set(s => ({ ui: { ...s.ui, deepLink: null } }), false, 'clearDeepLink'),
         setOwnerPanel:   (open) => set(s => ({ ui: { ...s.ui, ownerPanelOpen: open } }), false, 'setOwnerPanel'),
         setCmdPalette:   (open, query) => set(s => ({
           ui: { ...s.ui, cmdPaletteOpen: open, cmdQuery: query ?? s.ui.cmdQuery }

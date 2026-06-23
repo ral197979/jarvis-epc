@@ -118,6 +118,7 @@ import { policiesRouter       } from './routes/policies'                    // v
 import { executiveRouter      } from './routes/executive'                   // v4.40.0 Ava Phase 4
 import { integrationHubRouter } from './routes/integrationHub'             // v4.40.0 Ava Phase 4
 import { exportsRouter        } from './routes/exports'                     // v4.40.0 Ava Phase 4
+import { copilotRouter        } from './routes/copilot'                     // v4.41.0: Project Copilot (AI Project Intelligence)
 import { auditVerificationRouter } from './routes/auditVerification'       // v4.40.0 Ava Phase 4
 import { agentsRouter           } from './routes/agents'                    // v5.0.0 Ava Phase 5
 import { agentApprovalsRouter   } from './routes/agentApprovals'            // v5.0.0 Ava Phase 5
@@ -537,6 +538,7 @@ app.use('/api/v1/policies',      policiesRouter)       // v4.40.0 Ava Phase 4: E
 app.use('/api/v1/executive',     executiveRouter)      // v4.40.0 Ava Phase 4: Executive Command Dashboard
 app.use('/api/v1/integrations/hub', integrationHubRouter) // v4.40.0 Ava Phase 4: Integration Hub
 app.use('/api/v1/exports',       exportsRouter)        // v4.40.0 Ava Phase 4: Data Warehouse Exports
+app.use('/api/v1',               copilotRouter)        // v4.41.0: Project Copilot — AI Project Intelligence focus briefings
 app.use('/api/v1/audit/verify',  auditVerificationRouter) // v4.40.0 Ava Phase 4: Audit Chain Verification
 app.use('/api/v1/agents',                agentLimiter, agentsRouter)            // v5.0.1 Ava Phase 5: Multi-Agent System
 app.use('/api/v1/agents/approvals',      agentLimiter, agentApprovalsRouter)    // v5.0.1 Ava Phase 5: Agent Approval Queue

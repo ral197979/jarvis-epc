@@ -11,7 +11,8 @@
  * terminal statuses + review_notes. Mirrors RFIsView/PunchListView REST
  * conventions: project selector, KPIs, filters, table, modals.
  */
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useDeepLink } from '../hooks/useDeepLink'
 
 interface Submittal {
   id: string
@@ -126,6 +127,8 @@ export default function SubmittalsView(props: { policy?: any; biz?: any; onNavig
   const [showCreate, setShowCreate] = useState(false)
   const [showDetail, setShowDetail] = useState(false)
   const [selected, setSelected] = useState<Submittal | null>(null)
+  const deepLink = useDeepLink('submittal')
+  const deepLinkOpened = useRef(false)
 
   const [showReview, setShowReview] = useState(false)
   const [reviewStatus, setReviewStatus] = useState<'approved' | 'approved_as_noted' | 'revise_resubmit' | 'rejected'>('approved')
@@ -179,6 +182,13 @@ export default function SubmittalsView(props: { policy?: any; biz?: any; onNavig
     }
   }
   useEffect(() => { reload() }, [projectId])
+
+  // Deep-link: open the submittal a Focus card pointed at, once loaded.
+  useEffect(() => {
+    if (deepLinkOpened.current || !deepLink?.sourceId || submittals.length === 0) return
+    const target = submittals.find(s => s.id === deepLink.sourceId)
+    if (target) { setSelected(target); setShowDetail(true); deepLinkOpened.current = true }
+  }, [deepLink, submittals])
 
   // ─── Derived ──────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {

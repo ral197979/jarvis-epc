@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useDeepLink } from '../hooks/useDeepLink';
 import { downloadCsv } from '../utils/csv';
 
 interface ChecklistItem {
@@ -198,6 +199,8 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
   const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   const [activeInspection, setActiveInspection] = useState<Inspection | null>(null);
+  const deepLink = useDeepLink('inspection');
+  const deepLinkOpened = useRef(false);
   const [activeChecklist, setActiveChecklist] = useState<ChecklistItem[]>([]);
   const [activeResults, setActiveResults] = useState<InspectionResult[]>([]);
   const [activeNotes, setActiveNotes] = useState('');
@@ -352,6 +355,14 @@ export default function InspectionsView(props: { policy?: any; biz?: any; onNavi
       console.error('Open run failed:', err);
     }
   };
+
+  // Deep-link: open the inspection a Focus card pointed at, once the list loads.
+  useEffect(() => {
+    if (deepLinkOpened.current || !deepLink?.sourceId || inspections.length === 0) return;
+    const target = inspections.find(i => i.id === deepLink.sourceId);
+    if (target) { openRun(target); deepLinkOpened.current = true; }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLink, inspections]);
 
   const updateResult = (idx: number, patch: Partial<InspectionResult>) => {
     setActiveResults(activeResults.map((r, i) => i === idx ? { ...r, ...patch } : r));

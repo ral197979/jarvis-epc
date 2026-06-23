@@ -68,6 +68,7 @@ const NotificationsView    = lazy(() => import('./notifications/NotificationsVie
 const PredictView          = lazy(() => import('./predict/PredictView'))
 const TimesheetsView       = lazy(() => import('./timesheets/TimesheetsView'))
 const RiskRegisterView     = lazy(() => import('./riskRegister/RiskRegisterView'))
+const CopilotView          = lazy(() => import('./copilot/CopilotView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   overview:      DashboardMainView,
   team:          TeamView,
   predict:       PredictView,
+  focus:         CopilotView,
   integrations:  () => React.createElement(ComingSoonView, { label: 'Integrations',  domain: 'System',     icon: '🔗', viewId: 'integrations',  context: 'Outbound connectors (QuickBooks, Slack, Tractian, BACnet) are being migrated to the new integration framework.' }),
   notifications: NotificationsView,
 }

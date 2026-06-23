@@ -14,7 +14,8 @@
  * Replaces the corrupted file shipped in 2444420 (null byte + interleaved RFI
  * fragments rendered the original unparseable by tsc).
  */
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useDeepLink } from '../hooks/useDeepLink'
 import { downloadCsv } from '../utils/csv'
 
 interface PunchList {
@@ -181,6 +182,8 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
 
   const [showDetail, setShowDetail] = useState(false)
   const [selectedItem, setSelectedItem] = useState<PunchItem | null>(null)
+  const deepLink = useDeepLink('punch')
+  const deepLinkOpened = useRef(false)
 
   // Load projects
   useEffect(() => {
@@ -257,6 +260,17 @@ export default function PunchListView(_props: { policy?: any; biz?: any; onNavig
     }
   }
   useEffect(() => { reloadItems() }, [selectedListId])
+
+  // Deep-link: select the item's parent list (from the Focus payload) so its
+  // items load, then open the item once present.
+  useEffect(() => {
+    if (deepLink?.parentId) setSelectedListId(deepLink.parentId)
+  }, [deepLink])
+  useEffect(() => {
+    if (deepLinkOpened.current || !deepLink?.sourceId || items.length === 0) return
+    const target = items.find(it => it.id === deepLink.sourceId)
+    if (target) { setSelectedItem(target); setShowDetail(true); deepLinkOpened.current = true }
+  }, [deepLink, items])
 
   // Derived
   const filteredItems = useMemo(() => {

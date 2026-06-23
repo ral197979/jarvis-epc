@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useDeepLink } from '../hooks/useDeepLink';
 
 interface RFI {
   id: string;
@@ -35,6 +36,8 @@ export default function RFIsView(props: { policy?: any; biz?: any; onNavigate?: 
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRFI, setSelectedRFI] = useState<RFI | null>(null);
   const [responseText, setResponseText] = useState('');
+  const deepLink = useDeepLink('rfi');
+  const deepLinkOpened = useRef(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -83,6 +86,13 @@ export default function RFIsView(props: { policy?: any; biz?: any; onNavigate?: 
     };
     fetchRFIs();
   }, [projectId]);
+
+  // Deep-link: open the RFI a Focus card pointed at, once the list has loaded.
+  useEffect(() => {
+    if (deepLinkOpened.current || !deepLink?.sourceId || rfis.length === 0) return;
+    const target = rfis.find(r => r.id === deepLink.sourceId);
+    if (target) { setSelectedRFI(target); setShowDetailModal(true); deepLinkOpened.current = true; }
+  }, [deepLink, rfis]);
 
   const handleCreateRFI = async () => {
     if (!projectId || !formData.title || !formData.due_date) {
