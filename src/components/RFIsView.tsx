@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
 import { useDeepLink } from '../hooks/useDeepLink';
+import RfiCopilotPanel from './rfi/RfiCopilotPanel';
 
 interface RFI {
   id: string;
@@ -524,6 +525,8 @@ export default function RFIsView(_props: { policy?: any; biz?: any; onNavigate?:
                 <div><strong>Due Date:</strong> {new Date(selectedRFI.due_date).toLocaleDateString()}</div>
               </div>
             </div>
+
+            <RfiCopilotPanel rfiId={selectedRFI.id} />
 
             <div style={{ borderTop: '1px solid var(--jarvis-bg)', paddingTop: '16px', marginBottom: '16px' }}>
               <h3 style={{ margin: '0 0 12px 0', fontSize: '14px' }}>Responses ({selectedRFI.responses?.length || 0})</h3>
