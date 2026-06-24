@@ -32,6 +32,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'dailylogs',     label: 'Daily Logs', icon: '🗓️',  domain: 'construction'  },
   { id: 'drawings',        label: 'Drawings',      icon: '📐',  domain: 'construction'  },
   { id: 'scheduleimport',  label: 'Import Schedule', icon: '📅',  domain: 'construction'  },
+  { id: 'forecast',        label: 'Schedule Forecast', icon: '🎲', domain: 'construction' },
   { id: 'subcontracts',   label: 'Subcontracts',    icon: '🏗️',  domain: 'construction'  },
   { id: 'meetings',       label: 'Meetings',        icon: '📋',  domain: 'construction'  },
   { id: 'bim',           label: 'BIM',        icon: '🏢',  domain: 'construction'  },
