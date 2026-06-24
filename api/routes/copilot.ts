@@ -16,6 +16,7 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildProjectFocus, buildPortfolioFocus } from '../services/copilot/projectCopilotService'
 import { buildProjectCoordination, buildPortfolioCoordination } from '../services/copilot/coordinationService'
 import { buildProjectReport, buildPortfolioReport } from '../services/copilot/executiveReportService'
+import { buildNarrativeReport } from '../services/copilot/narrativeReportService'
 import { buildPortfolioInsights } from '../services/copilot/portfolioInsightsService'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -109,6 +110,19 @@ router.get('/copilot/portfolio', async (_req: Request, res: Response) => {
     res.json({ data: insights })
   } catch (err) {
     res.status(500).json({ error: 'Failed to build portfolio insights', detail: (err as Error).message })
+  }
+})
+
+// ── Owner / board narrative report (deterministic, copy-pasteable) ────────────
+
+router.get('/copilot/projects/:projectId/narrative-report', async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  try {
+    const report = await buildNarrativeReport(r.tenantId!, String(req.params.projectId), new Date())
+    if (!report) return res.status(404).json({ error: 'Project not found' })
+    res.json({ data: report })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to build narrative report', detail: (err as Error).message })
   }
 })
 

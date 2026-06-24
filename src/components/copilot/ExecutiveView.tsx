@@ -29,6 +29,21 @@ export default function ExecutiveView(_props: { onNavigate?: (tab: string) => vo
   const [report, setReport] = useState<PortfolioReport | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [narrative, setNarrative] = useState<{ title: string; markdown: string } | null>(null)
+  const [narrativeBusy, setNarrativeBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  const openReport = async (projectId: string) => {
+    setNarrativeBusy(true); setNarrative(null); setCopied(false)
+    try {
+      const res = await fetch(`/api/v1/copilot/projects/${projectId}/narrative-report`, { credentials: 'include' })
+      if (res.ok) setNarrative((await res.json()).data)
+    } finally { setNarrativeBusy(false) }
+  }
+  const copyReport = async () => {
+    if (!narrative) return
+    try { await navigator.clipboard.writeText(narrative.markdown); setCopied(true) } catch { /* clipboard blocked */ }
+  }
 
   const load = useCallback(async () => {
     setLoading(true); setError(false)
@@ -108,10 +123,29 @@ export default function ExecutiveView(_props: { onNavigate?: (tab: string) => vo
                   <div style={{ fontSize: 13, color: 'var(--jarvis-tx)' }}>{p.projectName ?? p.projectId.slice(0, 8)}</div>
                   <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.topConcern}</div>
                 </div>
+                <button onClick={() => openReport(p.projectId)} disabled={narrativeBusy} title="Generate owner report"
+                  style={{ flexShrink: 0, padding: '4px 10px', borderRadius: 6, fontSize: 12, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg2)', color: 'var(--jarvis-tx)', cursor: 'pointer' }}>📄 Report</button>
               </div>
             ))}
           </div>
         </>
+      )}
+
+      {/* Owner report modal */}
+      {(narrative || narrativeBusy) && (
+        <div onClick={() => setNarrative(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--jarvis-bg2)', border: '1px solid var(--jarvis-bd)', borderRadius: 10, maxWidth: 720, width: '100%', maxHeight: '85vh', overflow: 'auto', padding: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, gap: 8 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--jarvis-tx)' }}>{narrative?.title ?? 'Generating…'}</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {narrative && <button onClick={copyReport} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: 'none', background: 'var(--jarvis-ac)', color: '#0a0b0f', fontWeight: 700, cursor: 'pointer' }}>{copied ? '✓ Copied' : 'Copy markdown'}</button>}
+                <button onClick={() => setNarrative(null)} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', cursor: 'pointer' }}>Close</button>
+              </div>
+            </div>
+            {narrativeBusy && !narrative && <div style={{ fontSize: 13, color: 'var(--jarvis-ts)' }}>Composing report…</div>}
+            {narrative && <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--jarvis-tx)', lineHeight: 1.55, fontFamily: 'inherit', margin: 0 }}>{narrative.markdown}</pre>}
+          </div>
+        </div>
       )}
     </div>
   )
