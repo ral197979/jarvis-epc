@@ -14,7 +14,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import {
   listNcrs, createNcr, updateNcr, listCorrectiveActions, createCorrectiveAction,
-  updateCorrectiveActionStatus, buildNcrSummary,
+  updateCorrectiveActionStatus, buildNcrSummary, autoRaiseNcrsFromInspections,
 } from '../services/quality/ncrService'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -81,6 +81,14 @@ router.patch('/capas/:id', async (req: Request, res: Response) => {
     if (!row) return res.status(404).json({ error: 'Corrective action not found' })
     res.json({ data: row })
   } catch (err) { res.status(500).json({ error: 'Failed to update corrective action', detail: (err as Error).message }) }
+})
+
+router.post('/projects/:projectId/ncrs/auto-raise', async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  try {
+    const result = await autoRaiseNcrsFromInspections(r.tenantId!, String(req.params.projectId), r.auth?.sub ?? null)
+    res.status(result.count > 0 ? 201 : 200).json({ data: result })
+  } catch (err) { res.status(500).json({ error: 'Failed to auto-raise NCRs', detail: (err as Error).message }) }
 })
 
 router.get('/projects/:projectId/ncr-summary', async (req: Request, res: Response) => {

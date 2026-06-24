@@ -12,7 +12,7 @@ vi.mock('../db/pool', () => ({
 vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1' }; next() } }))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
-import { analyzeNcr, type NcrRow, type CapaRow } from '../services/quality/ncrService'
+import { analyzeNcr, buildAutoRaisedNcr, type NcrRow, type CapaRow } from '../services/quality/ncrService'
 
 const NOW = new Date('2026-06-22T12:00:00Z')
 
@@ -65,6 +65,17 @@ describe('analyzeNcr — recurring root causes', () => {
     const s = analyzeNcr(ncrs, [], NOW)
     expect(s.recurringRootCauses.find(r => r.cause === 'welding')?.count).toBe(2)
     expect(s.recurringRootCauses.find(r => r.cause === 'concrete')).toBeFalsy() // only 1
+  })
+})
+
+describe('buildAutoRaisedNcr', () => {
+  it('maps a failed inspection to a major NCR sourced to the inspection', () => {
+    const n = buildAutoRaisedNcr({ id: 'insp-uuid-123', inspection_number: 'C-12', title: 'Concrete pour', discipline: 'Structural', location: 'Grid A' })
+    expect(n.severity).toBe('major')
+    expect(n.source).toBe('inspection')
+    expect(n.source_ref).toBe('insp-uuid-123')
+    expect(n.title).toContain('Concrete pour')
+    expect(n.discipline).toBe('Structural')
   })
 })
 
@@ -121,5 +132,28 @@ describe('NCR / CAPA routes', () => {
   it('PATCH capa validates status', async () => {
     const res = await request(makeApp()).patch('/api/v1/capas/c1').send({ status: 'bogus' })
     expect(res.status).toBe(400)
+  })
+
+  it('POST auto-raise creates an NCR for a failed inspection without one', async () => {
+    mockQuery.mockImplementation(async (_t: string, sql: string) => {
+      if (/FROM inspections/.test(sql)) return { rows: [{ id: 'insp1', inspection_number: 'C-1', title: 'Pour', discipline: 'Structural', location: 'A' }] }
+      if (/MAX\(ncr_number\)/.test(sql)) return { rows: [{ max: 3 }], rowCount: 1 }
+      if (/INSERT INTO ncrs/.test(sql)) return { rows: [{ id: 'n1', ncr_number: 4, title: 'Failed inspection: Pour', severity: 'major', status: 'open', source: 'inspection', source_ref: 'insp1' }], rowCount: 1 }
+      return { rows: [] }
+    })
+    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs/auto-raise').send({})
+    expect(res.status).toBe(201)
+    expect(res.body.data.count).toBe(1)
+    expect(res.body.data.created[0].source).toBe('inspection')
+  })
+
+  it('POST auto-raise is idempotent (200, none created) when there are no new failures', async () => {
+    mockQuery.mockImplementation(async (_t: string, sql: string) => {
+      if (/FROM inspections/.test(sql)) return { rows: [] }   // all failed inspections already have NCRs
+      return { rows: [] }
+    })
+    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs/auto-raise').send({})
+    expect(res.status).toBe(200)
+    expect(res.body.data.count).toBe(0)
   })
 })

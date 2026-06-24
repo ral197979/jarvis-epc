@@ -167,6 +167,61 @@ export async function updateCorrectiveActionStatus(tenantId: string, id: string,
   return res.rows[0] ?? null
 }
 
+// ─── Auto-raise NCRs from failed inspections ──────────────────────────────────
+
+export interface InspectionLite { id: string; inspection_number?: string | null; title?: string | null; discipline?: string | null; location?: string | null }
+
+/** Pure mapping: the NCR fields for a failed inspection (severity defaults to major). */
+export function buildAutoRaisedNcr(insp: InspectionLite): {
+  title: string; description: string; severity: string; discipline: string | null; location: string | null; source: string; source_ref: string
+} {
+  const ref = insp.inspection_number ?? insp.id.slice(0, 8)
+  return {
+    title: `Failed inspection: ${insp.title ?? ref}`,
+    description: `Auto-raised from failed inspection ${ref}.`,
+    severity: 'major',
+    discipline: insp.discipline ?? null,
+    location: insp.location ?? null,
+    source: 'inspection',
+    source_ref: insp.id,
+  }
+}
+
+/**
+ * Create one NCR for each failed inspection that does not already have one
+ * (idempotent — re-running creates nothing). NCR numbers are assigned
+ * sequentially within a single transaction.
+ */
+export async function autoRaiseNcrsFromInspections(tenantId: string, projectId: string, userId: string | null) {
+  return tenantTransaction(tenantId, async (client) => {
+    const cand = await client.query(
+      `SELECT i.id, i.inspection_number, i.title, i.discipline, i.location
+         FROM inspections i
+        WHERE i.tenant_id=$1 AND i.project_id=$2 AND lower(i.overall_result)='fail'
+          AND NOT EXISTS (
+            SELECT 1 FROM ncrs n
+             WHERE n.tenant_id=i.tenant_id AND n.project_id=i.project_id
+               AND n.source='inspection' AND n.source_ref=i.id::text)
+        ORDER BY i.created_at LIMIT 500`, [tenantId, projectId])
+    if (cand.rows.length === 0) return { created: [], count: 0 }
+
+    const maxRes = await client.query(`SELECT COALESCE(MAX(ncr_number),0) AS max FROM ncrs WHERE tenant_id=$1 AND project_id=$2`, [tenantId, projectId])
+    let next = Number(maxRes.rows[0].max)
+    const created: unknown[] = []
+    for (const insp of cand.rows as InspectionLite[]) {
+      next += 1
+      const n = buildAutoRaisedNcr(insp)
+      const res = await client.query(
+        `INSERT INTO ncrs (tenant_id, project_id, ncr_number, title, description, severity, discipline, location, source, source_ref, raised_by)
+         VALUES ($1,$2,$3,$4,$5,$6::ncr_severity,$7,$8,$9,$10,$11)
+         RETURNING id, ncr_number, title, severity, status, source, source_ref`,
+        [tenantId, projectId, next, n.title, n.description, n.severity, n.discipline, n.location, n.source, n.source_ref, userId])
+      created.push(res.rows[0])
+    }
+    return { created, count: created.length }
+  })
+}
+
 export async function buildNcrSummary(tenantId: string, projectId: string, now: Date = new Date()): Promise<NcrSummary | null> {
   const projRes = await tenantQuery(tenantId, `SELECT id FROM projects WHERE tenant_id=$1 AND id=$2`, [tenantId, projectId])
   if (!projRes.rows[0]) return null

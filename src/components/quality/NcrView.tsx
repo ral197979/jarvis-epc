@@ -36,6 +36,7 @@ export default function NcrView(_props: { onNavigate?: (tab: string) => void }) 
   const [busy, setBusy] = useState(false)
   const [ncrForm, setNcrForm] = useState({ title: '', severity: 'minor', discipline: '', location: '', source: 'inspection' })
   const [capaDesc, setCapaDesc] = useState('')
+  const [autoMsg, setAutoMsg] = useState('')
 
   useEffect(() => {
     (async () => {
@@ -97,6 +98,14 @@ export default function NcrView(_props: { onNavigate?: (tab: string) => void }) 
     try { await fetch(`/api/v1/capas/${id}`, { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) }); if (selected) await loadCapas(selected.id) }
     finally { setBusy(false) }
   }
+  const autoRaise = async () => {
+    setBusy(true)
+    try {
+      const r = await fetch(`/api/v1/projects/${projectId}/ncrs/auto-raise`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: '{}' }).then(x => x.json())
+      setAutoMsg(r.data?.count ? `Raised ${r.data.count} NCR${r.data.count === 1 ? '' : 's'} from failed inspections.` : 'No new failed inspections to raise.')
+      await load(projectId)
+    } finally { setBusy(false) }
+  }
 
   const card: React.CSSProperties = { background: 'var(--jarvis-bg2)', border: '1px solid var(--jarvis-bd)', borderRadius: 10, padding: 16, marginBottom: 16 }
   const inp: React.CSSProperties = { padding: '5px 8px', borderRadius: 6, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', fontSize: 12 }
@@ -137,7 +146,12 @@ export default function NcrView(_props: { onNavigate?: (tab: string) => void }) 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         {/* Register */}
         <div style={{ ...card, flex: '1 1 460px', minWidth: 320 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jarvis-tx)', marginBottom: 8 }}>NCR register ({ncrs.length})</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--jarvis-tx)' }}>NCR register ({ncrs.length})</span>
+            <button onClick={autoRaise} disabled={busy} title="Create NCRs for failed inspections that don't have one yet"
+              style={{ ...inp, cursor: busy ? 'default' : 'pointer', fontWeight: 600 }}>⚙ Auto-raise from failures</button>
+          </div>
+          {autoMsg && <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', marginBottom: 8 }}>{autoMsg}</div>}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
             <select value={ncrForm.severity} onChange={e => setNcrForm({ ...ncrForm, severity: e.target.value })} style={inp}><option value="minor">Minor</option><option value="major">Major</option><option value="critical">Critical</option></select>
             <select value={ncrForm.source} onChange={e => setNcrForm({ ...ncrForm, source: e.target.value })} style={inp}><option value="inspection">Inspection</option><option value="punch">Punch</option><option value="observation">Observation</option><option value="audit">Audit</option><option value="other">Other</option></select>
