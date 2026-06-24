@@ -80,6 +80,7 @@ const FieldAssistantView    = lazy(() => import('./field/FieldAssistantView'))
 const AutopilotView         = lazy(() => import('./copilot/AutopilotView'))
 const ScheduleForecastView  = lazy(() => import('./schedule/ScheduleForecastView'))
 const QualityIntelligenceView = lazy(() => import('./quality/QualityIntelligenceView'))
+const CostIntelligenceView  = lazy(() => import('./costControl/CostIntelligenceView'))
 const ProcurementRiskView   = lazy(() => import('./procurement/ProcurementRiskView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -198,6 +199,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   autopilot:     AutopilotView,
   forecast:      ScheduleForecastView,
   quality:       QualityIntelligenceView,
+  costiq:        CostIntelligenceView,
   procurementrisk: ProcurementRiskView,
   integrations:  IntegrationsView,
   notifications: NotificationsView,

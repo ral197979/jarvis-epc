@@ -72,6 +72,7 @@ import { budgetsRouter      } from './routes/budgets'       // v4.31.0
 import { payApplicationsRouter } from './routes/payApplications' // v4.45.0: AIA G702/G703 billing
 import { qualityIntelligenceRouter } from './routes/qualityIntelligence' // v4.51.0: Quality Intelligence
 import { safetyRouter         } from './routes/safety'          // v4.53.0: Safety (Phase 10)
+import { costIntelligenceRouter } from './routes/costIntelligence' // v4.54.0: Cost Intelligence
 import { procurementRiskRouter } from './routes/procurementRisk'  // v4.52.0: Procurement Risk Engine
 import { rfiCopilotRouter    } from './routes/rfiCopilot'      // v4.46.0: RFI Copilot
 import { submittalReviewRouter } from './routes/submittalReview' // v4.47.0: Submittal review assistant
@@ -533,6 +534,7 @@ app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + ch
 app.use('/api/v1',                payApplicationsRouter) // v4.45.0: AIA G702/G703 pay applications
 app.use('/api/v1',                qualityIntelligenceRouter) // v4.51.0: Quality Intelligence
 app.use('/api/v1',                safetyRouter)          // v4.53.0: Safety (Phase 10)
+app.use('/api/v1',                costIntelligenceRouter) // v4.54.0: Cost Intelligence
 app.use('/api/v1',                procurementRiskRouter) // v4.52.0: Procurement Risk Engine
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
 app.use('/api/v1',                autoCoordinationRouter) // v4.49.0: Autonomous Coordination (recommend → approve → execute)
