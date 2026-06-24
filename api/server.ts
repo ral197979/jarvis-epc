@@ -70,6 +70,7 @@ import { drawingsRouter     } from './routes/drawings'      // v4.31.0
 import { bimRouter          } from './routes/bim'           // v4.31.0
 import { budgetsRouter      } from './routes/budgets'       // v4.31.0
 import { payApplicationsRouter } from './routes/payApplications' // v4.45.0: AIA G702/G703 billing
+import { qualityIntelligenceRouter } from './routes/qualityIntelligence' // v4.51.0: Quality Intelligence
 import { rfiCopilotRouter    } from './routes/rfiCopilot'      // v4.46.0: RFI Copilot
 import { submittalReviewRouter } from './routes/submittalReview' // v4.47.0: Submittal review assistant
 import { fieldAssistantRouter } from './routes/fieldAssistant'   // v4.48.0: AI Field Assistant
@@ -528,6 +529,7 @@ app.use('/api/v1',                drawingsRouter)       // v4.31.0: Drawings + r
 app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models + coordination issues
 app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
 app.use('/api/v1',                payApplicationsRouter) // v4.45.0: AIA G702/G703 pay applications
+app.use('/api/v1',                qualityIntelligenceRouter) // v4.51.0: Quality Intelligence
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
 app.use('/api/v1',                autoCoordinationRouter) // v4.49.0: Autonomous Coordination (recommend → approve → execute)
 app.use('/api/v1',                inspectionsRouter)    // v4.32.0: Inspection templates + records

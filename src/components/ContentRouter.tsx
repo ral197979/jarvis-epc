@@ -79,6 +79,7 @@ const BillingView           = lazy(() => import('./billing/BillingView'))
 const FieldAssistantView    = lazy(() => import('./field/FieldAssistantView'))
 const AutopilotView         = lazy(() => import('./copilot/AutopilotView'))
 const ScheduleForecastView  = lazy(() => import('./schedule/ScheduleForecastView'))
+const QualityIntelligenceView = lazy(() => import('./quality/QualityIntelligenceView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -195,6 +196,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   fieldai:       FieldAssistantView,
   autopilot:     AutopilotView,
   forecast:      ScheduleForecastView,
+  quality:       QualityIntelligenceView,
   integrations:  IntegrationsView,
   notifications: NotificationsView,
 }

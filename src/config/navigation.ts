@@ -41,6 +41,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'submittals',    label: 'Submittals', icon: '📨',  domain: 'construction'  },
   { id: 'punch',         label: 'Punch List', icon: '📌',  domain: 'construction'  },
   { id: 'inspections',   label: 'Inspections', icon: '🔍', domain: 'construction'  },
+  { id: 'quality',       label: 'Quality IQ',  icon: '🔬', domain: 'construction'  },
   { id: 'compliance',    label: 'Compliance',  icon: '🛡️', domain: 'construction'  },
   { id: 'fixlibrary',    label: 'Fix Library', icon: '🔧', domain: 'engineering'   },
   { id: 'knowledge',     label: 'Knowledge',   icon: '📚', domain: 'system'        },
