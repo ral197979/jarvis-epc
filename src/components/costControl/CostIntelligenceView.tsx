@@ -19,6 +19,12 @@ interface CostIntel {
   overrunRisk: 'low' | 'medium' | 'high'
   recommendations: string[]
 }
+interface CommitmentLine { id: string; scNumber: number | null; title: string; vendor: string | null; status: string; contractValue: number; billed: number; retentionHeld: number; pctBilled: number; remaining: number }
+interface CommitmentRollup {
+  headline: string
+  totals: { subcontracts: number; activeSubcontracts: number; committed: number; billed: number; paidNet: number; retentionHeld: number; remainingToBill: number; pctBilled: number }
+  lines: CommitmentLine[]
+}
 
 const money = (n: number) => `${n < 0 ? '-' : ''}$${Math.round(Math.abs(n)).toLocaleString('en-US')}`
 const riskColor = (r: string) => (r === 'low' ? '#22c55e' : r === 'medium' ? '#f59e0b' : '#ef4444')
@@ -29,6 +35,7 @@ export default function CostIntelligenceView(_props: { onNavigate?: (tab: string
   const [projectId, setProjectId] = useState('')
   const [data, setData] = useState<CostIntel | null>(null)
   const [loading, setLoading] = useState(false)
+  const [commit, setCommit] = useState<CommitmentRollup | null>(null)
 
   useEffect(() => {
     (async () => {
@@ -48,10 +55,14 @@ export default function CostIntelligenceView(_props: { onNavigate?: (tab: string
     if (!pid) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/v1/projects/${pid}/cost-intelligence`, { credentials: 'include' })
-      const json = await res.json()
-      setData(res.ok ? json.data : null)
-    } catch { setData(null) } finally { setLoading(false) }
+      const [ci, cm] = await Promise.all([
+        fetch(`/api/v1/projects/${pid}/cost-intelligence`, { credentials: 'include' }),
+        fetch(`/api/v1/projects/${pid}/commitments`, { credentials: 'include' }),
+      ])
+      const ciJson = await ci.json()
+      setData(ci.ok ? ciJson.data : null)
+      setCommit(cm.ok ? (await cm.json()).data : null)
+    } catch { setData(null); setCommit(null) } finally { setLoading(false) }
   }, [])
   useEffect(() => { load(projectId) }, [projectId, load])
 
@@ -126,6 +137,28 @@ export default function CostIntelligenceView(_props: { onNavigate?: (tab: string
               ))}
             </div>
           </div>
+
+          {/* Commitments rollup */}
+          {commit && commit.totals.subcontracts > 0 && (
+            <div style={card}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jarvis-tx)', marginBottom: 6 }}>Commitments (subcontracts)</div>
+              <div style={{ fontSize: 12, color: 'var(--jarvis-ts)', marginBottom: 10 }}>{commit.headline}</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
+                {([['Committed', commit.totals.committed], ['Billed', commit.totals.billed], ['Retention held', commit.totals.retentionHeld], ['Remaining', commit.totals.remainingToBill]] as [string, number][]).map(([label, val]) => (
+                  <div key={label} style={{ flex: '1 1 130px', minWidth: 130, border: '1px solid var(--jarvis-bd)', borderRadius: 8, padding: 10 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--jarvis-tx)', fontFamily: 'var(--jarvis-font-mono)' }}>{money(val)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--jarvis-ts)' }}>{label}{label === 'Billed' ? ` (${commit.totals.pctBilled}%)` : ''}</div>
+                  </div>
+                ))}
+              </div>
+              {commit.lines.slice(0, 8).map(l => (
+                <div key={l.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--jarvis-tx)', padding: '3px 0', borderTop: '1px solid var(--jarvis-bd)' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>SC-{l.scNumber ?? '?'} {l.title} <span style={{ color: 'var(--jarvis-ts)' }}>· {l.vendor ?? ''} · {l.status}</span></span>
+                  <span style={{ color: 'var(--jarvis-ts)', flexShrink: 0, marginLeft: 8, fontFamily: 'var(--jarvis-font-mono)' }}>{money(l.billed)}/{money(l.contractValue)} ({l.pctBilled}%)</span>
+                </div>
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

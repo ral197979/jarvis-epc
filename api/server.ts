@@ -73,6 +73,7 @@ import { payApplicationsRouter } from './routes/payApplications' // v4.45.0: AIA
 import { qualityIntelligenceRouter } from './routes/qualityIntelligence' // v4.51.0: Quality Intelligence
 import { safetyRouter         } from './routes/safety'          // v4.53.0: Safety (Phase 10)
 import { costIntelligenceRouter } from './routes/costIntelligence' // v4.54.0: Cost Intelligence
+import { commitmentsRouter     } from './routes/commitments'      // v4.57.0: commitment rollup
 import { ncrRouter            } from './routes/ncr'             // v4.55.0: NCR / CAPA (Phase 9)
 import { procurementRiskRouter } from './routes/procurementRisk'  // v4.52.0: Procurement Risk Engine
 import { rfiCopilotRouter    } from './routes/rfiCopilot'      // v4.46.0: RFI Copilot
@@ -538,6 +539,7 @@ app.use('/api/v1',                payApplicationsRouter) // v4.45.0: AIA G702/G7
 app.use('/api/v1',                qualityIntelligenceRouter) // v4.51.0: Quality Intelligence
 app.use('/api/v1',                safetyRouter)          // v4.53.0: Safety (Phase 10)
 app.use('/api/v1',                costIntelligenceRouter) // v4.54.0: Cost Intelligence
+app.use('/api/v1',                commitmentsRouter)     // v4.57.0: commitment rollup
 app.use('/api/v1',                ncrRouter)             // v4.55.0: NCR / CAPA (Phase 9)
 app.use('/api/v1',                procurementRiskRouter) // v4.52.0: Procurement Risk Engine
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
