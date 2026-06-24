@@ -93,6 +93,7 @@ import complianceRouter       from './routes/compliance'    // v4.31.0
 import fieldSyncRouter        from './routes/fieldSync'     // v4.31.0
 import scheduleRouter         from './routes/schedule'      // v4.31.0
 import { scheduleForecastRouter } from './routes/scheduleForecast' // v4.50.0: schedule Monte Carlo + recovery
+import { scheduleCriticalPathRouter } from './routes/scheduleCriticalPath' // v4.56.0: critical-path what-if
 import autosignRulesRouter    from './routes/autosignRules' // v4.31.0
 import agentActionsRouter     from './routes/agentActionsRoutes' // v4.31.0
 import baselinesRouter        from './routes/baselinesRoutes'    // v4.31.0
@@ -519,6 +520,7 @@ app.use('/api/v1/compliance-tasks', complianceRouter)  // v4.31.0: compliance wa
 app.use('/api/v1/field-sync',       fieldSyncRouter)   // v4.31.0: offline batch replay
 app.use('/api/v1/schedule',         scheduleRouter)    // v4.31.0: CPM + tasks + dependencies
 app.use('/api/v1/schedule',         scheduleForecastRouter) // v4.50.0: Monte Carlo forecast + recovery planner
+app.use('/api/v1/schedule',         scheduleCriticalPathRouter) // v4.56.0: critical-path explain + what-if
 app.use('/api/v1/commissioning/autosign-rules', autosignRulesRouter) // v4.31.0: arbitration rules + /arbitrate
 app.use('/api/v1/commissioning/baselines',      baselinesRouter)     // v4.31.0: baseline visibility
 app.use('/api/v1/agent-actions',   agentActionsRouter) // v4.31.0: agent action log + review queue

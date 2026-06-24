@@ -18,6 +18,10 @@ interface Forecast {
   targetDays: number | null; probabilityOnTarget: number | null
   criticality: Crit[]; criticalPath: PathStep[]; recovery: Recovery[]
 }
+interface CritStep { taskId: string; name: string; durationDays: number }
+interface NearCrit { taskId: string; name: string; totalFloat: number }
+interface CriticalPathExplain { projectFinish: number; taskCount: number; criticalPath: CritStep[]; nearCritical: NearCrit[] }
+interface WhatIfResult { baselineFinish: number; newFinish: number; deltaDays: number; newCriticalPath: CritStep[]; becameCritical: { taskId: string; name: string }[] }
 
 export default function ScheduleForecastView(_props: { onNavigate?: (tab: string) => void }) {
   const [projects, setProjects] = useState<Project[]>([])
@@ -26,6 +30,11 @@ export default function ScheduleForecastView(_props: { onNavigate?: (tab: string
   const [data, setData] = useState<Forecast | null>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [cp, setCp] = useState<CriticalPathExplain | null>(null)
+  const [wiTask, setWiTask] = useState('')
+  const [wiDelta, setWiDelta] = useState('5')
+  const [wiResult, setWiResult] = useState<WhatIfResult | null>(null)
+  const [wiBusy, setWiBusy] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -53,6 +62,28 @@ export default function ScheduleForecastView(_props: { onNavigate?: (tab: string
     } catch { setError('Forecast failed') } finally { setBusy(false) }
   }, [])
   useEffect(() => { run(projectId, '') }, [projectId, run])
+
+  const loadCp = useCallback(async (pid: string) => {
+    if (!pid) return
+    setWiResult(null); setWiTask('')
+    try {
+      const res = await fetch(`/api/v1/schedule/${pid}/critical-path`, { credentials: 'include' })
+      setCp(res.ok ? (await res.json()).data : null)
+    } catch { setCp(null) }
+  }, [])
+  useEffect(() => { loadCp(projectId) }, [projectId, loadCp])
+
+  const runWhatIf = async () => {
+    if (!wiTask || !projectId) return
+    setWiBusy(true)
+    try {
+      const res = await fetch(`/api/v1/schedule/${projectId}/what-if`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ changes: [{ taskId: wiTask, deltaDays: Number(wiDelta) || 0 }] }),
+      })
+      setWiResult(res.ok ? (await res.json()).data : null)
+    } finally { setWiBusy(false) }
+  }
 
   const card: React.CSSProperties = { background: 'var(--jarvis-bg2)', border: '1px solid var(--jarvis-bd)', borderRadius: 10, padding: 16, marginBottom: 16 }
   const onTargetColor = data?.probabilityOnTarget == null ? '#6b7280' : data.probabilityOnTarget >= 0.8 ? '#22c55e' : data.probabilityOnTarget >= 0.5 ? '#f59e0b' : '#ef4444'
@@ -135,6 +166,35 @@ export default function ScheduleForecastView(_props: { onNavigate?: (tab: string
             </div>
           </div>
         </>
+      )}
+
+      {/* Critical-path what-if */}
+      {cp && (cp.criticalPath.length > 0 || cp.nearCritical.length > 0) && (
+        <div style={card}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jarvis-tx)', marginBottom: 8 }}>What-if: delay a task and see the impact</div>
+          {cp.nearCritical.length > 0 && (
+            <div style={{ fontSize: 11, color: 'var(--jarvis-ts)', marginBottom: 10 }}>
+              Near-critical buffers: {cp.nearCritical.slice(0, 6).map(n => `${n.name} (${n.totalFloat}d)`).join(' · ')}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={wiTask} onChange={e => { setWiTask(e.target.value); setWiResult(null) }} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', fontSize: 12, maxWidth: 240 }}>
+              <option value="">Pick a task…</option>
+              {[...cp.criticalPath.map(s => ({ id: s.taskId, name: `${s.name} (critical)` })), ...cp.nearCritical.map(n => ({ id: n.taskId, name: `${n.name} (${n.totalFloat}d float)` }))].map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </select>
+            <span style={{ fontSize: 12, color: 'var(--jarvis-ts)' }}>slips by</span>
+            <input type="number" value={wiDelta} onChange={e => setWiDelta(e.target.value)} style={{ width: 64, padding: '6px 8px', borderRadius: 6, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', fontSize: 12 }} />
+            <span style={{ fontSize: 12, color: 'var(--jarvis-ts)' }}>days</span>
+            <button onClick={runWhatIf} disabled={wiBusy || !wiTask} style={{ padding: '6px 14px', borderRadius: 6, fontSize: 13, border: 'none', background: 'var(--jarvis-ac)', color: '#0a0b0f', fontWeight: 700, cursor: wiTask ? 'pointer' : 'default', opacity: wiTask ? 1 : 0.5 }}>{wiBusy ? '…' : 'Run'}</button>
+          </div>
+          {wiResult && (
+            <div style={{ marginTop: 12, fontSize: 13, color: 'var(--jarvis-tx)' }}>
+              Finish moves <strong style={{ color: wiResult.deltaDays > 0 ? '#ef4444' : '#22c55e' }}>{wiResult.deltaDays > 0 ? `+${wiResult.deltaDays}` : wiResult.deltaDays}d</strong> ({wiResult.baselineFinish}d → {wiResult.newFinish}d).
+              {wiResult.deltaDays === 0 && ' Absorbed by float — no impact on the finish.'}
+              {wiResult.becameCritical.length > 0 && <span style={{ color: 'var(--jarvis-ts)' }}> Newly critical: {wiResult.becameCritical.map(t => t.name).join(', ')}.</span>}
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
