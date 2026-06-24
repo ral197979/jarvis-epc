@@ -34,6 +34,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'scheduleimport',  label: 'Import Schedule', icon: '📅',  domain: 'construction'  },
   { id: 'forecast',        label: 'Schedule Forecast', icon: '🎲', domain: 'construction' },
   { id: 'subcontracts',   label: 'Subcontracts',    icon: '🏗️',  domain: 'construction'  },
+  { id: 'procurementrisk', label: 'Procure Risk',   icon: '🚚',  domain: 'construction'  },
   { id: 'meetings',       label: 'Meetings',        icon: '📋',  domain: 'construction'  },
   { id: 'bim',           label: 'BIM',        icon: '🏢',  domain: 'construction'  },
   { id: 'iot',           label: 'IoT Sensors', icon: '📡', domain: 'construction'  },
