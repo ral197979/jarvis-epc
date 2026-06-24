@@ -82,6 +82,7 @@ const ScheduleForecastView  = lazy(() => import('./schedule/ScheduleForecastView
 const QualityIntelligenceView = lazy(() => import('./quality/QualityIntelligenceView'))
 const CostIntelligenceView  = lazy(() => import('./costControl/CostIntelligenceView'))
 const NcrView               = lazy(() => import('./quality/NcrView'))
+const VendorScorecardView   = lazy(() => import('./procurement/VendorScorecardView'))
 const ProcurementRiskView   = lazy(() => import('./procurement/ProcurementRiskView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -202,6 +203,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   quality:       QualityIntelligenceView,
   costiq:        CostIntelligenceView,
   ncr:           NcrView,
+  vendorscore:   VendorScorecardView,
   procurementrisk: ProcurementRiskView,
   integrations:  IntegrationsView,
   notifications: NotificationsView,

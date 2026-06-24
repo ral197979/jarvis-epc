@@ -70,6 +70,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'transmittals',  label: 'Transmittals', icon: '📬', domain: 'documents'     },
   { id: 'docs',          label: 'Documents',  icon: '🗄️',  domain: 'documents'     },
   { id: 'directory',     label: 'Directory',  icon: '📚',  domain: 'procurement'   },
+  { id: 'vendorscore',   label: 'Vendor Scorecard', icon: '🏅', domain: 'procurement' },
   { id: 'mcp',           label: 'MCP',        icon: '🔌',  domain: 'system'        },
   { id: 'automation',    label: 'Automation', icon: '⚙️',  domain: 'system'        },
   { id: 'integrations',  label: 'Integr.',    icon: '🔗',  domain: 'system'        },
