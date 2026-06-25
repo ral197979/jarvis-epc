@@ -121,7 +121,7 @@ const DEFAULT_API_STATS: ApiStats = { count: 0, tokens: 0, lastCall: null, error
 const DEFAULT_GATEWAY: GatewayState = { enabled: true, loading: false, lastCheck: null }
 
 const DEFAULT_UI: UIState = {
-  activeTab:       'dash',
+  activeTab:       'focus',
   ownerPanelOpen:  false,
   cmdPaletteOpen:  false,
   cmdQuery:        '',

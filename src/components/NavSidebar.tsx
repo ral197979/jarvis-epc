@@ -2,15 +2,15 @@
  * Denver Engineering — NavSidebar (v4.30.0 UI refresh)
  * Clean sidebar with lucide icons, grouped sections, hover states, smooth motion.
  */
-import React from 'react'
+import React, { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Target, FlaskConical, ListChecks, HardHat, FileText, Calculator,
   Wrench, Users, Wallet, Sparkles, Zap, Hammer, Archive, BookOpen, Plug, Link2,
-  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, Workflow, ShieldAlert, Lightbulb, Library, Bot, Compass, Network, ClipboardList, FolderKanban, Receipt, Radar, Cpu, Dices, Microscope, Truck, LifeBuoy, TrendingDown, FileWarning, Award
+  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, ChevronDown, Workflow, ShieldAlert, Lightbulb, Library, Bot, Compass, Network, ClipboardList, FolderKanban, Receipt, Radar, Cpu, Dices, Microscope, Truck, LifeBuoy, TrendingDown, FileWarning, Award
 } from 'lucide-react'
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
-import { NAVIGATION_ITEMS, type NavItem } from '../config/navigation'
+import { NAVIGATION_ITEMS, NAV_SECTIONS, type NavItem } from '../config/navigation'
 
 // v4.31.0 TS fix: lucide-react icons are ForwardRefExoticComponent, not plain
 // ComponentType — use the library's own LucideIcon type so the map is assignable.
@@ -63,6 +63,76 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
     onNavigate?.(id)
   }
 
+  // Lifecycle sections (WORKFLOW_REDESIGN W1). Group the already-filtered items
+  // by section, preserving section order and per-item order within each section.
+  // Any item without a known section falls into a trailing "More" group so nothing
+  // can ever be hidden by a missing/typo'd section id.
+  const [collapsedSecs, setCollapsedSecs] = useState<Record<string, boolean>>({})
+  const KNOWN_SECTIONS = new Set(NAV_SECTIONS.map(s => s.id))
+  const grouped = [
+    ...NAV_SECTIONS.map(sec => ({ ...sec, items: visibleItems.filter(it => it.section === sec.id) })),
+    { id: '_more', label: 'More', items: visibleItems.filter(it => !it.section || !KNOWN_SECTIONS.has(it.section)) },
+  ].filter(sec => sec.items.length)
+  function toggleSection(id: string) {
+    setCollapsedSecs(prev => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  function renderItem(item: NavItem) {
+    const isActive   = activeTab === item.id
+    const badgeCount = badges[item.id] ?? 0
+    const Icon       = ICON_MAP[item.id] ?? LayoutDashboard
+    return (
+      <button
+        key={item.id}
+        onClick={() => navigate(item.id)}
+        aria-label={item.label}
+        aria-current={isActive ? 'page' : undefined}
+        title={collapsed ? item.label : undefined}
+        className="jarvis-nav-item"
+        style={{
+          width: '100%',
+          display: 'flex', alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: 10,
+          padding: collapsed ? '10px 0' : '8px 10px',
+          marginBottom: 2,
+          background: isActive ? 'rgba(245,158,11,0.12)' : 'transparent',
+          border: 'none', borderRadius: 'var(--jarvis-r-md)',
+          cursor: 'pointer', position: 'relative',
+          color: isActive ? 'var(--jarvis-ac-hover)' : 'var(--jarvis-ts)',
+          transition: 'background var(--jarvis-t-fast), color var(--jarvis-t-fast)',
+          fontFamily: 'var(--jarvis-font-sans)',
+          fontSize: 13, fontWeight: isActive ? 600 : 500,
+        }}
+        onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = 'var(--jarvis-sf)'; e.currentTarget.style.color = 'var(--jarvis-tx)' } }}
+        onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--jarvis-ts)' } }}
+      >
+        <Icon size={18} strokeWidth={isActive ? 2.25 : 1.75} />
+        {!collapsed && (
+          <span style={{ flex: 1, textAlign: 'left', letterSpacing: '-0.01em' }}>{item.label}</span>
+        )}
+        {!collapsed && badgeCount > 0 && (
+          <span style={{
+            minWidth: 20, height: 20, borderRadius: 10,
+            background: 'var(--jarvis-ac)', color: '#0a0b0f',
+            fontSize: 10, fontWeight: 700, lineHeight: '20px',
+            textAlign: 'center', padding: '0 6px',
+            fontFamily: 'var(--jarvis-font-mono)',
+          }}>
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        )}
+        {collapsed && badgeCount > 0 && (
+          <span style={{
+            position: 'absolute', top: 4, right: 6,
+            minWidth: 8, height: 8, borderRadius: 4,
+            background: 'var(--jarvis-ac)',
+          }} aria-label={String(badgeCount) + ' items'} />
+        )}
+      </button>
+    )
+  }
+
   const WIDTH = collapsed ? 64 : 208
 
   return (
@@ -104,62 +174,33 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
 
       {/* Nav items */}
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '8px 8px' }}>
-        {visibleItems.map(item => {
-          const isActive   = activeTab === item.id
-          const badgeCount = badges[item.id] ?? 0
-          const Icon       = ICON_MAP[item.id] ?? LayoutDashboard
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => navigate(item.id)}
-              aria-label={item.label}
-              aria-current={isActive ? 'page' : undefined}
-              title={collapsed ? item.label : undefined}
-              className="jarvis-nav-item"
-              style={{
-                width: '100%',
-                display: 'flex', alignItems: 'center',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                gap: 10,
-                padding: collapsed ? '10px 0' : '8px 10px',
-                marginBottom: 2,
-                background: isActive ? 'rgba(245,158,11,0.12)' : 'transparent',
-                border: 'none', borderRadius: 'var(--jarvis-r-md)',
-                cursor: 'pointer', position: 'relative',
-                color: isActive ? 'var(--jarvis-ac-hover)' : 'var(--jarvis-ts)',
-                transition: 'background var(--jarvis-t-fast), color var(--jarvis-t-fast)',
-                fontFamily: 'var(--jarvis-font-sans)',
-                fontSize: 13, fontWeight: isActive ? 600 : 500,
-              }}
-              onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = 'var(--jarvis-sf)'; e.currentTarget.style.color = 'var(--jarvis-tx)' } }}
-              onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--jarvis-ts)' } }}
-            >
-              <Icon size={18} strokeWidth={isActive ? 2.25 : 1.75} />
-              {!collapsed && (
-                <span style={{ flex: 1, textAlign: 'left', letterSpacing: '-0.01em' }}>{item.label}</span>
-              )}
-              {!collapsed && badgeCount > 0 && (
-                <span style={{
-                  minWidth: 20, height: 20, borderRadius: 10,
-                  background: 'var(--jarvis-ac)', color: '#0a0b0f',
-                  fontSize: 10, fontWeight: 700, lineHeight: '20px',
-                  textAlign: 'center', padding: '0 6px',
-                  fontFamily: 'var(--jarvis-font-mono)',
-                }}>
-                  {badgeCount > 99 ? '99+' : badgeCount}
-                </span>
-              )}
-              {collapsed && badgeCount > 0 && (
-                <span style={{
-                  position: 'absolute', top: 4, right: 6,
-                  minWidth: 8, height: 8, borderRadius: 4,
-                  background: 'var(--jarvis-ac)',
-                }} aria-label={String(badgeCount) + ' items'} />
-              )}
-            </button>
-          )
-        })}
+        {collapsed
+          ? visibleItems.map(renderItem)
+          : grouped.map(sec => {
+              const hasActive = sec.items.some(it => it.id === activeTab)
+              // Active section is always shown; otherwise honor the user's toggle.
+              const open = hasActive || !collapsedSecs[sec.id]
+              return (
+                <div key={sec.id} style={{ marginBottom: 6 }}>
+                  <button
+                    onClick={() => toggleSection(sec.id)}
+                    aria-expanded={open}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '6px 10px 4px', marginTop: 2,
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      color: 'var(--jarvis-td)', textTransform: 'uppercase',
+                      fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+                      fontFamily: 'var(--jarvis-font-sans)',
+                    }}
+                  >
+                    {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                    <span style={{ flex: 1, textAlign: 'left' }}>{sec.label}</span>
+                  </button>
+                  {open && sec.items.map(renderItem)}
+                </div>
+              )
+            })}
       </div>
 
       {/* Footer: Owner + Collapse */}

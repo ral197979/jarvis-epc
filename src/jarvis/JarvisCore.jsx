@@ -416,7 +416,7 @@ export default function JarvisCore() {
     var m            = useAppStore(function(s) { return s.ui.activeTab; });
     var p            = useAppStore(function(s) { return s.setTab; });
     var _authOk      = useAppStore(function(s) { return s.auth.isAuthenticated; });
-    var _authSet     = function(v) { useAppStore.getState().setAuth({ isAuthenticated: v }); };
+    var _authSet     = function(v) { useAppStore.getState().setAuth({ isAuthenticated: v }); if (v) useAppStore.getState().setTab("focus"); }; // W1: login lands on Focus, not Dashboard
     var _gwEnabled   = useAppStore(function(s) { return s.gateway.enabled; });
     var _gwSet       = function(v) { useAppStore.getState().setGateway({ enabled: v }); };
     var _oCfg        = useAppStore(function(s) { return s.ownerConfig; });
