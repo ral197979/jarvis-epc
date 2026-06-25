@@ -76,6 +76,7 @@ import { costIntelligenceRouter } from './routes/costIntelligence' // v4.54.0: C
 import { commitmentsRouter     } from './routes/commitments'      // v4.57.0: commitment rollup
 import { vendorScorecardRouter } from './routes/vendorScorecard'   // v4.59.0: vendor scorecard
 import { ncrRouter            } from './routes/ncr'             // v4.55.0: NCR / CAPA (Phase 9)
+import { myWorkRouter         } from './routes/myWork'          // v4.33.0: My Work — universal personal queue (Redesign W2)
 import { procurementRiskRouter } from './routes/procurementRisk'  // v4.52.0: Procurement Risk Engine
 import { rfiCopilotRouter    } from './routes/rfiCopilot'      // v4.46.0: RFI Copilot
 import { submittalReviewRouter } from './routes/submittalReview' // v4.47.0: Submittal review assistant
@@ -543,6 +544,7 @@ app.use('/api/v1',                costIntelligenceRouter) // v4.54.0: Cost Intel
 app.use('/api/v1',                commitmentsRouter)     // v4.57.0: commitment rollup
 app.use('/api/v1',                vendorScorecardRouter) // v4.59.0: vendor scorecard
 app.use('/api/v1',                ncrRouter)             // v4.55.0: NCR / CAPA (Phase 9)
+app.use('/api/v1',                myWorkRouter)          // v4.33.0: My Work — universal personal queue (Redesign W2)
 app.use('/api/v1',                procurementRiskRouter) // v4.52.0: Procurement Risk Engine
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
 app.use('/api/v1',                autoCoordinationRouter) // v4.49.0: Autonomous Coordination (recommend → approve → execute)

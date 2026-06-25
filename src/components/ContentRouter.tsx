@@ -84,6 +84,7 @@ const CostIntelligenceView  = lazy(() => import('./costControl/CostIntelligenceV
 const NcrView               = lazy(() => import('./quality/NcrView'))
 const VendorScorecardView   = lazy(() => import('./procurement/VendorScorecardView'))
 const ProcurementRiskView   = lazy(() => import('./procurement/ProcurementRiskView'))
+const MyWorkView            = lazy(() => import('./myWork/MyWorkView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -193,6 +194,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   team:          TeamView,
   predict:       PredictView,
   focus:         CopilotView,
+  mywork:        MyWorkView,
   coordination:  CoordinationView,
   executive:     ExecutiveView,
   portfolioiq:   PortfolioIQView,

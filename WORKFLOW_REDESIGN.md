@@ -366,15 +366,21 @@ A new global screen aggregating every actionable record assigned to or owned by 
 across all modules — the personal complement to the project-centric Focus.
 
 **Sections (tabs or stacked lanes):**
-| Lane | Contents |
-|---|---|
-| Assigned to me | Anything where I'm the owner/assignee, open |
-| Waiting on others | Items I created/own that are blocked on someone else |
-| Needs my approval | Approval-gated items in my court (COs, budgets, submittals, vendors, drawings) |
-| Blocked | My items with an unresolved blocker |
-| Overdue | Past due, any module |
-| Completed today | Closed by me today (sense of progress) |
-| Upcoming this week | Due in the next 7 days |
+| Lane | Contents | Build status |
+|---|---|---|
+| Assigned to me | Anything where I'm the owner/assignee, open | **Shipped (W2)** — RFIs, punch, CAPA, actions, inspections |
+| Needs my approval | Approval-gated items in my court (COs, submittals) | **Shipped (W2)** — submittals + change orders where I'm reviewer |
+| Overdue | Past due, any module | **Shipped (W2)** — derived from due dates |
+| Upcoming this week | Due in the next 7 days | **Shipped (W2)** — derived from due dates |
+| Completed today | Closed by me today (sense of progress) | **Shipped (W2)** — actions closed today |
+| Waiting on others | Items I created/own that are blocked on someone else | **Deferred** — needs a `created_by`-vs-assignee distinction not yet modeled |
+| Blocked | My items with an unresolved blocker | **Deferred** — needs a blocker relation not yet modeled |
+
+> **W2 honesty note:** the five shipped lanes are backed by real columns
+> (`assigned_to` / `reviewed_by` / `assigned_to_user_id` + status + due date). The
+> two deferred lanes are intentionally **not** rendered rather than faked — they
+> require ownership/blocker data the schema doesn't carry yet. The categorizer
+> (`categorizeMyWork`) is pure and unit-tested; the LLM is not involved.
 
 **Aggregated record types:** RFIs, Submittals, Punch items, Inspections, Meetings/action
 items, Budget approvals, Change Orders, Safety actions, NCRs/CAPAs, Drawing reviews,
@@ -625,8 +631,8 @@ deliverable — this is the recommended order for the follow-on work.
 
 | Wave | Scope | Risk | Why first |
 |---|---|---|---|
-| **W1 — Navigation shell** | Focus as default landing; lifecycle-grouped collapsible sidebar; header project/phase/gate block; breadcrumbs | Low (pure IA/UX; no data changes) | Immediate "feels cohesive" win; reversible |
-| **W2 — My Work** | Aggregated personal queue (read-model over existing data) | Low–Med | High daily value; reuses Focus/Action reads |
+| **W1 — Navigation shell** ✅ | Focus as default landing + lifecycle-grouped collapsible sidebar **(shipped)**; header phase/gate block + breadcrumbs deferred to W3 (need gate data) | Low (pure IA/UX; no data changes) | Immediate "feels cohesive" win; reversible |
+| **W2 — My Work** ✅ | Aggregated personal queue (read-model over existing data) **(shipped — 5 lanes; 2 deferred)** | Low–Med | High daily value; reuses Focus/Action reads |
 | **W3 — Lifecycle map + gates** | Gate records, derived requirements, lifecycle timeline, "advance phase" | Med | Core of the workflow story; needs gate schema |
 | **W4 — Related rail** | Cross-module relationship panel on record screens | Med | Realizes "never search for related info" |
 | **W5 — Guided flows** | Construction Today's Plan, QA loop, Safety daily, Procurement lifecycle as sequenced strips | Med | Polishes role journeys |

@@ -41,6 +41,7 @@ export const NAV_SECTIONS: { id: string; label: string }[] = [
 export const NAVIGATION_ITEMS: NavItem[] = [
   // ── Personal ────────────────────────────────────────────────────────────────
   { id: 'focus',         label: 'Focus',        icon: '🧭',  domain: 'ai',           section: 'personal'     },
+  { id: 'mywork',        label: 'My Work',      icon: '🗂️',  domain: 'operations',   section: 'personal'     },
   { id: 'actions',       label: 'Actions',      icon: '⚡',  domain: 'operations',   section: 'personal'     },
   { id: 'notifications', label: 'Notifs',       icon: '🔔',  domain: 'operations',   section: 'personal'     },
   // ── Project Setup ─────────────────────────────────────────────────────────────
