@@ -17,8 +17,9 @@ describe('NAVIGATION_ITEMS', () => {
     // floor rather than an exact count so incremental additions don't force
     // churn here, while catching accidental regressions (e.g. someone emptying
     // the list).
+    // v4.37.0: Workflow Redesign added My Work, Lifecycle, and the Setup Wizard.
     expect(NAVIGATION_ITEMS.length).toBeGreaterThanOrEqual(19)
-    expect(NAVIGATION_ITEMS.length).toBeLessThanOrEqual(60)
+    expect(NAVIGATION_ITEMS.length).toBeLessThanOrEqual(70)
   })
 
   it('all items have required fields: id, label, icon', () => {

@@ -358,6 +358,17 @@ writes to existing tables; the wizard is an orchestration layer, not new data si
 "Go Live" runs a readiness validation and stamps the project onto the lifecycle map at
 *Planning*. Admin/Owner/PM tiers only.
 
+> **W6 shipped.** A 5-step resumable wizard (Project Information → Contract →
+> Schedule → Set up next → Review & Go Live) that creates a **real project** via
+> `POST /api/v1/projects` (status `planning`, phase `feasibility`). Pure logic
+> (`validateDraft`, `stepValid`, `buildProjectPayload`) is unit-tested; the draft is
+> persisted to localStorage so it survives a refresh. The heavier subsystem steps
+> (team/roles, cost codes/WBS, schedule import, inspection templates, automation
+> rules, document structure) are presented as a **post-create checklist of links to
+> the existing screens** rather than fabricated inline editors — honest, and it
+> lands the user exactly where each real tool lives. Full inline editors for those
+> subsystems remain a future per-subsystem enhancement.
+
 ---
 
 ## 7. Universal "My Work" Workspace
@@ -662,7 +673,7 @@ deliverable — this is the recommended order for the follow-on work.
 | **W3b — Global shell phase/gate + breadcrumbs** ✅ | Slim WorkflowContextBar at the top of every screen: Section › Screen breadcrumb + active project · phase · gate-status chip (click → Lifecycle) **(shipped)**. Rendered in ContentRouter (no legacy-shell edit); record-level breadcrumb crumb is a future per-view add | Low–Med | Realizes "always know where you are + project context" |
 | **W4 — Related rail** ✅ | Cross-module relationship panel on record screens **(shipped)** — generic `getRelated` service + `RelatedPanel` embedded in RFI + Submittal detail; only real FK/shared-key/Action-spine links | Med | Realizes "never search for related info" |
 | **W5 — Guided flows** ✅ | Sequenced "you are here → next step" stepper over real screens, shown on each workflow's hubs **(shipped)** — Quality loop, Daily construction, Procurement, Engineering, Cost & commercial. Rendered in ContentRouter; steps map only to real nav ids | Med | Polishes role journeys |
-| **W6 — Setup Wizard** | 13-step resumable project initialization | Med–High | Biggest new build; benefits from W1–W3 in place |
+| **W6 — Setup Wizard** ✅ | Resumable project-initialization wizard **(shipped)** — 5 steps that create a real project via `POST /api/v1/projects`; subsystem setup presented as a post-create checklist of links to existing screens | Med–High | Biggest new build; benefits from W1–W3 in place |
 | **W7 — Commissioning handoff + Turnover packages** | External integration points | Med | Depends on lifecycle/gates (W3) |
 | **W8 — Docs refresh** | Update the §12 docs to match shipped IA | Low | Close the loop |
 

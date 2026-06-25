@@ -45,6 +45,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'actions',       label: 'Actions',      icon: '⚡',  domain: 'operations',   section: 'personal'     },
   { id: 'notifications', label: 'Notifs',       icon: '🔔',  domain: 'operations',   section: 'personal'     },
   // ── Project Setup ─────────────────────────────────────────────────────────────
+  { id: 'setup',         label: 'Setup Wizard', icon: '🧙',  domain: 'operations',   section: 'setup'        },
   { id: 'projects',      label: 'Projects',     icon: '📋',  domain: 'operations',   section: 'setup'        },
   { id: 'lifecycle',     label: 'Lifecycle',    icon: '🛤️',  domain: 'operations',   section: 'setup'        },
   { id: 'crm',           label: 'CRM',          icon: '🎯',  domain: 'crm',          section: 'setup'        },
