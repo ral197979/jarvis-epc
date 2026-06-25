@@ -131,6 +131,22 @@ The differentiator. These read live signals across every module and turn them in
 
 ---
 
+## 9b. Workflow & Lifecycle
+
+The platform is organised around how projects are actually executed — project-centric, workflow-driven, lifecycle-based.
+
+| Feature | What it does for you |
+|---|---|
+| 🗂️ **My Work** | Your personal queue across every module: assigned to me, needs my approval, overdue, due this week, completed today — each row one click from the record. |
+| 🧙 **Setup Wizard** | A resumable, guided flow that stands up a new project, then routes you to the right screen for team, budget, schedule, templates, automation, and documents. |
+| 🛤️ **Lifecycle & Gates** | Every project on a visual EPC timeline with the controlling **approval gate** — its requirements computed live from your records (open critical RFIs, NCRs, punch, failed inspections, budget). Advance the phase only when the gate is approved or waived. |
+| 📦 **Turnover & Commissioning** | Build turnover packages with a deliverables checklist and move them through the handoff chain. Commissioning runs in the separate commissioning workspace — launch it and record its status here. |
+| 🧭 **Guided flows & context** | Every screen shows where you are (breadcrumb) and, on workflow hubs, a "you are here → next step" stepper, plus the active project's phase and gate status. |
+
+> Nothing was removed in the redesign — every existing module was re-homed into its natural place on the lifecycle. See [NAVIGATION.md](NAVIGATION.md).
+
+---
+
 ## 10. Who it's for
 
 | Role | Day-one value |

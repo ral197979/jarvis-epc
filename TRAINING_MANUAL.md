@@ -361,6 +361,10 @@ Available now: QuickBooks, Slack, Microsoft Teams, plus webhook delivery and dat
 # Part 5 — Glossary
 
 - **Focus** — the ranked, cross-module daily briefing of what needs attention.
+- **My Work** — your personal queue aggregating assigned/approval/overdue items across every module.
+- **Approval gate** — a per-phase checkpoint with computed requirements that must be approved (or waived) before the project advances.
+- **Turnover package** — a named deliverable bundle moved through the commissioning/turnover handoff chain.
+- **Guided flow** — a stepper that sequences the real screens of a workflow and shows "you are here → next step".
 - **Copilot** — an AI assistant scoped to a domain (Project/Coordination/Executive/Portfolio, RFI, Submittal review).
 - **Criticality index** — how often a task lands on the critical path across Monte Carlo runs.
 - **CPM** — Critical Path Method; the schedule network that drives float and the critical path.
@@ -379,6 +383,10 @@ Available now: QuickBooks, Slack, Microsoft Teams, plus webhook delivery and dat
 | I need to… | Go to |
 |---|---|
 | See what to work on today | 🧭 Focus |
+| See everything assigned to me | 🗂️ My Work |
+| Start a new project | 🧙 Setup Wizard |
+| See the project phase / advance a gate | 🛤️ Lifecycle |
+| Assemble a turnover package / hand off to commissioning | 📦 Turnover |
 | Find what's blocking the project | 🔗 Coordination |
 | Brief the board / owner | 📋 Executive → 📄 Report |
 | Compare projects / spot resource conflicts | 🗂️ Portfolio IQ |
@@ -396,5 +404,17 @@ Available now: QuickBooks, Slack, Microsoft Teams, plus webhook delivery and dat
 | Add/remove users, SSO | ⚙️ System / Administrator Guide |
 
 ---
+
+# Part 7 — Workflow Redesign additions
+
+The platform was reorganised around the EPC lifecycle (see [NAVIGATION.md](NAVIGATION.md) and [WORKFLOW_REDESIGN.md](WORKFLOW_REDESIGN.md)). What's new for users:
+
+- **You land on Focus, not Dashboard.** Dashboard is now an informational screen under Executive.
+- **Lifecycle-grouped sidebar.** Sections follow the EPC lifecycle (Personal → Project Setup → Planning → Engineering → Procurement → Construction → Quality → Safety → Commercial → Turnover → Operations → AI → Executive → Administration) and are collapsible; the section you're in auto-expands.
+- **My Work (🗂️).** One personal queue across every module: Assigned to me · Needs my approval · Overdue · Upcoming this week · Completed today.
+- **Setup Wizard (🧙).** A resumable, 5-step flow that creates a project and then points you to the screens for the rest of setup (team, budget, schedule import, templates, automation, documents).
+- **Lifecycle & gates (🛤️).** Every project shows its phase on a timeline and the next approval gate, whose requirements are computed live from your records; advance the phase once the gate is approved or waived.
+- **Turnover & commissioning (📦).** Build turnover packages with a deliverables checklist and move them through the handoff chain. Commissioning runs in the separate commissioning workspace — launch it and record its status here.
+- **Always-on context.** Every screen shows a breadcrumb (Section › Screen) and, when relevant, a guided-flow stepper plus the active project's phase/gate chip.
 
 *Denver Engineering — Procore stores your project. This platform understands it.*

@@ -5,6 +5,8 @@
 > **Legend:** ✅ supported today · 🟡 partial · ❌ planned
 > **The recurring theme:** the **Focus** screen (`focus` → `copilot/CopilotView.tsx`) is the daily entry point for every persona. It replaces "click around and chase" with "see what matters, why, and do it" — every Focus card deep-links straight into the live record with the project pre-selected.
 > **Sibling docs:** [AI_PROJECT_INTELLIGENCE_SPEC.md](./AI_PROJECT_INTELLIGENCE_SPEC.md) · [SCREEN_INVENTORY.md](./SCREEN_INVENTORY.md)
+>
+> **Navigation update (Workflow Redesign):** these persona journeys now run inside a lifecycle-grouped sidebar with **My Work**, the **Setup Wizard**, **Lifecycle & gates**, and **Turnover** added, plus a breadcrumb + guided-flow stepper on every screen. The navigation-level role journeys and the authoritative IA are in [WORKFLOW_REDESIGN.md §5](./WORKFLOW_REDESIGN.md#5-role-based-user-journeys) and [NAVIGATION.md](./NAVIGATION.md).
 
 ---
 

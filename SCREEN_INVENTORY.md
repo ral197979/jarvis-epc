@@ -5,6 +5,8 @@
 > **Legend:** ✅ implemented & wired · 🟡 shallow/partial · ⚠️ renders real UI but **placeholder math** (not trustworthy) · ❌ planned (no screen)
 > **Sibling docs:** [AI_PROJECT_INTELLIGENCE_SPEC.md](./AI_PROJECT_INTELLIGENCE_SPEC.md) · [USER_WORKFLOWS.md](./USER_WORKFLOWS.md) · shell-math baseline in [FEATURES.md](./FEATURES.md)
 >
+> **IA update (Workflow Redesign):** screens are now grouped by EPC **lifecycle section** rather than module domain, and four screens were added — My Work (`mywork`), Setup Wizard (`setup`), Lifecycle (`lifecycle`), Turnover (`turnover`). The authoritative current sidebar/IA reference is **[NAVIGATION.md](./NAVIGATION.md)**; the old-home → new-home map for every screen is in [WORKFLOW_REDESIGN.md §13](./WORKFLOW_REDESIGN.md#13-migration-plan--every-current-screen-mapped).
+>
 > Every tab below is a real key in `TAB_MAP` unless noted "(no nav)" or ❌. The shell views (⚠️) are flagged in §Engineering and must be relabeled or backed by validated engines before enterprise demos.
 
 ---

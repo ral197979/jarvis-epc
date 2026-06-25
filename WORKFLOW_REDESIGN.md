@@ -568,12 +568,12 @@ Cactus DC                                  Health ● 82  Phase: Construction
 
 ## 12. Updated Documentation plan
 
-On implementation, these docs are updated/created (no code in this deliverable):
-- **TRAINING_MANUAL.md** — re-sequence role tracks to the new lifecycle nav; add Setup Wizard, My Work, gates.
-- **SCREEN_INVENTORY.md** — annotate each screen with its new plane/phase home (the §13 map).
-- **USER_WORKFLOWS.md** — replace module-walkthroughs with the lifecycle/role journeys (§5).
-- **CUSTOMER_FEATURES.md** — re-group features by lifecycle plane; add gates, lifecycle map, My Work.
-- **New: NAVIGATION.md** — the authoritative sidebar/IA reference for engineers (mirrors §2/§13).
+These docs are updated/created (**done in W8**):
+- **NAVIGATION.md** ✅ *(new)* — the authoritative sidebar/IA reference (mirrors `navigation.ts`: planes, sections, every item, new screens, role gating, shell context).
+- **TRAINING_MANUAL.md** ✅ — added Part 7 (redesign additions), My Work / Lifecycle / Setup Wizard / Turnover quick-reference rows, and glossary terms.
+- **CUSTOMER_FEATURES.md** ✅ — added §9b "Workflow & Lifecycle".
+- **SCREEN_INVENTORY.md** ✅ — header note pointing to NAVIGATION.md + the §13 migration map (body left intact).
+- **USER_WORKFLOWS.md** ✅ — header note pointing to §5 role journeys + NAVIGATION.md (body left intact).
 
 ---
 
@@ -675,7 +675,7 @@ deliverable — this is the recommended order for the follow-on work.
 | **W5 — Guided flows** ✅ | Sequenced "you are here → next step" stepper over real screens, shown on each workflow's hubs **(shipped)** — Quality loop, Daily construction, Procurement, Engineering, Cost & commercial. Rendered in ContentRouter; steps map only to real nav ids | Med | Polishes role journeys |
 | **W6 — Setup Wizard** ✅ | Resumable project-initialization wizard **(shipped)** — 5 steps that create a real project via `POST /api/v1/projects`; subsystem setup presented as a post-create checklist of links to existing screens | Med–High | Biggest new build; benefits from W1–W3 in place |
 | **W7 — Commissioning handoff + Turnover packages** ✅ | Turnover packages with a deliverables-completeness checklist + handoff chain (open → ready_for_commissioning → in_commissioning → ready_for_turnover → accepted) **(shipped)**; commissioning stays external — only the launch URL + recorded status read-back are stored | Med | Depends on lifecycle/gates (W3) |
-| **W8 — Docs refresh** | Update the §12 docs to match shipped IA | Low | Close the loop |
+| **W8 — Docs refresh** ✅ | Update the §12 docs to match shipped IA **(shipped)** — new [NAVIGATION.md](NAVIGATION.md); TRAINING_MANUAL + CUSTOMER_FEATURES updated; SCREEN_INVENTORY + USER_WORKFLOWS point to the new IA | Low | Close the loop |
 
 ---
 
