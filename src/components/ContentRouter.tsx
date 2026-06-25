@@ -15,6 +15,8 @@ import type { PolicyConfig } from '../modules/biz/dispatch'
 import { useAppStore }       from '../modules/store/appSlice'
 import { ViewErrorBoundary } from './ErrorBoundary'
 import WorkflowContextBar    from './shell/WorkflowContextBar'
+import GuidedFlow            from './shell/GuidedFlow'
+import { flowForTab }        from '../config/workflows'
 
 // ─── Lazy load all view components ───────────────────────────────────────────
 // Using lazy() avoids bundling the entire component tree upfront.
@@ -246,6 +248,7 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
       style={{ flex: 1, overflow: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}
     >
       <WorkflowContextBar activeTab={activeTab} onNavigate={onNavigate} />
+      {(() => { const flow = flowForTab(activeTab); return flow ? <GuidedFlow flow={flow} activeTab={activeTab} onNavigate={onNavigate} /> : null })()}
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
         <ViewErrorBoundary viewId={activeTab}>
           <Suspense fallback={<ViewLoader />}>
