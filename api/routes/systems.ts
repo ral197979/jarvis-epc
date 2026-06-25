@@ -21,9 +21,10 @@ import {
   listSystems, createSystem, updateSystem,
   createSubsystem, updateSubsystem,
   listTagsForProject, createTag, updateTag,
-  getTagPackCoverage,
   NotFoundError, ValidationError,
 } from '../services/epcCore'
+// getTagPackCoverage reads test_packs (execution) — sourced from cxExecution.
+import { getTagPackCoverage } from '../services/cxExecution'
 
 type Req = Request & AuthenticatedRequest & TenantRequest
 

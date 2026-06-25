@@ -146,7 +146,7 @@ describe('F04: packWorker _failJob SQL', () => {
 
 // ─── F05 coverage endpoint ────────────────────────────────────────────────────
 
-import { getTagPackCoverage } from '../services/epcCore'
+import { getTagPackCoverage } from '../services/cxExecution'
 
 // getTagPackCoverage now runs two parallel queries:
 //   call[0] = summary COUNT (params: [projectId])

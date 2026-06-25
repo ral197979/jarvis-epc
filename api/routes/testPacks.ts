@@ -19,7 +19,7 @@ import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import {
   listTestPacksByProject, createTestPack, getTestPack, updateTestPack,
   NotFoundError, ValidationError,
-} from '../services/epcCore'
+} from '../services/cxExecution'
 
 type Req = Request & AuthenticatedRequest & TenantRequest
 
