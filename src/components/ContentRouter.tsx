@@ -85,6 +85,7 @@ const NcrView               = lazy(() => import('./quality/NcrView'))
 const VendorScorecardView   = lazy(() => import('./procurement/VendorScorecardView'))
 const ProcurementRiskView   = lazy(() => import('./procurement/ProcurementRiskView'))
 const MyWorkView            = lazy(() => import('./myWork/MyWorkView'))
+const LifecycleView         = lazy(() => import('./lifecycle/LifecycleView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -195,6 +196,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   predict:       PredictView,
   focus:         CopilotView,
   mywork:        MyWorkView,
+  lifecycle:     LifecycleView,
   coordination:  CoordinationView,
   executive:     ExecutiveView,
   portfolioiq:   PortfolioIQView,

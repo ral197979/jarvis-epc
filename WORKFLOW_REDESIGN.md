@@ -415,6 +415,17 @@ gate {
 IFC Approval · Material Approval · Construction Release · Mechanical Completion ·
 Ready For Commissioning · Ready For Turnover · Ready For Operations`.
 
+> **W3 shipped (grounded in the real schema).** Rather than the aspirational 10-gate
+> set above, the implementation keys gates to the existing `project_phase` enum
+> (`feasibility → feed → detailed_design → procurement → construction →
+> commissioning → closeout`). One entry gate per phase, each with requirements
+> **computed live** from records (budget set, open critical RFIs, submittals in
+> review, pending change orders, failed inspections, open NCRs, punch burndown).
+> Approvals persist in `project_gates`; `buildLifecycle` is pure/unit-tested;
+> advancement requires the controlling gate to be `approved` or `waived`. The
+> richer per-percentage gate set remains a configurable enhancement (open
+> decision #1).
+
 **Every project header displays:** Current Gate · Next Gate · Owner · Outstanding
 Requirements (count + list) · Expected Completion. Requirements are **computed** from
 underlying records (e.g., "all 90% drawings IFC-stamped", "0 open critical RFIs",
@@ -633,7 +644,8 @@ deliverable — this is the recommended order for the follow-on work.
 |---|---|---|---|
 | **W1 — Navigation shell** ✅ | Focus as default landing + lifecycle-grouped collapsible sidebar **(shipped)**; header phase/gate block + breadcrumbs deferred to W3 (need gate data) | Low (pure IA/UX; no data changes) | Immediate "feels cohesive" win; reversible |
 | **W2 — My Work** ✅ | Aggregated personal queue (read-model over existing data) **(shipped — 5 lanes; 2 deferred)** | Low–Med | High daily value; reuses Focus/Action reads |
-| **W3 — Lifecycle map + gates** | Gate records, derived requirements, lifecycle timeline, "advance phase" | Med | Core of the workflow story; needs gate schema |
+| **W3 — Lifecycle map + gates** ✅ | Gate records, derived requirements, lifecycle timeline, "advance phase" **(shipped)** — grounded on the real `project_phase` enum (7 phases); header phase/gate block + breadcrumbs split to **W3b** | Med | Core of the workflow story; needs gate schema |
+| **W3b — Global shell phase/gate + breadcrumbs** | Surface current phase/gate in the top bar; record breadcrumbs | Med | Touches legacy `JarvisCore.jsx` shell; deferred from W3 to keep that slice clean |
 | **W4 — Related rail** | Cross-module relationship panel on record screens | Med | Realizes "never search for related info" |
 | **W5 — Guided flows** | Construction Today's Plan, QA loop, Safety daily, Procurement lifecycle as sequenced strips | Med | Polishes role journeys |
 | **W6 — Setup Wizard** | 13-step resumable project initialization | Med–High | Biggest new build; benefits from W1–W3 in place |
