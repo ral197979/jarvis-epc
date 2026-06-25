@@ -458,6 +458,20 @@ drawing refs, cost_code, schedule activity id, vendor/PO ids, and the Action Cen
 cross-module `source/sourceId` channel used by the existing deep-link system
 (`openRecord({tab, source, sourceId, projectId})`).
 
+> **W4 shipped — only real links, nothing fabricated.** A generic `getRelated`
+> service + `RelatedPanel` (embedded in the RFI and Submittal detail views) surface
+> connections that genuinely exist in the schema:
+> - **FK-backed:** `change_orders.rfi_id` (RFI↔CO), `corrective_actions.ncr_id`
+>   (NCR↔CAPA), `punch_items.drawing_id` (Punch↔Drawing).
+> - **Action spine:** `actions.source_module` + `source_id` (any record ↔ its actions).
+> - **Shared key:** submittals with the same `spec_section`.
+>
+> The canonical graph's other edges — RFI↔Drawing, RFI↔Submittal, Submittal↔Vendor,
+> Inspection↔Punch, cost-code/schedule cross-links — **do not exist as FKs in the
+> schema** and are deliberately **not** invented. Adding them is a schema change
+> (future), at which point each becomes a few lines in `getRelated`. The panel is
+> generic, so dropping it into the remaining detail views is a one-liner each.
+
 ---
 
 ## 10. Updated Wireframes (text)
@@ -646,7 +660,7 @@ deliverable — this is the recommended order for the follow-on work.
 | **W2 — My Work** ✅ | Aggregated personal queue (read-model over existing data) **(shipped — 5 lanes; 2 deferred)** | Low–Med | High daily value; reuses Focus/Action reads |
 | **W3 — Lifecycle map + gates** ✅ | Gate records, derived requirements, lifecycle timeline, "advance phase" **(shipped)** — grounded on the real `project_phase` enum (7 phases); header phase/gate block + breadcrumbs split to **W3b** | Med | Core of the workflow story; needs gate schema |
 | **W3b — Global shell phase/gate + breadcrumbs** ✅ | Slim WorkflowContextBar at the top of every screen: Section › Screen breadcrumb + active project · phase · gate-status chip (click → Lifecycle) **(shipped)**. Rendered in ContentRouter (no legacy-shell edit); record-level breadcrumb crumb is a future per-view add | Low–Med | Realizes "always know where you are + project context" |
-| **W4 — Related rail** | Cross-module relationship panel on record screens | Med | Realizes "never search for related info" |
+| **W4 — Related rail** ✅ | Cross-module relationship panel on record screens **(shipped)** — generic `getRelated` service + `RelatedPanel` embedded in RFI + Submittal detail; only real FK/shared-key/Action-spine links | Med | Realizes "never search for related info" |
 | **W5 — Guided flows** | Construction Today's Plan, QA loop, Safety daily, Procurement lifecycle as sequenced strips | Med | Polishes role journeys |
 | **W6 — Setup Wizard** | 13-step resumable project initialization | Med–High | Biggest new build; benefits from W1–W3 in place |
 | **W7 — Commissioning handoff + Turnover packages** | External integration points | Med | Depends on lifecycle/gates (W3) |
