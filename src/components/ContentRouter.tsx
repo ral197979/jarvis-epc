@@ -14,6 +14,7 @@ import React, { Suspense, lazy } from 'react'
 import type { PolicyConfig } from '../modules/biz/dispatch'
 import { useAppStore }       from '../modules/store/appSlice'
 import { ViewErrorBoundary } from './ErrorBoundary'
+import WorkflowContextBar    from './shell/WorkflowContextBar'
 
 // ─── Lazy load all view components ───────────────────────────────────────────
 // Using lazy() avoids bundling the entire component tree upfront.
@@ -242,13 +243,16 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
       id="main-content"
       role="main"
       aria-label={`${activeTab} view`}
-      style={{ flex: 1, overflow: 'auto', minHeight: 0 }}
+      style={{ flex: 1, overflow: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}
     >
-      <ViewErrorBoundary viewId={activeTab}>
-        <Suspense fallback={<ViewLoader />}>
-          <ViewComponent {...sharedProps} />
-        </Suspense>
-      </ViewErrorBoundary>
+      <WorkflowContextBar activeTab={activeTab} onNavigate={onNavigate} />
+      <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <ViewErrorBoundary viewId={activeTab}>
+          <Suspense fallback={<ViewLoader />}>
+            <ViewComponent {...sharedProps} />
+          </Suspense>
+        </ViewErrorBoundary>
+      </div>
     </main>
   )
 }
