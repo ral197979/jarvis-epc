@@ -7,7 +7,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   LayoutDashboard, Target, FlaskConical, ListChecks, HardHat, FileText, Calculator,
   Wrench, Users, Wallet, Sparkles, Zap, Hammer, Archive, BookOpen, Plug, Link2,
-  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, ChevronDown, Workflow, ShieldAlert, Lightbulb, Library, Bot, Compass, Network, ClipboardList, FolderKanban, Receipt, Radar, Cpu, Dices, Microscope, Truck, LifeBuoy, TrendingDown, FileWarning, Award, Inbox, Milestone, Wand2
+  Bell, Settings, ShieldCheck, ChevronLeft, ChevronRight, ChevronDown, Workflow, ShieldAlert, Lightbulb, Library, Bot, Compass, Network, ClipboardList, FolderKanban, Receipt, Radar, Cpu, Dices, Microscope, Truck, LifeBuoy, TrendingDown, FileWarning, Award, Inbox, Milestone, Wand2, Package
 } from 'lucide-react'
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
 import { NAVIGATION_ITEMS, NAV_SECTIONS, type NavItem } from '../config/navigation'
@@ -15,7 +15,7 @@ import { NAVIGATION_ITEMS, NAV_SECTIONS, type NavItem } from '../config/navigati
 // v4.31.0 TS fix: lucide-react icons are ForwardRefExoticComponent, not plain
 // ComponentType — use the library's own LucideIcon type so the map is assignable.
 const ICON_MAP: Record<string, LucideIcon> = {
-  dash: LayoutDashboard, crm: Target, feed: FlaskConical, projects: ListChecks, lifecycle: Milestone, setup: Wand2,
+  dash: LayoutDashboard, crm: Target, feed: FlaskConical, projects: ListChecks, lifecycle: Milestone, setup: Wand2, turnover: Package,
   construction: HardHat, proposals: FileText, calc: Calculator, hub: Wrench,
   team: Users, portfolio: Wallet, predict: Sparkles, focus: Compass, mywork: Inbox, coordination: Network, executive: ClipboardList, portfolioiq: FolderKanban, billing: Receipt, actions: Zap, field: Hammer, fieldai: Radar, autopilot: Cpu, forecast: Dices, quality: Microscope, procurementrisk: Truck, safety: LifeBuoy, costiq: TrendingDown, ncr: FileWarning, vendorscore: Award,
   ask: Bot, docs: Archive, directory: BookOpen, mcp: Plug, automation: Workflow,

@@ -95,6 +95,7 @@ export const NAVIGATION_ITEMS: NavItem[] = [
   { id: 'billing',       label: 'Billing',       icon: '🧾', domain: 'finance',      section: 'commercial'   },
   { id: 'costiq',        label: 'Cost IQ',       icon: '💸', domain: 'finance',      section: 'commercial'   },
   // ── Turnover ──────────────────────────────────────────────────────────────────
+  { id: 'turnover',      label: 'Turnover',     icon: '📦',  domain: 'documents',    section: 'turnover'     },
   { id: 'transmittals',  label: 'Transmittals', icon: '📬',  domain: 'documents',    section: 'turnover'     },
   { id: 'docs',          label: 'Documents',    icon: '🗄️',  domain: 'documents',    section: 'turnover'     },
   // ── Operations ────────────────────────────────────────────────────────────────

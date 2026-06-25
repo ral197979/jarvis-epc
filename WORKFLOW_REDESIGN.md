@@ -674,7 +674,7 @@ deliverable — this is the recommended order for the follow-on work.
 | **W4 — Related rail** ✅ | Cross-module relationship panel on record screens **(shipped)** — generic `getRelated` service + `RelatedPanel` embedded in RFI + Submittal detail; only real FK/shared-key/Action-spine links | Med | Realizes "never search for related info" |
 | **W5 — Guided flows** ✅ | Sequenced "you are here → next step" stepper over real screens, shown on each workflow's hubs **(shipped)** — Quality loop, Daily construction, Procurement, Engineering, Cost & commercial. Rendered in ContentRouter; steps map only to real nav ids | Med | Polishes role journeys |
 | **W6 — Setup Wizard** ✅ | Resumable project-initialization wizard **(shipped)** — 5 steps that create a real project via `POST /api/v1/projects`; subsystem setup presented as a post-create checklist of links to existing screens | Med–High | Biggest new build; benefits from W1–W3 in place |
-| **W7 — Commissioning handoff + Turnover packages** | External integration points | Med | Depends on lifecycle/gates (W3) |
+| **W7 — Commissioning handoff + Turnover packages** ✅ | Turnover packages with a deliverables-completeness checklist + handoff chain (open → ready_for_commissioning → in_commissioning → ready_for_turnover → accepted) **(shipped)**; commissioning stays external — only the launch URL + recorded status read-back are stored | Med | Depends on lifecycle/gates (W3) |
 | **W8 — Docs refresh** | Update the §12 docs to match shipped IA | Low | Close the loop |
 
 ---

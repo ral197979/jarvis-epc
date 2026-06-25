@@ -90,6 +90,7 @@ const ProcurementRiskView   = lazy(() => import('./procurement/ProcurementRiskVi
 const MyWorkView            = lazy(() => import('./myWork/MyWorkView'))
 const LifecycleView         = lazy(() => import('./lifecycle/LifecycleView'))
 const SetupWizardView       = lazy(() => import('./setup/SetupWizardView'))
+const TurnoverView          = lazy(() => import('./turnover/TurnoverView'))
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -202,6 +203,7 @@ const TAB_MAP: Record<string, ViewEntry> = {
   mywork:        MyWorkView,
   lifecycle:     LifecycleView,
   setup:         SetupWizardView,
+  turnover:      TurnoverView,
   coordination:  CoordinationView,
   executive:     ExecutiveView,
   portfolioiq:   PortfolioIQView,
