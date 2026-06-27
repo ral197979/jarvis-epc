@@ -5,7 +5,7 @@
  * `now`, so most coverage is plain unit tests with no DB. A small route smoke
  * test mirrors the mock-pool pattern to confirm the endpoint is wired.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 // ─── Mock DB pool (used only by the route smoke test) ─────────────────────────
 const mockQuery = vi.fn()
@@ -121,7 +121,16 @@ function makeApp() {
 }
 
 describe('My Work route smoke', () => {
-  beforeEach(() => vi.clearAllMocks())
+  // The route uses the real clock (`new Date()`), so pin it to the same reference
+  // date the fixtures assume — otherwise wall-clock drift turns the "upcoming"
+  // submittal (due 2026-06-25) into an overdue item. Fake only Date so supertest's
+  // real timers keep working.
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-06-22T12:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
 
   it('GET /my-work aggregates across modules', async () => {
     // Query order in buildMyWork: rfis, punch, capa, actions, inspections, submittals, changeOrders, doneActions
