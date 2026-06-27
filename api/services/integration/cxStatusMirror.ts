@@ -13,6 +13,7 @@
  * See COMMISSIONING_EXTRACTION_PLAN.md §3 (event contract) and §1d.
  */
 import { tenantQuery } from '../../db/pool'
+import { toMirrorEvent, DELTA_FIELDS } from './cxEventMap'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -161,9 +162,33 @@ async function _applyPatch(tenantId: string, handoffId: string, eventId: string,
   `, vals)
 }
 
+/** Apply a relative count adjustment to the mirror, clamped at zero. */
+async function _applyDelta(tenantId: string, handoffId: string, eventId: string, delta: Record<string, number>): Promise<void> {
+  const cols: string[] = ['tenant_id', 'handoff_id', 'last_event_id']
+  const ph:   string[] = ['$1', '$2', '$3']
+  const vals: unknown[] = [tenantId, handoffId, eventId]
+  const updates: string[] = ['last_event_id = EXCLUDED.last_event_id']
+  let i = 4
+  for (const [field, d] of Object.entries(delta)) {
+    if (!(DELTA_FIELDS as readonly string[]).includes(field)) continue  // identifier allowlist
+    // Bound $i is reused in INSERT (new-row value, clamped) and UPDATE (existing + delta, clamped).
+    cols.push(field); ph.push(`GREATEST(0, $${i})`); vals.push(d)
+    updates.push(`${field} = GREATEST(0, cx_status_mirror.${field} + $${i})`)
+    i++
+  }
+  if (cols.length === 3) return   // nothing valid to apply
+  updates.push('synced_at = NOW()', 'updated_at = NOW()')
+  await tenantQuery(tenantId, `
+    INSERT INTO cx_status_mirror (${cols.join(', ')}) VALUES (${ph.join(', ')})
+    ON CONFLICT (tenant_id, handoff_id) DO UPDATE SET ${updates.join(', ')}
+  `, vals)
+}
+
 /**
  * Idempotently apply one inbound event. Records it in the idempotency ledger
- * first; a duplicate event_id is a no-op (returns processed:false).
+ * first; a duplicate event_id is a no-op (returns processed:false). The event
+ * name may be Menlo-internal, canonical, or already cx.* — it is normalized at
+ * the edge (cxEventMap.toMirrorEvent) into a mirror instruction.
  */
 export async function applyInboundEvent(
   tenantId: string, evt: InboundCxEvent,
@@ -177,9 +202,14 @@ export async function applyInboundEvent(
 
   if (!ins.rows.length) return { processed: false }   // duplicate → idempotent no-op
 
-  const patch = reduceEvent(evt.event, evt.data ?? {})
-  if (evt.handoff_id && Object.keys(patch).length) {
-    await _applyPatch(tenantId, evt.handoff_id, evt.event_id, patch)
+  const norm = toMirrorEvent(evt.event, evt.data ?? {})
+  if (norm && evt.handoff_id) {
+    if (norm.delta) {
+      await _applyDelta(tenantId, evt.handoff_id, evt.event_id, norm.delta)
+    } else {
+      const patch = reduceEvent(norm.event, norm.data ?? {})
+      if (Object.keys(patch).length) await _applyPatch(tenantId, evt.handoff_id, evt.event_id, patch)
+    }
   }
   return { processed: true }
 }

@@ -17,6 +17,7 @@ import {
   commissioningTimeoutMs,
 } from './cxConfig'
 import { seedMirror } from './cxStatusMirror'
+import { toMenloInboundEvent } from './cxEventMap'
 import { slog } from '../../../src/modules/observability/index'
 
 export interface CreateHandoffInput {
@@ -27,12 +28,6 @@ export interface CreateHandoffInput {
   scope?: Record<string, unknown>
   deliverables?: Record<string, unknown>
   idempotency_key: string
-}
-
-export interface ReadinessInput {
-  fat_ready: boolean
-  sat_ready: boolean
-  evidence?: Record<string, unknown>
 }
 
 /** Discriminated result: callers branch on `enabled`. */
@@ -74,8 +69,9 @@ export async function createHandoff(
   input: CreateHandoffInput,
 ): Promise<GatewayResult<{ handoff_id: string; workspace_url: string; status: string }>> {
   if (!isCommissioningExternalEnabled()) return DISABLED
+  // Menlo intake endpoint (ECOSYSTEM_INTEGRATION_CONTRACT.md §3.1 / R1).
   const res = await _request<{ handoff_id: string; workspace_url: string; status: string }>(
-    'POST', '/api/cx/v1/handoffs', input, input.idempotency_key,
+    'POST', '/api/projects/handoff', input, input.idempotency_key,
   )
   try {
     await seedMirror(input.tenant_id, res.handoff_id, {
@@ -93,22 +89,30 @@ export async function createHandoff(
   return { enabled: true, ...res }
 }
 
-/** §2.2 — pull current status for a handoff (push via webhook is preferred). */
+/** Pull current commissioning status for a project (push via webhook is preferred). */
 export async function getHandoffStatus(
-  handoffId: string,
+  projectId: string,
 ): Promise<GatewayResult<{ status: Record<string, unknown> }>> {
   if (!isCommissioningExternalEnabled()) return DISABLED
-  const status = await _request<Record<string, unknown>>('GET', `/api/cx/v1/handoffs/${encodeURIComponent(handoffId)}/status`)
+  const status = await _request<Record<string, unknown>>('GET', `/api/projects/${encodeURIComponent(projectId)}/status`)
   return { enabled: true, status }
 }
 
-/** §2.3 — assert FAT/SAT readiness; Commissioning may reject with blocking items. */
-export async function assertReadiness(
-  handoffId: string, input: ReadinessInput,
-): Promise<GatewayResult<{ accepted: boolean; blocking_items: unknown[] }>> {
+/**
+ * Publish a Denver → Menlo lifecycle event (readiness, construction-complete,
+ * equipment-installed, …). Canonical event name is translated to Menlo's inbound
+ * vocabulary at the edge; delivery is fire-and-forget to Menlo's event sink.
+ * Replaces the old synchronous readiness gate — Menlo's readiness model is
+ * event-driven (ECOSYSTEM_INTEGRATION_CONTRACT.md §3 / R1).
+ */
+export async function publishToCommissioning(
+  canonicalEvent: string, projectId: string, data: Record<string, unknown> = {},
+): Promise<GatewayResult<{ accepted: boolean }>> {
   if (!isCommissioningExternalEnabled()) return DISABLED
-  const res = await _request<{ accepted: boolean; blocking_items: unknown[] }>(
-    'POST', `/api/cx/v1/handoffs/${encodeURIComponent(handoffId)}/readiness`, input,
-  )
-  return { enabled: true, ...res }
+  await _request('POST', '/api/events', {
+    event: toMenloInboundEvent(canonicalEvent),
+    project_id: projectId,
+    data,
+  })
+  return { enabled: true, accepted: true }
 }

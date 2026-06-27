@@ -79,4 +79,32 @@ describe('applyInboundEvent (idempotency)', () => {
     expect(r).toEqual({ processed: true })
     expect(mockTenantQuery).toHaveBeenCalledTimes(1) // ledger only
   })
+
+  it('normalizes a Menlo status event (FATCompleted → fat_status patch)', async () => {
+    mockTenantQuery
+      .mockResolvedValueOnce({ rows: [{ id: 'led3' }] })
+      .mockResolvedValueOnce({ rows: [] })
+    const r = await applyInboundEvent('t1', { event_id: 'e3', event: 'FATCompleted', tenant_id: 't1', handoff_id: 'hx1' })
+    expect(r).toEqual({ processed: true })
+    expect(mockTenantQuery).toHaveBeenCalledTimes(2)
+    expect(mockTenantQuery.mock.calls[1][1]).toContain('fat_status')
+  })
+
+  it('applies a delta for a Menlo count event (PunchCreated → punch_open +1, clamped)', async () => {
+    mockTenantQuery
+      .mockResolvedValueOnce({ rows: [{ id: 'led4' }] })
+      .mockResolvedValueOnce({ rows: [] })
+    const r = await applyInboundEvent('t1', { event_id: 'e4', event: 'PunchCreated', tenant_id: 't1', handoff_id: 'hx1' })
+    expect(r).toEqual({ processed: true })
+    const sql = mockTenantQuery.mock.calls[1][1] as string
+    expect(sql).toContain('punch_open')
+    expect(sql).toContain('GREATEST(0,')
+  })
+
+  it('records audit-only Menlo events with no mirror write (LoopCheckCompleted)', async () => {
+    mockTenantQuery.mockResolvedValueOnce({ rows: [{ id: 'led5' }] })
+    const r = await applyInboundEvent('t1', { event_id: 'e5', event: 'LoopCheckCompleted', tenant_id: 't1', handoff_id: 'hx1' })
+    expect(r).toEqual({ processed: true })
+    expect(mockTenantQuery).toHaveBeenCalledTimes(1) // ledger only
+  })
 })

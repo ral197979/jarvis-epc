@@ -49,7 +49,7 @@ describe('commissioningGateway.createHandoff', () => {
     expect(r).toEqual({ enabled: true, handoff_id: 'hx9', workspace_url: 'https://cx.example.com/ws/hx9', status: 'received' })
 
     const [url, opts] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(url).toBe('https://cx.example.com/api/cx/v1/handoffs')
+    expect(url).toBe('https://cx.example.com/api/projects/handoff')
     expect(opts.method).toBe('POST')
     expect(opts.headers['Authorization']).toBe('Bearer tok-123')
     expect(opts.headers['Idempotency-Key']).toBe('idem-1')
