@@ -1,0 +1,47 @@
+# CODEOWNERS — enforces the Federation approval matrix (FEDERATION_CHANGE_POLICY.md §6)
+#
+# Replace @ral197979 with real GitHub teams when they exist, e.g.
+#   @org/federation-architects, @org/security, @org/ai-governance, @org/db.
+# Until then the repo owner is the accountable approver for every domain.
+
+# ── Default owner ───────────────────────────────────────────────────────────
+*                                             @ral197979
+
+# ── Federation contracts & governance (Federation Architect) ────────────────
+/REFERENCE_ARCHITECTURE.md                    @ral197979
+/ECOSYSTEM_INTEGRATION_CONTRACT.md            @ral197979
+/FEDERATION_CHANGE_POLICY.md                  @ral197979
+/FEDERATION_RFC_TEMPLATE.md                   @ral197979
+/FEDERATION_ADOPTION_GUIDE.md                 @ral197979
+/FEDERATION_COMPLIANCE_CHECKLIST.md           @ral197979
+/FEDERATION_LIFECYCLE.md                      @ral197979
+/FEDERATION_RELEASE_POLICY.md                 @ral197979
+/docs/adr/                                    @ral197979
+
+# ── Event contracts (publishers + subscribers) ──────────────────────────────
+/api/services/events/                         @ral197979
+/api/services/integration/                    @ral197979
+
+# ── Universal Object Service (identity) ─────────────────────────────────────
+/api/services/registry/                       @ral197979
+
+# ── AI Capability Registry ──────────────────────────────────────────────────
+/api/services/capabilities/                   @ral197979
+
+# ── Digital Thread + Knowledge Graph ────────────────────────────────────────
+/api/services/graph/                          @ral197979
+
+# ── Document authority (EAP client) ─────────────────────────────────────────
+/api/services/eap/                            @ral197979
+
+# ── Security-sensitive (Security Lead) ──────────────────────────────────────
+/api/auth.ts                                  @ral197979
+/api/middleware/                              @ral197979
+/ENTERPRISE_SECURITY_SPEC.md                  @ral197979
+
+# ── Database / migrations (DB owner) ────────────────────────────────────────
+/api/db/migrations/                           @ral197979
+
+# ── CI / release engineering ────────────────────────────────────────────────
+/.github/                                     @ral197979
+/vitest.config.ts                             @ral197979
