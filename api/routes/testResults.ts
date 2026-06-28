@@ -34,7 +34,6 @@ function _handleErr(err: unknown, res: Response, where: string): void {
     res.status(404).json({ error: 'not_found', message: err.message })
     return
   }
-  const msg = err instanceof Error ? err.message : String(err)
   const code = (err as { code?: string })?.code
   if (code === '23505') {
     res.status(409).json({ error: 'duplicate', message: 'step_no already exists for this pack' })

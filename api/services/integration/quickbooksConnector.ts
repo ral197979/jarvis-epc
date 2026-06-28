@@ -95,7 +95,6 @@ const QBO_BASE: Record<string, string> = {
 
 const OAUTH_TOKEN_URL    = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer'
 const OAUTH_REVOKE_URL   = 'https://developer.api.intuit.com/v2/oauth2/tokens/revoke'
-const OAUTH_DISCOVER_URL = 'https://developer.api.intuit.com/.well-known/openid_sandbox_configuration'
 
 // ─── QuickBooksConnector ──────────────────────────────────────────────────────
 
