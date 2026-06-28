@@ -2,6 +2,11 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// Determinism: force UTC for all test runs (set before workers fork so Date reads
+// it at init). Eliminates timezone-dependent date assertions diverging between a
+// developer's local zone and CI/prod (UTC). See v2.0.1 stabilization.
+process.env.TZ = 'UTC'
+
 export default defineConfig({
   plugins: [react()],
 
@@ -23,6 +28,7 @@ export default defineConfig({
     env: {
       ANTHROPIC_API_KEY: 'sk-test-stub-for-vitest',
       JWT_SECRET:        'test-jwt-secret',
+      TZ:                'UTC',
     },
 
     setupFiles: [path.resolve(__dirname, './src/__tests__/setup.ts')],
