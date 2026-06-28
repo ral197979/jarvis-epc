@@ -105,7 +105,7 @@ export const portfolioAdapter = {
     if (!USE_MOCKS) return createProjectLive(input)
     const fmt = (n?: number) =>
       n
-        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1 }).format(n)
+        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 1, trailingZeroDisplay: 'stripIfInteger' }).format(n)
         : '—'
     const created: Project = {
       id: input.code,

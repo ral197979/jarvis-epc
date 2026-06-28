@@ -49,6 +49,7 @@ function formatMoney(amount: number, currency: string): string {
       currency: currency || 'USD',
       notation: 'compact',
       maximumFractionDigits: 1,
+      trailingZeroDisplay: 'stripIfInteger',
     }).format(amount)
   } catch {
     return `$${Math.round(amount).toLocaleString()}`

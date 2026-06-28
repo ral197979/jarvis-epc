@@ -375,7 +375,10 @@ export function buildAuditPackage(
  */
 export async function computeEvidenceHash(file: File | Blob): Promise<string> {
   const buffer = await file.arrayBuffer()
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer)
+  // Wrap in a Uint8Array view so digest() accepts it across realms: a jsdom Blob's
+  // arrayBuffer() yields a jsdom-realm ArrayBuffer that Node 20's webcrypto rejects
+  // via instanceof. A TypedArray view passes the check; identical bytes → same hash.
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new Uint8Array(buffer))
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
