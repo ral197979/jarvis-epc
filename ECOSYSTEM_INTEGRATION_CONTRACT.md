@@ -1,7 +1,11 @@
 # Ava EPC Ecosystem — Integration Contract v2.0 (DRAFT)
 
-**Status:** DRAFT / source-of-truth proposal. Documentation only — no code changes implied by this file.
-Supersedes the v1 draft. Aligns to *HOB — AI-Native Federation Architecture v2.0*.
+**Status:** v2.0 — hardened for merge (2026-06-27). Source-of-truth proposal; documentation only — no
+code changes implied by this file. Supersedes the v1 draft. Aligns to *HOB — AI-Native Federation
+Architecture v2.0*. This pass resolves the architecture-review must-fix items **in the contract**: AI
+Governance envelope (§11), Universal Object Service (§3.1), event `spec_version` + compatibility policy
+(§4), and ratified ownership decisions (§13). Implementation of these remains follow-up work (tracked on
+PR #4); the dormant code in PR #4 is unaffected.
 
 **Tagging:** **[observed]** = what a repo exposes today (read-only review, 2026-06-27). **[proposed]** =
 the target convention to ratify before wiring. **[gap]** = Denver work needed.
@@ -37,7 +41,7 @@ Companions: `COMMISSIONING_EXTRACTION_PLAN.md` (Denver↔Menlo extraction), `api
 
 > Boundary note: "FAT" appears in two places by design — **ControlCore** owns *controls/PLC* FAT
 > automation; **Menlo** owns *field* FAT execution. ControlCore's PLC-FAT results feed Menlo; they do
-> not duplicate. (Open decision #2, §11.)
+> not duplicate. (Ratified, §13.)
 
 ---
 
@@ -46,7 +50,7 @@ Companions: `COMMISSIONING_EXTRACTION_PLAN.md` (Denver↔Menlo extraction), `api
 Communication happens only through these. **No direct database coupling. No duplicated business logic,
 calculations, or document generation.**
 
-1. **Universal Object Registry** — one immutable UUID per real-world object (§3).
+1. **Universal Object Service** — one immutable UUID per real-world object; identity issuance + resolution (§3).
 2. **Universal Event Specification** — shared event vocabulary (§4).
 3. **AI Capability Registry** — ask for a capability, not a service URL (§5).
 4. **MCP + REST** — synchronous capability calls and queries (§5, §8).
@@ -54,7 +58,7 @@ calculations, or document generation.**
 
 ---
 
-## 3. Universal Object Registry [proposed]
+## 3. Universal Object Registry → Universal Object Service [proposed]
 
 Every object below gets **one immutable UUID** that never changes across the asset lifecycle.
 Applications **store references only** — no app re-mints an identity another app owns.
@@ -79,6 +83,59 @@ surrogate. This is what makes `LT-101` one object end-to-end.
 `commissioning_items` with local UUIDs. **[gap]** no shared registry; tag identity is Denver-local, not
 reconciled to AEC's `EngineeringModel`. Registry adoption = treat AEC equipment/instrument UUIDs as the
 canonical ids Denver references.
+
+### 3.1 The registry is a SERVICE, not just a vocabulary [proposed]
+
+The UUID vocabulary (object types + minting authority above) is necessary but not sufficient. To be the
+long-term federation identity backbone it must be promoted to a first-class **Universal Object Service**
+(UOS) — the system of record for object identity across every repository. The UOS is responsible for:
+
+- **UUID issuance** (by the owning system per the minting-authority table)
+- **UUID resolution** (given a reference, return the object's canonical record)
+- **object owner lookup** (which repository owns this object)
+- **external ID mapping** (vendor/customer/3rd-party identifiers)
+- **legacy ID mapping** (pre-federation identifiers — e.g. Denver-local tag ids, Menlo `externalId`)
+- **alias handling** (multiple human identifiers → one canonical UUID)
+- **merge semantics** (two records found to be the same object)
+- **supersede semantics** (an object replaced by a newer one, e.g. re-tag/revision)
+- **tombstone policy** (logical deletion; identities are never hard-deleted or reused)
+- **version history** (attribute changes over time; the UUID itself is immutable)
+- **object discovery** (search/enumerate objects by type/owner/scope)
+- **cross-system reference validation** (is this `*_uuid` real and resolvable?)
+
+**Resolution contract [proposed].** Given:
+
+```text
+object_type + uuid
+```
+
+the UOS returns:
+
+```text
+canonical UUID
+object type
+owning repository
+current lifecycle status      (active | superseded | merged | tombstoned)
+aliases
+external IDs
+superseded-by / merged-into links
+related references
+source system
+created timestamp
+updated timestamp
+```
+
+**Binding rule:** Applications **may reference** shared objects by UUID, but **object resolution must go
+through the Universal Object Service** — no repository resolves another repository's object by reaching
+into its database or re-deriving identity. Identity is immutable; lifecycle changes are expressed via
+`superseded-by` / `merged-into` / `tombstoned`, never by mutating or reusing a UUID.
+
+**Hosting:** see §13 (Denver is the initial UOS host/orchestrator; canonical issuance + lifecycle
+resolution are governed by the UOS regardless of host).
+
+**Status [observed/gap]:** PR #4 ships the identity *vocabulary + minting guardrails* (`objectRegistry.ts`,
+pure, in-memory). The persistent UOS (store, resolution API, lifecycle) is **follow-up implementation
+work**, not in PR #4.
 
 ---
 
@@ -115,12 +172,40 @@ emits these today and they have no canonical name yet.)*
 Denver publishes (out): `project.*`, `engineering.completed`, `commissioning`-readiness signals (which
 Menlo subscribes to as its inbound `ProjectReadyForCommissioning`, `ConstructionCompleted`, …).
 
-**Envelope [proposed]:** `event_id`, `event` (canonical), `tenant_id`, `project_id`, `subject_uuid`
-(registry id), `occurred_at`, `correlation_id`, `data`. Idempotency key = `(tenant_id, event_id)`
-(Denver PR-1 `cx_inbound_events`). Transport: signed webhooks (HMAC-SHA256, PR-1) → broker later.
+**Envelope [proposed].** Every event envelope carries a `spec_version` so the vocabulary can evolve
+without breaking subscribers:
 
-**Denver today [observed]:** internal `realtime_event_log` + PR-1 `cx.*` mirror vocabulary.
-**[gap]** publish/subscribe using canonical names via an edge adapter.
+```text
+spec_version      semver of the event contract (e.g. "1.0")
+event_id          unique id; idempotency key with tenant_id
+event_name        canonical dotted name (domain.action)
+tenant_id
+project_id
+subject_uuid      Universal Object Service reference (§3)
+occurred_at       ISO-8601 UTC
+correlation_id    trace id across systems
+data              event payload (see schema rules below)
+```
+
+Idempotency key = `(tenant_id, event_id)` (Denver PR-1 `cx_inbound_events`). Transport: signed webhooks
+(HMAC-SHA256, PR-1) → broker later.
+
+**Compatibility policy [proposed] (binding once adopted):**
+- **Additive by default** — new optional fields may be added within the same `spec_version`.
+- **Breaking changes require a new `spec_version`** (removing/renaming a field, changing a type/meaning).
+- **Consumers must ignore unknown fields** (forward-compatible parsing).
+- **Deprecated fields remain for at least one full compatibility window** before removal in a later
+  `spec_version`; deprecations are announced, not silent.
+- **Payloads should reference a schema** — `data` carries (or the registry maps) a `schema_name` /
+  `schema_version` so payloads are validatable and versioned independently of the envelope.
+- **Delivery is at-least-once unless explicitly stated otherwise** — ordering is **not** guaranteed
+  across transports; consumers **must be idempotent** (dedupe on `(tenant_id, event_id)`).
+
+**Denver today [observed]:** R3 `universalEvents.buildEnvelope` emits `{event_id, event, tenant_id,
+project_id, subject_uuid, occurred_at, correlation_id, data}` over `realtime_event_log` + the webhook
+dispatcher. **[gap]** it does **not** yet carry `spec_version`, uses `event` (not `event_name`), and has
+no per-payload `schema_*` — aligning the envelope to the versioned shape above is **follow-up
+implementation** (a one-field-plus-rename change), not in PR #4.
 
 ---
 
@@ -224,12 +309,48 @@ exposes `/api/doc-factory/{generate,generate-async,export,fpt,iom}` and ships SD
 
 ---
 
-## 11. AI-first principles [proposed]
+## 11. AI-first principles + AI Governance Contract [proposed]
 
-Every repo exposes AI capabilities; every screen supports NL interaction; every KPI drills to source;
-every artifact carries provenance; every recommendation is explainable with confidence + evidence.
-(Crania/AEC/ControlCore already attach provenance/citations; Menlo's copilot is advisory-only and never
-signs off — keep that invariant.)
+**Principles.** Every repo exposes AI capabilities; every screen supports NL interaction; every KPI
+drills to source; every artifact carries provenance; every recommendation is explainable with confidence
++ evidence. (Crania/AEC/ControlCore already attach provenance/citations; Menlo's copilot is advisory-only
+and never signs off — keep that invariant.)
+
+### 11.1 AI artifact envelope (binding once adopted)
+
+Every AI-generated output — across **Denver, Crania, Ava-Engineering-Core, Ava Math Engine,
+Ava-ControlCore, Menlo, and any future specialist engine** — must carry a uniform governance envelope so
+provenance, explainability, and approval travel with the artifact wherever it crosses the federation:
+
+```text
+model_provider        e.g. anthropic | openai | ollama | local
+model_name            e.g. claude-opus-4-8
+model_version         resolved model id/version actually used
+prompt_version        version of the prompt/template that produced it
+confidence            0.0–1.0 (or an explicit "n/a")
+reasoning_summary     short human-readable rationale
+citations[]           source references the output is grounded in
+evidence_refs[]       registry UUIDs / document refs supporting it
+review_status         draft | under_review | approved | rejected
+human_approver        user id of the approver (null until approved)
+approved_at           ISO-8601 UTC (null until approved)
+generated_at          ISO-8601 UTC
+correlation_id        trace id (ties to the event/digital-thread chain)
+```
+
+The envelope attaches to AI-produced events (the event `data`), documents (alongside the EAP doc
+reference), and registry objects created/updated by AI.
+
+### 11.2 Authority rule (binding)
+
+**No AI-generated engineering output is considered authoritative until it has been reviewed or approved
+according to the owning domain's workflow.** Until then it is `draft`/`under_review` and must be labeled
+as such everywhere it appears. The owning system (per §1 / §10 ownership) defines the approval workflow;
+the approver and timestamp are recorded in the envelope and the audit trail. Advisory AI (e.g. Menlo's
+copilot) never sign offs — it only proposes.
+
+**Status [observed/gap]:** specialist engines attach partial provenance/citations today; a *uniform*
+AI-artifact envelope across all repos is **follow-up contract + implementation** work, not in PR #4.
 
 ---
 
@@ -246,12 +367,32 @@ Denver already satisfies most Universal API + Security items. Net-new Denver wor
 
 ---
 
-## 13. Open decisions (resolve before deep wiring)
+## 13. Ratified decisions (binding)
 
-1. **Process-design authority** — Crania orchestrates (NL); AEC/Math Engine compute. Denver never calls both for one calc.
-2. **PLC vs field commissioning seam** — ControlCore PLC-FAT/deployment feeds Menlo field execution; no duplication.
-3. **Graph + event transport** — start signed webhooks (PR-1); graduate to a broker (NATS/Kafka/SQS) as fan-out grows.
-4. **Registry/graph hosting** — does the Object Registry + Knowledge Graph live in Denver, AEC, or a shared service? (Leaning: Denver hosts registry index + cross-system search; AEC remains engineering source-of-truth.)
+Previously-open boundary questions, now ratified as the federation standard.
+
+**Process Design.** Crania owns natural-language design intent and orchestration. Ava-Engineering-Core
+and Ava Math Engine own calculations, engineering models, and technical computation. Denver manages the
+EPC workflow and stores project/deliverable state. Denver never calls both Crania and AEC/Math for the
+same calculation — it requests a capability and the providers delegate among themselves.
+
+**Document Generation.** AEC/EAP is the authoritative document-generation system. Denver may own
+document-control records and workflow status (manage vs generate). ControlCore may generate
+controls-specific *source* artifacts, but final rendered engineering documents must register through EAP.
+One document engine, one citation model, one template system.
+
+**FAT Ownership.** ControlCore owns PLC/controls FAT and code validation. Menlo owns field
+FAT/SAT/FPT/IST execution. ControlCore FAT results feed Menlo execution and Denver readiness dashboards;
+the two never duplicate.
+
+**Registry Host.** Denver is the initial host/orchestrator for the Universal Object Service (§3).
+Specialist repositories may propose object references, but canonical UUID issuance and lifecycle
+resolution must be governed by the Universal Object Service (issuance still follows the §3 minting-
+authority table; "host" is the orchestration point, not a change of ownership).
+
+**Standing (non-blocking) decision — transport.** Start with signed webhooks (HMAC-SHA256, PR-1);
+graduate to a broker (NATS/Kafka/SQS) as cross-system fan-out grows. Reassess when a second high-volume
+subscriber comes online.
 
 ---
 
