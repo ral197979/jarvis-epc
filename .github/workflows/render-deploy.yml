@@ -34,6 +34,13 @@ jobs:
           echo "HTTP ${RESP}"
           cat /tmp/resp.json || true
           echo
+          # 409 = a deploy is already in progress for this service (Render's native
+          # auto-deploy already fired for this commit). That is success, not failure —
+          # the redundant fallback hook just conflicts. Accept it instead of failing CI.
+          if [ "$RESP" = "409" ]; then
+            echo "::notice::Render returned 409 — a deploy is already in progress (native auto-deploy is handling ${GITHUB_SHA}). Treating as success."
+            exit 0
+          fi
           if [ "$RESP" != "200" ] && [ "$RESP" != "201" ]; then
             echo "::error::Render deploy hook returned non-2xx status ${RESP}"
             exit 1
