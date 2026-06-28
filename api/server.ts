@@ -94,6 +94,8 @@ import { deficienciesRouter  } from './routes/deficiencies'  // v4.32.0: test-tr
 import { commissioningItemsRouter } from './routes/commissioningItems' // v4.32.0: CX checklist items (P2)
 import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
+import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
+import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
 import complianceRouter       from './routes/compliance'    // v4.31.0
 import fieldSyncRouter        from './routes/fieldSync'     // v4.31.0
@@ -225,6 +227,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type','Authorization','X-Request-ID','X-Tenant-ID'],
 }))
 
+// ─── Commissioning webhook (PR-1) ─────────────────────────────────────────────
+// Mounted BEFORE express.json() so the route can read the RAW body for HMAC
+// verification. Authenticated by signature (service-to-service), so it sits
+// outside the /api/v1 auth+CSRF chain. See COMMISSIONING_EXTRACTION_PLAN.md §1d.
+app.use('/api/cx/webhook', commissioningWebhookRouter)
+
 // ─── Body / cookie parsing ────────────────────────────────────────────────────
 
 app.use(express.json({ limit: '2mb' }))
@@ -249,6 +257,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 //   metricsMiddleware — tracks every HTTP request's method/route/status/duration
 
 app.get('/metrics', metricsHandler)
+app.use(openapiRouter)   // R6b: GET /openapi.json (public, flag-gated via OPENAPI_ENABLED)
 app.use(metricsMiddleware)
 
 // ─── Request ID + structured logging ─────────────────────────────────────────

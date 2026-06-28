@@ -46,6 +46,10 @@ Google_Stitch_A/
 Google_Stitch_B/
 Google_Stitch_C/
 
+# Commissioning export bundles (generated data dumps, not source)
+cx-export-bundle/
+bundle-*/
+
 # Vercel
 .vercel
 

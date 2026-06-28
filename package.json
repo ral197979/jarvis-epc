@@ -26,6 +26,7 @@
     "ci": "npm audit --audit-level=high && npm run typecheck:all && npm run check:monolith && npm test -- --run",
     "db:migrate": "tsx api/db/migrate.ts",
     "knowledge:ingest": "tsx api/scripts/ingest-directory.ts",
+    "cx:export": "tsx api/scripts/cxExportRun.ts",
     "ops:health": "tsx scripts/ops-health-snapshot.ts",
     "ops:governance": "tsx scripts/ops-governance-check.ts"
   },
