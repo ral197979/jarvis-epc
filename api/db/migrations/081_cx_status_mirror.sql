@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS cx_status_mirror (
   deficiencies_open    INTEGER      NOT NULL DEFAULT 0,
   ncr_open             INTEGER      NOT NULL DEFAULT 0,
   punch_open           INTEGER      NOT NULL DEFAULT 0,
-  references           JSONB        NOT NULL DEFAULT '{}', -- { deficiencies_url, ncr_url, punch_url, reports:[...] }
+  refs                 JSONB        NOT NULL DEFAULT '{}', -- deep-links: { deficiencies_url, ncr_url, punch_url, reports:[...] } ('references' is a reserved keyword)
   last_event_id        TEXT,
   synced_at            TIMESTAMPTZ,
   created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),

@@ -151,8 +151,9 @@ async function _applyPatch(tenantId: string, handoffId: string, eventId: string,
     }
   }
   if (patch.references !== undefined) {
-    cols.push('references'); ph.push(`$${i}`); vals.push(JSON.stringify(patch.references))
-    updates.push(`references = COALESCE(cx_status_mirror.references, '{}'::jsonb) || EXCLUDED.references`); i++
+    // DB column is `refs` ('references' is a reserved SQL keyword); TS field stays `references`.
+    cols.push('refs'); ph.push(`$${i}`); vals.push(JSON.stringify(patch.references))
+    updates.push(`refs = COALESCE(cx_status_mirror.refs, '{}'::jsonb) || EXCLUDED.refs`); i++
   }
   updates.push('synced_at = NOW()', 'updated_at = NOW()')
 
@@ -238,7 +239,7 @@ function _rowToMirror(r: Record<string, unknown>): MirrorRow {
 
 const SELECT = `SELECT handoff_id, project_id, turnover_package_id, workspace_url, phase,
   fat_status, fat_readiness_pct, sat_status, sat_readiness_pct,
-  deficiencies_open, ncr_open, punch_open, references, synced_at FROM cx_status_mirror`
+  deficiencies_open, ncr_open, punch_open, refs AS references, synced_at FROM cx_status_mirror`
 
 export async function getStatusByHandoff(tenantId: string, handoffId: string): Promise<MirrorRow | null> {
   const r = await tenantQuery(tenantId, `${SELECT} WHERE tenant_id=$1 AND handoff_id=$2`, [tenantId, handoffId])

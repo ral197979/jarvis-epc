@@ -7,8 +7,8 @@
  * opt-in per request (only acts when the client sends the header).
  *
  * Pluggable store (in-memory default; swap for DB/Redis to span instances/
- * restarts). Caches only completed 2xx/4xx responses sent via res.json (5xx are
- * transient and re-executed). In-flight concurrent dedup is out of scope here —
+ * restarts). Caches only completed 2xx responses sent via res.json (4xx may be a
+ * correctable client error; 5xx is transient). In-flight concurrent dedup is out of scope here —
  * it needs a store-level lock; documented as a follow-up.
  *
  * NOT auto-mounted: wire it on /api/v1 AFTER tenant resolution so the cache key
@@ -71,10 +71,13 @@ export function idempotency(store?: IdempotencyStore) {
       return
     }
 
-    // Capture the response body on the way out; cache deterministic results only.
+    // Capture the response body on the way out; cache successful results only.
+    // 2xx is the deterministic, replay-safe class — 4xx may be a correctable
+    // client error (a fixed retry with the same key should re-run) and 5xx is
+    // transient.
     const origJson = res.json.bind(res)
     res.json = (body: unknown): Response => {
-      if (res.statusCode < 500) _store.set(key, res.statusCode, body)
+      if (res.statusCode >= 200 && res.statusCode < 300) _store.set(key, res.statusCode, body)
       return origJson(body)
     }
     next()

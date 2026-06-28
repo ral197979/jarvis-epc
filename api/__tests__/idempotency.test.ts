@@ -36,6 +36,7 @@ describe('idempotency middleware', () => {
     let n = 0
     app.post('/thing', (_req, res) => { n += 1; res.status(201).json({ n }) })
     app.post('/fail', (_req, res) => { n += 1; res.status(500).json({ n }) })
+    app.post('/bad', (_req, res) => { n += 1; res.status(400).json({ n }) })
     app.get('/thing', (_req, res) => { n += 1; res.json({ n }) })
     return app
   }
@@ -83,6 +84,13 @@ describe('idempotency middleware', () => {
     const a = await request(app).post('/fail').set('Idempotency-Key', 'k1')
     const b = await request(app).post('/fail').set('Idempotency-Key', 'k1')
     expect(a.body.n).toBe(1); expect(b.body.n).toBe(2)
+  })
+
+  it('does not cache 4xx (correctable client error → re-executed)', async () => {
+    const app = makeApp()
+    const a = await request(app).post('/bad').set('Idempotency-Key', 'k1')
+    const b = await request(app).post('/bad').set('Idempotency-Key', 'k1')
+    expect(a.status).toBe(400); expect(a.body.n).toBe(1); expect(b.body.n).toBe(2)
   })
 
   it('ignores non-mutating methods', async () => {
