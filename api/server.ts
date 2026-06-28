@@ -95,6 +95,7 @@ import { commissioningItemsRouter } from './routes/commissioningItems' // v4.32.
 import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
+import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
 import complianceRouter       from './routes/compliance'    // v4.31.0
 import fieldSyncRouter        from './routes/fieldSync'     // v4.31.0
@@ -256,6 +257,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 //   metricsMiddleware — tracks every HTTP request's method/route/status/duration
 
 app.get('/metrics', metricsHandler)
+app.use(openapiRouter)   // R6b: GET /openapi.json (public, flag-gated via OPENAPI_ENABLED)
 app.use(metricsMiddleware)
 
 // ─── Request ID + structured logging ─────────────────────────────────────────
