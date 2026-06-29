@@ -1,0 +1,45 @@
+# Fly.io config for the Denver API (Node 20, always-on).
+# Pairs with Neon (Postgres+pgvector) via the DATABASE_URL secret. Redis optional.
+# Deployed by .github/workflows/fly-deploy.yml (no local terminal needed).
+#
+# If "denver-epc" is taken, change `app` below (one edit in the GitHub web editor).
+app = "denver-epc"
+primary_region = "iad"   # US East (Virginia) — near Neon us-east
+
+[build]
+  dockerfile = "Dockerfile.api"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3001"
+  DB_SSL = "true"            # Neon requires TLS
+  LOG_LEVEL = "info"
+  STORAGE_BACKEND = "local"
+  # Federation feature flags OFF (v2.0.1 ships dormant — no runtime change)
+  COMMISSIONING_EXTERNAL = "false"
+  CAPABILITY_REGISTRY = "false"
+  UNIVERSAL_EVENTS = "false"
+  OBJECT_REGISTRY = "false"
+  KNOWLEDGE_GRAPH = "false"
+  IDEMPOTENCY = "false"
+  OPENAPI_ENABLED = "false"
+  DENVER_MCP_SERVER = "false"
+  EAP_ENABLED = "false"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = false   # background workers must stay alive
+  auto_start_machines = true
+  min_machines_running = 1     # always-on (cheapest single instance)
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/api/v1/health"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+
+[[vm]]
+  memory = "1gb"
+  cpus = 1
