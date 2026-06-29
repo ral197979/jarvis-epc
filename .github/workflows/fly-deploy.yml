@@ -1,0 +1,54 @@
+name: Fly Deploy
+
+# No local terminal needed — run this from the GitHub "Actions" tab → "Run workflow".
+# Requires these GitHub Actions secrets (Settings → Secrets and variables → Actions):
+#   FLY_API_TOKEN      — Fly dashboard → Tokens (a deploy/org token)
+#   DATABASE_URL       — Neon DIRECT connection string (…?sslmode=require)
+#   JWT_SECRET         — 32+ char random
+#   ANTHROPIC_API_KEY  — optional (app boots without it; AI calls fail until set)
+on:
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    name: Deploy to Fly
+    runs-on: ubuntu-latest
+    concurrency: { group: fly-deploy, cancel-in-progress: false }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Create app if it does not exist
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          APP=$(grep -m1 '^app' fly.toml | cut -d'"' -f2)
+          flyctl apps create "$APP" --org personal 2>/dev/null || echo "app '$APP' already exists (ok)"
+
+      - name: Stage secrets
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl secrets set --stage \
+            DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}"
+
+      - name: Deploy (single machine, remote build)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only --ha=false
+
+      - name: Health check
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          APP=$(grep -m1 '^app' fly.toml | cut -d'"' -f2)
+          for i in $(seq 1 20); do
+            code=$(curl -s -m 8 -o /dev/null -w '%{http_code}' "https://$APP.fly.dev/api/v1/health" || echo 000)
+            echo "attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "::warning::health not 200 yet — check 'fly logs' in the Fly dashboard"
