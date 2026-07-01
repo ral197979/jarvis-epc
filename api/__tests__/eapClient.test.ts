@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { generateDocument, exportDocument, isEapDocType, EAP_DOC_TYPES } from '../services/eap/eapClient'
 
-const ENVS = ['EAP_ENABLED', 'AEC_BASE_URL', 'AEC_SVC_TOKEN', 'EAP_TIMEOUT_MS']
+const ENVS = ['EAP_ENABLED', 'CRANIA_BASE_URL', 'CRANIA_SVC_TOKEN', 'EAP_TIMEOUT_MS']
 
 describe('eapClient', () => {
   beforeEach(() => { for (const k of ENVS) delete process.env[k]; vi.stubGlobal('fetch', vi.fn()) })
@@ -23,17 +23,17 @@ describe('eapClient', () => {
 
   it('generates via the EAP doc-factory when enabled', async () => {
     process.env['EAP_ENABLED'] = 'true'
-    process.env['AEC_BASE_URL'] = 'https://aec.example.com'
-    process.env['AEC_SVC_TOKEN'] = 'tok-9'
+    process.env['CRANIA_BASE_URL'] = 'https://crania.example.com'
+    process.env['CRANIA_SVC_TOKEN'] = 'tok-9'
     ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
-      ok: true, json: async () => ({ url: 'https://aec/docs/d1.pdf', sha256: 'ab12' }),
+      ok: true, json: async () => ({ url: 'https://crania/docs/d1.pdf', sha256: 'ab12' }),
     })
 
     const r = await generateDocument(input)
-    expect(r).toEqual({ enabled: true, document: { url: 'https://aec/docs/d1.pdf', sha256: 'ab12', doc_type: 'fat' } })
+    expect(r).toEqual({ enabled: true, document: { url: 'https://crania/docs/d1.pdf', sha256: 'ab12', doc_type: 'fat' } })
 
     const [url, opts] = (fetch as ReturnType<typeof vi.fn>).mock.calls[0]
-    expect(url).toBe('https://aec.example.com/api/doc-factory/generate')
+    expect(url).toBe('https://crania.example.com/api/doc-factory/generate')
     expect(opts.method).toBe('POST')
     expect(opts.headers['Authorization']).toBe('Bearer tok-9')
     expect(opts.headers['Idempotency-Key']).toBe('idem-1')
@@ -41,7 +41,7 @@ describe('eapClient', () => {
 
   it('prefers the EAP-reported doc_type over the request', async () => {
     process.env['EAP_ENABLED'] = 'true'
-    process.env['AEC_BASE_URL'] = 'https://aec.example.com'
+    process.env['CRANIA_BASE_URL'] = 'https://crania.example.com'
     ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true, json: async () => ({ url: 'u', sha256: 's', doc_type: 'fat_report' }),
     })
@@ -49,20 +49,20 @@ describe('eapClient', () => {
     expect(r).toMatchObject({ enabled: true, document: { doc_type: 'fat_report' } })
   })
 
-  it('throws when enabled but AEC_BASE_URL is missing', async () => {
+  it('throws when enabled but CRANIA_BASE_URL is missing', async () => {
     process.env['EAP_ENABLED'] = 'true'
-    await expect(generateDocument(input)).rejects.toThrow(/AEC_BASE_URL/)
+    await expect(generateDocument(input)).rejects.toThrow(/CRANIA_BASE_URL/)
     expect(fetch).not.toHaveBeenCalled()
   })
 
   it('exportDocument is gated and wired to the export endpoint', async () => {
     expect(await exportDocument('d1', 'pdf')).toEqual({ enabled: false })
     process.env['EAP_ENABLED'] = 'true'
-    process.env['AEC_BASE_URL'] = 'https://aec.example.com'
+    process.env['CRANIA_BASE_URL'] = 'https://crania.example.com'
     ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: true, json: async () => ({ url: 'u', sha256: 's' }) })
     const r = await exportDocument('d1', 'pdf')
     expect(r).toEqual({ enabled: true, document: { url: 'u', sha256: 's', doc_type: 'pdf' } })
-    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe('https://aec.example.com/api/doc-factory/export')
+    expect((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]).toBe('https://crania.example.com/api/doc-factory/export')
   })
 
   it('exposes the doc-type catalogue', () => {

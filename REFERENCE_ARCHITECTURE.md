@@ -13,7 +13,7 @@ Canonical detail lives in `ECOSYSTEM_INTEGRATION_CONTRACT.md` and the governance
 
 The Ava EPC ecosystem is a **federation**: a set of independently deployable repositories that behave like
 one intelligent platform. **Denver** is the Enterprise EPC Delivery Platform the user experiences;
-specialist engines (Crania, Ava-Engineering-Core, Ava Math Engine, Ava-ControlCore, Menlo-Commissioning)
+specialist engines (Crania, Ava Math Engine, Ava-ControlCore, Menlo-Commissioning)
 own technical execution behind it.
 
 Principles:
@@ -44,8 +44,7 @@ flowchart TD
       Denver["Denver — Enterprise EPC Delivery Platform<br/>orchestration · workflow · system of record"]
     end
     subgraph Engineering Engines
-      Crania["Crania<br/>NL design intent + orchestration"]
-      AEC["Ava-Engineering-Core<br/>engineering model · drawings · EAP docs"]
+      Crania["Crania<br/>NL design intent + orchestration · engineering model · drawings · EAP docs"]
       Math["Ava Math Engine<br/>calculations"]
       Control["Ava-ControlCore<br/>PLC / SCADA / controls"]
     end
@@ -54,19 +53,17 @@ flowchart TD
     end
 
     Denver -- "capability calls (MCP/REST)" --> Crania
-    Denver -- "capability calls" --> AEC
     Denver -- "capability calls" --> Control
     Denver -- "handoff + events" --> Menlo
     Crania -- "delegates math" --> Math
-    AEC -- "delegates math" --> Math
-    AEC -- "EAP documents" --> Menlo
-    AEC -- "EAP documents" --> Denver
+    Crania -- "EAP documents" --> Menlo
+    Crania -- "EAP documents" --> Denver
     Control -- "PLC-FAT results" --> Menlo
     Menlo -- "status events" --> Denver
 ```
 
 Read the edges as: **Denver requests capabilities** and **hands off** to execution; **engines delegate**
-math to one place; **AEC is the document authority**; **status flows back** to Denver as canonical events.
+math to one place; **Crania is the document authority**; **status flows back** to Denver as canonical events.
 
 ---
 
@@ -77,10 +74,9 @@ Detail: `ECOSYSTEM_INTEGRATION_CONTRACT.md` §1, §10, §13 and ADR-001/002. Sum
 | Repository | Mission | Owns | Never owns | Primary capabilities | Public interfaces | Depends on | Future direction |
 |---|---|---|---|---|---|---|---|
 | **Denver** | Enterprise EPC delivery platform | EPC business workflow, project/portfolio, procurement, construction, cost/schedule/quality/risk, document control, turnover planning, executive reporting, orchestration, digital-thread index | calculations, PLC, field commissioning, document rendering | orchestration, capability routing, dashboards, AI PM | REST `/api/v1`, events, MCP (provider + consumer), webhooks | all engines (via capabilities) | host the Universal Object Service; deepen AI PM |
-| **Crania** | NL engineering front door | design intent, design orchestration | the calculation engine | intent extraction, design interpretation | MCP tools, REST | Math Engine, AEC | broaden disciplines |
-| **Ava-Engineering-Core** | Engineering source of truth + doc authority | canonical EngineeringModel, drawing intelligence, engineering calcs, **EAP Document Factory** | project orchestration, field execution | model build, drawing review, doc generation | MCP tools, REST `/api/doc-factory/*` | Math Engine | richer model + EAP coverage |
+| **Crania** | NL engineering front door + engineering source of truth + doc authority | design intent, design orchestration, canonical EngineeringModel, drawing intelligence, engineering calcs, **EAP Document Factory** | project orchestration, field execution | intent extraction, design interpretation, model build, drawing review, doc generation | MCP tools, REST `/api/doc-factory/*` | Math Engine | broaden disciplines; richer model + EAP coverage |
 | **Ava Math Engine** | Pure computation | every engineering calculation | UI, workflow, persistence | sizing, hydraulics, structural, electrical | MCP tools | — | more calculation domains |
-| **Ava-ControlCore** | Controls specialist | PLC/SCADA gen/review/conversion, controls FAT, PLC commissioning | field commissioning | PLC codegen, P&ID, comms, controls docs | REST (MCP shim planned) | AEC (model), EAP (docs) | MCP provider; deeper validation |
+| **Ava-ControlCore** | Controls specialist | PLC/SCADA gen/review/conversion, controls FAT, PLC commissioning | field commissioning | PLC codegen, P&ID, comms, controls docs | REST (MCP shim planned) | Crania (model), EAP (docs) | MCP provider; deeper validation |
 | **Menlo-Commissioning** | Field commissioning execution | pre-comm, loop checks, FAT/SAT/FPT/IST, punch, deficiencies, NCR/CAPA, witnessing, turnover, readiness | engineering calcs, PLC generation | test execution, evidence, witness, turnover | REST, MCP bridge, events | Denver (handoff), EAP (docs) | persistence + ingest of Denver bootstrap |
 
 ---
@@ -97,12 +93,12 @@ flowchart LR
 | Stage | Primary owner | Specialist engines involved |
 |---|---|---|
 | Opportunity / Proposal | **Denver** | — |
-| Engineering (management) | **Denver** | Crania (intent), AEC (model/review), Math (calcs) |
-| Design (technical) | **AEC** | Crania, Math, ControlCore (controls) |
+| Engineering (management) | **Denver** | Crania (intent + model/review), Math (calcs) |
+| Design (technical) | **Crania** | Math, ControlCore (controls) |
 | Procurement | **Denver** | — |
 | Construction | **Denver** | — |
 | Commissioning | **Menlo** | ControlCore (PLC-FAT feeds Menlo) |
-| Turnover | **Denver** (planning) + **Menlo** (execution evidence) | AEC/EAP (turnover package) |
+| Turnover | **Denver** (planning) + **Menlo** (execution evidence) | Crania/EAP (turnover package) |
 | Operations | downstream (FacilityHub / EstateOps, future) | — |
 
 Denver **manages** every stage's workflow + records; specialists **execute** the technical work
@@ -194,7 +190,7 @@ extracted later) and **ADR-003**.
 
 - **Universal Object Service** is the system of record for identity.
 - **Canonical UUIDs** — one immutable id per object, minted by its owner; never reused or mutated.
-- **Ownership** — per the minting-authority table (Denver / AEC / Menlo own distinct object types).
+- **Ownership** — per the minting-authority table (Denver / Crania / Menlo own distinct object types).
 - **External IDs / aliases** — vendor, customer, and human identifiers map to the canonical UUID.
 - **Legacy migration** — pre-federation ids (e.g. Menlo `externalId`) map forward; identity preserved.
 - **Lifecycle** — change via `superseded-by` / `merged-into` / `tombstoned`, never by mutating a UUID.
@@ -206,7 +202,7 @@ extracted later) and **ADR-003**.
 
 Detail: `ECOSYSTEM_INTEGRATION_CONTRACT.md` §10 and **ADR-008**.
 
-- **EAP (in AEC) is the single document authority.** Producers render; consumers store a **reference**
+- **EAP (in Crania) is the single document authority.** Producers render; consumers store a **reference**
   (URL + sha256), never bytes.
 - **Engineering documents** (FDS, SOO, datasheets), **commissioning documents** (FAT/SAT/FPT procedures,
   reports, turnover packages), and **controls documents** (ControlCore source artifacts) all register
@@ -218,7 +214,7 @@ Detail: `ECOSYSTEM_INTEGRATION_CONTRACT.md` §10 and **ADR-008**.
 
 ```mermaid
 flowchart LR
-    Req["Denver / Menlo / ControlCore<br/>(needs a document)"] -->|"generate request"| EAP["AEC · EAP Document Factory"]
+    Req["Denver / Menlo / ControlCore<br/>(needs a document)"] -->|"generate request"| EAP["Crania · EAP Document Factory"]
     EAP -->|"rendered doc"| Store["Document storage"]
     EAP -->|"reference: url + sha256"| Req
     Req --> DC["Denver document control<br/>(record · revision · approval)"]
@@ -261,7 +257,6 @@ flowchart TD
     subgraph Independent deploys
       d1[Denver] 
       d2[Crania]
-      d3[AEC]
       d4[Math]
       d5[ControlCore]
       d6[Menlo]
@@ -269,7 +264,6 @@ flowchart TD
     Contracts["Federation Specification (versioned contracts)"]
     d1 --- Contracts
     d2 --- Contracts
-    d3 --- Contracts
     d4 --- Contracts
     d5 --- Contracts
     d6 --- Contracts
@@ -372,7 +366,7 @@ flowchart LR
 | Term | Meaning |
 |---|---|
 | **Federation** | independently deployable repositories interoperating through shared, versioned contracts. |
-| **Repository** | one member system (Denver, Crania, AEC, Math, ControlCore, Menlo, or a future repo). |
+| **Repository** | one member system (Denver, Crania, Math, ControlCore, Menlo, or a future repo). |
 | **Specialist engine** | a repository that owns a technical-execution domain (calc, PLC, commissioning, docs). |
 | **Capability** | a named unit of work (e.g. `process.design`) resolved to a provider via the Capability Registry. |
 | **Universal Object Service (UOS)** | the identity system of record: UUID issuance, resolution, lifecycle. |
@@ -384,7 +378,7 @@ flowchart LR
 | **Knowledge Graph** | the semantic graph of typed relationships between objects. |
 | **Decision Record (ADR)** | an immutable record of an architectural decision (`docs/adr/`). |
 | **Reference Architecture** | this document — the authoritative front door. |
-| **EAP** | the Engineering/Document authoring platform in AEC; the sole document authority. |
+| **EAP** | the Engineering/Document authoring platform in Crania; the sole document authority. |
 | **MCP** | Model Context Protocol — tool-style capability invocation between agents/engines. |
 | **Canonical event** | a dotted `domain.action` event in the shared vocabulary. |
 | **Compliance level** | 1 Compatible / 2 Certified / 3 Reference Implementation. |

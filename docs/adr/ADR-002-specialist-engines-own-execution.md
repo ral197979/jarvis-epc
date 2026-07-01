@@ -1,8 +1,9 @@
 # ADR-002 — Specialist Engines Own Technical Execution
 
 - **Status:** Accepted (2026-06-27)
+- **Amended by:** [ADR-009](ADR-009-crania-absorbs-aec.md) — Crania absorbed the former Ava-Engineering-Core (AEC) engine (2026-07-01); read every "AEC" below as **Crania**.
 - **Decider:** Federation Architecture Council
-- **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §1, §10, §13, ADR-001, ADR-005, ADR-008
+- **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §1, §10, §13, ADR-001, ADR-005, ADR-008, ADR-009
 
 ## Context
 EPC delivery spans process calculations, engineering models, PLC/SCADA logic, document rendering, and

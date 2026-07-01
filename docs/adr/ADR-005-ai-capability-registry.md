@@ -1,8 +1,9 @@
 # ADR-005 — AI Capability Registry
 
 - **Status:** Accepted (2026-06-27)
+- **Amended by:** [ADR-009](ADR-009-crania-absorbs-aec.md) — Crania absorbed the former Ava-Engineering-Core (AEC) engine (2026-07-01); read every "AEC" below as **Crania**.
 - **Decider:** Federation Architecture Council
-- **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §5, ADR-002
+- **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §5, ADR-002, ADR-009
 
 ## Context
 Denver must invoke specialist engines (design, calculation, drawing review, PLC, commissioning, document
