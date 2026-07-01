@@ -20,7 +20,7 @@ describe('object type registry', () => {
   })
   it('reports minting authority and throws on unknown type', () => {
     expect(mintingAuthority('project')).toBe('denver')
-    expect(mintingAuthority('equipment')).toBe('aec')
+    expect(mintingAuthority('equipment')).toBe('crania')
     expect(mintingAuthority('test')).toBe('menlo')
     expect(() => mintingAuthority('nope')).toThrow(UnknownObjectTypeError)
   })
@@ -36,7 +36,7 @@ describe('mint — Denver mints only its own', () => {
   it('generates distinct uuids each call (immutable per object)', () => {
     expect(mint('project').uuid).not.toBe(mint('project').uuid)
   })
-  it('refuses to mint an AEC-owned type (reference it instead)', () => {
+  it('refuses to mint a Crania-owned type (reference it instead)', () => {
     expect(() => mint('equipment')).toThrow(ForeignMintError)
   })
   it('refuses to mint a Menlo-owned type', () => {
@@ -49,8 +49,8 @@ describe('mint — Denver mints only its own', () => {
 
 describe('makeRef — reference an existing object (any authority)', () => {
   const uuid = '11111111-2222-4333-8444-555555555555'
-  it('builds a reference to an AEC-owned object', () => {
-    expect(makeRef('equipment', uuid)).toEqual({ type: 'equipment', uuid, authority: 'aec' })
+  it('builds a reference to a Crania-owned object', () => {
+    expect(makeRef('equipment', uuid)).toEqual({ type: 'equipment', uuid, authority: 'crania' })
   })
   it('rejects a malformed uuid', () => {
     expect(() => makeRef('equipment', 'not-a-uuid')).toThrow(InvalidUuidError)

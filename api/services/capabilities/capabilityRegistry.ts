@@ -64,8 +64,7 @@ export function isCapabilityRegistryEnabled(): boolean {
  */
 export function providers(): Provider[] {
   return [
-    { id: 'crania',      label: 'Crania',              transport: 'mcp',  baseUrl: env('CRANIA_MCP_URL'),        capabilities: ['process.design', 'calc.run'] },
-    { id: 'aec',         label: 'Ava-Engineering-Core', transport: 'rest', baseUrl: env('AEC_BASE_URL'),          capabilities: ['calc.run', 'drawing.review', 'engineering.model', 'doc.generate'] },
+    { id: 'crania',      label: 'Crania',              transport: 'mcp',  baseUrl: env('CRANIA_MCP_URL'),        capabilities: ['process.design', 'calc.run', 'drawing.review', 'engineering.model', 'doc.generate'] },
     { id: 'controlcore', label: 'Ava-ControlCore',     transport: 'rest', baseUrl: env('CONTROLCORE_BASE_URL'),  capabilities: ['plc.generate', 'plc.review'] },
     { id: 'menlo',       label: 'Menlo-Commissioning', transport: 'rest', baseUrl: env('COMMISSIONING_BASE_URL'),capabilities: ['commissioning.procedure', 'commissioning.execute'] },
     { id: 'ava',         label: 'Ava MCP (legacy bridge)', transport: 'mcp', baseUrl: env('AVA_MCP_URL'),        capabilities: ['ava.tools'] },

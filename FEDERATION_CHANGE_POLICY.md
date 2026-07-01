@@ -4,8 +4,9 @@
 Status: v1.0 (2026-06-27). Governs the *contracts* in `ECOSYSTEM_INTEGRATION_CONTRACT.md` and the
 companion governance docs. Documentation/governance only — implementation-agnostic.
 
-Federation members: **Denver, Menlo-Commissioning, Crania, Ava-Engineering-Core (AEC), Ava Math Engine,
+Federation members: **Denver, Menlo-Commissioning, Crania, Ava Math Engine,
 Ava-ControlCore**, and any future repository that adopts the federation contracts.
+(Crania absorbed the former Ava-Engineering-Core engine — see ADR-009.)
 
 ---
 
@@ -103,7 +104,7 @@ responsibilities, not necessarily distinct people.)
 | Contract domain | Primary approver | Required co-approvers |
 |---|---|---|
 | Event contracts (§4) | Federation Architect | every publishing + subscribing repo owner |
-| Universal Object Service (§3) | Object Service owner (Denver as host) | AEC + Menlo (largest minters) |
+| Universal Object Service (§3) | Object Service owner (Denver as host) | Crania + Menlo (largest minters) |
 | AI Governance (§11) | AI Governance Lead | each AI-producing repo owner |
 | API Standards (§8) | Federation Architect | all repo owners |
 | Security (§9) | Security Lead | Federation Architect |

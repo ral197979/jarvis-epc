@@ -1,24 +1,25 @@
 /**
  * Denver Engineering — EAP document client (R7)
  * ─────────────────────────────────────────────────────────────────────────────
- * Routes Denver's engineering-document generation to AEC's EAP Document Factory —
- * the single document authority (ECOSYSTEM_INTEGRATION_CONTRACT.md §10). Denver
- * never renders documents itself; it requests generation and stores a REFERENCE
- * (URL + sha256). Producer renders, consumer stores the ref.
+ * Routes Denver's engineering-document generation to Crania's EAP Document
+ * Factory — the single document authority (ECOSYSTEM_INTEGRATION_CONTRACT.md §10;
+ * Crania absorbed the former AEC engine). Denver never renders documents itself;
+ * it requests generation and stores a REFERENCE (URL + sha256). Producer renders,
+ * consumer stores the ref.
  *
  * Additive + flag-gated, mirroring commissioningGateway: with EAP_ENABLED off
  * (default) every call is a no-op returning { enabled:false } and never touches
- * the network. Reuses AEC_BASE_URL (already used by the R2 capability registry).
+ * the network. Uses CRANIA_BASE_URL (Crania's REST doc-factory endpoint).
  */
 
 export function isEapEnabled(): boolean {
   return process.env['EAP_ENABLED'] === 'true'
 }
 function eapBaseUrl(): string {
-  return (process.env['AEC_BASE_URL'] ?? '').replace(/\/+$/, '')
+  return (process.env['CRANIA_BASE_URL'] ?? '').replace(/\/+$/, '')
 }
 function eapToken(): string {
-  return process.env['AEC_SVC_TOKEN'] ?? ''
+  return process.env['CRANIA_SVC_TOKEN'] ?? ''
 }
 function eapTimeoutMs(): number {
   return Number(process.env['EAP_TIMEOUT_MS']) || 15_000
@@ -49,7 +50,7 @@ const DISABLED = { enabled: false } as const
 
 async function _request<T>(method: 'POST', path: string, body: unknown, idempotencyKey?: string): Promise<T> {
   const base = eapBaseUrl()
-  if (!base) throw new Error('AEC_BASE_URL not configured')
+  if (!base) throw new Error('CRANIA_BASE_URL not configured')
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), eapTimeoutMs())
   try {

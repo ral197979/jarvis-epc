@@ -26,8 +26,7 @@ Companions: `COMMISSIONING_EXTRACTION_PLAN.md` (Denver↔Menlo extraction), `api
 | System | Owns | Never owns |
 |---|---|---|
 | **Denver** | The full EPC delivery workflow: opportunity, proposal, **engineering management** (packages, deliverables, approvals, schedules), procurement, construction, **quality**, cost, schedule, **risk**, **document control**, **turnover planning**, portfolio analytics, executive/owner reporting, enterprise AI, cross-system search, digital-thread index | *Technical execution only*: engineering/process calculations, PLC/SCADA logic generation, field commissioning execution, document authoring/rendering |
-| **Crania** | Natural-language engineering: intent extraction, design interpretation, workflow orchestration | The calculation engine (delegates to Math Engine + AEC) |
-| **Ava-Engineering-Core (AEC)** | Canonical `EngineeringModel` (equipment, instruments, loops, IO), drawing intelligence, engineering relationships, **engineering calculations**, **EAP Document Factory** | Project orchestration, field execution |
+| **Crania** | Natural-language engineering: intent extraction, design interpretation, workflow orchestration; canonical `EngineeringModel` (equipment, instruments, loops, IO), drawing intelligence, engineering relationships, **engineering calculations**, **EAP Document Factory** (absorbed the former Ava-Engineering-Core — ADR-009) | Project orchestration, field execution; raw computation (delegates to Math Engine) |
 | **Ava Math Engine** | Every engineering calculation (hydraulics, HVAC, pump/pipe/tank sizing, heat transfer, pressure loss, structural, electrical) | UI, workflow, persistence |
 | **Ava-ControlCore** | Controls: PLC gen/review/conversion, HMI, SCADA, controls cybersecurity, **controls FAT automation**, PLC commissioning, controls validation | Field commissioning |
 | **Menlo-Commissioning** | Commissioning execution: pre-comm, loop checks, FAT, SAT, FPT, IST, performance testing, punch, deficiencies, NCR/CAPA, witnessing, turnover, readiness | Engineering calcs, PLC generation |
@@ -36,7 +35,7 @@ Companions: `COMMISSIONING_EXTRACTION_PLAN.md` (Denver↔Menlo extraction), `api
 > artifact; specialist engines own the *technical execution* behind it. "Size this chilled-water pump"
 > → Denver issues a capability request → Math Engine computes → result returns to Denver; the user only
 > ever sees Denver. Likewise Denver owns the engineering *deliverable register, approvals, and schedule*
-> while AEC/EAP *generates* the document content Denver references (manage vs generate). This is the
+> while Crania/EAP *generates* the document content Denver references (manage vs generate). This is the
 > Procore pattern: one perceived platform, specialized services behind it.
 
 > Boundary note: "FAT" appears in two places by design — **ControlCore** owns *controls/PLC* FAT
@@ -72,7 +71,7 @@ vendor, purchase_order, submittal, inspection, work_order.
 | Object types | Minted by |
 |---|---|
 | organization, project, building, area, contract, purchase_order, submittal, vendor, work_order, requirement | **Denver** |
-| system, subsystem, equipment, instrument, loop, io_point, cable, panel, drawing, calculation, document | **AEC** (canonical engineering) |
+| system, subsystem, equipment, instrument, loop, io_point, cable, panel, drawing, calculation, document | **Crania** (canonical engineering) |
 | test, issue (punch/deficiency/NCR), inspection | **Menlo** (execution) |
 
 **Reference rule:** every record in any repo that relates to a registered object stores its
@@ -81,8 +80,8 @@ surrogate. This is what makes `LT-101` one object end-to-end.
 
 **Denver today [observed]:** has `projects`, `systems`, `subsystems`, `tags`(equipment),
 `commissioning_items` with local UUIDs. **[gap]** no shared registry; tag identity is Denver-local, not
-reconciled to AEC's `EngineeringModel`. Registry adoption = treat AEC equipment/instrument UUIDs as the
-canonical ids Denver references.
+reconciled to Crania's `EngineeringModel`. Registry adoption = treat Crania equipment/instrument UUIDs as
+the canonical ids Denver references.
 
 ### 3.1 The registry is a SERVICE, not just a vocabulary [proposed]
 
@@ -216,10 +215,10 @@ implementation** (a one-field-plus-rename change), not in PR #4.
 | Capability | Provider | Transport [observed] |
 |---|---|---|
 | Generate process design | **Crania** | MCP (11 tools) |
-| Run pump/pipe/tank sizing, hydraulics, etc. | **Ava Math Engine** (via Crania/AEC) | MCP |
-| Drawing review / extraction, engineering model | **AEC** | MCP (15 drawing + 10 process) |
+| Run pump/pipe/tank sizing, hydraulics, etc. | **Ava Math Engine** (via Crania) | MCP |
+| Drawing review / extraction, engineering model | **Crania** | MCP (15 drawing + 10 process) |
 | Generate PLC / controls FAT | **Ava-ControlCore** | **REST only — needs MCP shim [gap]** |
-| Generate engineering documents (EAP) | **AEC** | REST `/api/doc-factory/*` |
+| Generate engineering documents (EAP) | **Crania** | REST `/api/doc-factory/*` |
 | Generate / execute commissioning procedure | **Menlo** | MCP bridge (`/api/mcp/*`) |
 
 **Registry record [proposed]:** `{ capability, provider, transport, endpoint|command, tools[], scopes,
@@ -296,11 +295,12 @@ agents. **[proposed]** graph store + a write contract (apps emit edges on object
 
 ## 10. Engineering Document Authority [proposed]
 
-**AEC's EAP Document Factory is the only authoritative engineering-document generator.** [observed] AEC
-exposes `/api/doc-factory/{generate,generate-async,export,fpt,iom}` and ships SDK adapters
-(`aec.menlo/v1`, `aec.denver`, `aec.crania`, `aec.ava-controls`, `aec.ava-math`).
+**Crania's EAP Document Factory is the only authoritative engineering-document generator.** [observed]
+Crania exposes `/api/doc-factory/{generate,generate-async,export,fpt,iom}` and ships SDK adapters
+(`crania.menlo/v1`, `crania.denver`, `crania.ava-controls`, `crania.ava-math`). (Crania absorbed the
+former Ava-Engineering-Core engine — ADR-009.)
 
-- Menlo `DOCGEN_BASE_URL` → AEC EAP (Menlo already stores `packageRef` only). [proposed]
+- Menlo `DOCGEN_BASE_URL` → Crania EAP (Menlo already stores `packageRef` only). [proposed]
 - Denver authors engineering docs (FDS, SOO, FAT, SAT, FPT, O&M, test procedures, turnover packages,
   commissioning reports) via EAP — **never a second renderer.** [gap: Denver should route doc needs to EAP]
 - ControlCore `plc-docgen` stays PLC-specialized but registers outputs as EAP document types. [proposed]
@@ -313,12 +313,12 @@ exposes `/api/doc-factory/{generate,generate-async,export,fpt,iom}` and ships SD
 
 **Principles.** Every repo exposes AI capabilities; every screen supports NL interaction; every KPI
 drills to source; every artifact carries provenance; every recommendation is explainable with confidence
-+ evidence. (Crania/AEC/ControlCore already attach provenance/citations; Menlo's copilot is advisory-only
++ evidence. (Crania/ControlCore already attach provenance/citations; Menlo's copilot is advisory-only
 and never signs off — keep that invariant.)
 
 ### 11.1 AI artifact envelope (binding once adopted)
 
-Every AI-generated output — across **Denver, Crania, Ava-Engineering-Core, Ava Math Engine,
+Every AI-generated output — across **Denver, Crania, Ava Math Engine,
 Ava-ControlCore, Menlo, and any future specialist engine** — must carry a uniform governance envelope so
 provenance, explainability, and approval travel with the artifact wherever it crosses the federation:
 
@@ -357,7 +357,7 @@ AI-artifact envelope across all repos is **follow-up contract + implementation**
 ## 12. Denver gap summary (what v2.0 asks of THIS repo)
 
 Denver already satisfies most Universal API + Security items. Net-new Denver work, all **additive**:
-1. **Universal Object Registry** references — adopt AEC equipment/instrument UUIDs as canonical; store as refs.
+1. **Universal Object Registry** references — adopt Crania equipment/instrument UUIDs as canonical; store as refs.
 2. **Universal event vocabulary** edge adapter — map `realtime_event_log` / PR-1 `cx.*` ⇄ canonical names.
 3. **AI Capability Registry** — replace single `AVA_MCP_URL` with capability→provider resolution.
 4. **Digital-thread index** keyed by registry UUIDs.
@@ -371,12 +371,13 @@ Denver already satisfies most Universal API + Security items. Net-new Denver wor
 
 Previously-open boundary questions, now ratified as the federation standard.
 
-**Process Design.** Crania owns natural-language design intent and orchestration. Ava-Engineering-Core
-and Ava Math Engine own calculations, engineering models, and technical computation. Denver manages the
-EPC workflow and stores project/deliverable state. Denver never calls both Crania and AEC/Math for the
-same calculation — it requests a capability and the providers delegate among themselves.
+**Process Design.** Crania owns natural-language design intent and orchestration, plus the engineering
+models and engineering calculations (absorbed from the former Ava-Engineering-Core — ADR-009); Ava Math
+Engine owns raw technical computation. Denver manages the EPC workflow and stores project/deliverable
+state. Denver never calls both Crania and Math for the same calculation — it requests a capability and
+the providers delegate among themselves.
 
-**Document Generation.** AEC/EAP is the authoritative document-generation system. Denver may own
+**Document Generation.** Crania/EAP is the authoritative document-generation system. Denver may own
 document-control records and workflow status (manage vs generate). ControlCore may generate
 controls-specific *source* artifacts, but final rendered engineering documents must register through EAP.
 One document engine, one citation model, one template system.
@@ -407,10 +408,10 @@ specs/contracts only here (each repo implements its own edge).
 | R1 | **Denver↔Menlo edge adapter** to canonical event names + reconcile gateway to Menlo REST (`/api/projects/handoff`, `/api/events`) | Denver | low; unblocks Phase D |
 | R2 | **AI Capability Registry** in Denver (capability→provider; wrap existing `AVA_MCP_URL`) | Denver | low, additive |
 | R3 | **Universal event vocabulary** publish/subscribe via edge adapter over `realtime_event_log` | Denver | low, additive |
-| R4 | **Object Registry references** — adopt AEC canonical UUIDs for equipment/instrument; store refs in Denver | Denver + AEC contract | medium |
+| R4 | **Object Registry references** — adopt Crania canonical UUIDs for equipment/instrument; store refs in Denver | Denver + Crania contract | medium |
 | R5 | **Digital-thread index** + **knowledge-graph** contributions keyed by registry UUIDs | Denver | medium |
 | R6 | **OpenAPI**, **first-class MCP server**, **universal idempotency** middleware | Denver | low–medium |
-| R7 | Route Denver doc generation → **EAP** | Denver + AEC | low |
+| R7 | Route Denver doc generation → **EAP** | Denver + Crania | low |
 | — | (Parallel, gated) Phase D dual-read cutover + Menlo bootstrap ingest | per extraction plan | held |
 
 **Constraints honored throughout:** Denver-only code changes; no Menlo edits until it's ready; nothing

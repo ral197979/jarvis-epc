@@ -4,7 +4,7 @@
  * Makes the contract's identity rule executable (ECOSYSTEM_INTEGRATION_CONTRACT.md
  * §3): every real-world object has ONE immutable UUID minted by its owning system;
  * other systems store REFERENCES only. Denver mints its own object types
- * (organization, project, …) and references AEC/Menlo-owned ones (equipment,
+ * (organization, project, …) and references Crania/Menlo-owned ones (equipment,
  * instrument, test, …) rather than re-minting them.
  *
  * Pure module — no DB, no schema change. It provides the minting/reference
@@ -15,7 +15,7 @@
  */
 import { randomUUID } from 'node:crypto'
 
-export type MintingAuthority = 'denver' | 'aec' | 'menlo'
+export type MintingAuthority = 'denver' | 'crania' | 'menlo'
 
 export interface ObjectTypeDef { type: string; authority: MintingAuthority }
 
@@ -32,18 +32,18 @@ export const OBJECT_TYPES: ObjectTypeDef[] = [
   { type: 'vendor', authority: 'denver' },
   { type: 'work_order', authority: 'denver' },
   { type: 'requirement', authority: 'denver' },
-  // AEC — canonical engineering objects
-  { type: 'system', authority: 'aec' },
-  { type: 'subsystem', authority: 'aec' },
-  { type: 'equipment', authority: 'aec' },
-  { type: 'instrument', authority: 'aec' },
-  { type: 'loop', authority: 'aec' },
-  { type: 'io_point', authority: 'aec' },
-  { type: 'cable', authority: 'aec' },
-  { type: 'panel', authority: 'aec' },
-  { type: 'drawing', authority: 'aec' },
-  { type: 'calculation', authority: 'aec' },
-  { type: 'document', authority: 'aec' },
+  // Crania — canonical engineering objects (absorbed the former AEC engine)
+  { type: 'system', authority: 'crania' },
+  { type: 'subsystem', authority: 'crania' },
+  { type: 'equipment', authority: 'crania' },
+  { type: 'instrument', authority: 'crania' },
+  { type: 'loop', authority: 'crania' },
+  { type: 'io_point', authority: 'crania' },
+  { type: 'cable', authority: 'crania' },
+  { type: 'panel', authority: 'crania' },
+  { type: 'drawing', authority: 'crania' },
+  { type: 'calculation', authority: 'crania' },
+  { type: 'document', authority: 'crania' },
   // Menlo — execution objects
   { type: 'test', authority: 'menlo' },
   { type: 'issue', authority: 'menlo' },
@@ -91,7 +91,7 @@ export interface ObjectRef {
 
 /**
  * Mint a NEW identity. Denver may only mint object types it owns; minting a type
- * owned by AEC/Menlo is a ForeignMintError (enforces "no duplicate identities").
+ * owned by Crania/Menlo is a ForeignMintError (enforces "no duplicate identities").
  */
 export function mint(type: string): ObjectRef {
   const authority = mintingAuthority(type)         // throws UnknownObjectTypeError
@@ -99,7 +99,7 @@ export function mint(type: string): ObjectRef {
   return { type, uuid: randomUUID(), authority }
 }
 
-/** Build a reference to an EXISTING object (any authority — incl. AEC/Menlo). */
+/** Build a reference to an EXISTING object (any authority — incl. Crania/Menlo). */
 export function makeRef(type: string, uuid: string): ObjectRef {
   const authority = mintingAuthority(type)         // throws UnknownObjectTypeError
   if (!isUuid(uuid)) throw new InvalidUuidError(uuid)

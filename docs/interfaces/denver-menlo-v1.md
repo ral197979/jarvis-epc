@@ -58,14 +58,14 @@ a reference (and may map its own local/external id to it). No consumer mints ano
 | `tenant_id` (organization) | **Denver** | UUID v4 | org lifetime | immutable | Menlo stores as `organization.externalId` |
 | `project_uuid` | **Denver** | UUID v4 | project lifetime | immutable | Menlo stores as `project.externalId`; **primary cross-system traceability key** |
 | `handoff_id` | **Menlo** | string (Menlo-native, e.g. `hx_…`) | commissioning lifecycle | immutable | Denver stores in `cx_status_mirror.handoff_id`; **primary correlation key for status/events** |
-| `system_uuid` | Denver (v1) → AEC (v2) | UUID/string | asset lifetime | immutable | **v1:** Denver-provided id, opaque to Menlo. AEC canonical identity is v2 (Epic 3) |
-| `equipment_uuid` | Denver (v1) → AEC (v2) | UUID/string | asset lifetime | immutable | **v1:** Denver tag id, opaque to Menlo. AEC canonical identity is v2 |
+| `system_uuid` | Denver (v1) → Crania (v2) | UUID/string | asset lifetime | immutable | **v1:** Denver-provided id, opaque to Menlo. Crania canonical identity is v2 (Epic 3) |
+| `equipment_uuid` | Denver (v1) → Crania (v2) | UUID/string | asset lifetime | immutable | **v1:** Denver tag id, opaque to Menlo. Crania canonical identity is v2 |
 | `test_uuid` | **Menlo** | string | test lifetime | immutable | Referenced by Menlo events; Denver treats as opaque deep-link target |
 | `issue_uuid` (punch/deficiency/NCR) | **Menlo** | string | issue lifetime | immutable | Opaque to Denver; used for deep-links + counts |
 | `turnover_id` | **Denver** | UUID (`turnover_packages.id`) | project lifetime | immutable | Denver maps `handoff_id → turnover_id` |
 
 **v1 cut-line:** equipment/system identity is **Denver-provided and opaque to Menlo** (Menlo stores them as
-external references). The Universal Object Service (canonical AEC equipment UUIDs + resolution API) is
+external references). The Universal Object Service (canonical Crania equipment UUIDs + resolution API) is
 **explicitly deferred to v2 / Epic 3** — Epic 1 does not require it.
 
 ---
@@ -306,7 +306,7 @@ serializer/parser round-trips the fixture byte-for-field.
   **ignore unknown fields**. Breaking changes (remove/rename/retype, semantic change) require a new major
   (`2.0`) with a coexistence window.
 - **Deprecation:** announce in the spec; keep deprecated fields/events ≥ one compatibility window.
-- **Future extensions (NOT in v1):** AEC canonical equipment/system UUIDs via the Universal Object Service
+- **Future extensions (NOT in v1):** Crania canonical equipment/system UUIDs via the Universal Object Service
   (Epic 3); AI-artifact governance envelope on AI-generated commissioning outputs (Epic 4); capability-
   registry-mediated calls; knowledge-graph edges. These arrive as `1.x` additive fields or `2.0` per the
   rules above — not in this contract.
@@ -359,7 +359,7 @@ Deterministic ownership rules — no ad-hoc resolution during implementation.
 | Turnover readiness signal | **Menlo** | readiness is an execution fact |
 | Turnover package workflow state | **Denver** | Denver orchestrates turnover |
 | Document-control record (revision/approval/status) | **Denver** | Denver owns document control |
-| Rendered document content | **EAP (AEC)** | EAP is the document authority |
+| Rendered document content | **EAP (Crania)** | EAP is the document authority |
 | Object identity (project/org) | **Denver** | Denver mints these ids |
 | Object identity (test/issue/handoff) | **Menlo** | Menlo mints these ids |
 
@@ -392,7 +392,7 @@ These are **business SLAs** — the experience customers should perceive — bac
 
 Deliberate scoping decisions for v1 (so reviewers and implementers know what is *intentionally* excluded):
 - **v1 uses opaque references, not the full Universal Object Service.** Equipment/system ids are
-  Denver-provided and opaque to Menlo (§2). UOS-backed canonical AEC identities are a v1.x/v2.0 evolution.
+  Denver-provided and opaque to Menlo (§2). UOS-backed canonical Crania identities are a v1.x/v2.0 evolution.
 - **v1 avoids full MCP / service-to-service federation.** Denver→Menlo is Bearer REST; Menlo→Denver is
   HMAC webhook. The Denver MCP provider and capability-registry-mediated calls are out of scope.
 - **v1 keeps commissioning execution entirely in Menlo.** Denver does not execute or author execution state.

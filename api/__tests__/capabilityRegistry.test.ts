@@ -12,7 +12,7 @@ import {
 } from '../services/capabilities/capabilityRegistry'
 
 const PROVIDER_ENVS = [
-  'CAPABILITY_REGISTRY', 'AEC_BASE_URL', 'CRANIA_MCP_URL',
+  'CAPABILITY_REGISTRY', 'CRANIA_MCP_URL',
   'CONTROLCORE_BASE_URL', 'COMMISSIONING_BASE_URL', 'AVA_MCP_URL',
 ]
 
@@ -29,19 +29,16 @@ describe('capabilityRegistry', () => {
   })
 
   it('strips trailing slashes from configured base URLs', () => {
-    process.env['AEC_BASE_URL'] = 'http://aec:3002///'
-    expect(resolveCapability('drawing.review').baseUrl).toBe('http://aec:3002')
+    process.env['CRANIA_MCP_URL'] = 'http://crania:4500///'
+    expect(resolveCapability('drawing.review').baseUrl).toBe('http://crania:4500')
   })
 
-  it('prefers the first provider in order when several are configured (calc.run → crania)', () => {
+  it('resolves engineering capabilities to crania (absorbed from AEC)', () => {
     process.env['CRANIA_MCP_URL'] = 'http://crania:4500'
-    process.env['AEC_BASE_URL'] = 'http://aec:3002'
     expect(resolveCapability('calc.run').id).toBe('crania')
-  })
-
-  it('falls back to the next provider when the preferred one is unconfigured (calc.run → aec)', () => {
-    process.env['AEC_BASE_URL'] = 'http://aec:3002' // crania unset
-    expect(resolveCapability('calc.run').id).toBe('aec')
+    expect(resolveCapability('drawing.review').id).toBe('crania')
+    expect(resolveCapability('engineering.model').id).toBe('crania')
+    expect(resolveCapability('doc.generate').id).toBe('crania')
   })
 
   it('throws UnknownCapabilityError for a capability no provider serves', () => {
@@ -88,7 +85,7 @@ describe('capabilityRegistry', () => {
       const v = validateRegistry()
       expect(v.enabled).toBe(false)
       expect(v.providers.find(p => p.id === 'crania')?.configured).toBe(true)
-      expect(v.providers.find(p => p.id === 'aec')?.configured).toBe(false)
+      expect(v.providers.find(p => p.id === 'controlcore')?.configured).toBe(false)
       // process.design is now resolvable (crania set); plc.generate is not.
       expect(v.unresolvableCapabilities).not.toContain('process.design')
       expect(v.unresolvableCapabilities).toContain('plc.generate')
