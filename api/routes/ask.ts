@@ -19,6 +19,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { askJarvis } from '../services/askBuilder'
+import { AiBudgetExceededError } from '../services/enterprise/aiCostTracker'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -78,6 +79,10 @@ router.post('/', async (req: Req, res: Response) => {
     })
     res.json({ data: result })
   } catch (err) {
+    if (err instanceof AiBudgetExceededError) {
+      res.status(402).json({ error: 'ai_budget_exceeded', budget: err.status })
+      return
+    }
     const msg = err instanceof Error ? err.message : String(err)
     if (msg.includes('ANTHROPIC_API_KEY not configured')) {
       res.status(503).json({ error: 'llm_not_configured', message: msg })

@@ -72,7 +72,7 @@ function getFetchAllowlist(): string[] {
 // (AVA_TIMEOUT / FETCH_ALLOWLIST are read via getters below — no module-level
 // caches so tests can override env per-case.)
 
-const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'] })
+const anthropic = new Anthropic({ apiKey: process.env['ANTHROPIC_API_KEY'], baseURL: process.env['ANTHROPIC_BASE_URL'] || undefined })
 
 // ─── Native tool catalogue ─────────────────────────────────────────────────────
 
