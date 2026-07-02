@@ -43,7 +43,7 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'critical'
 
 export type MemoryType = 'fact' | 'pattern' | 'preference' | 'outcome'
 
-export type MemoryScopeType = 'project' | 'workflow' | 'action' | 'global'
+export type MemoryScopeType = 'project' | 'workflow' | 'action' | 'global' | 'user'
 
 export type LinkType = 'related' | 'caused_by' | 'contradicts' | 'supports'
 
