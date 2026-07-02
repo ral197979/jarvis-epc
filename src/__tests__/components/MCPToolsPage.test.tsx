@@ -183,24 +183,24 @@ describe('MCPToolsPage', () => {
     }
   })
 
-  it('expands a resource when its toggle button is clicked', () => {
+  it('expands a resource when its toggle button is clicked', async () => {
     renderPage()
-    const toggles = screen.getAllByRole('button', { name: /▼|▲/ })
-    expect(toggles.length).toBeGreaterThan(0)
-    fireEvent.click(toggles[0]!)
-    const expanded = screen.getAllByRole('button', { name: /▲/ })
-    expect(expanded.length).toBeGreaterThanOrEqual(1)
+    // findAllByRole lets mount fetches settle before we interact.
+    const toggle = (await screen.findAllByRole('button', { name: /▼/ }))[0]!
+    fireEvent.click(toggle)
+    await waitFor(() => expect(toggle).toHaveTextContent('▲'))
   })
 
-  it('collapses an expanded resource on second click', () => {
+  it('collapses an expanded resource on second click', async () => {
     renderPage()
-    const collapsedBefore = screen.getAllByRole('button', { name: /▼/ }).length
-    const toggle = screen.getAllByRole('button', { name: /▼/ })[0]!
+    // Assert the SAME toggle flips ▼→▲→▼. Robust against async mount fetches
+    // (loadCatalogue/checkAvaHealth) re-rendering other toggles — the previous
+    // global ▼-count comparison flaked in CI when a fetch resolved mid-test.
+    const toggle = (await screen.findAllByRole('button', { name: /▼/ }))[0]!
     fireEvent.click(toggle)
-    const expandedToggle = screen.getAllByRole('button', { name: /▲/ })[0]!
-    fireEvent.click(expandedToggle)
-    const collapsedAfter = screen.getAllByRole('button', { name: /▼/ }).length
-    expect(collapsedAfter).toBe(collapsedBefore)
+    await waitFor(() => expect(toggle).toHaveTextContent('▲'))
+    fireEvent.click(toggle)
+    await waitFor(() => expect(toggle).toHaveTextContent('▼'))
   })
 
   // ── Static catalogue invariants ──────────────────────────────────────────────
