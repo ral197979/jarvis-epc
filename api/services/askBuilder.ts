@@ -25,6 +25,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { tenantTransaction } from '../db/pool'
 import { searchKnowledge, type KnowledgeHit } from './knowledgeSearch'
 import { searchFixes, type FixSearchHit } from './fixLibrary'
+import { getAiBudgetStatus, recordAiUsage, AiBudgetExceededError } from './enterprise/aiCostTracker'
 import { slog } from '../../src/modules/observability/index'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ export interface AskInput {
   // Escape hatches — normally defaults are right
   topK?:       number          // default 8, clamped [3,12]
   chunkCharLimit?: number      // per-chunk truncate cap (default 1200)
+  agentType?:  string          // cost attribution (e.g. 'personal_agent'); default null
 }
 
 export interface Citation {
@@ -77,7 +79,9 @@ function getClient(): Anthropic {
   if (!apiKey || apiKey.startsWith('placeholder')) {
     throw new Error('ANTHROPIC_API_KEY not configured — /ask requires a real key')
   }
-  return new Anthropic({ apiKey })
+  // ANTHROPIC_BASE_URL points the SDK at a self-hosted / OpenAI-compatible model
+  // behind an Anthropic-compatible proxy (e.g. LiteLLM). Unset → Anthropic's API.
+  return new Anthropic({ apiKey, baseURL: process.env['ANTHROPIC_BASE_URL'] || undefined })
 }
 
 // The one tool Claude is allowed to call. The schema is the OUTPUT
@@ -213,6 +217,20 @@ export async function askJarvis(input: AskInput): Promise<AskResult> {
   const client = getClient()
   const model = DEFAULT_MODEL
 
+  // Budget gate — refuse BEFORE spending when the tenant is over its monthly AI
+  // budget. Only enforces when a budget is configured (isOverBudget is false
+  // otherwise), so it's opt-in per tenant. Fails OPEN on a budget-lookup error
+  // so a transient DB issue never blocks a legitimate ask.
+  try {
+    const budget = await getAiBudgetStatus(input.tenantId)
+    if (budget.isOverBudget) throw new AiBudgetExceededError(budget)
+  } catch (err) {
+    if (err instanceof AiBudgetExceededError) throw err
+    slog('WARN', 'askBuilder', '[ask] budget check failed — allowing (fail-open)', {
+      tenantId: input.tenantId, error: (err as Error).message,
+    })
+  }
+
   const completion = await client.messages.create({
     model,
     max_tokens: 2048,
@@ -251,6 +269,25 @@ export async function askJarvis(input: AskInput): Promise<AskResult> {
   })
 
   const elapsed = Date.now() - started
+
+  // Meter spend for the AI cost tracker / budget engine. Best-effort — an
+  // accounting hiccup must never fail an answer the user already received.
+  try {
+    await recordAiUsage(input.tenantId, {
+      agentType:        input.agentType,
+      model,
+      provider:         process.env['ANTHROPIC_BASE_URL'] ? 'custom' : 'anthropic',
+      operation:        'ask',
+      promptTokens:     completion.usage.input_tokens,
+      completionTokens: completion.usage.output_tokens,
+      latencyMs:        elapsed,
+    })
+  } catch (err) {
+    slog('WARN', 'askBuilder', '[ask] usage recording failed', {
+      tenantId: input.tenantId, error: (err as Error).message,
+    })
+  }
+
   slog('INFO', 'askBuilder', '[ask] resolved', {
     tenantId:   input.tenantId,
     sessionId,

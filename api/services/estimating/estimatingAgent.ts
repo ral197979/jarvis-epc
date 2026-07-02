@@ -197,7 +197,7 @@ async function generateEstimateSummary(
   lines:            EstimateLineDraft[],
   modelName:        string,
 ): Promise<string> {
-  const client   = new Anthropic()
+  const client   = new Anthropic({ baseURL: process.env['ANTHROPIC_BASE_URL'] || undefined })
   const total    = lines.reduce((s, l) => s + l.quantity * (l.unit_material + l.unit_labor + l.unit_equipment), 0)
   const topLines = lines
     .map(l => ({ desc: l.description, cost: l.quantity * (l.unit_material + l.unit_labor + l.unit_equipment) }))

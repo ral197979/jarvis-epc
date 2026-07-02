@@ -17,6 +17,7 @@ import {
   isPersonalAgentEnabled, rememberForUser, listUserMemory, forgetUserMemory,
   getPersonalBriefing, askPersonalAgent,
 } from '../services/agents/personalAgentService'
+import { AiBudgetExceededError } from '../services/enterprise/aiCostTracker'
 
 type Req = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -92,6 +93,9 @@ router.post('/me/agent/ask', async (req: Request, res: Response) => {
     const result = await askPersonalAgent({ tenantId, userId, question: question.trim(), projectId: projectId ?? null })
     res.json({ data: result })
   } catch (err) {
+    if (err instanceof AiBudgetExceededError) {
+      return res.status(402).json({ error: 'ai_budget_exceeded', budget: err.status })
+    }
     res.status(500).json({ error: 'ask_failed', detail: (err as Error).message })
   }
 })

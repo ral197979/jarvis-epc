@@ -147,6 +147,7 @@ export async function askPersonalAgent(input: PersonalAskInput): Promise<Persona
       userId: input.userId,
       question: input.question,
       projectId: input.projectId ?? null,
+      agentType: PERSONAL_AGENT,   // cost attribution → 'personal_agent'
     }),
     listUserMemory(input.tenantId, input.userId),
   ])

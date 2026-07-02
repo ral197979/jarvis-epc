@@ -16,6 +16,14 @@ const MODEL_COSTS: Record<string, { prompt: number; completion: number }> = {
   default:              { prompt: 3.00,  completion: 15.00 },
 }
 
+/** Thrown by metered LLM paths when a tenant's monthly AI budget is exceeded. */
+export class AiBudgetExceededError extends Error {
+  constructor(public readonly status: AiBudgetStatus) {
+    super('ai_budget_exceeded')
+    this.name = 'AiBudgetExceededError'
+  }
+}
+
 // ─── Record AI usage ──────────────────────────────────────────────────────────
 
 export async function recordAiUsage(

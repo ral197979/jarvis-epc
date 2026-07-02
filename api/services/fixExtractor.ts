@@ -154,7 +154,7 @@ function getClient(): Anthropic {
   if (!key || key.startsWith('placeholder')) {
     throw new Error('ANTHROPIC_API_KEY not configured — fix extraction requires a real key')
   }
-  return new Anthropic({ apiKey: key })
+  return new Anthropic({ apiKey: key, baseURL: process.env['ANTHROPIC_BASE_URL'] || undefined })
 }
 
 const EXTRACT_TOOL: Anthropic.Tool = {
