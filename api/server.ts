@@ -96,6 +96,7 @@ import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
 import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
+import { personalAgentRouter } from './routes/personalAgent' // ADR-012: per-user agent (flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
 import complianceRouter       from './routes/compliance'    // v4.31.0
 import fieldSyncRouter        from './routes/fieldSync'     // v4.31.0
@@ -506,6 +507,9 @@ app.get('/api/v1/admin/sessions', requireAuth as never, (req: Request, res: Resp
 // ─── Tenant routes ────────────────────────────────────────────────────────────
 
 app.use('/api/v1/tenants', tenantsRouter)
+
+// ─── Personal Agent (ADR-012, flag-gated: PERSONAL_AGENT) ──────────────────────
+app.use('/api/v1', personalAgentRouter)
 
 // ─── UUID param guard ─────────────────────────────────────────────────────────
 
