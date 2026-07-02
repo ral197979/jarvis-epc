@@ -1,7 +1,7 @@
 # ADR-008 — EAP is the Document Authority
 
 - **Status:** Accepted (2026-06-27)
-- **Amended by:** [ADR-009](ADR-009-crania-absorbs-aec.md) — Crania absorbed the former Ava-Engineering-Core (AEC) engine (2026-07-01); the EAP Document Factory now lives in **Crania**. Read every "AEC" below as **Crania**.
+- **Amended by:** [ADR-011](ADR-011-crania-absorbs-aec.md) — Crania absorbed the former Ava-Engineering-Core (AEC) engine (2026-07-01); the EAP Document Factory now lives in **Crania**. Read every "AEC" below as **Crania**.
 - **Decider:** Federation Architecture Council
 - **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §10, §13, ADR-001, ADR-002, ADR-009
 

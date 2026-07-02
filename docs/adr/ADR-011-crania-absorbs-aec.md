@@ -1,4 +1,4 @@
-# ADR-009 — Crania Absorbs Ava-Engineering-Core
+# ADR-011 — Crania Absorbs Ava-Engineering-Core
 
 - **Status:** Accepted (2026-07-01)
 - **Decider:** Federation Architecture Council
@@ -46,4 +46,4 @@ and `EAP_ENABLED` are unchanged in default behavior; this ADR changes ownership,
 - **Transport note:** Crania is MCP-first (`CRANIA_MCP_URL`), but the EAP doc factory is REST
   (`CRANIA_BASE_URL`). Crania exposes both; the capability registry abstracts transport for callers.
 - **Superseded naming:** ADR-002/003/005/007/008 retain their decisions but their "AEC" references now
-  mean Crania (each carries an *Amended by: ADR-009* note).
+  mean Crania (each carries an *Amended by: ADR-011* note).

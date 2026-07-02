@@ -26,7 +26,7 @@ Companions: `COMMISSIONING_EXTRACTION_PLAN.md` (Denver↔Menlo extraction), `api
 | System | Owns | Never owns |
 |---|---|---|
 | **Denver** | The full EPC delivery workflow: opportunity, proposal, **engineering management** (packages, deliverables, approvals, schedules), procurement, construction, **quality**, cost, schedule, **risk**, **document control**, **turnover planning**, portfolio analytics, executive/owner reporting, enterprise AI, cross-system search, digital-thread index | *Technical execution only*: engineering/process calculations, PLC/SCADA logic generation, field commissioning execution, document authoring/rendering |
-| **Crania** | Natural-language engineering: intent extraction, design interpretation, workflow orchestration; canonical `EngineeringModel` (equipment, instruments, loops, IO), drawing intelligence, engineering relationships, **engineering calculations**, **EAP Document Factory** (absorbed the former Ava-Engineering-Core — ADR-009) | Project orchestration, field execution; raw computation (delegates to Math Engine) |
+| **Crania** | Natural-language engineering: intent extraction, design interpretation, workflow orchestration; canonical `EngineeringModel` (equipment, instruments, loops, IO), drawing intelligence, engineering relationships, **engineering calculations**, **EAP Document Factory** (absorbed the former Ava-Engineering-Core — ADR-011) | Project orchestration, field execution; raw computation (delegates to Math Engine) |
 | **Ava Math Engine** | Every engineering calculation (hydraulics, HVAC, pump/pipe/tank sizing, heat transfer, pressure loss, structural, electrical) | UI, workflow, persistence |
 | **Ava-ControlCore** | Controls: PLC gen/review/conversion, HMI, SCADA, controls cybersecurity, **controls FAT automation**, PLC commissioning, controls validation | Field commissioning |
 | **Menlo-Commissioning** | Commissioning execution: pre-comm, loop checks, FAT, SAT, FPT, IST, performance testing, punch, deficiencies, NCR/CAPA, witnessing, turnover, readiness | Engineering calcs, PLC generation |
@@ -298,7 +298,7 @@ agents. **[proposed]** graph store + a write contract (apps emit edges on object
 **Crania's EAP Document Factory is the only authoritative engineering-document generator.** [observed]
 Crania exposes `/api/doc-factory/{generate,generate-async,export,fpt,iom}` and ships SDK adapters
 (`crania.menlo/v1`, `crania.denver`, `crania.ava-controls`, `crania.ava-math`). (Crania absorbed the
-former Ava-Engineering-Core engine — ADR-009.)
+former Ava-Engineering-Core engine — ADR-011.)
 
 - Menlo `DOCGEN_BASE_URL` → Crania EAP (Menlo already stores `packageRef` only). [proposed]
 - Denver authors engineering docs (FDS, SOO, FAT, SAT, FPT, O&M, test procedures, turnover packages,
@@ -372,7 +372,7 @@ Denver already satisfies most Universal API + Security items. Net-new Denver wor
 Previously-open boundary questions, now ratified as the federation standard.
 
 **Process Design.** Crania owns natural-language design intent and orchestration, plus the engineering
-models and engineering calculations (absorbed from the former Ava-Engineering-Core — ADR-009); Ava Math
+models and engineering calculations (absorbed from the former Ava-Engineering-Core — ADR-011); Ava Math
 Engine owns raw technical computation. Denver manages the EPC workflow and stores project/deliverable
 state. Denver never calls both Crania and Math for the same calculation — it requests a capability and
 the providers delegate among themselves.
