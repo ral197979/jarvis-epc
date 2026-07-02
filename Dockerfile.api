@@ -9,14 +9,16 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --ignore-scripts
 
-# Copy source
+# Copy source (API + full frontend, needed for the SPA build)
 COPY tsconfig*.json ./
 COPY api/ ./api/
-COPY src/modules/ ./src/modules/
+COPY src/ ./src/
+COPY index.html vite.config.js ./
+COPY public/ ./public/
 
-# Compile TypeScript
-RUN npx tsc -p tsconfig.json --outDir dist --noEmit false || true
-# Fallback: use tsx at runtime (acceptable for small teams)
+# Build the frontend SPA (Vite → dist/). The API runs via tsx at runtime
+# from api/ source, so no separate API compile step is needed.
+RUN npm run build
 
 # Stage 2: Production runtime
 FROM node:20-alpine AS runtime
@@ -29,9 +31,10 @@ RUN addgroup -S jarvis && adduser -S jarvis -G jarvis
 COPY package*.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-# Copy built app
+# Copy built app (API source + compiled frontend SPA)
 COPY --from=builder /app/api ./api
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/dist ./dist
 
 # Upload directory (used when STORAGE_BACKEND=local)
 RUN mkdir -p /app/uploads && chown jarvis:jarvis /app/uploads
