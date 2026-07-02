@@ -6,7 +6,7 @@ companion governance docs. Documentation/governance only — implementation-agno
 
 Federation members: **Denver, Menlo-Commissioning, Crania, Ava Math Engine,
 Ava-ControlCore**, and any future repository that adopts the federation contracts.
-(Crania absorbed the former Ava-Engineering-Core engine — see ADR-009.)
+(Crania absorbed the former Ava-Engineering-Core engine — see ADR-011.)
 
 ---
 

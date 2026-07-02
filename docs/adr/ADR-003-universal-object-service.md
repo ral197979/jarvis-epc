@@ -1,9 +1,9 @@
 # ADR-003 — Universal Object Service
 
 - **Status:** Accepted (2026-06-27)
-- **Amended by:** [ADR-009](ADR-009-crania-absorbs-aec.md) — Crania absorbed the former Ava-Engineering-Core (AEC) engine (2026-07-01); read every "AEC" below as **Crania**.
+- **Amended by:** [ADR-011](ADR-011-crania-absorbs-aec.md) — Crania absorbed the former Ava-Engineering-Core (AEC) engine (2026-07-01); read every "AEC" below as **Crania**.
 - **Decider:** Federation Architecture Council
-- **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §3, §3.1, §13, ADR-006, ADR-007, ADR-009
+- **Related:** `ECOSYSTEM_INTEGRATION_CONTRACT.md` §3, §3.1, §13, ADR-006, ADR-007, ADR-011
 
 ## Context
 For the federation to behave as one platform, an equipment tag like `LT-101` must be the *same object*

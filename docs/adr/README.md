@@ -21,5 +21,8 @@ single implementation and the federation can evolve without tribal knowledge.
 | [ADR-008](ADR-008-eap-document-authority.md) | EAP is the Document Authority | Accepted |
 | [ADR-009](ADR-009-ai-governance-standard.md) | AI Governance Standard | Accepted |
 | [ADR-010](ADR-010-federation-security-principles.md) | Federation Security Principles | Accepted |
+| [ADR-011](ADR-011-crania-absorbs-aec.md) | Crania Absorbs Ava-Engineering-Core | Accepted |
+| [ADR-012](ADR-012-per-user-agents.md) | Per-User AI Agents | Proposed |
 
-All Accepted 2026-06-27 alongside Federation Specification v2.0. Decider: Federation Architecture Council.
+ADR-001–010 Accepted 2026-06-27 alongside Federation Specification v2.0. Decider: Federation Architecture Council.
+ADR-011 Accepted 2026-07-01 (Crania consolidation). ADR-012 Proposed 2026-07-02.
