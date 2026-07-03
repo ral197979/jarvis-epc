@@ -494,14 +494,19 @@ describe('notificationWorker: backoff + dead-letter', () => {
     expect(late.getTime()).toBeLessThan(maxAllowed)
   })
 
-  it('deliver routes to in_app stub', async () => {
+  // AUDIT-P0-08: this used to assert the stub fabricated success:true —
+  // the actual audit finding. It now honestly reports failure since nothing
+  // is actually delivered; see api/__tests__/notificationWorker.test.ts for
+  // the full regression coverage of the retry/dead-letter behavior this unlocks.
+  it('deliver routes to in_app stub, which reports failure (not implemented)', async () => {
     const job = {
       id: 'j1', tenant_id: T, channel: 'in_app', template_key: 'test',
       recipient_ids: [U1], recipient_emails: [], payload: {},
       attempts: 0, max_attempts: 5, action_id: null, event_type: null,
     }
     const result = await notifHooks.deliver(job as never)
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
+    expect(result.error).toBe('not_implemented:in_app')
   })
 
   it('deliver returns failure for unknown channel', async () => {

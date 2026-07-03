@@ -31,6 +31,12 @@ const _rawJwtSecret = process.env['JWT_SECRET']
 
 if (!_rawJwtSecret) {
   if (process.env['NODE_ENV'] === 'production') {
+    // AUDIT-P0-09: this runs at module-import time, before server.ts's
+    // start() calls initErrorTracking() — Sentry isn't initialized yet, so
+    // there's nothing for flushErrorTracking() to flush here (it would be a
+    // silent no-op). console.error is synchronous, unlike the pino-transport
+    // sites elsewhere in the audit, so this specific line isn't at risk of
+    // being lost before process.exit(1) the way those were.
     console.error('[JARVIS:Auth] FATAL — JWT_SECRET not set')
     process.exit(1)
   } else {

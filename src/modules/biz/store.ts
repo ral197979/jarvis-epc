@@ -218,6 +218,42 @@ export const useBizStore = create<BizStoreState>()(
   )
 )
 
+// ─── Backend hydration (AUDIT-P0-10) ───────────────────────────────────────────
+//
+// ~50 components read collections off this store, but nothing ever fetched
+// them from the backend — every fresh session showed a silent, error-free
+// empty state indistinguishable from "no data exists" (worse than a failed
+// fetch, since there wasn't even a failed request to see in the network tab).
+//
+// This hydrates the `projects` collection — the one with a confirmed,
+// verified-working REST endpoint (GET /api/v1/projects, tested end-to-end
+// during remediation) — by merging the fetched rows into the existing biz
+// state via restore(), rather than replacing it outright, so it doesn't wipe
+// whatever the pre-existing local persistence layer (io.get('bizState'))
+// already restored.
+//
+// Scope note: this closes the finding for `projects`, the collection with
+// the broadest downstream impact, and establishes the hydration pattern.
+// The remaining ~25 collections in BizState are NOT hydrated by this fix —
+// each would need its own endpoint verified and its response shape mapped,
+// which is a larger, higher-risk effort than this pass covers safely. See
+// audit/evidence/CLOSURE_EVIDENCE_2026-07-02.md for the full list.
+export async function hydrateProjectsFromBackend(
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ ok: boolean; count: number }> {
+  try {
+    const res = await fetchImpl('/api/v1/projects', { credentials: 'include' })
+    if (!res.ok) return { ok: false, count: 0 }
+    const body = await res.json() as { data?: unknown }
+    const rows = Array.isArray(body.data) ? body.data as BizRecord[] : []
+    const current = useBizStore.getState().biz
+    useBizStore.getState().restore({ ...current, projects: rows })
+    return { ok: true, count: rows.length }
+  } catch {
+    return { ok: false, count: 0 }
+  }
+}
+
 // ─── Typed collection selectors ────────────────────────────────────────────────
 export const selectLeads         = (s: BizStoreState) => s.biz.leads                    as BizRecord[]
 export const selectContracts     = (s: BizStoreState) => s.biz.contracts                as BizRecord[]

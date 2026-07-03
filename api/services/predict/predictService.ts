@@ -232,7 +232,7 @@ export async function getProjectHealth(tenantId: string, projectId: string): Pro
   // Revised budget
   const budgetRes = await tenantQuery(tenantId, `
     SELECT
-      COALESCE((SELECT bac FROM evm_baselines WHERE tenant_id=$1 AND project_id=$2 AND status='active' ORDER BY created_at DESC LIMIT 1), 0) AS bac,
+      COALESCE((SELECT bac FROM evm_baselines WHERE tenant_id=$1 AND project_id=$2 AND is_active=true ORDER BY created_at DESC LIMIT 1), 0) AS bac,
       COALESCE(SUM(cost_impact) FILTER (WHERE status='approved'), 0)  AS approved_co,
       COALESCE(SUM(cost_impact) FILTER (WHERE status='submitted'), 0) AS pending_co
     FROM change_orders

@@ -74,6 +74,9 @@ export default defineConfig({
       '@':        path.resolve(__dirname, './src'),
       '@modules': path.resolve(__dirname, './src/modules'),
       '@api':     path.resolve(__dirname, './api'),
+      // @sentry/node is an optional peer dep (see errorTracking.ts) never
+      // installed by default — see api/__tests__/__mocks__/sentryNodeStub.ts.
+      '@sentry/node': path.resolve(__dirname, './api/__tests__/__mocks__/sentryNodeStub.ts'),
     },
   },
 })

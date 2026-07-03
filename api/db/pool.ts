@@ -21,19 +21,38 @@
 
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg'
 import { slog } from '../../src/modules/observability/index'
+import { flushErrorTracking } from '../services/observability/errorTracking'
 
 // ─── Build pool config ────────────────────────────────────────────────────────
 
 const DATABASE_URL = process.env['DATABASE_URL']
-// AUD-002: optional NON-OWNER application role connection string. When set,
-// tenant (request-path) queries run through this role so PostgreSQL Row Level
-// Security is actually ENFORCED. PostgreSQL exempts a table's OWNER from RLS
-// unless FORCE is set, so connecting tenant traffic as the owner silently
-// disarms every tenant_isolation policy. Provision role `jarvis_app`
-// (NOBYPASSRLS, see migration 075) and point this at it to activate the
-// database-level isolation backstop. Unset → falls back to the main pool
-// (prior behavior; app-layer WHERE clauses remain the only control).
+// AUD-002 / AUDIT-P0-06: optional NON-OWNER application role connection
+// string. When set, tenant (request-path) queries run through this role so
+// PostgreSQL Row Level Security is actually ENFORCED. PostgreSQL exempts a
+// table's OWNER from RLS unless FORCE is set, so connecting tenant traffic as
+// the owner silently disarms every tenant_isolation policy. Provision role
+// `jarvis_app` (NOBYPASSRLS, see migration 075) and point this at it to
+// activate the database-level isolation backstop.
+//
+// This used to silently fall back to the owner pool when unset — the exact
+// bug class AUD-002 was meant to close, just moved into an opt-in default
+// instead of a fail-closed one. The audit found the shipped deploy runbook
+// (docs/deploy/fly-neon-upstash.md) even instructs operators to skip it. In
+// production this is now a hard boot-time failure, mirroring the existing
+// JWT_SECRET precedent below — a tenant-isolation backstop that's silently
+// absent in production is a worse failure mode than one that's loud and
+// blocks deployment until it's configured. Non-production environments keep
+// the previous (documented, non-breaking) fallback, with a loud warning.
 const DATABASE_URL_APP = process.env['DATABASE_URL_APP']
+
+if (!DATABASE_URL_APP) {
+  if (process.env['NODE_ENV'] === 'production') {
+    slog('ERROR', 'db', '[pool] FATAL — DATABASE_URL_APP not set in production: tenant queries would silently run as the RLS-exempt table owner', {})
+    process.exit(1)
+  } else {
+    slog('WARN', 'db', '[pool] DATABASE_URL_APP not set — tenantQuery()/tenantTransaction() are using the owner pool; RLS is not enforced as a backstop (app-layer WHERE clauses are the only tenant isolation control)', {})
+  }
+}
 
 function makePoolConfig(url: string | undefined): Record<string, unknown> {
   return url
@@ -93,6 +112,12 @@ export async function initPool(): Promise<void> {
     const msg = err instanceof Error ? err.message : String(err)
     slog('ERROR', 'db', '[pool] Failed to connect to PostgreSQL', { message: msg })
     if (process.env['NODE_ENV'] === 'production') {
+      // AUDIT-P0-09: slog's underlying console.error is synchronous so this
+      // specific line isn't at risk of the pino-transport loss the audit
+      // flagged elsewhere, but the failure never reached Sentry/error
+      // tracking before this — flush it so it does, on the same bounded
+      // timeout as every other fatal exit path.
+      await flushErrorTracking(2000)
       process.exit(1)
     }
     throw err

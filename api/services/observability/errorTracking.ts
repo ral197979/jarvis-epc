@@ -190,3 +190,55 @@ export async function flushErrorTracking(timeoutMs = 2000): Promise<void> {
     await _sentry.flush(timeoutMs)
   }
 }
+
+// ─── Fatal exit (AUDIT-P0-09) ──────────────────────────────────────────────────
+//
+// Every fatal `process.exit(1)` call site (server.ts / worker.ts startup
+// failure, db/pool.ts connection failure, auth.ts missing JWT_SECRET) used to
+// call `log.fatal(...)` and exit on the same tick. pino's default destination
+// write — and especially its pino-pretty transport worker thread, used in
+// development — is asynchronous, so the one log line that explains *why* the
+// process is dying was the one most likely to be lost before it was written.
+// The graceful SIGTERM/SIGINT shutdown path already awaited
+// flushErrorTracking() before exiting; this gives every fatal path the same
+// treatment, plus an explicit pino flush/drain, with a bounded timeout so a
+// stuck transport can never hang a process that's already decided to exit.
+type FlushablePinoLogger = {
+  fatal: (obj: Record<string, unknown>, msg?: string) => void
+  flush: (cb?: (err?: Error) => void) => void
+}
+
+function _flushPino(logger: FlushablePinoLogger, timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    let done = false
+    const finish = () => { if (!done) { done = true; resolve() } }
+    const timer = setTimeout(finish, timeoutMs)
+    try {
+      logger.flush(() => { clearTimeout(timer); finish() })
+    } catch {
+      clearTimeout(timer)
+      finish()
+    }
+  })
+}
+
+/**
+ * Log a fatal error, flush Sentry + the pino logger (bounded by timeoutMs),
+ * then exit. Use this instead of a bare `log.fatal(...); process.exit(1)` at
+ * every startup/crash call site so the diagnostic log line is never silently
+ * dropped.
+ */
+export async function fatalExit(
+  logger: FlushablePinoLogger,
+  err: unknown,
+  msg: string,
+  timeoutMs = 2000,
+): Promise<never> {
+  const message = err instanceof Error ? err.message : String(err)
+  logger.fatal({ err: message }, msg)
+  await Promise.allSettled([
+    flushErrorTracking(timeoutMs),
+    _flushPino(logger, timeoutMs),
+  ])
+  process.exit(1)
+}

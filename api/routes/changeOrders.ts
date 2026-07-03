@@ -15,7 +15,7 @@
  * DELETE /api/v1/change-orders/:id/tasks/:taskId              — unlink a schedule task
  */
 import { Router, Request, Response } from 'express'
-import { requireAuth, type AuthenticatedRequest } from '../auth'
+import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import {
   createChangeOrder, getChangeOrder, listChangeOrders, updateChangeOrder,
@@ -125,7 +125,12 @@ changeOrdersRouter.post('/change-orders/:id/submit', async (req: Request, res: R
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/approve', async (req: Request, res: Response) => {
+// AUDIT-P1-12: approve/reject were gated only by requireAuth+requireTenant —
+// any authenticated tenant member, including a 'viewer', could approve or
+// reject a budget/contract-impacting change order. owner/admin/project_manager
+// matches the roles with approval authority elsewhere in the RBAC hierarchy
+// (README.md: owner → admin → project_manager → engineer → viewer).
+changeOrdersRouter.post('/change-orders/:id/approve', requireRole('owner', 'admin', 'project_manager') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {
@@ -137,7 +142,7 @@ changeOrdersRouter.post('/change-orders/:id/approve', async (req: Request, res: 
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/reject', async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/reject', requireRole('owner', 'admin', 'project_manager') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {

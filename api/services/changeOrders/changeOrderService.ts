@@ -7,6 +7,7 @@
  * Workflow: draft → submitted → approved | rejected → (void)
  */
 import { tenantQuery } from '../../db/pool'
+import { slog } from '../../../src/modules/observability/index'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,8 +127,8 @@ export async function listChangeOrders(
      FROM change_orders co
      WHERE co.tenant_id=$1
        AND co.project_id=$2
-       AND ($3::co_status IS NULL OR co.status=$3)
-       AND ($4::co_type   IS NULL OR co.type=$4)
+       AND ($3::text     IS NULL OR co.status=$3)
+       AND ($4::co_type  IS NULL OR co.type=$4)
      ORDER BY co.created_at DESC
      LIMIT $5 OFFSET $6`,
     [tenantId, filter.projectId, filter.status ?? null, filter.type ?? null, limit, offset],
@@ -350,24 +351,35 @@ async function _applyEvmBacAdjustment(
   changeOrderId: string,
   costImpact: number,
 ): Promise<void> {
-  // Find the active (most recent) baseline for this project
-  const baselineRes = await tenantQuery(tenantId,
-    `SELECT id FROM evm_baselines
-     WHERE tenant_id=$1 AND project_id=$2
-     ORDER BY created_at DESC LIMIT 1`,
-    [tenantId, projectId],
-  )
-  if (!baselineRes.rows[0]) return
+  // AUDIT-P0-04: this used to INSERT into evm_actuals with four columns
+  // (baseline_id, wbs_code, period_start, period_end, actual_cost) that don't
+  // exist on the real table (api/db/migrations/053_evm.sql:76-87 defines
+  // wbs_entry_id, period_date, amount) — the insert threw on every approved
+  // change order with a nonzero cost impact. Fixed to use the real columns.
+  //
+  // evm_actuals.amount has CHECK (amount >= 0) — it models ACWP (actual cost
+  // incurred), not a signed BAC delta. A cost-increase CO (costImpact > 0)
+  // maps cleanly onto that as a project-level actual with no specific WBS
+  // entry (wbs_entry_id left NULL — schema allows it, ON DELETE SET NULL).
+  // A credit CO (costImpact < 0) has no clean home in evm_actuals as-is; a
+  // negative "actual cost" would violate the CHECK constraint and misrepresent
+  // the data. Recording BAC credits (and BAC adjustments in general, properly,
+  // instead of as a synthetic "actual") is a product/schema decision beyond
+  // this fix's scope — skipped with a log line rather than silently
+  // corrupting data or crashing the approval.
+  if (costImpact <= 0) {
+    slog('WARN', 'changeOrders', '[evm-bac-adjustment] skipped — evm_actuals cannot represent a non-positive cost impact', {
+      tenantId, projectId, changeOrderId, costImpact,
+    })
+    return
+  }
 
-  const baselineId = baselineRes.rows[0]['id'] as string
-
-  // Record the BAC adjustment as a cost actual with a synthetic WBS reference
   await tenantQuery(tenantId,
     `INSERT INTO evm_actuals
-       (tenant_id, project_id, baseline_id, wbs_code, period_start, period_end, actual_cost, description)
-     VALUES ($1,$2,$3,'CO-ADJUSTMENT',$4,$4,$5,$6)`,
+       (tenant_id, project_id, period_date, amount, description)
+     VALUES ($1,$2,$3,$4,$5)`,
     [
-      tenantId, projectId, baselineId,
+      tenantId, projectId,
       new Date().toISOString().slice(0, 10),
       costImpact,
       `Change order adjustment (CO ID: ${changeOrderId})`,

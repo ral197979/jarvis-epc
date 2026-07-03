@@ -66,7 +66,7 @@ export async function getCostControlSnapshot(
     FROM   evm_baselines
     WHERE  tenant_id = $1
       AND  project_id = $2
-      AND  status = 'active'
+      AND  is_active = true
     ORDER  BY created_at DESC
     LIMIT  1
   `, [tenantId, projectId])

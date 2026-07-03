@@ -653,7 +653,10 @@ describe('federated privacy thresholds', () => {
     expect(MIN_BENCHMARK_COHORT).toBe(10)
   })
 
+  // AUDIT-P1-02: contributorCount is now computed server-side (mocked below
+  // as the first pool.query call) rather than trusted from the caller.
   it('publishPattern with exactly 5 contributors is allowed', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 5 }))
     mockPool.mockResolvedValueOnce(mockRow({
       id: 'p1', pattern_type: 'test', industry_segment: null, region: null,
       project_type: null, pattern_data: JSON.stringify({}), confidence_score: '0.7',
@@ -661,13 +664,14 @@ describe('federated privacy thresholds', () => {
       expires_at: null, created_at: '2024-01-01T00:00:00Z', updated_at: '2024-01-01T00:00:00Z',
     }))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    const p = await publishPattern({ patternType: 'test', patternData: {}, confidenceScore: 0.7, contributorCount: 5 })
+    const p = await publishPattern({ patternType: 'test', patternData: {}, confidenceScore: 0.7 })
     expect(p.kAnonymityMet).toBe(true)
   })
 
   it('publishPattern with 4 contributors is rejected', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 4 }))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    await expect(publishPattern({ patternType: 'test', patternData: {}, confidenceScore: 0.9, contributorCount: 4 }))
+    await expect(publishPattern({ patternType: 'test', patternData: {}, confidenceScore: 0.9 }))
       .rejects.toThrow('K-anonymity threshold not met: 4 < 5 required')
   })
 

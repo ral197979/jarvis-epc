@@ -220,28 +220,36 @@ describe('federatedIntelligenceEngine', () => {
     expect(anon['score']).toBe(90)
   })
 
+  // AUDIT-P1-02: contributorCount is no longer a trusted client-supplied
+  // field — publishPattern now computes it server-side via a
+  // count(DISTINCT tenant_id) query against federated_contributions (mocked
+  // below as the first pool.query call), the same way the legitimate
+  // aggregation worker's checkKAnonymity() does.
   it('publishPattern throws when contributor_count < K_ANONYMITY_MIN (5)', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 3 }))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
     await expect(publishPattern({
-      patternType: 'test', patternData: {}, confidenceScore: 0.9, contributorCount: 3,
+      patternType: 'test', patternData: {}, confidenceScore: 0.9,
     })).rejects.toThrow('K-anonymity threshold not met')
   })
 
   it('publishPattern succeeds when contributor_count >= 5', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 8 }))
     mockPool.mockResolvedValueOnce(mockRow(makePatternRow()))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
     const p = await publishPattern({
-      patternType: 'anomaly_detection', patternData: {}, confidenceScore: 0.85, contributorCount: 8,
+      patternType: 'anomaly_detection', patternData: {}, confidenceScore: 0.85,
     })
     expect(p.kAnonymityMet).toBe(true)
     expect(p.contributorCount).toBe(8)
   })
 
   it('publishPattern passes k_anonymity_met=TRUE to DB', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 5 }))
     mockPool.mockResolvedValueOnce(mockRow(makePatternRow()))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    await publishPattern({ patternType: 'test', patternData: {}, confidenceScore: 0.9, contributorCount: 5 })
-    const args = mockPool.mock.calls[0]![1] as unknown[]
+    await publishPattern({ patternType: 'test', patternData: {}, confidenceScore: 0.9 })
+    const args = mockPool.mock.calls[1]![1] as unknown[]  // calls[0] is the count query
     expect(args).toContain(true)  // k_anonymity_met = TRUE
   })
 

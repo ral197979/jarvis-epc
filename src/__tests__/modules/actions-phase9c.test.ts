@@ -1270,16 +1270,20 @@ describe('privacy boundary integration', () => {
     expect(MIN_BENCHMARK_COHORT).toBeGreaterThan(K_ANONYMITY_MIN)
   })
 
+  // AUDIT-P1-02: contributorCount is now computed server-side (mocked below
+  // as the first pool.query call) rather than trusted from the caller.
   it('publishPattern rejects contributorCount=4 (below threshold)', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 4 }))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    await expect(publishPattern({ patternType: 'sla', patternData: {}, confidenceScore: 0.9, contributorCount: 4 }))
+    await expect(publishPattern({ patternType: 'sla', patternData: {}, confidenceScore: 0.9 }))
       .rejects.toThrow('K-anonymity threshold not met: 4 < 5 required')
   })
 
   it('publishPattern accepts contributorCount=5 (at threshold)', async () => {
+    mockPool.mockResolvedValueOnce(mockRow({ k: 5 }))
     mockPool.mockResolvedValueOnce(mockRow(makePatternRow({ contributor_count: 5 })))
     const { publishPattern } = await import('../../../api/services/ecosystem/federatedIntelligenceEngine')
-    const p = await publishPattern({ patternType: 'sla', patternData: {}, confidenceScore: 0.9, contributorCount: 5 })
+    const p = await publishPattern({ patternType: 'sla', patternData: {}, confidenceScore: 0.9 })
     expect(p.contributorCount).toBe(5)
   })
 
