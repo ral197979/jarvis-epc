@@ -59,6 +59,14 @@ function hrsToDays(hrs: number | undefined): number {
   return Math.max(0, Math.round(hrs / 8))
 }
 
+// XER rows always contain every %F column, so a missing value is a blank string
+// rather than undefined — `??` would not treat it as absent. Use this for any
+// "prefer A, fall back to B" column pair.
+function firstNonBlank(...vals: (string | undefined)[]): string | undefined {
+  for (const v of vals) if (v && v.trim() !== '') return v
+  return undefined
+}
+
 const PRED_TYPE_MAP: Record<string, ImportDependency['type']> = {
   PR_FS: 'FS', PR_SS: 'SS', PR_FF: 'FF', PR_SF: 'SF',
 }
@@ -122,8 +130,8 @@ export function parseXer(content: string): ImportSchedule {
     const durationDays = isMilestone ? 0 : hrsToDays(durationHrs)
 
     // Dates: prefer target (baseline) dates, fall back to early dates
-    const plannedStart  = parseXerDate(row['target_start_date']  ?? row['early_start_date'])
-    const plannedFinish = parseXerDate(row['target_end_date']    ?? row['early_end_date'])
+    const plannedStart  = parseXerDate(firstNonBlank(row['target_start_date'], row['early_start_date']))
+    const plannedFinish = parseXerDate(firstNonBlank(row['target_end_date'],   row['early_end_date']))
     const actualStart   = parseXerDate(row['act_start_date'])
     const actualFinish  = parseXerDate(row['act_end_date'])
 
