@@ -18,6 +18,7 @@ import * as samlify from 'samlify'
 import { randomBytes, createHash } from 'node:crypto'
 import { query } from '../../db/pool'
 import { slog } from '../../../src/modules/observability/index'
+import { assertSafeUrl, SsrfBlockedError } from '../../lib/ssrfGuard'
 import { getPlatformCert, stripCertHeaders } from './certificateRotation'
 import {
   extractAttributes, deriveRole, validateRequiredClaims,
@@ -362,8 +363,15 @@ export async function importIdpMetadataFromUrl(
   tenantId:    string,
   metadataUrl: string,
 ): Promise<{ updated: boolean; provider?: string; entityId?: string }> {
+  // AUDIT-P0-07: this fetched an admin-supplied URL with no validation —
+  // every other outbound-fetch-from-user-input call site in this codebase
+  // (webhook dispatch, integration health-check, the MCP http_fetch tool)
+  // routes through assertSafeUrl; this one was missed. Without it, a tenant
+  // owner/admin could point this at cloud metadata (169.254.169.254) or any
+  // internal address reachable from the server.
   let xmlText: string
   try {
+    await assertSafeUrl(metadataUrl)
     const resp = await fetch(metadataUrl, {
       signal: AbortSignal.timeout(10_000),
       headers: { 'Accept': 'application/xml, text/xml, */*' },
@@ -371,6 +379,7 @@ export async function importIdpMetadataFromUrl(
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
     xmlText = await resp.text()
   } catch (err) {
+    if (err instanceof SsrfBlockedError) throw err
     throw new Error(`Failed to fetch IdP metadata from ${metadataUrl}: ${err instanceof Error ? err.message : err}`)
   }
 

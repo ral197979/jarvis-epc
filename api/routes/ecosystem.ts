@@ -5,6 +5,7 @@
 // edge nodes, air-gap mode, certification, and workflow composition.
 
 import { Router, Request, Response, NextFunction } from 'express'
+import { requireRole } from '../auth'
 
 // ─── Service imports ──────────────────────────────────────────────────────────
 
@@ -88,7 +89,11 @@ router.get('/federated/patterns', async (req: Request, res: Response, next: Next
 })
 
 // POST /api/v1/ecosystem/federated/patterns (admin)
-router.post('/federated/patterns', async (req: Request, res: Response, next: NextFunction) => {
+// AUDIT-P1-02: comment said "(admin)" but no role check was ever applied —
+// any authenticated tenant user could publish a federated pattern. The
+// contributorCount trust issue is fixed separately in publishPattern()
+// itself (federatedIntelligenceEngine.ts); this closes the missing-authz half.
+router.post('/federated/patterns', requireRole('owner', 'admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const pattern = await publishPattern(req.body)
     res.status(201).json(pattern)

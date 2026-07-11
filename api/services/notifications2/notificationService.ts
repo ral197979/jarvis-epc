@@ -90,7 +90,7 @@ export async function scanAndGenerate(tenantId: string): Promise<number> {
         COALESCE(SUM(co.cost_impact) FILTER (WHERE co.status='approved'), 0) AS approved_co,
         COALESCE(SUM(a.amount), 0)  AS acwp
       FROM projects p
-      LEFT JOIN evm_baselines b   ON b.project_id = p.id AND b.tenant_id = p.tenant_id AND b.status='active'
+      LEFT JOIN evm_baselines b   ON b.project_id = p.id AND b.tenant_id = p.tenant_id AND b.is_active=true
       LEFT JOIN change_orders co  ON co.project_id = p.id AND co.tenant_id = p.tenant_id
       LEFT JOIN evm_actuals a     ON a.project_id = p.id AND a.tenant_id = p.tenant_id
       WHERE p.tenant_id = $1

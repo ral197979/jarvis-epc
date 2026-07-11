@@ -63,7 +63,7 @@ export function parseMsp(content: string): ImportSchedule {
   for (const raw of rawTasks) {
     const t = raw as Record<string, unknown>
     const uid = Number(t['UID'])
-    if (uid === 0) continue  // project summary task
+    if (uid === 0 || isNaN(uid)) continue  // project summary task / malformed row (no valid UID)
 
     const externalId = String(uid)
     const activityId = (t['ID'] as string | number)?.toString() ?? externalId

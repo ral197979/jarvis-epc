@@ -423,9 +423,14 @@ router.get('/exports/:id', requireAuth, requireTenant, async (req: Request, res:
 })
 
 // ─── Deployment Health ────────────────────────────────────────────────────────
+// AUDIT-P1-01: these were requireAuth-only — any authenticated user of any
+// tenant could trigger platform-wide health checks or provision/reset demo
+// tenants. Same bug class as AUD-001 above (missing authorization, not
+// missing authentication); requirePlatformAdmin was already defined for the
+// lifecycle routes but these were missed in that hardening pass.
 
 // GET /enterprise/deployment/health
-router.get('/deployment/health', requireAuth, async (_req: Request, res: Response) => {
+router.get('/deployment/health', requireAuth, requirePlatformAdmin, async (_req: Request, res: Response) => {
   try {
     const report = await generateHealthReport()
     res.json(report)
@@ -435,7 +440,7 @@ router.get('/deployment/health', requireAuth, async (_req: Request, res: Respons
 })
 
 // POST /enterprise/deployment/health/run
-router.post('/deployment/health/run', requireAuth, async (_req: Request, res: Response) => {
+router.post('/deployment/health/run', requireAuth, requirePlatformAdmin, async (_req: Request, res: Response) => {
   try {
     const report = await runPlatformChecks()
     res.json(report)
@@ -445,7 +450,7 @@ router.post('/deployment/health/run', requireAuth, async (_req: Request, res: Re
 })
 
 // POST /enterprise/deployment/health/check
-router.post('/deployment/health/check', requireAuth, async (req: Request, res: Response) => {
+router.post('/deployment/health/check', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const check = await recordHealthCheck(req.body as never)
     res.status(201).json(check)
@@ -457,7 +462,7 @@ router.post('/deployment/health/check', requireAuth, async (req: Request, res: R
 // ─── Demo Tenants ─────────────────────────────────────────────────────────────
 
 // POST /enterprise/demo
-router.post('/demo', requireAuth, async (req: Request, res: Response) => {
+router.post('/demo', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const { templateKey, createdBy } = req.body as Record<string, unknown>
     if (!templateKey) { res.status(422).json({ error: 'validation', message: 'templateKey required' }); return }
@@ -471,7 +476,7 @@ router.post('/demo', requireAuth, async (req: Request, res: Response) => {
 })
 
 // GET /enterprise/demo
-router.get('/demo', requireAuth, async (req: Request, res: Response) => {
+router.get('/demo', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const { industry, status } = req.query as Record<string, string>
     const demos = await listDemoTenants({ industry, status })
@@ -482,7 +487,7 @@ router.get('/demo', requireAuth, async (req: Request, res: Response) => {
 })
 
 // POST /enterprise/demo/:tenantId/reset
-router.post('/demo/:tenantId/reset', requireAuth, async (req: Request, res: Response) => {
+router.post('/demo/:tenantId/reset', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const demo = await resetDemoTenant(req.params.tenantId as string)
     res.json(demo)

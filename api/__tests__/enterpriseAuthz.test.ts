@@ -22,6 +22,10 @@ const h = vi.hoisted(() => ({
   getLifecycleHistory: vi.fn().mockResolvedValue([]),
   getSubscription:    vi.fn().mockResolvedValue({ id: 's1' }),
   listSubscriptions:  vi.fn().mockResolvedValue([{ id: 's1' }, { id: 's2' }]),
+  generateHealthReport: vi.fn().mockResolvedValue({ ok: true }),
+  createDemoTenant:     vi.fn().mockResolvedValue({ ok: true }),
+  listDemoTenants:      vi.fn().mockResolvedValue([]),
+  resetDemoTenant:      vi.fn().mockResolvedValue({ ok: true }),
 }))
 
 vi.mock('../db/pool', () => ({
@@ -72,16 +76,17 @@ vi.mock('../services/enterprise/complianceExportEngine', () => ({
   requestExport: vi.fn(), getExport: vi.fn(), listExports: vi.fn(),
 }))
 vi.mock('../services/enterprise/deploymentHealthService', () => ({
-  generateHealthReport: vi.fn(), runPlatformChecks: vi.fn(), recordHealthCheck: vi.fn(),
+  generateHealthReport: h.generateHealthReport, runPlatformChecks: vi.fn(), recordHealthCheck: vi.fn(),
 }))
 vi.mock('../services/enterprise/demoTenantGenerator', () => ({
-  createDemoTenant: vi.fn(), getDemoTenant: vi.fn(), listDemoTenants: vi.fn(), resetDemoTenant: vi.fn(),
+  createDemoTenant: h.createDemoTenant, getDemoTenant: vi.fn(),
+  listDemoTenants: h.listDemoTenants, resetDemoTenant: h.resetDemoTenant,
 }))
 vi.mock('../services/enterprise/apiGatewayService', () => ({
   createApiKey: vi.fn(), listApiKeys: vi.fn(), revokeApiKey: vi.fn(),
 }))
 
-const { suspendTenant, archiveTenant, listSubscriptions } = h
+const { suspendTenant, archiveTenant, listSubscriptions, generateHealthReport, createDemoTenant, listDemoTenants, resetDemoTenant } = h
 
 import express from 'express'
 import request from 'supertest'
@@ -152,5 +157,57 @@ describe('AUD-001 — tenant lifecycle authorization', () => {
     const res = await request(makeApp()).get('/api/v1/enterprise/subscriptions')
     expect(res.status).toBe(403)
     expect(listSubscriptions).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * AUDIT-P1-01 regression — deployment health + demo tenant routes.
+ * Before the fix these had only requireAuth — any authenticated user of ANY
+ * tenant could trigger platform-wide health checks or provision/reset demo
+ * tenants. Same bug class as AUD-001 above; requirePlatformAdmin already
+ * existed for the lifecycle routes but these were missed in that pass.
+ */
+describe('AUDIT-P1-01 — deployment health + demo tenant authorization', () => {
+  it('blocks a non-platform-admin owner from running platform health checks (403)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: TENANT_A }
+    const res = await request(makeApp()).get('/api/v1/enterprise/deployment/health')
+    expect(res.status).toBe(403)
+    expect(generateHealthReport).not.toHaveBeenCalled()
+  })
+
+  it('blocks a non-platform-admin owner from creating a demo tenant (403)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: TENANT_A }
+    const res = await request(makeApp())
+      .post('/api/v1/enterprise/demo').send({ templateKey: 'x' })
+    expect(res.status).toBe(403)
+    expect(createDemoTenant).not.toHaveBeenCalled()
+  })
+
+  it('blocks a non-platform-admin owner from listing demo tenants (403)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: TENANT_A }
+    const res = await request(makeApp()).get('/api/v1/enterprise/demo')
+    expect(res.status).toBe(403)
+    expect(listDemoTenants).not.toHaveBeenCalled()
+  })
+
+  it('blocks a non-platform-admin owner from resetting a demo tenant (403)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: TENANT_A }
+    const res = await request(makeApp()).post(`/api/v1/enterprise/demo/${TENANT_B}/reset`)
+    expect(res.status).toBe(403)
+    expect(resetDemoTenant).not.toHaveBeenCalled()
+  })
+
+  it('allows an explicit PLATFORM admin to run health checks and manage demo tenants', async () => {
+    h.identity = { sub: 'platform-op', role: 'engineer', tid: TENANT_A }
+    process.env['PLATFORM_ADMIN_USER_IDS'] = 'platform-op'
+    vi.resetModules()
+    const mod = await import('../routes/enterprise')
+    const app = express(); app.use(express.json()); app.use('/api/v1/enterprise', mod.default)
+
+    const health = await request(app).get('/api/v1/enterprise/deployment/health')
+    expect(health.status).toBe(200)
+
+    const demo = await request(app).post('/api/v1/enterprise/demo').send({ templateKey: 'x' })
+    expect(demo.status).toBe(201)
   })
 })

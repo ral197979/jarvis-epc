@@ -174,7 +174,7 @@ import { startIfcParseWorker,         stopIfcParseWorker         } from './servi
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker' // v10.2.0: DP aggregation worker
 import samlRouter from './auth/saml/samlRoutes'                                                                          // Phase 2A: SAML 2.0 Enterprise SSO
 import { scimRouter, scimAdminRouter } from './routes/scim'                                                              // Phase 2B: SCIM 2.0 Provisioning
-import { initErrorTracking, errorTrackingMiddleware, flushErrorTracking } from './services/observability/errorTracking'  // Phase 1: Observability
+import { initErrorTracking, errorTrackingMiddleware, flushErrorTracking, fatalExit } from './services/observability/errorTracking'  // Phase 1: Observability
 import { metricsMiddleware, metricsHandler, setDbUp } from './services/observability/metrics'                                       // Phase 3: Prometheus metrics
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
@@ -750,10 +750,19 @@ async function start(): Promise<void> {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// AUDIT-P0-02 (refined): comparing import.meta.url to a raw file:// string
+// concatenation of process.argv[1] fails whenever the checkout path contains
+// a space or other URL-reserved character (import.meta.url is percent-encoded,
+// argv[1] isn't) — on this checkout ("Denver Engineering", with a space),
+// that made the comparison always false, so start() silently never ran and
+// the process exited 0 with zero log output. fileURLToPath decodes back to a
+// plain OS path for a comparison that's robust regardless of the checkout path.
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   start().catch((err) => {
-    log.fatal({ err: err.message }, '[startup] Fatal error — exiting')
-    process.exit(1)
+    // AUDIT-P0-09: fatalExit flushes Sentry + pino (bounded timeout) before
+    // exiting, so the log line explaining a startup failure isn't lost to
+    // pino's async write racing process.exit().
+    void fatalExit(log, err, '[startup] Fatal error — exiting')
   })
 }
 

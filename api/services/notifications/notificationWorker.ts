@@ -9,10 +9,14 @@
  * Registered as a promoter (same pattern as slaEngine, complianceWatcher).
  * Polls on every scheduler tick. FOR UPDATE SKIP LOCKED for concurrent safety.
  *
- * Delivery stubs:
+ * Delivery stubs (AUDIT-P0-08: all four channels are still unimplemented —
+ * the header claim that webhook "delegates to webhookDispatch emitEvent" was
+ * stale; it was a stub too. Each now honestly reports failure instead of a
+ * fabricated success, so the retry/dead-letter logic below actually engages
+ * instead of silently discarding every queued notification):
  *   - in_app:  stub (Phase 2 Sprint 4 — in-app notification store)
  *   - email:   stub (Phase 2 Sprint 4 — SES/SendGrid integration)
- *   - webhook: delegates to webhookDispatch emitEvent
+ *   - webhook: stub (Phase 2 Sprint 4 — route through webhookDispatch)
  *   - slack:   stub (Phase 2 Sprint 5 — Slack SDK)
  */
 
@@ -49,30 +53,30 @@ type DeliveryResult = { success: boolean; responseCode?: number; error?: string;
 
 async function _deliverInApp(job: NotifJobRow): Promise<DeliveryResult> {
   // TODO Phase 2 Sprint 4: write to user_notifications table / push via SSE
-  slog('INFO', 'notificationWorker', '[in_app] stub delivery', {
+  slog('WARN', 'notificationWorker', '[in_app] channel not implemented — reporting failure, not fabricating success', {
     jobId: job.id, recipients: job.recipient_ids.length,
   })
-  return { success: true, responseCode: 200, durationMs: 0 }
+  return { success: false, error: 'not_implemented:in_app', durationMs: 0 }
 }
 
 async function _deliverEmail(job: NotifJobRow): Promise<DeliveryResult> {
   // TODO Phase 2 Sprint 4: SES / SendGrid integration
-  slog('INFO', 'notificationWorker', '[email] stub delivery', {
+  slog('WARN', 'notificationWorker', '[email] channel not implemented — reporting failure, not fabricating success', {
     jobId: job.id, emails: job.recipient_emails.length,
   })
-  return { success: true, responseCode: 200, durationMs: 0 }
+  return { success: false, error: 'not_implemented:email', durationMs: 0 }
 }
 
 async function _deliverWebhook(job: NotifJobRow): Promise<DeliveryResult> {
   // TODO Phase 2 Sprint 4: route through webhookDispatch
-  slog('INFO', 'notificationWorker', '[webhook] stub delivery', { jobId: job.id })
-  return { success: true, responseCode: 200, durationMs: 0 }
+  slog('WARN', 'notificationWorker', '[webhook] channel not implemented — reporting failure, not fabricating success', { jobId: job.id })
+  return { success: false, error: 'not_implemented:webhook', durationMs: 0 }
 }
 
 async function _deliverSlack(job: NotifJobRow): Promise<DeliveryResult> {
   // TODO Phase 2 Sprint 5: Slack SDK integration
-  slog('INFO', 'notificationWorker', '[slack] stub delivery', { jobId: job.id })
-  return { success: true, responseCode: 200, durationMs: 0 }
+  slog('WARN', 'notificationWorker', '[slack] channel not implemented — reporting failure, not fabricating success', { jobId: job.id })
+  return { success: false, error: 'not_implemented:slack', durationMs: 0 }
 }
 
 async function _deliver(job: NotifJobRow): Promise<DeliveryResult> {

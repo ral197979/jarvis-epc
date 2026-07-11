@@ -22,13 +22,25 @@ import { AiBudgetExceededError } from '../services/enterprise/aiCostTracker'
 type Req = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 
-// Flag gate — the whole surface is 404 until the feature is enabled.
-router.use((_req: Request, res: Response, next) => {
+// AUDIT-P0 (discovered during remediation, not in the original 2026-07-02
+// report): this router is mounted at bare `/api/v1` (app.use('/api/v1',
+// personalAgentRouter) in server.ts), and this flag-gate was previously
+// registered with router.use((req,res,next) => ...) — no path prefix — so it
+// ran for EVERY request under /api/v1/*, not just this router's own
+// /me/agent/* routes. Since PERSONAL_AGENT defaults to false/unset (see
+// .env.example), this made the entire API 404 for every endpoint mounted
+// after this router in server.ts (projects, my-work, vendors, RFIs, ...) in
+// any environment that didn't explicitly opt in — reproduced locally and
+// confirmed to be the actual mechanism behind every non-health endpoint
+// returning a bare {"error":"not_found"}. Scoping the gate to '/me/agent'
+// (matching this router's own route paths below) fixes it without touching
+// the flag's intended default-off behavior for its own surface.
+router.use('/me/agent', (_req: Request, res: Response, next) => {
   if (!isPersonalAgentEnabled()) { res.status(404).json({ error: 'not_found' }); return }
   next()
 })
-router.use(requireAuth as never)
-router.use(requireTenant() as never)
+router.use('/me/agent', requireAuth as never)
+router.use('/me/agent', requireTenant() as never)
 
 function ids(req: Request): { tenantId: string; userId: string } {
   const r = req as Req

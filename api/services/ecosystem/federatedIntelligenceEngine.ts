@@ -113,14 +113,34 @@ export interface PublishPatternInput {
   projectType?: string
   patternData: Record<string, unknown>
   confidenceScore: number
-  contributorCount: number
+}
+
+// AUDIT-P1-02: contributorCount used to come straight from the request body
+// and was trusted as-is — any authenticated tenant user could publish a
+// pattern with a fabricated count (e.g. contributorCount: 5) and get
+// k_anonymity_met=true regardless of how many tenants actually contributed.
+// It's now computed here from the real federated_contributions rows, the
+// same way the legitimate aggregation worker's checkKAnonymity() does, so
+// the count this function enforces against is the same one it publishes.
+async function _countDistinctContributors(patternType: string): Promise<number> {
+  const res = await pool.query<{ k: number }>(
+    `SELECT count(DISTINCT tenant_id)::int AS k
+     FROM federated_contributions
+     WHERE contribution_type = $1
+       AND status IN ('pending','privacy_checked')
+       AND opt_in_verified = true`,
+    [patternType],
+  )
+  return res.rows[0]?.k ?? 0
 }
 
 export async function publishPattern(input: PublishPatternInput): Promise<FederatedPattern> {
+  const contributorCount = await _countDistinctContributors(input.patternType)
+
   // Enforce k-anonymity before publishing
-  if (input.contributorCount < K_ANONYMITY_MIN) {
+  if (contributorCount < K_ANONYMITY_MIN) {
     throw new Error(
-      `K-anonymity threshold not met: ${input.contributorCount} < ${K_ANONYMITY_MIN} required`,
+      `K-anonymity threshold not met: ${contributorCount} < ${K_ANONYMITY_MIN} required`,
     )
   }
 
@@ -137,7 +157,7 @@ export async function publishPattern(input: PublishPatternInput): Promise<Federa
       input.projectType ?? null,
       JSON.stringify(input.patternData),
       input.confidenceScore,
-      input.contributorCount,
+      contributorCount,
       true,
     ],
   )

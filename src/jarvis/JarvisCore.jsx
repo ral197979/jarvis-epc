@@ -52,7 +52,7 @@ import { hashPin as _hashPin } from "../modules/utils/pinUtils";
 import { createDispatch, actions as _bizActions, checkWritePolicy } from "../modules/biz/dispatch";
 // G5 Sprint 5 (v4.31.0): use extracted JARVIS_ACTIONS from biz/reducer (superset of former inline map)
 import { JARVIS_ACTIONS } from "../modules/biz/reducer";
-import { useBizStore } from "../modules/biz/store";
+import { useBizStore, hydrateProjectsFromBackend } from "../modules/biz/store";
 // G5 Sprint 7 + P4 (v4.31.0): removed 34 dangling letter-code stub imports.
 // Only views actually referenced in JarvisCore's body (via live wrappers Ki/ji/Zi
 // and the top-level JarvisToastContainer / JarvisCmdPalette / JarvisBuildAIContext /
@@ -517,6 +517,13 @@ export default function JarvisCore() {
             .then(function(d) { if (d !== null) _gwSet(d.enabled !== false); })
             .catch(function() {});
     }, []);
+
+    // AUDIT-P0-10: hydrate the biz store's `projects` collection from the
+    // real backend once authenticated — see store.ts for scope/rationale.
+    ui(function() {
+        if (!_authOk) return;
+        hydrateProjectsFromBackend().catch(function() {});
+    }, [_authOk]);
 
     // P2-D: Toggle AI gateway kill switch
     var _toggleGateway = function() {

@@ -17,6 +17,7 @@
  */
 
 import pino from 'pino'
+import { fileURLToPath } from 'url'
 import { initPool } from './db/pool'
 import { runMigrations } from './db/migrate'
 import { startPackWorker, stopPackWorker } from './services/packWorker'
@@ -36,7 +37,7 @@ import { registerReadinessSnapshotHandler } from './services/readiness/readiness
 import { startIfcParseWorker, stopIfcParseWorker } from './services/bim/ifcParseWorker'
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker'
 import { purgeExpiredTokens } from './auth'
-import { initErrorTracking, flushErrorTracking } from './services/observability/errorTracking'
+import { initErrorTracking, flushErrorTracking, fatalExit } from './services/observability/errorTracking'
 
 // ─── Logger ───────────────────────────────────────────────────────────────────
 
@@ -122,10 +123,13 @@ async function startWorkers(): Promise<void> {
 
 // ─── Entry point ──────────────────────────────────────────────────────────────
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// AUDIT-P0-02 (refined): see matching comment in api/server.ts — raw
+// import.meta.url vs file://argv[1] string comparison breaks on any checkout
+// path containing a space or URL-reserved character.
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   startWorkers().catch(err => {
-    log.fatal({ err: err.message }, '[worker] Fatal startup error')
-    process.exit(1)
+    // AUDIT-P0-09: see matching comment in api/server.ts.
+    void fatalExit(log, err, '[worker] Fatal startup error')
   })
 }
 

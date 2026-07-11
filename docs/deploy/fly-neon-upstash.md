@@ -89,9 +89,12 @@ fly secrets set \
 # REDIS_URL: omit for single-instance (in-memory fallback). See §7 to add Upstash.
 ```
 > **Gotchas:** (1) Neon needs `DB_SSL=true` (in `[env]`) *and* `?sslmode=require` in the URL. (2)
-> `DATABASE_URL_APP` (the non-owner `jarvis_app` role for full RLS enforcement) is **optional** — skip it
-> first; app-layer tenant scoping still applies. Enable later by creating that role in Neon and setting
-> `DATABASE_URL_APP`. (3) With no `REDIS_URL`, `/health` still reports `redis.ok` (the in-memory store) — green.
+> `DATABASE_URL_APP` (the non-owner `jarvis_app` role for full RLS enforcement) is **required** in
+> production — as of AUDIT-P0-06 the API refuses to boot with `NODE_ENV=production` and this unset,
+> because without it every "tenant-scoped" query silently runs as the RLS-exempt table owner. Create
+> the `jarvis_app` role in Neon (`NOBYPASSRLS`, migration 075 grants it) and set `DATABASE_URL_APP`
+> *before* deploying with `NODE_ENV=production`. (3) With no `REDIS_URL`, `/health` still reports
+> `redis.ok` (the in-memory store) — green.
 
 ## 5. Deploy (runs migrations on boot)
 ```bash
