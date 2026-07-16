@@ -1,0 +1,155 @@
+name: Fly Staging Deploy
+
+# Manual-only. Never triggers on push/pull_request/schedule/tag — staging is
+# promoted deliberately, not automatically, per audit/evidence/
+# fly-staging-readiness-2026-07/README.md.
+#
+# Target app is hardcoded to "denver-epc-staging" throughout this file — it is
+# NOT a workflow input, so a caller cannot redirect this workflow at production
+# or any other app. scripts/validate-fly-staging-config.mjs enforces (in CI,
+# on every push/PR) that this file never gains an app-name input and never
+# references "denver-epc" (production).
+#
+# Required GitHub Actions secrets (Settings → Secrets and variables → Actions),
+# NONE of which are set as of this workflow's creation — see the secret
+# prerequisite inventory in the evidence package for what still needs to be
+# supplied out-of-band before this workflow can actually run:
+#   FLY_API_TOKEN            — Fly deploy/org token, staging-scoped if possible
+#   STAGING_DATABASE_URL_APP — Neon jarvis_app (NOBYPASSRLS) connection string for
+#                               the staging Neon branch — the application-runtime
+#                               role, never the owner/admin role. There is no
+#                               fallback: if this is missing, the job fails
+#                               before any deploy step runs. This workflow never
+#                               reads DATABASE_URL (owner) and never sets it as
+#                               the app's runtime connection.
+#   STAGING_JWT_SECRET        — 32+ char random, staging-specific (do not reuse
+#                               production's JWT_SECRET)
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to deploy (branch, tag, or full commit SHA). Must resolve to a clean, existing commit — no arbitrary/unresolvable input is accepted."
+        required: true
+        default: main
+
+env:
+  STAGING_APP: denver-epc-staging   # hardcoded — see header comment; never sourced from input
+
+jobs:
+  deploy-staging:
+    name: Deploy to Fly staging
+    runs-on: ubuntu-latest
+    concurrency: { group: fly-staging-deploy, cancel-in-progress: false }
+    steps:
+      - name: Check out exact ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Resolve and record exact commit SHA
+        id: sha
+        run: |
+          set -euo pipefail
+          # Refuse a dirty/unresolved tree — this must be a clean, real commit,
+          # never a locally-modified working copy (there is no local working
+          # copy in a GitHub-hosted runner, but this guard also catches a
+          # checkout that somehow left untracked build artifacts before this
+          # step, e.g. from a cache restore).
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::Working tree is not clean after checkout — refusing to deploy an unresolved source state."
+            git status --porcelain
+            exit 1
+          fi
+          sha="$(git rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "Resolved deploy SHA: $sha"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck:all
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+
+      - name: Validate staging config invariants
+        run: node scripts/validate-fly-staging-config.mjs
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Validate fly.staging.toml against the staging app
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FLY_API_TOKEN:-}" ]; then
+            echo "::error::FLY_API_TOKEN is not set — failing closed. This is a GitHub Actions secret prerequisite documented in audit/evidence/fly-staging-readiness-2026-07/SECRET_PREREQUISITES_REDACTED.md."
+            exit 1
+          fi
+          flyctl config validate --config fly.staging.toml --app "$STAGING_APP"
+
+      - name: Fail closed if the staging runtime credential is unavailable
+        run: |
+          set -euo pipefail
+          # Deliberately checking for presence only — never echoing the value.
+          # No fallback to DATABASE_URL (owner/admin) is permitted here, ever.
+          if [ -z "${STAGING_DATABASE_URL_APP:-}" ]; then
+            echo "::error::STAGING_DATABASE_URL_APP is not available. Refusing to deploy — there is no fallback to an owner/admin connection string. See DATABASE_ISOLATION_DECISION.md for what needs to be provisioned first."
+            exit 1
+          fi
+          echo "STAGING_DATABASE_URL_APP is present (value not printed)."
+        env:
+          STAGING_DATABASE_URL_APP: ${{ secrets.STAGING_DATABASE_URL_APP }}
+
+      - name: Stage secrets (values never echoed)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          flyctl secrets set --app "$STAGING_APP" --stage \
+            DATABASE_URL_APP="${{ secrets.STAGING_DATABASE_URL_APP }}" \
+            JWT_SECRET="${{ secrets.STAGING_JWT_SECRET }}"
+          echo "Staged 2 secrets by name (DATABASE_URL_APP, JWT_SECRET) — values not printed."
+
+      - name: Deploy (single machine, remote build)
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          flyctl deploy --config fly.staging.toml --app "$STAGING_APP" \
+            --remote-only --ha=false \
+            --env "APP_RELEASE_SHA=${{ steps.sha.outputs.sha }}" \
+            --env "APP_ENV=staging"
+
+      - name: Health check
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          for i in $(seq 1 20); do
+            code=$(curl -s -m 8 -o /dev/null -w '%{http_code}' "https://${STAGING_APP}.fly.dev/api/v1/health" || echo 000)
+            echo "attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "::warning::health not 200 yet — check 'flyctl logs --app denver-epc-staging' in the Fly dashboard"
+
+      - name: Report deployed release
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          echo "### Fly staging deploy summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- App: \`$STAGING_APP\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deployed SHA: \`${{ steps.sha.outputs.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          flyctl releases --app "$STAGING_APP" | head -5 >> "$GITHUB_STEP_SUMMARY"

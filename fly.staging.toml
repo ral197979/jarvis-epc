@@ -1,0 +1,61 @@
+# Fly.io STAGING config for the Denver API. Mirrors fly.toml (production) except
+# for app name, region-neutral cost tier, and staging-labeled non-secret metadata.
+#
+# Target app is fixed to "denver-epc-staging" — never change this to "denver-epc".
+# scripts/validate-fly-staging-config.mjs enforces this in CI (see that script
+# for the full list of guarded invariants).
+#
+# Deployed only by .github/workflows/fly-staging-deploy.yml (workflow_dispatch,
+# manual only — no push/PR/schedule trigger). This file must never contain a
+# database URL, token, password, or private key — secrets are injected at
+# deploy time via `flyctl secrets set`, never checked in here.
+app = "denver-epc-staging"
+primary_region = "iad"   # same region as production; staging proves the real network path
+
+[build]
+  dockerfile = "Dockerfile.api"   # same Dockerfile as production — no staging-only build path
+
+[env]
+  NODE_ENV = "production"          # intentionally "production" NODE_ENV so the app runs its
+                                    # real production code paths (incl. the DATABASE_URL_APP
+                                    # fail-closed check) — APP_ENV below is what distinguishes
+                                    # staging from production for anything that needs to know.
+  APP_ENV = "staging"               # non-secret label — identifies this environment in logs/health
+  PORT = "3001"
+  DB_SSL = "true"
+  LOG_LEVEL = "debug"                # more verbose than production for easier staging diagnosis
+  STORAGE_BACKEND = "local"
+  # Same dormant federation flags as production — staging must not silently enable
+  # features production has intentionally kept off.
+  COMMISSIONING_EXTERNAL = "false"
+  CAPABILITY_REGISTRY = "false"
+  UNIVERSAL_EVENTS = "false"
+  OBJECT_REGISTRY = "false"
+  KNOWLEDGE_GRAPH = "false"
+  IDEMPOTENCY = "false"
+  OPENAPI_ENABLED = "false"
+  DENVER_MCP_SERVER = "false"
+  EAP_ENABLED = "false"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = true    # staging: OK to scale to zero when idle (cost control)
+  auto_start_machines = true
+  min_machines_running = 0     # staging: not always-on, unlike production's min_machines_running = 1
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/api/v1/health"
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "60s"
+
+[[vm]]
+  memory = "1gb"
+  cpus = 1
+  # Single machine, single process group ("app") — deliberately matching production's
+  # current in-process web+scheduler topology. Do NOT add a second process group or
+  # scale beyond one machine here: schedulers/promoters run in-process and are not
+  # yet safe to run on more than one concurrent instance (no leader election / locking
+  # has been implemented — see audit/evidence/fly-staging-readiness-2026-07/WORKER_TOPOLOGY.md).
