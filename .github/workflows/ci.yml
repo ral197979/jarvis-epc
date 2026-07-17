@@ -85,3 +85,13 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm audit --audit-level=high
+
+  fly-staging-config-guard:
+    name: Fly staging config anti-regression guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      # No Node dependencies required — the script only reads checked-in
+      # config/workflow text, so no `npm ci` needed for this gate.
+      - run: node scripts/validate-fly-staging-config.mjs

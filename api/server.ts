@@ -50,6 +50,7 @@ import {
   type AuthenticatedRequest,
 } from './auth'
 import { initPool, poolHealthy, poolStats, query, tenantQuery } from './db/pool'
+import { getReleaseIdentity } from './services/releaseIdentity'
 import { runMigrations } from './db/migrate'
 import { requireTenant, TenantRequest } from './middleware/tenant'
 import { registerUuidParamGuards, validateUuidQueryParams } from './middleware/validateUuidParams'
@@ -398,6 +399,7 @@ app.get('/api/v1/health', async (_req: Request, res: Response) => {
   res.status(allOk ? 200 : 503).json({
     status:  allOk ? 'ok' : 'degraded',
     version: '9.0.0',
+    ...getReleaseIdentity(),
     uptime:  Math.floor(process.uptime()),
     ts:      new Date().toISOString(),
     checks: {

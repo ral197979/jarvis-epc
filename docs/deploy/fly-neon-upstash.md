@@ -150,3 +150,25 @@ The SPA (`Dockerfile.frontend`/nginx) is static:
 - [ ] Frontend deployed (Cloudflare Pages/Netlify free, or 2nd Fly app); `VITE_BACKEND_URL` + `ALLOWED_ORIGINS` set
 - [ ] (then) tag `v2.0.1` from `11f0903`, publish `docs/releases/v2.0.1.md`
 - [ ] (later, if multi-instance) add Upstash + `ioredis` per §7
+
+## 12. Staging environment (added by `infra/fly-staging-readiness`, 2026-07-16)
+
+The actual production app on this account is **`denver-epc`** (org `personal`, region `iad`) — not the generic `denver-api` name used as an example above. A dedicated staging app, **`denver-epc-staging`** (same org, same region), now exists alongside it, created empty (no machines, no secrets, no release) — see `audit/evidence/fly-staging-readiness-2026-07/STAGING_APP_PROOF.md` for the creation proof.
+
+**Config:** `fly.staging.toml` (repo root) — targets only `denver-epc-staging`, never `denver-epc`. Same `Dockerfile.api`, same `/api/v1/health` check, same single-machine/single-process topology as production (background schedulers still run **in-process** with the web server — see `audit/evidence/fly-staging-readiness-2026-07/WORKER_TOPOLOGY.md`; `api/worker.ts` remains an unused, undeployed second entrypoint). Staging differs only in non-secret ways: `APP_ENV=staging`, `LOG_LEVEL=debug`, and `min_machines_running=0` / `auto_stop_machines=true` for cost control.
+
+**Deployment:** `.github/workflows/fly-staging-deploy.yml`, `workflow_dispatch` only — **staging never auto-deploys** (no `push`, `pull_request`, or `schedule` trigger). Opening a PR against this workflow, or merging one, does not run it. `scripts/validate-fly-staging-config.mjs` runs in CI on every push/PR and fails the build if the staging config or workflow ever drifts toward being able to target production (wrong app name, a push trigger, a user-suppliable app-name input, a literal `DATABASE_URL_APP` value committed anywhere, etc.).
+
+**Database isolation:** staging must use its own Neon branch/project — **never** production's database, and never merely a schema inside it. Full analysis and recommendation: `audit/evidence/fly-staging-readiness-2026-07/DATABASE_ISOLATION_DECISION.md`. Staging must not use production customer data without a separate, explicit approval.
+
+**`DATABASE_URL_APP` is mandatory, with no fallback, in both environments.** Since AUDIT-P0-06, the API refuses to boot in `NODE_ENV=production` (which both `fly.toml` and `fly.staging.toml` set, deliberately — staging runs the real production code paths) if `DATABASE_URL_APP` is unset. There is no code path that falls back to the owner-level `DATABASE_URL` for runtime traffic, in staging or production, and this document does not describe one — see `api/db/pool.ts`.
+
+**Secrets are supplied out-of-band, never through this repo or this documentation.** Required names (values never recorded anywhere in the repo): `FLY_API_TOKEN`, `STAGING_DATABASE_URL_APP`, `STAGING_JWT_SECRET`, optionally `ANTHROPIC_API_KEY` — current presence/absence tracked by name only in `audit/evidence/fly-staging-readiness-2026-07/SECRET_PREREQUISITES_REDACTED.md`. **Credential rotation and creation are outside the scope of both the `infra/fly-staging-readiness` task and this document** — provisioning the staging Neon role/branch and supplying its connection string is a separate, explicitly-authorized step.
+
+**Release identity:** `/api/v1/health` now includes a non-secret `releaseSha` field (`api/services/releaseIdentity.ts`), populated at deploy time via `flyctl deploy --env APP_RELEASE_SHA=<git-sha>` in the staging workflow. `null` when unset (e.g. local dev). This lets anyone confirm exactly which commit a running Fly release corresponds to without shell access.
+
+**Rollback:** the primary rollback target for either app is always "whatever release was running immediately before the failed deploy" (for production, that is currently **v5** — see `audit/evidence/fly-staging-readiness-2026-07/FLY_PRODUCTION_BASELINE.md` for why v4 is a secondary fallback only, not primary). `flyctl releases --app <app>` plus `flyctl deploy --image <prior-release-image>` (or the Fly dashboard rollback action) is the mechanism; nothing new was built for this, since Fly's built-in release history already covers it.
+
+**Render:** outside the active deployment path for both staging and production. `render.yaml` and `render-deploy.yml` are unmodified by this work and unrelated to it.
+
+**Production promotion requires separate authorization.** This document, `fly.staging.toml`, and `fly-staging-deploy.yml` govern staging only. Nothing here deploys, or is intended to imply authorization to deploy, PR #18 (or any other change) to `denver-epc`. As of this section being written, **no application deployment — staging or production — has been performed** under `infra/fly-staging-readiness`; see `audit/evidence/fly-staging-readiness-2026-07/DEPLOYMENT_NOT_EXECUTED.md`.
