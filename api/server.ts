@@ -97,6 +97,7 @@ import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
 import { novaCommandsRouter } from './routes/novaCommands' // ADR-001: Nova inbound commands (HMAC, raw body)
+import { novaIntegrationStatusRouter } from './routes/novaIntegrationStatus' // ADR-001 §2.9: tenant-authed Nova panel read API + retry
 import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
 import { personalAgentRouter } from './routes/personalAgent' // ADR-012: per-user agent (flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
@@ -573,6 +574,7 @@ app.use('/api/v1',                myWorkRouter)          // v4.33.0: My Work —
 app.use('/api/v1',                lifecycleRouter)       // v4.34.0: Project lifecycle + approval gates (Redesign W3)
 app.use('/api/v1',                relatedRouter)         // v4.35.0: Cross-module related records (Redesign W4)
 app.use('/api/v1',                turnoverRouter)        // v4.38.0: Turnover packages + commissioning handoff (Redesign W7)
+app.use('/api/v1',                novaIntegrationStatusRouter) // ADR-001 §2.9: /projects/:id/nova-integration (read + retry)
 app.use('/api/v1',                procurementRiskRouter) // v4.52.0: Procurement Risk Engine
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
 app.use('/api/v1',                autoCoordinationRouter) // v4.49.0: Autonomous Coordination (recommend → approve → execute)
