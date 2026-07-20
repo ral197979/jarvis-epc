@@ -94,15 +94,29 @@ describe('JARVIS_SYSTEM_PROMPT', () => {
     expect(JARVIS_SYSTEM_PROMPT).toContain('"actions"')
   })
 
-  it('contains NEC code references', () => {
-    expect(JARVIS_SYSTEM_PROMPT).toContain('NEC')
-    expect(JARVIS_SYSTEM_PROMPT).toContain('430.')
+  // FEATURE-TRUTH REMEDIATION: the prompt previously advertised NEC 430.x /
+  // EVM CPI-SPI *calculation* capabilities Denver does not actually implement.
+  // Those assertions encoded a false claim and were replaced with honesty
+  // assertions (below). See src/config/systemPrompt.ts and
+  // DENVER_AI_CAPABILITY_STATUS.md.
+  it('does NOT advertise unimplemented engineering-calculation capabilities', () => {
+    // These are the specific overclaims removed in the feature-truth audit.
+    expect(JARVIS_SYSTEM_PROMPT).not.toContain('44 calcs')
+    expect(JARVIS_SYSTEM_PROMPT).not.toContain('12 NEC auto-calcs')
+    expect(JARVIS_SYSTEM_PROMPT).not.toMatch(/\bFuel\b/)     // the fabricated "Fuel" design tool
+    expect(JARVIS_SYSTEM_PROMPT).not.toContain('107 skills')
+    expect(JARVIS_SYSTEM_PROMPT).not.toContain('AGI')
   })
 
-  it('contains EVM references', () => {
+  it('states the engineering-calculation honesty boundary', () => {
+    expect(JARVIS_SYSTEM_PROMPT).toContain('does NOT have a verified engineering-calculation backend')
+    expect(JARVIS_SYSTEM_PROMPT).toContain('qualified engineer')
+  })
+
+  it('still covers the real EPC domains it does implement', () => {
     expect(JARVIS_SYSTEM_PROMPT).toContain('EVM')
-    expect(JARVIS_SYSTEM_PROMPT).toContain('CPI')
-    expect(JARVIS_SYSTEM_PROMPT).toContain('SPI')
+    expect(JARVIS_SYSTEM_PROMPT).toContain('RFIs')
+    expect(JARVIS_SYSTEM_PROMPT).toContain('commissioning')
   })
 
   it('contains critical action types', () => {
