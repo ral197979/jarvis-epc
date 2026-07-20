@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova-denver/v1/progress-event",
+  "title": "Denver → Nova: project progress event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "eventType", "occurredAt", "connectionId", "novaTenantId", "novaProjectId", "denverProjectId", "summary"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "eventId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "eventType": { "enum": ["denver.project.created", "denver.project.progress.updated", "denver.integration.test"] },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "connectionId": { "type": "string", "maxLength": 128 },
+    "novaTenantId": { "type": "string", "maxLength": 128 },
+    "novaProjectId": { "type": "string", "maxLength": 128 },
+    "denverProjectId": { "type": "string", "maxLength": 128 },
+    "correlationId": { "type": "string", "maxLength": 128 },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overallStatus"],
+      "properties": {
+        "overallStatus": {
+          "enum": ["planning", "engineering", "procurement", "construction", "mechanical_completion", "pre_commissioning", "commissioning", "performance_testing", "turnover", "client_acceptance", "closed", "on_hold", "cancelled"]
+        },
+        "overallPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "engineeringPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "procurementPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "constructionPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "mechanicalCompletionPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "commissioningPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "systemsReadyForStartup": { "type": "integer", "minimum": 0 },
+        "systemsAccepted": { "type": "integer", "minimum": 0 },
+        "criticalDeficienciesOpen": { "type": "integer", "minimum": 0 },
+        "deficienciesOpen": { "type": "integer", "minimum": 0 },
+        "overdueActivities": { "type": "integer", "minimum": 0 },
+        "turnoverStatus": { "enum": ["not_started", "in_progress", "issued", "accepted"] }
+      }
+    }
+  }
+}

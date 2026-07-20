@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova-denver/v1/create-project-request",
+  "title": "Nova → Denver: create EPC project command",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "command", "idempotencyKey", "connectionId", "novaTenantId", "novaProjectId", "project", "requestedBy"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "command": { "const": "project.create" },
+    "idempotencyKey": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "connectionId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "novaTenantId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "novaProjectId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "novaProjectUrl": { "type": "string", "maxLength": 512 },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "projectNumber"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+        "projectNumber": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "contractNumber": { "type": "string", "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 255 },
+        "location": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string", "maxLength": 255 },
+            "country": { "type": "string", "minLength": 2, "maxLength": 2 }
+          }
+        },
+        "startDate": { "type": "string", "format": "date" },
+        "targetCompletionDate": { "type": "string", "format": "date" },
+        "projectType": { "type": "string", "maxLength": 32 },
+        "scope": { "type": "array", "maxItems": 12, "items": { "type": "string", "maxLength": 32 } },
+        "systems": { "type": "array", "maxItems": 64, "items": { "type": "string", "maxLength": 64 } },
+        "templateKey": { "type": "string", "maxLength": 64 },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    "requestedBy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["novaUserId"],
+      "properties": {
+        "novaUserId": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 255 }
+      }
+    }
+  }
+}
