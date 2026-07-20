@@ -95,3 +95,19 @@ jobs:
       # No Node dependencies required — the script only reads checked-in
       # config/workflow text, so no `npm ci` needed for this gate.
       - run: node scripts/validate-fly-staging-config.mjs
+
+  feature-truth-guard:
+    name: feature-truth-guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      # Coverage guard reads source text only — no deps needed.
+      - run: node scripts/validate-capability-registry.mjs
+      # Semantic honesty invariants (needs the TS registry imported).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/__tests__/config/capabilityRegistry.test.ts
