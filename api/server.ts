@@ -96,6 +96,7 @@ import { commissioningItemsRouter } from './routes/commissioningItems' // v4.32.
 import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
+import { novaCommandsRouter } from './routes/novaCommands' // ADR-001: Nova inbound commands (HMAC, raw body)
 import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
 import { personalAgentRouter } from './routes/personalAgent' // ADR-012: per-user agent (flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
@@ -234,6 +235,12 @@ app.use(cors({
 // verification. Authenticated by signature (service-to-service), so it sits
 // outside the /api/v1 auth+CSRF chain. See COMMISSIONING_EXTRACTION_PLAN.md §1d.
 app.use('/api/cx/webhook', commissioningWebhookRouter)
+
+// ─── Nova command endpoint (ADR-001) ──────────────────────────────────────────
+// Same raw-body/HMAC pattern as the commissioning webhook: mounted BEFORE
+// express.json(), outside the /api/v1 auth+CSRF chain. Tenant resolution is
+// connection-scoped (see routes/novaCommands.ts header).
+app.use('/api/nova', novaCommandsRouter)
 
 // ─── Body / cookie parsing ────────────────────────────────────────────────────
 
