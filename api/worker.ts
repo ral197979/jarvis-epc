@@ -34,6 +34,8 @@ import { registerSlaEngine } from './services/slaEngine'
 import { registerNotificationWorker } from './services/notifications/notificationWorker'
 import { registerAnalyticsSnapshotHandler } from './services/actions/actionAnalyticsService'
 import { registerReadinessSnapshotHandler } from './services/readiness/readinessSnapshots'
+import { registerNovaOutboxHandler } from './services/integration/novaOutbox'
+import { registerNovaSnapshotDiffHandler } from './services/integration/novaSnapshotDiff'
 import { startIfcParseWorker, stopIfcParseWorker } from './services/bim/ifcParseWorker'
 import { startFederatedAggregationWorker, stopFederatedAggregationWorker } from './services/ecosystem/federatedAggregationWorker'
 import { purgeExpiredTokens } from './auth'
@@ -83,6 +85,8 @@ async function startWorkers(): Promise<void> {
   registerKnowledgeIngestHandler()
   registerFixExtractorHandler()
   registerKnowledgeEmbedHandler()
+  registerNovaOutboxHandler()
+  registerNovaSnapshotDiffHandler()
   startIfcParseWorker()
   startFederatedAggregationWorker()
 
