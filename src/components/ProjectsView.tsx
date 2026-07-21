@@ -21,10 +21,12 @@ import {
   selectContracts,
   selectActionItems,
   selectEVMProjects,
+  selectProjects,
 } from '../modules/biz/store'
 import { createDispatch, type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
+import { NovaIntegrationPanel } from './NovaIntegrationPanel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Project {
@@ -233,11 +235,15 @@ function ActionItemsPanel({ actions: items, projectId, canWrite, onAdd }: {
 }
 
 // ─── Project detail view ──────────────────────────────────────────────────────
-function ProjectDetail({ project, evm, actionItems, canWrite, onBack }: {
+function ProjectDetail({ project, evm, actionItems, canWrite, canManageIntegrations, backendProjectId, onBack }: {
   project:     Project & { evm?: EVMData | null }
   evm?:        EVMData | null
   actionItems: ActionItem[]
   canWrite:    boolean
+  /** owner/admin — may trigger Nova delivery retry (server enforces regardless). */
+  canManageIntegrations: boolean
+  /** Denver DB project UUID resolved from the hydrated backend projects collection (null when unresolved). */
+  backendProjectId: string | null
   onBack:      () => void
 }) {
   const progress = project.progress ?? 0
@@ -313,6 +319,11 @@ function ProjectDetail({ project, evm, actionItems, canWrite, onBack }: {
 
       {/* EVM panel */}
       {evm && <div style={{ marginBottom: 12 }}><EVMPanel evm={evm} /></div>}
+
+      {/* Nova integration (ADR-001 §2.9) */}
+      <div style={{ marginBottom: 12 }}>
+        <NovaIntegrationPanel projectId={backendProjectId} canManage={canManageIntegrations} />
+      </div>
 
       {/* Action items */}
       <ActionItemsPanel
@@ -440,6 +451,9 @@ export function ProjectsView({ policy, onNavigate, onAudit, onToast }: ProjectsV
   const rawContracts = useBizStore(selectContracts) as Project[]
   const allActions   = useBizStore(selectActionItems) as ActionItem[]
   const evmAll       = useBizStore(selectEVMProjects)
+  // Hydrated backend project rows (GET /api/v1/projects) — the source of the
+  // DB UUID that project-scoped APIs (e.g. Nova integration status) require.
+  const backendProjects = useBizStore(selectProjects) as Array<{ id?: string; code?: string; name?: string }>
 
   const projectsWithEVM = useMemo(() => {
     const evmByProj = new Map(evmAll.map(e => [(e as { project?: string }).project, e]))
@@ -509,12 +523,25 @@ export function ProjectsView({ policy, onNavigate, onAudit, onToast }: ProjectsV
 
   // ── Detail view ───────────────────────────────────────────────────────────────
   if (selected) {
+    // Resolve the backend DB project UUID for the selected workspace record:
+    // direct UUID id, else match the hydrated backend rows by code or name.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const matched = UUID_RE.test(selected.id)
+      ? selected.id
+      : backendProjects.find(bp =>
+          (bp.code && bp.code === selected.id) || (bp.name && bp.name === selected.project),
+        )?.id ?? null
+    const backendProjectId = matched && UUID_RE.test(matched) ? matched : null
     return (
       <ProjectDetail
         project={selected}
         evm={selected.evm ?? null}
         actionItems={allActions}
         canWrite={canWrite}
+        // UI RoleKey has no 'admin' — 'owner' is the only privileged UI role.
+        // The retry endpoint independently enforces owner/admin server-side.
+        canManageIntegrations={policy.activeRole === 'owner'}
+        backendProjectId={backendProjectId}
         onBack={() => setSelected(null)}
       />
     )

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova-denver/v1/create-project-response",
+  "title": "Denver → Nova: create EPC project response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "denverOrganizationId", "denverProjectId", "denverProjectNumber", "projectUrl", "createdAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "status": { "enum": ["created", "already_exists"] },
+    "denverOrganizationId": { "type": "string", "maxLength": 128 },
+    "denverProjectId": { "type": "string", "maxLength": 128 },
+    "denverProjectNumber": { "type": "string", "maxLength": 64 },
+    "projectUrl": { "type": "string", "maxLength": 512 },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}

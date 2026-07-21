@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "nova-denver/v1/turnover-event",
+  "title": "Denver → Nova: turnover package event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "eventId", "eventType", "occurredAt", "connectionId", "novaTenantId", "novaProjectId", "denverProjectId", "package"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "eventId": { "type": "string", "minLength": 8, "maxLength": 128 },
+    "eventType": { "const": "denver.turnover.package.updated" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "connectionId": { "type": "string", "maxLength": 128 },
+    "novaTenantId": { "type": "string", "maxLength": 128 },
+    "novaProjectId": { "type": "string", "maxLength": 128 },
+    "denverProjectId": { "type": "string", "maxLength": 128 },
+    "correlationId": { "type": "string", "maxLength": 128 },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packageId", "title", "status"],
+      "properties": {
+        "packageId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 255 },
+        "revision": { "type": "string", "maxLength": 32 },
+        "status": { "enum": ["open", "ready_for_commissioning", "in_commissioning", "ready_for_turnover", "issued", "accepted", "superseded"] },
+        "systemOrArea": { "type": "string", "maxLength": 255 },
+        "issuedAt": { "type": "string", "format": "date-time" },
+        "acceptedAt": { "type": "string", "format": "date-time" },
+        "acceptedBy": { "type": "string", "maxLength": 255 },
+        "packageUrl": { "type": "string", "maxLength": 512 },
+        "superseded": { "type": "boolean" }
+      }
+    }
+  }
+}

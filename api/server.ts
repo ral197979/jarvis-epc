@@ -96,6 +96,10 @@ import { commissioningItemsRouter } from './routes/commissioningItems' // v4.32.
 import { auditRouter        } from './routes/audit'         // v4.30.0-audit
 import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
+import { novaCommandsRouter } from './routes/novaCommands' // ADR-001: Nova inbound commands (HMAC, raw body)
+import { novaIntegrationStatusRouter } from './routes/novaIntegrationStatus' // ADR-001 §2.9: tenant-authed Nova panel read API + retry
+import { registerNovaOutboxHandler } from './services/integration/novaOutbox' // ADR-001: outbox drain in every scheduler process
+import { registerNovaSnapshotDiffHandler } from './services/integration/novaSnapshotDiff' // ADR-001: progress/turnover snapshot diffs
 import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
 import { personalAgentRouter } from './routes/personalAgent' // ADR-012: per-user agent (flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
@@ -234,6 +238,12 @@ app.use(cors({
 // verification. Authenticated by signature (service-to-service), so it sits
 // outside the /api/v1 auth+CSRF chain. See COMMISSIONING_EXTRACTION_PLAN.md §1d.
 app.use('/api/cx/webhook', commissioningWebhookRouter)
+
+// ─── Nova command endpoint (ADR-001) ──────────────────────────────────────────
+// Same raw-body/HMAC pattern as the commissioning webhook: mounted BEFORE
+// express.json(), outside the /api/v1 auth+CSRF chain. Tenant resolution is
+// connection-scoped (see routes/novaCommands.ts header).
+app.use('/api/nova', novaCommandsRouter)
 
 // ─── Body / cookie parsing ────────────────────────────────────────────────────
 
@@ -566,6 +576,7 @@ app.use('/api/v1',                myWorkRouter)          // v4.33.0: My Work —
 app.use('/api/v1',                lifecycleRouter)       // v4.34.0: Project lifecycle + approval gates (Redesign W3)
 app.use('/api/v1',                relatedRouter)         // v4.35.0: Cross-module related records (Redesign W4)
 app.use('/api/v1',                turnoverRouter)        // v4.38.0: Turnover packages + commissioning handoff (Redesign W7)
+app.use('/api/v1',                novaIntegrationStatusRouter) // ADR-001 §2.9: /projects/:id/nova-integration (read + retry)
 app.use('/api/v1',                procurementRiskRouter) // v4.52.0: Procurement Risk Engine
 app.use('/api/v1',                fieldAssistantRouter)  // v4.48.0: AI Field Assistant
 app.use('/api/v1',                autoCoordinationRouter) // v4.49.0: Autonomous Coordination (recommend → approve → execute)
@@ -709,6 +720,13 @@ async function start(): Promise<void> {
   // fail their job cleanly instead of crashing the scheduler).
   startScheduler()
   registerWebhookDispatchHandler()
+  // Nova integration handlers must be registered in EVERY process that runs
+  // the scheduler claim loop (this server and api/worker.ts): a claiming
+  // process without the handler fails the job and burns its retry attempts.
+  // On Fly there is no separate worker process, so this registration is what
+  // drives outbox delivery and snapshot diffs in that deployment.
+  registerNovaOutboxHandler()
+  registerNovaSnapshotDiffHandler()
   registerIntegrationSync()
   registerKpiSnapshotHandler()
   registerComplianceWatcher()
