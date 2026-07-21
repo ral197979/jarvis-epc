@@ -3,12 +3,42 @@
  *
  * The text-parsing coverage guard lives in scripts/validate-capability-registry.mjs
  * (CI job "feature-truth-guard"). This test enforces the invariants that need the
- * real imported registry, and proves (negatively) that representative FALSE claims
- * would be rejected — so the guard can't rot into a rubber stamp.
+ * real imported registry.
+ *
+ * Each invariant is a NAMED PREDICATE returning true when an entry is honest under
+ * that rule (and true vacuously when the rule does not apply). The positive tests
+ * run every predicate over the real CAPABILITIES; the negative tests assert the
+ * SAME predicate REJECTS a fabricated false claim. Because both directions call the
+ * one predicate, deleting or weakening a rule breaks the negative test — the block
+ * cannot rot into a rubber stamp the way an assert-what-you-just-assigned test can.
  */
 import { describe, it, expect } from 'vitest'
 import { CAPABILITIES, capabilityForRoute, type Capability } from '../../config/capabilityRegistry'
 import { NAVIGATION_ITEMS } from '../../config/navigation'
+
+const present = (v: unknown) =>
+  v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)
+
+// ─── Honesty invariants as predicates (true = honest / rule satisfied) ──────────
+export const INVARIANTS: Record<string, (c: Capability) => boolean> = {
+  verifiedNativeHasEvidence: (c) =>
+    c.status !== 'VERIFIED_NATIVE' || (present(c.backendLocation) && c.evidence.length > 0),
+  externalStatusHasDependency: (c) =>
+    (c.status !== 'VERIFIED_EXTERNAL' && c.status !== 'EXTERNAL_SHELL') || present(c.externalDependency),
+  ragImpliesLlm: (c) =>
+    c.status !== 'GROUNDING_OR_RAG' || c.llmUsed === true,
+  deterministicIsNotLlm: (c) =>
+    c.status !== 'DETERMINISTIC_AUTOMATION' || c.llmUsed === false,
+  syntheticOrShellNotProduction: (c) =>
+    (c.status !== 'PLACEHOLDER_OR_SYNTHETIC' && c.status !== 'EXTERNAL_SHELL') || c.productionSuitable === false,
+  unvalidatedCalcNeedsReview: (c) =>
+    !(c.engineeringCalculation && !c.calculationValidated) || c.engineerReviewRequired === true,
+  drawingGeneratorNotValidatedCalc: (c) =>
+    c.status !== 'DRAWING_GENERATOR' || c.calculationValidated === false,
+  brokenOrSyntheticIsDocumented: (c) =>
+    (c.status !== 'BROKEN_OR_DEAD' && c.status !== 'PLACEHOLDER_OR_SYNTHETIC') ||
+    (c.honestyIssue ?? '').length + c.limitations.join('').length > 0,
+}
 
 describe('capability registry — coverage', () => {
   it('every sidebar navigation route has a registry entry', () => {
@@ -23,87 +53,51 @@ describe('capability registry — coverage', () => {
   })
 })
 
-describe('capability registry — honesty invariants', () => {
-  const has = (c: Capability, ...fields: (keyof Capability)[]) =>
-    fields.every(f => c[f] !== undefined && c[f] !== '' && !(Array.isArray(c[f]) && (c[f] as unknown[]).length === 0))
-
-  it('VERIFIED_NATIVE requires a backendLocation and at least one evidence item', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'VERIFIED_NATIVE')) {
-      expect(has(c, 'backendLocation'), `${c.id} VERIFIED_NATIVE without backendLocation`).toBe(true)
-      expect(c.evidence.length, `${c.id} VERIFIED_NATIVE without evidence`).toBeGreaterThan(0)
-    }
-  })
-
-  it('VERIFIED_EXTERNAL and EXTERNAL_SHELL require an externalDependency', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'VERIFIED_EXTERNAL' || c.status === 'EXTERNAL_SHELL')) {
-      expect(has(c, 'externalDependency'), `${c.id} (${c.status}) without externalDependency`).toBe(true)
-    }
-  })
-
-  it('GROUNDING_OR_RAG implies llmUsed', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'GROUNDING_OR_RAG')) {
-      expect(c.llmUsed, `${c.id} is RAG but llmUsed=false`).toBe(true)
-    }
-  })
-
-  it('DETERMINISTIC_AUTOMATION must NOT claim an LLM', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'DETERMINISTIC_AUTOMATION')) {
-      expect(c.llmUsed, `${c.id} is deterministic but claims llmUsed=true`).toBe(false)
-    }
-  })
-
-  it('placeholder/synthetic or external-shell engineering is never production-suitable', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'PLACEHOLDER_OR_SYNTHETIC' || c.status === 'EXTERNAL_SHELL')) {
-      expect(c.productionSuitable, `${c.id} (${c.status}) marked productionSuitable`).toBe(false)
-    }
-  })
-
-  it('any engineering calculation that is not validated must require engineer review', () => {
-    for (const c of CAPABILITIES.filter(c => c.engineeringCalculation && !c.calculationValidated)) {
-      expect(c.engineerReviewRequired, `${c.id} has unvalidated engineering calc but engineerReviewRequired=false`).toBe(true)
-    }
-  })
-
-  it('DRAWING_GENERATOR must not claim to perform validated engineering calculation', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'DRAWING_GENERATOR')) {
-      expect(c.calculationValidated, `${c.id} is a drawing generator but claims calculationValidated`).toBe(false)
-    }
-  })
-
-  it('BROKEN_OR_DEAD and PLACEHOLDER_OR_SYNTHETIC entries must document the issue', () => {
-    for (const c of CAPABILITIES.filter(c => c.status === 'BROKEN_OR_DEAD' || c.status === 'PLACEHOLDER_OR_SYNTHETIC')) {
-      expect((c.honestyIssue ?? '').length + c.limitations.join('').length, `${c.id} lacks a documented issue`).toBeGreaterThan(0)
-    }
-  })
+describe('capability registry — honesty invariants (real registry)', () => {
+  for (const [name, predicate] of Object.entries(INVARIANTS)) {
+    it(`every entry satisfies: ${name}`, () => {
+      for (const c of CAPABILITIES) {
+        expect(predicate(c), `${c.id} violates ${name}`).toBe(true)
+      }
+    })
+  }
 })
 
-describe('capability registry — negative cases (guard must reject false claims)', () => {
-  // These prove the invariants above actually bite. Each fabricates a false
-  // claim and asserts the corresponding rule would fail it.
+describe('capability registry — negative cases (the same predicate must REJECT a false claim)', () => {
+  // A minimal honest baseline. Each case mutates it into a specific lie and asserts
+  // the corresponding predicate returns false. If a rule were deleted (predicate
+  // hard-wired to true), the matching assertion here fails — that is the guard on
+  // the guard.
   const base: Capability = {
-    id: 'x', name: 'x', status: 'VERIFIED_NATIVE', verification: 'code',
+    id: 'x', name: 'x', status: 'UI_ONLY', verification: 'code',
     llmUsed: false, deterministicRulesUsed: false, predictiveModelUsed: false,
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
-    productionSuitable: true, engineerReviewRequired: false, limitations: [], evidence: [],
+    productionSuitable: false, engineerReviewRequired: false, limitations: [], evidence: [],
   }
+  const reject = (name: keyof typeof INVARIANTS, bad: Partial<Capability>) =>
+    expect(INVARIANTS[name]({ ...base, ...bad }), `${name} failed to reject a false claim`).toBe(false)
 
-  it('rejects VERIFIED_NATIVE with no evidence', () => {
-    const c = { ...base, backendLocation: 'x', evidence: [] }
-    expect(c.status === 'VERIFIED_NATIVE' && c.evidence.length === 0).toBe(true) // would fail the invariant
-  })
+  it('rejects VERIFIED_NATIVE with no evidence', () =>
+    reject('verifiedNativeHasEvidence', { status: 'VERIFIED_NATIVE', backendLocation: 'x', evidence: [] }))
 
-  it('rejects a deterministic feature claiming to be an LLM', () => {
-    const c = { ...base, status: 'DETERMINISTIC_AUTOMATION' as const, llmUsed: true }
-    expect(c.status === 'DETERMINISTIC_AUTOMATION' && c.llmUsed).toBe(true) // would fail the invariant
-  })
+  it('rejects an external-status entry with no externalDependency', () =>
+    reject('externalStatusHasDependency', { status: 'EXTERNAL_SHELL', externalDependency: undefined }))
 
-  it('rejects placeholder engineering marked production-suitable', () => {
-    const c = { ...base, status: 'PLACEHOLDER_OR_SYNTHETIC' as const, productionSuitable: true }
-    expect(c.status === 'PLACEHOLDER_OR_SYNTHETIC' && c.productionSuitable).toBe(true) // would fail the invariant
-  })
+  it('rejects RAG that claims no LLM', () =>
+    reject('ragImpliesLlm', { status: 'GROUNDING_OR_RAG', llmUsed: false }))
 
-  it('rejects unvalidated engineering calc without engineer-review requirement', () => {
-    const c = { ...base, engineeringCalculation: true, calculationValidated: false, engineerReviewRequired: false }
-    expect(c.engineeringCalculation && !c.calculationValidated && !c.engineerReviewRequired).toBe(true) // would fail
-  })
+  it('rejects a deterministic feature claiming to be an LLM', () =>
+    reject('deterministicIsNotLlm', { status: 'DETERMINISTIC_AUTOMATION', llmUsed: true }))
+
+  it('rejects placeholder engineering marked production-suitable', () =>
+    reject('syntheticOrShellNotProduction', { status: 'PLACEHOLDER_OR_SYNTHETIC', productionSuitable: true }))
+
+  it('rejects unvalidated engineering calc without engineer-review requirement', () =>
+    reject('unvalidatedCalcNeedsReview', { engineeringCalculation: true, calculationValidated: false, engineerReviewRequired: false }))
+
+  it('rejects a drawing generator claiming validated calculation', () =>
+    reject('drawingGeneratorNotValidatedCalc', { status: 'DRAWING_GENERATOR', calculationValidated: true }))
+
+  it('rejects a BROKEN_OR_DEAD entry with no documented issue', () =>
+    reject('brokenOrSyntheticIsDocumented', { status: 'BROKEN_OR_DEAD', honestyIssue: undefined, limitations: [] }))
 })

@@ -2,11 +2,25 @@
 /**
  * Denver Engineering — feature-truth guard.
  *
- * Enforces that src/config/capabilityRegistry.ts stays honest and in sync with
- * the real navigation surface and router, as a hard CI gate (job:
- * "feature-truth-guard"). It parses checked-in SOURCE (navigation.ts,
- * ContentRouter.tsx, capabilityRegistry.ts) rather than trusting prose — so a
- * new route or a drifted claim fails the build, not a doc review.
+ * Keeps src/config/capabilityRegistry.ts in sync with the real navigation
+ * surface and router, as a hard CI gate (job: "feature-truth-guard"). It parses
+ * checked-in SOURCE (navigation.ts, ContentRouter.tsx, capabilityRegistry.ts)
+ * rather than trusting prose — so an added/removed nav route or TAB_MAP entry
+ * without a matching registry entry fails the build.
+ *
+ * SCOPE — what this guard does and does NOT catch (independent review 2026-07-21,
+ * correcting an earlier overstatement that "a drifted claim fails the build"):
+ *   - CATCHES: structural drift — a route that exists in nav/router but has no
+ *     registry entry, a phantom/duplicate registry route, coverage-count drift.
+ *   - CATCHES (via the companion test): well-formedness of honesty fields —
+ *     VERIFIED_NATIVE needs evidence, RAG implies llmUsed, etc.
+ *   - DOES NOT CATCH: whether a classification is TRUE. A fabricated entry with
+ *     nonexistent backendLocation paths, invented evidence strings, and
+ *     status:'VERIFIED_NATIVE' passes both this script and the test. Truth of a
+ *     claim is established only by human/agent code review (e.g. the reviews that
+ *     produced the 2026-07-21 reclassifications), not by this gate.
+ *   - DOES NOT CATCH: a new user-reachable surface added INSIDE an existing route
+ *     (a sub-tab/panel), because the guard keys on nav/TAB_MAP routes only.
  *
  * Zero runtime deps: reads files as text, like scripts/validate-fly-staging-config.mjs.
  * The richer semantic invariants (evidence required for VERIFIED_NATIVE, etc.)

@@ -22,6 +22,17 @@
 // Removed. This prompt is consumed only by the legacy JarvisCore client path
 // (src/jarvis/JarvisCore.jsx); the production RAG assistant (api/services/
 // askBuilder.ts) uses its own grounded "answer ONLY from SOURCES" prompt.
+//
+// SCOPE CORRECTION (independent review 2026-07-21): editing THIS file does not,
+// by itself, fix hallucination risk on the production chat/agent surface. The
+// chat/agent gateway (src/modules/gateway/index.ts:198) sends its OWN hard-coded
+// AI_SYSTEM_PROMPT (:229), which this PR does NOT touch and which lacks the
+// engineering-calculation-honesty guard added below. So there are THREE distinct
+// prompt surfaces — JarvisCore (this file), askBuilder (grounded RAG), and the
+// gateway agent (AI_SYSTEM_PROMPT) — and only the first is corrected here.
+// Hardening AI_SYSTEM_PROMPT is tracked as a separate follow-up (see
+// DENVER_AI_CAPABILITY_STATUS.md). Do not represent this change as a
+// whole-product anti-hallucination fix.
 const PROMPT_LINES = [
   'You are Denver Engineering — an EPC (engineering, procurement & construction) project-management assistant.',
   'You help organize and record real project work: CRM, contracts, invoicing, procurement, submittals, RFIs,',

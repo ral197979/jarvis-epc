@@ -40,19 +40,31 @@ POST /api/v1/mcp/execute               (api/routes/mcp.ts)
 | **PWTP** (RO/NF, clarifiers, GAC, UV, chlorine CT) | Potable water design | **Missing** — no design code reachable; in-app math is synthetic. | `EXTERNAL_SHELL` |
 | **Pump / hydraulics** (TDH, Darcy-Weisbach) | Pump sizing | Real calc reported in a **separate repository** (`MEPPro-Precision-Edition`), **isolated** — not reachable from Denver. | `EXTERNAL_SHELL` |
 | **Process equipment** — separator, flash/VLE, reactor, mass balance, heat exchanger, pressure vessel | Process equipment design | **Missing** — routes to MCP; no backend implements Souders-Brown, Rachford-Rice, LMTD/NTU, ASME VIII. | `EXTERNAL_SHELL` |
-| **HVAC / MEP** (ASHRAE load, duct/pipe sizing) | Load & sizing calcs | **Stub** — in-app "load" math is not validated engineering. | `EXTERNAL_SHELL` |
-| **Electrical / NEC** (motor FLA, wire, breaker, conduit) | NEC sizing | **Text references only** — no 430.250 / 310.16 / 430.52 / conduit-fill implementation. | `EXTERNAL_SHELL` |
-| **Stormwater** (detention, LID, runoff) | Hydrology & detention | **Stub** — no Rational Method / curve-number / routing. | `EXTERNAL_SHELL` |
-| **Fire protection** (NFPA) | Suppression references | **Mention only** — a UL 1479 firestop *inspection* checklist exists; no NFPA hydraulics. | `EXTERNAL_SHELL` |
+| **HVAC / MEP** (ASHRAE load, duct/pipe sizing) | Load & sizing calcs | **Corrected 2026-07-21 — NOT a stub.** Real deterministic U·A·ΔT envelope loads, orientation-split solar gains, psychrometrics, Reynolds/friction/pressure-drop exist (`Denver-v3_4-MCP-API.html:17984-18075, :20223-20275`). But **unvalidated**, with hard-coded fudge factors (invented `1.3/1.5/1.6` "solar factors"), and it shows a false `"per NEC/ASHRAE"`-style success toast. Treat as **unvalidated in-app calculation**, not a shell and not a stub. | `EXTERNAL_SHELL`* |
+| **Electrical / NEC** (motor FLA, wire, breaker, conduit) | NEC sizing | **Corrected 2026-07-21 — NOT "text only".** Real 3-phase current (`demand/(480·√3·0.85)`), 125% continuous factor, breaker ladder, voltage-drop, short-circuit exist (`Denver-v3_4-MCP-API.html:25610-25739`). **Unvalidated**, and emits a false `"Electrical loads calculated per NEC Article 220"` toast. **Unvalidated in-app calculation.** | `EXTERNAL_SHELL`* |
+| **Stormwater** (detention, LID, runoff) | Hydrology & detention | **Corrected 2026-07-21 — NOT a stub.** Rational Method (`Q=CiA`), NRCS curve-number TR-55 (`S=1000/CN−10`), Kirpich/NRCS/Kerby time-of-concentration, detention sizing, inlet/channel/bioretention design exist (`Stormwater-Designer-v1_4-MCP-API.html:4851-5876`). **Unvalidated in-app calculation**, not a stub. | `EXTERNAL_SHELL`* |
+| **Fire protection** (NFPA) | Suppression references | **Corrected 2026-07-21 — NOT "mention only".** Real NFPA-13 density-by-hazard table, `flowHead=k·√P` orifice equation, hose-stream allowance, standpipe (`Denver-v3_4-MCP-API.html:25891-25938`). **Unvalidated** (magic `+5 psi`, "simplified Hazen-Williams `·0.5`"), and shows a false `"Sprinkler system designed per NFPA 13"` toast. **Unvalidated in-app calculation.** | `EXTERNAL_SHELL`* |
 | **Oil & Gas** (separator, flash) | O&G process | **Missing** — same as Process equipment. | `EXTERNAL_SHELL` |
-| **P&ID / PFD diagrams** | ISA-5.1 drawings | ✅ **Real** — genuine SVG/DXF generation (`public/tools/denver/UNIVERSAL-PID-GENERATOR.js`, `TRUE-PID-GENERATOR.js`). **Drawing only.** | `DRAWING_GENERATOR` |
+| **P&ID / PFD diagrams** | ISA-5.1 drawings | **Corrected 2026-07-21 — BROKEN, not real.** The PFD tool always renders a placeholder fallback (symbol-name probe misses `class UniversalPIDGenerator`); the TRUE-P&ID tool throws a `TypeError` every run (wrong arg order + four undefined methods); both are **canvas, not SVG** (`generateSVG()` returns an empty rect); **DXF export is a stub** (`exportToPIDDXF` undefined repo-wide — the button downloads an SVG). | `BROKEN_OR_DEAD` |
 | **EPC calculators** (EVM, schedule, manpower, unit rate) | Project-controls math | ✅ **Real and deterministic**, in-repo — these are project-controls arithmetic, not discipline engineering design. | `VERIFIED_NATIVE` (within `calc`) |
+
+> **\* `EXTERNAL_SHELL*` (corrected 2026-07-21).** The independent review found the original "stub / text-only / mention-only" labels on HVAC, Electrical, Stormwater, and Fire were **too harsh and misleading in the opposite direction**: each contains real, hand-rolled deterministic engineering code that returns a confident, precisely-formatted number. The taxonomy lacks an exact status for this; the honest description is **"unvalidated in-app calculation"** — *worse* than an empty shell for a reviewer, because a shell returns nothing while these return a plausible unvalidated answer with a green success toast. Do not read these rows as "nothing to worry about."
+
+## 2a. Undisclosed misleading behavior (added 2026-07-21)
+
+The original audit documented synthetic math but omitted three user-facing behaviors that actively mislead:
+
+1. **Fabricated results presented as an optimization run.** `WWTP-DesignPro-v5_0-MCP-API.html:18525-18546` `runOptimization()` waits 2 s, generates four `Math.random()` numbers, and shows `"✓ Optimization complete! Pareto-optimal solution found."` `runSensitivityAnalysis()` claims "100 simulations" and does nothing.
+2. **False code-compliance toasts.** `"Sprinkler system designed per NFPA 13"` (`Denver-v3_4-MCP-API.html:25933`), `"Electrical loads calculated per NEC Article 220"` (`:25644`), plus a `"DXF/CAD EXPORT — FULLY WORKING"` banner (`:803-804`) for an export that downloads an SVG.
+3. **No in-app warning anywhere.** No discipline tool renders any disclaimer from §4 below; the `calc` surface offers **"Save to Project"**, persisting synthetic numbers into the project record of truth with no provenance flag. The registry documents the problem; the running app does not.
 
 ## 3. What P&ID/PFD generation does and does not prove
 
-**Does:** produce real ISA-5.1-style diagrams — valve/actuator symbols, instrument bubbles, title block, SVG rendering, DXF export.
+> **Corrected 2026-07-21: P&ID/PFD generation is currently BROKEN** (see the table row and the `pid-pfd-generator` registry entry). The description below is the *intended* behavior; it is not what the tools do today. The PFD tool renders a placeholder, the TRUE-P&ID tool throws, output is canvas-not-SVG, and "DXF export" downloads an SVG.
 
-**Does NOT prove or imply:** hydraulic sizing · process sizing · equipment selection · code compliance · operability · safety · constructability.
+**Intended (not currently working):** produce real ISA-5.1-style diagrams — valve/actuator symbols, instrument bubbles, title block.
+
+**Would NOT prove or imply, even when fixed:** hydraulic sizing · process sizing · equipment selection · code compliance · operability · safety · constructability.
 
 A generated diagram is a **drafting artifact**. It carries no calculation authority.
 
