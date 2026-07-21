@@ -98,6 +98,8 @@ import commissioningRouter    from './routes/commissioning' // v4.30.0
 import { commissioningWebhookRouter } from './routes/commissioningWebhook' // PR-1: external Commissioning status webhook (HMAC, raw body)
 import { novaCommandsRouter } from './routes/novaCommands' // ADR-001: Nova inbound commands (HMAC, raw body)
 import { novaIntegrationStatusRouter } from './routes/novaIntegrationStatus' // ADR-001 §2.9: tenant-authed Nova panel read API + retry
+import { registerNovaOutboxHandler } from './services/integration/novaOutbox' // ADR-001: outbox drain in every scheduler process
+import { registerNovaSnapshotDiffHandler } from './services/integration/novaSnapshotDiff' // ADR-001: progress/turnover snapshot diffs
 import { openapiRouter } from './routes/openapi' // R6b: OpenAPI spec (public, flag-gated)
 import { personalAgentRouter } from './routes/personalAgent' // ADR-012: per-user agent (flag-gated)
 import automationRouter       from './routes/automation'    // v4.31.0
@@ -718,6 +720,13 @@ async function start(): Promise<void> {
   // fail their job cleanly instead of crashing the scheduler).
   startScheduler()
   registerWebhookDispatchHandler()
+  // Nova integration handlers must be registered in EVERY process that runs
+  // the scheduler claim loop (this server and api/worker.ts): a claiming
+  // process without the handler fails the job and burns its retry attempts.
+  // On Fly there is no separate worker process, so this registration is what
+  // drives outbox delivery and snapshot diffs in that deployment.
+  registerNovaOutboxHandler()
+  registerNovaSnapshotDiffHandler()
   registerIntegrationSync()
   registerKpiSnapshotHandler()
   registerComplianceWatcher()
