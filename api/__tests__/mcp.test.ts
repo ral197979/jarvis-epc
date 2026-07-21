@@ -258,6 +258,66 @@ describe('POST /api/v1/mcp/execute — native tools', () => {
   })
 })
 
+describe('POST /api/v1/mcp/execute — audit trail (regression: audit_log column mismatch)', () => {
+  // The real audit_action enum (migration 001_tenants_and_users.sql). The audit
+  // INSERT must use one of these — not an ad-hoc string like 'mcp:<tool>'.
+  const AUDIT_ACTION_ENUM = new Set([
+    'create', 'read', 'update', 'delete',
+    'login', 'logout', 'export', 'approve', 'reject',
+    'upload', 'download', 'integrate_push', 'integrate_pull',
+  ])
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    delete process.env['AVA_MCP_URL']
+    delete process.env['MCP_FETCH_ALLOWLIST']
+  })
+
+  it('writes an audit_log row on every execute using real columns and a valid audit_action enum', async () => {
+    const { query } = await import('../db/pool')
+    const res = await request(app).post('/api/v1/mcp/execute').send({
+      tool: 'audit_query', params: { filter: 'x', limit: '5' },
+    })
+    expect(res.status).toBe(200)
+
+    // Locate the audit INSERT among the query() calls the request issued.
+    const insert = vi.mocked(query).mock.calls.find(
+      ([sql]) => /INSERT\s+INTO\s+audit_log/i.test(String(sql)),
+    )
+    expect(insert, 'MCP execute must write an audit_log row').toBeDefined()
+
+    const [sql, params] = insert as [string, unknown[]]
+    // Real audit_log columns — NOT the nonexistent resource_type / changes.
+    expect(sql).toMatch(/\bresource\b/)
+    expect(sql).toMatch(/\bnew_data\b/)
+    expect(sql).not.toMatch(/resource_type/)
+    expect(sql).not.toMatch(/\bchanges\b/)
+
+    // action must be a valid audit_action enum value.
+    const enumArg = params.find(p => typeof p === 'string' && AUDIT_ACTION_ENUM.has(p))
+    expect(enumArg, 'INSERT must pass a valid audit_action enum value').toBeDefined()
+
+    // resource records the tool identity.
+    expect(params.some(p => typeof p === 'string' && p.includes('audit_query'))).toBe(true)
+  })
+
+  it('stores a non-UUID actor id as NULL (user_id is a UUID FK)', async () => {
+    // The tenant middleware mock sets auth.sub = 'user-abc' (not a UUID); the
+    // insert must coerce that to NULL rather than blow up the row.
+    const { query } = await import('../db/pool')
+    await request(app).post('/api/v1/mcp/execute').send({
+      tool: 'audit_log', params: { action: 'test_event', details: {} },
+    })
+    const insert = vi.mocked(query).mock.calls.find(
+      ([sql]) => /INSERT\s+INTO\s+audit_log/i.test(String(sql)),
+    )
+    expect(insert).toBeDefined()
+    const [, params] = insert as [string, unknown[]]
+    // Params are [tenant_id, user_id, action, resource, new_data].
+    expect(params[1]).toBeNull()
+  })
+})
+
 describe('POST /api/v1/mcp/execute — Ava proxy', () => {
   beforeEach(() => { vi.clearAllMocks(); process.env['AVA_MCP_URL'] = 'http://ava-test:8788' })
   afterEach(() => delete process.env['AVA_MCP_URL'])
