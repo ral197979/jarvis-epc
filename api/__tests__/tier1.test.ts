@@ -2,8 +2,8 @@
  * Tier-1 API smoke tests — v4.30.0
  *
  * Single spec file that verifies the happy-path shape of every Tier-1
- * read endpoint. Individual per-route spec files (risks.test.ts, mcp.test.ts)
- * remain authoritative for CRUD / edge cases; this file catches regressions
+ * read endpoint. Individual per-route spec files (mcp.test.ts) remain
+ * authoritative for CRUD / edge cases; this file catches regressions
  * like "missing router mount", "forgot requireTenant()", or "response shape
  * changed" without the overhead of exhaustive per-route coverage.
  *
@@ -56,6 +56,7 @@ import { dailyLogsRouter }   from '../routes/dailyLogs'
 import { drawingsRouter }    from '../routes/drawings'
 import { bimRouter }         from '../routes/bim'
 import { budgetsRouter }     from '../routes/budgets'
+import { changeOrdersRouter } from '../routes/changeOrders'
 import { inspectionsRouter } from '../routes/inspections'
 import { punchListsRouter }  from '../routes/punchLists'
 import { calculationsRouter } from '../routes/calculations'
@@ -68,6 +69,7 @@ function makeApp() {
   app.use('/api/v1', drawingsRouter as any)
   app.use('/api/v1', bimRouter as any)
   app.use('/api/v1', budgetsRouter as any)
+  app.use('/api/v1', changeOrdersRouter as any)
   app.use('/api/v1', inspectionsRouter as any)
   app.use('/api/v1', punchListsRouter as any)
   app.use('/api/v1', calculationsRouter as any)

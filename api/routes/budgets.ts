@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * Denver Engineering — Budgets & Change Orders API Route
+ * Denver Engineering — Budgets API Route
  * ─────────────────────────────────────────────────────────────────────────────
- * v4.31.0 — Procore Financials-parity budget, cost codes, and change orders.
+ * v4.31.0 — Procore Financials-parity budget and cost codes.
+ *
+ * Change-order CRUD lives in api/routes/changeOrders.ts (changeOrdersRouter),
+ * which is service-backed and matches the reconciled change_orders schema
+ * (migration 083). The inline change-order routes that used to live here were
+ * removed: they shadowed changeOrdersRouter (mounted on the same /api/v1
+ * prefix) and used the pre-083 column shape (co_type/amount/schedule_days),
+ * returning the wrong response envelope and writing lossy rows.
  *
  * Endpoints:
  *   GET    /api/v1/projects/:projectId/budget
@@ -13,9 +20,6 @@
  *   PATCH  /api/v1/budget-items/:itemId
  *   DELETE /api/v1/budget-items/:itemId
  *   GET    /api/v1/projects/:projectId/budget/rollup
- *   GET    /api/v1/projects/:projectId/change-orders
- *   POST   /api/v1/projects/:projectId/change-orders
- *   PATCH  /api/v1/change-orders/:id
  */
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
@@ -159,76 +163,6 @@ router.get('/projects/:projectId/budget/rollup', async (req: Request, res: Respo
     res.json({ rollup: result.rows[0] ?? null })
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch rollup' })
-  }
-})
-
-// ─── Change Orders ───────────────────────────────────────────────────────────
-router.get('/projects/:projectId/change-orders', async (req: Request, res: Response) => {
-  const r = req as AuthTenantReq
-  const { status, co_type } = req.query
-  const params: unknown[] = [r.tenantId!, req.params.projectId]
-  const filters: string[] = []
-  if (status)  { params.push(status);  filters.push(`status=$${params.length}`) }
-  if (co_type) { params.push(co_type); filters.push(`co_type=$${params.length}`) }
-  const where = filters.length ? `AND ${filters.join(' AND ')}` : ''
-  try {
-    const result = await tenantQuery(r.tenantId!,
-      `SELECT * FROM change_orders WHERE tenant_id=$1 AND project_id=$2 ${where}
-        ORDER BY created_at DESC`, params)
-    res.json({ change_orders: result.rows })
-  } catch (e) {
-    res.status(500).json({ error: 'Failed to list change orders' })
-  }
-})
-
-router.post('/projects/:projectId/change-orders', async (req: Request, res: Response) => {
-  const r = req as AuthTenantReq
-  const b = req.body ?? {}
-  if (!b.title) return res.status(400).json({ error: 'title required' })
-  const countRes = await tenantQuery(r.tenantId!,
-    'SELECT COUNT(*) AS n FROM change_orders WHERE tenant_id=$1 AND project_id=$2',
-    [r.tenantId!, req.params.projectId])
-  const n = parseInt(countRes.rows[0]?.n ?? '0') + 1
-  const co_number = b.co_number ?? `${(b.co_type ?? 'PCO')}-${String(n).padStart(3, '0')}`
-  try {
-    const result = await tenantQuery(r.tenantId!,
-      `INSERT INTO change_orders
-        (tenant_id, project_id, co_number, co_type, title, description, reason_code,
-         amount, schedule_days, status, cost_code, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
-      [r.tenantId!, req.params.projectId, co_number, b.co_type ?? 'PCO',
-       b.title, b.description ?? null, b.reason_code ?? null,
-       b.amount ?? 0, b.schedule_days ?? 0,
-       b.status ?? 'draft', b.cost_code ?? null, (r as any).auth?.sub ?? null])
-    res.status(201).json({ change_order: result.rows[0] })
-  } catch (e: any) {
-    if (e?.code === '23505') return res.status(409).json({ error: 'co_number exists' })
-    console.error('[change-orders] create error', e)
-    res.status(500).json({ error: 'Failed to create change order' })
-  }
-})
-
-router.patch('/change-orders/:id', async (req: Request, res: Response) => {
-  const r = req as AuthTenantReq
-  const allowed = ['title','description','reason_code','amount','schedule_days',
-                   'status','cost_code','co_type']
-  const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
-  if (!updates.length) return res.status(400).json({ error: 'No updatable fields' })
-  const setClauses = updates.map(([k], i) => `${k} = $${i + 3}`)
-  const s = updates.find(([k]) => k === 'status')
-  if (s && s[1] === 'submitted') setClauses.push(`submitted_by='${(r as any).auth?.sub ?? ''}'::uuid`, `submitted_at=NOW()`)
-  if (s && s[1] === 'approved')  setClauses.push(`approved_by='${(r as any).auth?.sub ?? ''}'::uuid`,  `approved_at=NOW()`)
-  if (s && s[1] === 'executed')  setClauses.push(`executed_at=NOW()`)
-  setClauses.push(`updated_at = NOW()`)
-  try {
-    const result = await tenantQuery(r.tenantId!,
-      `UPDATE change_orders SET ${setClauses.join(', ')} WHERE id=$1 AND tenant_id=$2 RETURNING *`,
-      [req.params.id, r.tenantId!, ...updates.map(([, v]) => v as any)])
-    if (!result.rows[0]) return res.status(404).json({ error: 'Change order not found' })
-    res.json({ change_order: result.rows[0] })
-  } catch (e) {
-    console.error('[change-orders] patch error', e)
-    res.status(500).json({ error: 'Failed to update change order' })
   }
 })
 
