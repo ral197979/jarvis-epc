@@ -39,6 +39,12 @@ export const WORKFLOWS: Flow[] = [
     ],
   },
   {
+    // Deliberately 7 steps, not the 9 items in navigation.ts's 'engineering'
+    // section: 'hub' (cross-domain project dashboard) and 'fixlibrary'
+    // (persistent troubleshooting knowledge base) are reference tools you use
+    // throughout the project, not stages you complete and move past — they
+    // don't belong in a sequential stepper. See src/__tests__/config/
+    // workflows.test.ts for the test that pins this exclusion intentionally.
     id: 'engineering', label: 'Engineering',
     steps: [
       { tab: 'feed',          label: 'FEED' },

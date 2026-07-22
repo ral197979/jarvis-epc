@@ -24,6 +24,18 @@ describe('WORKFLOWS config integrity', () => {
       expect(flow.label.length).toBeGreaterThan(0)
     }
   })
+
+  it("engineering flow intentionally excludes 'hub' and 'fixlibrary' — they're persistent reference tools, not sequential stages", () => {
+    // navigation.ts's engineering section has 9 items; this flow has 7. That gap
+    // is deliberate (see the comment in workflows.ts), not drift. If this test
+    // starts failing because someone added 'hub'/'fixlibrary' to the flow, that
+    // must be a conscious product decision — update this test AND the comment
+    // in workflows.ts together, don't just delete the assertion.
+    const engineering = WORKFLOWS.find(f => f.id === 'engineering')
+    const tabs = engineering?.steps.map(s => s.tab) ?? []
+    expect(tabs).not.toContain('hub')
+    expect(tabs).not.toContain('fixlibrary')
+  })
 })
 
 describe('flowForTab', () => {
