@@ -25,6 +25,11 @@ vi.mock('../db/pool', () => ({
   query:       vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
 }))
 
+// Structured logger used by writeAudit's failure path — spy on it so we can
+// prove an audit-write failure is logged rather than silently swallowed.
+const obs = vi.hoisted(() => ({ slog: vi.fn() }))
+vi.mock('../../src/modules/observability/index', () => ({ slog: obs.slog }))
+
 // Mock Anthropic SDK
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class MockAnthropic {
@@ -255,6 +260,114 @@ describe('POST /api/v1/mcp/execute — native tools', () => {
     expect(res.body.session_id).toBeDefined()
     expect(res.body.session_id).toMatch(/^sess_/)
     expect(res.body.name).toBe('test-agent')
+  })
+})
+
+describe('POST /api/v1/mcp/execute — audit trail (regression: audit_log column mismatch)', () => {
+  // The real audit_action enum (migration 001_tenants_and_users.sql). The audit
+  // INSERT must use one of these — not an ad-hoc string like 'mcp:<tool>'.
+  const AUDIT_ACTION_ENUM = new Set([
+    'create', 'read', 'update', 'delete',
+    'login', 'logout', 'export', 'approve', 'reject',
+    'upload', 'download', 'integrate_push', 'integrate_pull',
+  ])
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    delete process.env['AVA_MCP_URL']
+    delete process.env['MCP_FETCH_ALLOWLIST']
+  })
+
+  it('writes an audit_log row on every execute using real columns and a valid audit_action enum', async () => {
+    const { query } = await import('../db/pool')
+    const res = await request(app).post('/api/v1/mcp/execute').send({
+      tool: 'audit_query', params: { filter: 'x', limit: '5' },
+    })
+    expect(res.status).toBe(200)
+
+    // Locate the audit INSERT among the query() calls the request issued.
+    const insert = vi.mocked(query).mock.calls.find(
+      ([sql]) => /INSERT\s+INTO\s+audit_log/i.test(String(sql)),
+    )
+    expect(insert, 'MCP execute must write an audit_log row').toBeDefined()
+
+    const [sql, params] = insert as [string, unknown[]]
+    // Real audit_log columns — NOT the nonexistent resource_type / changes.
+    expect(sql).toMatch(/\bresource\b/)
+    expect(sql).toMatch(/\bnew_data\b/)
+    expect(sql).not.toMatch(/resource_type/)
+    expect(sql).not.toMatch(/\bchanges\b/)
+
+    // action must be a valid audit_action enum value.
+    const enumArg = params.find(p => typeof p === 'string' && AUDIT_ACTION_ENUM.has(p))
+    expect(enumArg, 'INSERT must pass a valid audit_action enum value').toBeDefined()
+
+    // resource records the tool identity.
+    expect(params.some(p => typeof p === 'string' && p.includes('audit_query'))).toBe(true)
+  })
+
+  it('stores a non-UUID actor id as NULL (user_id is a UUID FK)', async () => {
+    // The tenant middleware mock sets auth.sub = 'user-abc' (not a UUID); the
+    // insert must coerce that to NULL rather than blow up the row.
+    const { query } = await import('../db/pool')
+    await request(app).post('/api/v1/mcp/execute').send({
+      tool: 'audit_log', params: { action: 'test_event', details: {} },
+    })
+    const insert = vi.mocked(query).mock.calls.find(
+      ([sql]) => /INSERT\s+INTO\s+audit_log/i.test(String(sql)),
+    )
+    expect(insert).toBeDefined()
+    const [, params] = insert as [string, unknown[]]
+    // Params are [tenant_id, user_id, action, resource, new_data].
+    expect(params[1]).toBeNull()
+  })
+})
+
+describe('POST /api/v1/mcp/execute — audit failure visibility & query scope', () => {
+  beforeEach(async () => {
+    vi.clearAllMocks()
+    delete process.env['AVA_MCP_URL']
+    delete process.env['MCP_FETCH_ALLOWLIST']
+    // Restore the default query implementation so a prior test's override
+    // (rejecting the audit INSERT) never leaks — clearAllMocks keeps impls.
+    const { query } = await import('../db/pool')
+    vi.mocked(query).mockReset().mockResolvedValue({ rows: [], rowCount: 0 } as never)
+  })
+
+  it('logs an audit_log write failure (does not swallow it) and keeps tool success', async () => {
+    const { query } = await import('../db/pool')
+    vi.mocked(query).mockImplementation(((sql: any) =>
+      /INSERT\s+INTO\s+audit_log/i.test(String(sql))
+        ? Promise.reject(new Error('boom'))
+        : Promise.resolve({ rows: [], rowCount: 0 })) as unknown as typeof query)
+
+    const res = await request(app).post('/api/v1/mcp/execute').send({
+      tool: 'audit_query', params: { filter: 'x' },
+    })
+    // Audit is best-effort: a write failure must not fail the tool call...
+    expect(res.status).toBe(200)
+    // ...but it must be visible in the logs at ERROR level from the mcp module.
+    expect(obs.slog).toHaveBeenCalledWith(
+      'ERROR', 'mcp', expect.stringMatching(/audit/i), expect.anything(),
+    )
+  })
+
+  it('audit_query filters on the real `resource` column and is tenant-scoped', async () => {
+    const { query } = await import('../db/pool')
+    await request(app).post('/api/v1/mcp/execute').send({
+      tool: 'audit_query', params: { filter: 'projects', limit: '5' },
+    })
+    const select = vi.mocked(query).mock.calls.find(
+      ([sql]) => /SELECT[\s\S]*FROM\s+audit_log/i.test(String(sql)),
+    )
+    expect(select, 'audit_query must read audit_log').toBeDefined()
+    const [sql, params] = select as [string, unknown[]]
+    // Filters on `resource`, not the nonexistent `action`/`resource_type` path.
+    expect(sql).toMatch(/resource\s+ILIKE/i)
+    expect(sql).not.toMatch(/resource_type/)
+    // Tenant isolation: WHERE tenant_id = $1 bound to the caller's tenant.
+    expect(sql).toMatch(/tenant_id\s*=\s*\$1/i)
+    expect(params[0]).toBe('tenant-test')
   })
 })
 

@@ -33,6 +33,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { tenantQuery, query }                       from '../db/pool'
 import { assertSafeUrl } from '../lib/ssrfGuard'
+import { slog } from '../../src/modules/observability/index'
 import Anthropic from '@anthropic-ai/sdk'
 
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
@@ -143,12 +144,24 @@ function isDomainAllowed(url: string): boolean {
   }
 }
 
-async function writeAudit(tenantId: string, userId: string | undefined, action: string, details: unknown) {
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+async function writeAudit(tenantId: string, userId: string | undefined, resource: string, details: unknown) {
+  // audit_log's real columns are (action, resource, resource_id, old_data,
+  // new_data) — see migration 001. `action` is the audit_action enum, which has
+  // no 'execute' member, so MCP tool dispatch is recorded as an outbound
+  // integration action, matching how the Nova bridge audits its calls
+  // (integrate_push). The tool identity lives in `resource`. `user_id` is a UUID
+  // FK to users, so a missing/non-UUID actor is stored as NULL rather than
+  // crashing the insert with a type/FK error.
+  const actor = userId && UUID_RE.test(userId) ? userId : null
   await query(
-    `INSERT INTO audit_log (tenant_id, user_id, action, resource_type, resource_id, changes, created_at)
-     VALUES ($1,$2,$3,'mcp_tool',$4,$5,NOW()) ON CONFLICT DO NOTHING`,
-    [tenantId, userId ?? null, action, action, JSON.stringify(details)]
-  ).catch(e => console.warn('[mcp] audit_log insert failed:', e.message))
+    `INSERT INTO audit_log (tenant_id, user_id, action, resource, new_data)
+     VALUES ($1,$2,$3,$4,$5::jsonb)`,
+    [tenantId, actor, 'integrate_push', resource.slice(0, 100), JSON.stringify(details)]
+  ).catch(e => slog('ERROR', 'mcp', '[audit] audit_log write failed', {
+    tenantId, resource, message: e instanceof Error ? e.message : String(e),
+  }))
 }
 
 // ─── GET /api/v1/mcp/tools — merged catalogue ──────────────────────────────────
@@ -354,9 +367,9 @@ async function executeNative(
         const filter = String(params['filter'] ?? '')
         const limit  = Math.min(parseInt(String(params['limit'] ?? '50')), 200)
         const result = await query(
-          `SELECT id, action, resource_type, resource_id, changes, created_at
+          `SELECT id, action, resource, resource_id, new_data, created_at
            FROM audit_log
-           WHERE tenant_id = $1 ${filter ? `AND action ILIKE $2` : ''}
+           WHERE tenant_id = $1 ${filter ? `AND resource ILIKE $2` : ''}
            ORDER BY created_at DESC LIMIT ${limit}`,
           filter ? [r.tenantId, `%${filter}%`] : [r.tenantId]
         )
