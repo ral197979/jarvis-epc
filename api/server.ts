@@ -65,7 +65,6 @@ import {
 } from './routes/integrations'
 import { calculationsRouter } from './routes/calculations'
 import { mcpRouter          } from './routes/mcp'           // v4.28.0
-import { risksRouter        } from './routes/risks'         // v4.28.0
 import { dailyLogsRouter    } from './routes/dailyLogs'     // v4.31.0
 import { drawingsRouter     } from './routes/drawings'      // v4.31.0
 import { bimRouter          } from './routes/bim'           // v4.31.0
@@ -560,11 +559,10 @@ app.use('/api/v1/knowledge-fixes', fixLibraryRouter)   // v4.31.0: Pattern C fix
 app.use('/api/v1/knowledge',       knowledgeRouter)    // v4.31.0: ingested-document corpus
 app.use('/api/v1/ask',             askRouter)          // v4.31.0: grounded RAG chat
 app.use('/api/v1',                calculationsRouter)
-app.use('/api/v1',                risksRouter)         // v4.28.0: Risk Register CRUD
 app.use('/api/v1',                dailyLogsRouter)      // v4.31.0: Daily logs
 app.use('/api/v1',                drawingsRouter)       // v4.31.0: Drawings + revisions + markups
 app.use('/api/v1',                bimRouter)            // v4.31.0: BIM models + coordination issues
-app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + change orders
+app.use('/api/v1',                budgetsRouter)        // v4.31.0: Budgets + budget items (change orders → changeOrdersRouter)
 app.use('/api/v1',                payApplicationsRouter) // v4.45.0: AIA G702/G703 pay applications
 app.use('/api/v1',                qualityIntelligenceRouter) // v4.51.0: Quality Intelligence
 app.use('/api/v1',                safetyRouter)          // v4.53.0: Safety (Phase 10)
