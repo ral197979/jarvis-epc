@@ -1,6 +1,6 @@
 # Denver Engineering — Feature Truth
 
-**Branch:** `audit/denver-feature-truth` · **Base commit:** `e6bdec8` (origin/main) · **Repository:** `ral197979/jarvis-epc`
+**Branch:** `audit/denver-feature-truth` · **Base commit:** `63861eb` (origin/main, rebased 2026-07-22 after PR #22 + PR #23 merged) · **Repository:** `ral197979/jarvis-epc`
 
 An evidence-grounded, honesty-first inventory of what Denver Engineering **actually does** today — verified against source, backend routes, and this repository's committed audit evidence, not against marketing copy or feature labels.
 
@@ -10,13 +10,15 @@ The machine-readable source of truth is [`src/config/capabilityRegistry.ts`](src
 
 > **Independent review corrections (2026-07-21).** A second independent code review found the audit ~90% accurate but wrong on several *affirmative* claims. Reclassified in the registry: `pid-pfd-generator` DRAWING_GENERATOR → **BROKEN_OR_DEAD** (probe/arg-order/undefined-method bugs; canvas-only, no SVG; DXF export is a stub); `actions` VERIFIED_NATIVE → **PARTIAL** (renders from the non-hydrated biz store, never calls its backend); `riskregister` VERIFIED_NATIVE → **BROKEN_OR_DEAD** (route shadowed; live query hits dropped columns → 500); `changeorders` VERIFIED_NATIVE → **BROKEN_OR_DEAD** (route shadowed by budgets.ts; empty grid, lossy create); `drawings`/`transmittals`/`commissioning` VERIFIED_NATIVE → **PARTIAL**; `mcp` `llmUsed` false → **true**. The engineering-tools table below was also **too harsh** on stormwater/HVAC/electrical/fire (real deterministic code exists) and did **not disclose** the false compliance toasts and synthetic-optimization output — both now corrected in [`DENVER_ENGINEERING_TOOLS_STATUS.md`](DENVER_ENGINEERING_TOOLS_STATUS.md). The route-shadowing and audit-column defects are real product bugs, split to their own fix PRs.
 
+> **Follow-up: the split-out fix PRs are now merged (2026-07-22).** The two route-shadowing bugs are fixed and merged in **PR #22** (merge `63861eb`): `risksRouter` is deleted and the inline change-order routes are removed from `budgets.ts`, so `riskRegisterRouter` and `changeOrdersRouter` own their paths. The MCP audit-column bug is fixed and merged in **PR #23** (merge `353525b`): audit writes use the real `audit_log` columns with the valid `integrate_push` enum, a UUID-guarded actor, tenant-scoped queries, and ERROR-level logging on write failure. This branch is rebased onto that merged `main` and the registry reclassifies from the merged evidence: `riskregister` and `changeorders` **BROKEN_OR_DEAD → VERIFIED_NATIVE** at verification tier **`code`** (routing + response contract are locked by merged anti-regression tests `api/__tests__/routeShadowRegression.test.ts`; **no live-DB/browser E2E was run**, so the tier stays `code`, not `runtime`); `mcp` **stays PARTIAL** (the audit sub-defect is fixed, but ~77% of the catalog remains unreachable behind the unconfigured Ava proxy). Note: `pid-pfd-generator` remains `BROKEN_OR_DEAD` — the "P&ID/PFD generation is real" line in §7 below predates the 2026-07-21 correction and is superseded by it (pre-existing prose drift, not changed by this consolidation).
+
 > **Verification-limit disclosure.** The local dev database is empty (0 tenants, 0 users) and the login screen is a stale PIN form that does not match the email/password backend. Deep multi-tenant workflow verification was therefore constrained. Classifications carry an explicit verification tier — `runtime` (exercised live), `code` (source + route tracing), or `audit` (carried from a committed evidence doc with file:line proof). Workflow *depth* leans on `code`/`audit`; that is stated rather than overclaimed as `runtime`.
 
 ---
 
 ## 1. Product summary
 
-Denver Engineering is an EPC (Engineering, Procurement & Construction) project-management platform. Its genuinely strong, self-contained capabilities are the **management platform** (projects, RFIs, submittals, punch, inspections, daily logs, budgets, cost control, EVM, timesheets, schedule import, meetings, billing) and a **document intelligence + grounded RAG assistant** (Ask Jarvis). Several "AI / Copilot / IQ / Autopilot / Predict" surfaces are **deterministic analytics or statistical models, not generative AI**. The **discipline engineering-calculation tools are unvalidated in-app math and/or design-assist shells** with no validated calculation backend reachable from this app, and some emit fabricated output. **P&ID/PFD generation is currently broken** (see the 2026-07-21 correction above). A handful of management surfaces are **not fully wired** — `changeorders` and `riskregister` route to shadowing handlers, and `actions`/`commissioning` render from a non-hydrated store (see corrections above and per-entry notes).
+Denver Engineering is an EPC (Engineering, Procurement & Construction) project-management platform. Its genuinely strong, self-contained capabilities are the **management platform** (projects, RFIs, submittals, punch, inspections, daily logs, budgets, cost control, EVM, timesheets, schedule import, meetings, billing) and a **document intelligence + grounded RAG assistant** (Ask Jarvis). Several "AI / Copilot / IQ / Autopilot / Predict" surfaces are **deterministic analytics or statistical models, not generative AI**. The **discipline engineering-calculation tools are unvalidated in-app math and/or design-assist shells** with no validated calculation backend reachable from this app, and some emit fabricated output. **P&ID/PFD generation is currently broken** (see the 2026-07-21 correction above). The `changeorders` and `riskregister` route-shadowing defects **have been fixed and merged (PR #22, 2026-07-22)** and are reclassified VERIFIED_NATIVE (code tier); `actions`/`commissioning` still render from a non-hydrated store (see corrections above and per-entry notes).
 
 ## 2. Capability legend (truth taxonomy)
 
@@ -39,17 +41,18 @@ Denver Engineering is an EPC (Engineering, Procurement & Construction) project-m
 
 ## 3. Summary by status (71 capability entries)
 
+_Counts reflect the registry after the 2026-07-22 rebase + reclassification (see the follow-up note above)._
+
 | Status | Count |
 |---|---|
-| VERIFIED_NATIVE | 31 |
-| PARTIAL | 22 |
+| VERIFIED_NATIVE | 27 |
+| PARTIAL | 26 |
 | DETERMINISTIC_AUTOMATION | 10 |
 | VERIFIED_EXTERNAL | 2 |
 | PREDICTIVE_MODEL | 2 |
+| BROKEN_OR_DEAD | 2 |
 | GROUNDING_OR_RAG | 1 |
 | EXTERNAL_SHELL | 1 |
-| DRAWING_GENERATOR | 1 |
-| BROKEN_OR_DEAD | 1 |
 
 Route census: **62 sidebar nav routes + ~8 hidden/legacy TAB_MAP-only routes** (commissioning, engineering hub, audit log, overview, planner, resources, jobs, procurement hub) that are reachable but absent from the sidebar. See [`DENVER_ROUTE_COVERAGE.md`](DENVER_ROUTE_COVERAGE.md).
 
