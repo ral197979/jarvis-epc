@@ -23,6 +23,7 @@ single implementation and the federation can evolve without tribal knowledge.
 | [ADR-010](ADR-010-federation-security-principles.md) | Federation Security Principles | Accepted |
 | [ADR-011](ADR-011-crania-absorbs-aec.md) | Crania Absorbs Ava-Engineering-Core | Accepted |
 | [ADR-012](ADR-012-per-user-agents.md) | Per-User AI Agents | Proposed |
+| [ADR-013](ADR-013-crania-calculation-scope.md) | Crania Closes Four of Denver's Nine Calculation Disciplines | Proposed |
 
 ADR-001–010 Accepted 2026-06-27 alongside Federation Specification v2.0. Decider: Federation Architecture Council.
 ADR-011 Accepted 2026-07-01 (Crania consolidation). ADR-012 Proposed 2026-07-02.
