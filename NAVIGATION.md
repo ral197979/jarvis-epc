@@ -168,6 +168,17 @@ The sidebar hides sections a tier can't use (enforced in [NavSidebar.tsx](src/co
 | Project Manager / Engineer | `operations`, `engineering`, `construction`, `documents`, `field` domains |
 | Viewer | `operations`, `documents` (read) |
 
+> **⚠️ This table describes the intent, not the whole behaviour.**
+> [ADR-014](docs/adr/ADR-014-navigation-as-authorization-projection.md) documents four defects in
+> the shipped implementation: the filter branches on five roles but the `user_role` enum has seven,
+> so **`procurement` and `field_ops` fall through to the full sidebar**
+> ([NavSidebar.tsx:56](src/components/NavSidebar.tsx:56)); an empty filter result restores the full
+> nav rather than denying ([NavSidebar.tsx:58](src/components/NavSidebar.tsx:58));
+> [ContentRouter.tsx](src/components/ContentRouter.tsx) has **no route guard**, so hiding an item is
+> the only thing gating the screen; and a second, disagreeing table (`PERSONAS[].tabs` in
+> [auth/index.ts:75](src/modules/auth/index.ts:75)) keys on roles — `exec`, `pm` — that do not exist
+> in the database enum. Server-side, `requireRole` is applied only to administrative routers.
+
 ---
 
 ## Adding a screen (developer checklist)
