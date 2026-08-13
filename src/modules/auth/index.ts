@@ -27,7 +27,6 @@ export type RoleKey = 'owner' | 'exec' | 'pm' | 'engineer' | 'viewer'
 
 export interface Persona {
   label:     string
-  tabs:      string[] | null
   canConfig: boolean
   canAudit:  boolean
   canWrite:  boolean
@@ -72,12 +71,23 @@ if (typeof document !== 'undefined' && !document.getElementById('jarvis-live-reg
 }
 
 // ─── Personas / Roles ─────────────────────────────────────────────────────────
+/**
+ * Write/config/audit authority per persona.
+ *
+ * ADR-014: the `tabs` allowlist that used to live here was deleted. It was a
+ * second, disagreeing screen-authorization table — it keyed on `exec` and `pm`,
+ * which are not values of the `user_role` enum, and it granted a different set
+ * than the sidebar filter did. Screen authorization now lives solely in
+ * `src/config/capabilities.ts` (`SCREEN_CAP` + `ROLE_CAPS`, read via `canSee`).
+ * These personas retain only write/config/audit authority, which ADR-014
+ * Phase 1 does not change.
+ */
 export const PERSONAS: Record<RoleKey, Persona> = {
-  owner:    { label: 'Owner',       tabs: null,                                                                                            canConfig: true,  canAudit: true,  canWrite: true,  icon: '👑' },
-  exec:     { label: 'Executive',   tabs: ['dash', 'portfolio', 'predict', 'notifications'],                                              canConfig: false, canAudit: true,  canWrite: false, icon: '💼' },
-  pm:       { label: 'Project Mgr', tabs: ['dash', 'crm', 'projects', 'construction', 'proposals', 'actions', 'docs', 'field', 'notifications'], canConfig: false, canAudit: false, canWrite: true,  icon: '📋' },
-  engineer: { label: 'Engineer',    tabs: ['dash', 'projects', 'construction', 'calc', 'hub', 'feed', 'docs', 'actions', 'notifications'],  canConfig: false, canAudit: false, canWrite: true,  icon: '🔧' },
-  viewer:   { label: 'Viewer',      tabs: ['dash', 'portfolio', 'notifications'],                                                         canConfig: false, canAudit: false, canWrite: false, icon: '👀' },
+  owner:    { label: 'Owner',       canConfig: true,  canAudit: true,  canWrite: true,  icon: '👑' },
+  exec:     { label: 'Executive',   canConfig: false, canAudit: true,  canWrite: false, icon: '💼' },
+  pm:       { label: 'Project Mgr', canConfig: false, canAudit: false, canWrite: true,  icon: '📋' },
+  engineer: { label: 'Engineer',    canConfig: false, canAudit: false, canWrite: true,  icon: '🔧' },
+  viewer:   { label: 'Viewer',      canConfig: false, canAudit: false, canWrite: false, icon: '👀' },
 }
 
 // ─── Policy Engine ────────────────────────────────────────────────────────────

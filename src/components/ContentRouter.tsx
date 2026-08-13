@@ -17,6 +17,7 @@ import { ViewErrorBoundary } from './ErrorBoundary'
 import WorkflowContextBar    from './shell/WorkflowContextBar'
 import GuidedFlow            from './shell/GuidedFlow'
 import { flowForTab }        from '../config/workflows'
+import { canSee, capabilityForScreen } from '../config/capabilities'
 
 // ─── Lazy load all view components ───────────────────────────────────────────
 // Using lazy() avoids bundling the entire component tree upfront.
@@ -147,7 +148,7 @@ function ViewLoader() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ViewEntry = React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>
 
-const TAB_MAP: Record<string, ViewEntry> = {
+export const TAB_MAP: Record<string, ViewEntry> = {
   dash:          Dashboard,
   crm:           CRMView,
   feed:          FeedView,
@@ -223,9 +224,44 @@ const TAB_MAP: Record<string, ViewEntry> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: ContentRouterProps) {
-  const activeTab = useAppStore(s => s.ui.activeTab)
+  const activeTab   = useAppStore(s => s.ui.activeTab)
+  const ownerConfig = useAppStore(s => s.ownerConfig)
 
   const ViewComponent = TAB_MAP[activeTab]
+
+  // ADR-014 route guard. Hiding a nav item is not access control: a deep link, a
+  // persisted tab id from a prior session or role, or a cross-link from a KPI all
+  // set the active tab without passing the sidebar. The guard reads the same
+  // canSee() the sidebar projection reads, and fails closed.
+  const activeRole = { ...ownerConfig, ...policy }.activeRole
+  if (ViewComponent && !canSee(activeTab, activeRole)) {
+    const cap = capabilityForScreen(activeTab)
+    return (
+      <div
+        role="alert"
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 10, padding: 24, textAlign: 'center', color: 'var(--jarvis-ts)' }}
+      >
+        <span style={{ fontSize: 32 }} aria-hidden>🔒</span>
+        <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--jarvis-tp, inherit)' }}>
+          403 — not available to your role
+        </p>
+        <p style={{ fontSize: 13, maxWidth: 420 }}>
+          <code>{activeTab}</code>{cap ? <> requires <code>{cap}</code>, which</> : ' is not a registered destination and'}{' '}
+          your role ({String(activeRole ?? 'unknown')}) does not hold. You reached this from a direct
+          URL, a bookmark or a stale link.
+        </p>
+        {onNavigate && (
+          <button
+            type="button"
+            onClick={() => onNavigate('mywork')}
+            style={{ marginTop: 4, padding: '7px 14px', fontSize: 13, borderRadius: 6, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'inherit', cursor: 'pointer' }}
+          >
+            Back to My Work
+          </button>
+        )}
+      </div>
+    )
+  }
 
   if (!ViewComponent) {
     return (

@@ -38,8 +38,10 @@ describe('PERSONAS', () => {
     expect(PERSONAS.viewer).toBeDefined()
   })
 
-  it('owner has null tabs (all access)', () => {
-    expect(PERSONAS.owner.tabs).toBeNull()
+  it('carries no screen allowlist (ADR-014 — screen authz lives in capabilities.ts)', () => {
+    for (const [role, persona] of Object.entries(PERSONAS)) {
+      expect(persona, `${role} must not re-introduce a tabs allowlist`).not.toHaveProperty('tabs')
+    }
   })
 
   it('owner can config and audit', () => {
@@ -60,12 +62,6 @@ describe('PERSONAS', () => {
     for (const [role, persona] of Object.entries(PERSONAS)) {
       expect(persona.icon, `${role} should have an icon`).toBeTruthy()
     }
-  })
-
-  it('viewer has restricted tab access', () => {
-    expect(PERSONAS.viewer.tabs).not.toBeNull()
-    expect(PERSONAS.viewer.tabs!.length).toBeGreaterThan(0)
-    expect(PERSONAS.viewer.tabs!.length).toBeLessThan(PERSONAS.pm.tabs!.length)
   })
 })
 

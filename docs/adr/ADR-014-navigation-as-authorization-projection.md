@@ -145,7 +145,7 @@ Concretely:
 
 | Phase | Scope | Risk | Gate |
 |---|---|---|---|
-| 1 | `capabilities.ts`, `canSee`, `ContentRouter` guard + 403 state, fail-closed, delete `PERSONAS.tabs` and the domain filter, completeness + fail-closed tests | Client-only, reversible | Security review before merge |
+| 1 | `capabilities.ts`, `canSee`, `ContentRouter` guard + 403 state, fail-closed, delete `PERSONAS.tabs` and the domain filter, completeness + fail-closed tests | Client-only, reversible | **Implemented — see below.** Security review before merge |
 | 2 | `requireCapability` middleware, JWT-derived caps, applied to all module routers, client/server parity test | **Class 3** | Independent security review; owner merge authorization |
 | 3 | Assigned-project scoping in project-scoped queries; `My Projects` vs org-wide registry split | Class 3 (data exposure) | Independent review |
 | 4 | Access-request → approval → grant workflow | Deferred | Only if explicitly commissioned |
@@ -176,7 +176,39 @@ Evidence for the four findings, gathered by reading source on `origin/main` @ `f
 - `requireAuth` — 252 non-test occurrences in `api/`. `requireRole` — administrative routers only
   (`samlRoutes.ts`, `scim.ts`, `ecosystem.ts`, `novaIntegrationStatus.ts`, `commissioning.ts`).
 
-**Not verified at runtime.** The local dev database is empty (0 tenants, 0 users), as recorded in
-`DENVER_FEATURE_TRUTH.md` §"Verification-limit disclosure", so the fail-open paths were established
-by source reading, not by signing in as a `procurement` user and observing the sidebar. Verification
-tier: **`code`**, not `runtime`. A live reproduction should be part of the Phase 1 test evidence.
+**Not verified against a live database.** The local dev database is empty (0 tenants, 0 users), as
+recorded in `DENVER_FEATURE_TRUTH.md` §"Verification-limit disclosure", so the fail-open paths were
+established by source reading, not by signing in over SSO as a `procurement` user. Verification tier
+for the *findings*: **`code`**, not `runtime`.
+
+The Phase 1 *fix*, however, is proven behaviourally — see below.
+
+## Phase 1 implementation status (2026-08-13)
+
+Implemented on `docs/adr-014-authorization-projection`. **Not reviewed, not merged.**
+
+| Item | Where |
+|---|---|
+| Capability registry — `USER_ROLES` (7, mirroring the DB enum), 20 `CAPABILITIES`, `SCREEN_CAP` (70 destinations), `ROLE_CAPS` | `src/config/capabilities.ts` |
+| `canSee()` — the single predicate, fails closed | `src/config/capabilities.ts` |
+| Sidebar reads `canSee`; `domain` branching and the empty-result fallback deleted | `src/components/NavSidebar.tsx` |
+| Route guard + 403 naming destination, capability and role | `src/components/ContentRouter.tsx` |
+| `PERSONAS[].tabs` deleted; write/config/audit authority retained | `src/modules/auth/index.ts` |
+
+**Evidence.** `npm run typecheck` clean · ESLint clean on all changed files · full suite
+**167 files / 5428 tests passing** (`npx vitest run`). 34 new tests: 21 registry tests
+(`src/__tests__/config/capabilities.test.ts`) and 13 behavioural tests
+(`src/__tests__/components/navAuthorization.test.tsx`) that render the sidebar per role and assert
+its contents equal `canSee` for all 62 nav items, and that a directly-set `activeTab` on a blocked
+destination renders 403 rather than the screen. One unrelated flake was observed on the first full
+run — `api/__tests__/tier1.test.ts` "socket hang up" under parallel load; it passed in isolation
+twice and on the full re-run, and shares no import with these changes.
+
+**Resulting projections** (sidebar items of 62 / total routes of 70): owner 62/70 · admin 62/70 ·
+project_manager 44/50 · engineer 33/38 · field_ops 24/29 · procurement 19/24 · viewer 12/17.
+
+**Behaviour changes to call out in review.** Grants are stated by function rather than by the nav
+`domain` tag, so some access moves: an engineer gains the procurement-tagged screens they could
+already reach via `subcontracts`, and loses the org-wide `projects` registry; `procurement` and
+`field_ops` lose the full sidebar they previously fell through to. This is intended, and it is the
+part of Phase 1 most worth a second opinion.

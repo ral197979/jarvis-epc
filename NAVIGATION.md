@@ -158,26 +158,44 @@ Rendered by [ContentRouter](src/components/ContentRouter.tsx) above each view:
 
 ---
 
-## Role gating (permission tiers)
+## Role gating — navigation is a projection of authorization
 
-The sidebar hides sections a tier can't use (enforced in [NavSidebar.tsx](src/components/NavSidebar.tsx) by item `domain`):
+Per [ADR-014](docs/adr/ADR-014-navigation-as-authorization-projection.md), the sidebar renders only
+destinations the signed-in role can actually open, and the router enforces the same rule
+independently. Both read one predicate — `canSee()` in
+[src/config/capabilities.ts](src/config/capabilities.ts). There is no sidebar-specific permission
+table.
 
-| Tier | Sees |
-|---|---|
-| Owner / Admin | Everything |
-| Project Manager / Engineer | `operations`, `engineering`, `construction`, `documents`, `field` domains |
-| Viewer | `operations`, `documents` (read) |
+- **`SCREEN_CAP`** maps every destination — all 62 sidebar items *and* the 8 hidden `TAB_MAP`-only
+  routes — to the one capability that opens it.
+- **`ROLE_CAPS`** grants capabilities to each of the **seven** `user_role` enum values
+  (`api/db/migrations/001_tenants_and_users.sql`). Roles are not granted screens.
+- **Fails closed.** An unknown role, an absent role, or an unregistered destination denies.
+- **The router guards independently.** A deep link, a persisted tab from a prior role, or a
+  cross-link from a KPI renders a **403** naming the destination and the missing capability — not
+  the screen. Hiding a nav item is never the access control.
 
-> **⚠️ This table describes the intent, not the whole behaviour.**
-> [ADR-014](docs/adr/ADR-014-navigation-as-authorization-projection.md) documents four defects in
-> the shipped implementation: the filter branches on five roles but the `user_role` enum has seven,
-> so **`procurement` and `field_ops` fall through to the full sidebar**
-> ([NavSidebar.tsx:56](src/components/NavSidebar.tsx:56)); an empty filter result restores the full
-> nav rather than denying ([NavSidebar.tsx:58](src/components/NavSidebar.tsx:58));
-> [ContentRouter.tsx](src/components/ContentRouter.tsx) has **no route guard**, so hiding an item is
-> the only thing gating the screen; and a second, disagreeing table (`PERSONAS[].tabs` in
-> [auth/index.ts:75](src/modules/auth/index.ts:75)) keys on roles — `exec`, `pm` — that do not exist
-> in the database enum. Server-side, `requireRole` is applied only to administrative routers.
+| Role | Capabilities | Sidebar items | Total routes |
+|---|---|---|---|
+| Owner | 20 | 62 / 62 | 70 |
+| Admin | 20 | 62 / 62 | 70 |
+| Project Manager | 15 | 44 / 62 | 50 |
+| Engineer | 9 | 33 / 62 | 38 |
+| Field Ops | 7 | 24 / 62 | 29 |
+| Procurement | 5 | 19 / 62 | 24 |
+| Viewer | 3 | 12 / 62 | 17 |
+
+`portfolio.view` and `project.view` are deliberately distinct: a Project Manager has full depth on
+projects with no cross-project financial roll-up.
+
+> **⚠️ Client-side only — this is not yet a security boundary.** ADR-014 Phase 1 fixes the client.
+> Server-side, `requireRole` is still applied only to administrative routers, so no cost, budget,
+> EVM or portfolio endpoint enforces a role. The `requireCapability` middleware that closes that is
+> **Phase 2 and not implemented**. Until it lands, treat this as UX correctness plus defence in
+> depth, not as enforcement.
+
+Write authority is separate and unchanged — see `POLICY_ACTIONS` and `PERSONAS[].canWrite` in
+[src/modules/auth/index.ts](src/modules/auth/index.ts).
 
 ---
 
