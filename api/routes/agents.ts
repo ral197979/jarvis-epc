@@ -6,6 +6,7 @@ import { getAllAgents, getAllCapabilities } from '../services/agents/agentRegist
 import { orchestrate, getAvailableObjectives } from '../services/agents/agentOrchestrator'
 import { listExecutions, getExecution, getExecutionEvents, getDecisionTraces } from '../services/agents/agentExecutionLedger'
 import { listTasks, getTask } from '../services/agents/agentTaskQueue'
+import { requireCapability } from '../authz/requireCapability'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -53,7 +54,7 @@ agentsRouter.post('/plan', async (req: Request, res: Response) => {
 })
 
 // POST /api/v1/agents/execute — execute an objective
-agentsRouter.post('/execute', async (req: Request, res: Response) => {
+agentsRouter.post('/execute', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { objective, scope, scopeId, context, requestedBy } = req.body

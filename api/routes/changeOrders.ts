@@ -15,8 +15,9 @@
  * DELETE /api/v1/change-orders/:id/tasks/:taskId              — unlink a schedule task
  */
 import { Router, Request, Response } from 'express'
-import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth'
+import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createChangeOrder, getChangeOrder, listChangeOrders, updateChangeOrder,
   submitChangeOrder, approveChangeOrder, rejectChangeOrder, voidChangeOrder,
@@ -114,7 +115,7 @@ changeOrdersRouter.patch('/change-orders/:id', async (req: Request, res: Respons
 
 // ─── Workflow transitions ─────────────────────────────────────────────────────
 
-changeOrdersRouter.post('/change-orders/:id/submit', async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/submit', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await submitChangeOrder(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown')
@@ -130,7 +131,7 @@ changeOrdersRouter.post('/change-orders/:id/submit', async (req: Request, res: R
 // reject a budget/contract-impacting change order. owner/admin/project_manager
 // matches the roles with approval authority elsewhere in the RBAC hierarchy
 // (README.md: owner → admin → project_manager → engineer → viewer).
-changeOrdersRouter.post('/change-orders/:id/approve', requireRole('owner', 'admin', 'project_manager') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/approve', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {
@@ -142,7 +143,7 @@ changeOrdersRouter.post('/change-orders/:id/approve', requireRole('owner', 'admi
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/reject', requireRole('owner', 'admin', 'project_manager') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/reject', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {
@@ -154,7 +155,7 @@ changeOrdersRouter.post('/change-orders/:id/reject', requireRole('owner', 'admin
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/void', async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/void', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await voidChangeOrder(r.tenantId!, p(req, 'id'))

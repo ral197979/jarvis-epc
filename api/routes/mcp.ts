@@ -35,6 +35,7 @@ import { tenantQuery, query }                       from '../db/pool'
 import { assertSafeUrl } from '../lib/ssrfGuard'
 import { slog } from '../../src/modules/observability/index'
 import Anthropic from '@anthropic-ai/sdk'
+import { requireCapability } from '../authz/requireCapability'
 
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
 type AuthTenantReq = Request & AuthenticatedRequest & Omit<TenantRequest, 'tenantId'> & { tenantId: string }
@@ -215,7 +216,7 @@ router.get('/ava/health', async (_req: Request, res: Response) => {
 
 // ─── POST /api/v1/mcp/execute — unified tool dispatch ─────────────────────────
 
-router.post('/execute', async (req: Request, res: Response) => {
+router.post('/execute', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { tool, params = {}, project_id } = req.body as {
     tool?: string; params?: Record<string, unknown>; project_id?: string

@@ -15,6 +15,7 @@ import { Router, Response } from 'express'
 import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createFix, searchFixes, getFix, deleteFix, verifyFix, listUsedSymptoms,
   type FixConfidence,
@@ -189,7 +190,7 @@ router.patch('/:id', async (req: Req, res: Response) => {
 
 // ─── Verify ──────────────────────────────────────────────────────────────────
 
-router.post('/:id/verify', async (req: Req, res: Response) => {
+router.post('/:id/verify', requireCapability('assistant.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const userId = req.auth?.sub

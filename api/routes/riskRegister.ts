@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createRisk, listRisks, getRisk, updateRisk, closeRisk, getRiskSummary,
   type RiskStatus, type RiskCategory,
@@ -77,7 +78,7 @@ riskRegisterRouter.patch('/risks/:id', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to update risk' }) }
 })
 
-riskRegisterRouter.post('/risks/:id/close', async (req: Request, res: Response) => {
+riskRegisterRouter.post('/risks/:id/close', requireCapability('risk.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await closeRisk(r.tenantId!, p(req, 'id'))

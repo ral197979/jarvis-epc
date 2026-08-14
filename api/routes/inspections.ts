@@ -18,6 +18,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -260,7 +261,7 @@ router.patch('/inspections/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/inspections/:id/complete', async (req: Request, res: Response) => {
+router.post('/inspections/:id/complete', requireCapability('quality.verify') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
 

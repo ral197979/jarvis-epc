@@ -2,6 +2,7 @@
 // Resource optimization, strategy planning, consensus decisions.
 
 import { Router, Request, Response } from 'express'
+import { requireCapability } from '../authz/requireCapability'
 import {
   analyzeResourceUtilization, buildWorkloadBalancePlan,
   proposeOptimization, approveOptimization,
@@ -58,7 +59,7 @@ router.get('/proposals', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/proposals/:id/approve', async (req: Request, res: Response) => {
+router.post('/proposals/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { approvedBy } = req.body
     const proposal = await approveOptimization(tid(req), req.params.id as string, approvedBy)

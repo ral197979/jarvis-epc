@@ -12,6 +12,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   upsertTimesheet, listTimesheets, submitTimesheet,
   approveTimesheet, rejectTimesheet, getWeeklySummary,
@@ -70,7 +71,7 @@ timesheetsRouter.get('/team/members/:memberId/timesheets', async (req: Request, 
   } catch (e) { res.status(500).json({ error: 'Failed to list timesheets' }) }
 })
 
-timesheetsRouter.post('/timesheets/:id/submit', async (req: Request, res: Response) => {
+timesheetsRouter.post('/timesheets/:id/submit', requireCapability('team.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ts = await submitTimesheet(r.tenantId!, p(req, 'id'))
@@ -79,7 +80,7 @@ timesheetsRouter.post('/timesheets/:id/submit', async (req: Request, res: Respon
   } catch (e) { res.status(500).json({ error: 'Failed to submit' }) }
 })
 
-timesheetsRouter.post('/timesheets/:id/approve', async (req: Request, res: Response) => {
+timesheetsRouter.post('/timesheets/:id/approve', requireCapability('team.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ts = await approveTimesheet(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown')
@@ -88,7 +89,7 @@ timesheetsRouter.post('/timesheets/:id/approve', async (req: Request, res: Respo
   } catch (e) { res.status(500).json({ error: 'Failed to approve' }) }
 })
 
-timesheetsRouter.post('/timesheets/:id/reject', async (req: Request, res: Response) => {
+timesheetsRouter.post('/timesheets/:id/reject', requireCapability('team.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ts = await rejectTimesheet(r.tenantId!, p(req, 'id'))

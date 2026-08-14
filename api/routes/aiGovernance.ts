@@ -7,6 +7,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   listPendingRecommendations,
   queueRecommendation,
@@ -63,7 +64,7 @@ aiGovernanceRouter.get('/recommendations/:id/preview', async (req: Request, res:
 })
 
 // ─── Approve recommendation ───────────────────────────────────────────────────
-aiGovernanceRouter.post('/recommendations/:id/approve', async (req: Request, res: Response) => {
+aiGovernanceRouter.post('/recommendations/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const ok = await approveRecommendation(r.tenantId!, req.params['id'] as string, r.auth!.sub)
   if (!ok) { res.status(404).json({ error: 'Not found or not pending' }); return }
@@ -71,7 +72,7 @@ aiGovernanceRouter.post('/recommendations/:id/approve', async (req: Request, res
 })
 
 // ─── Reject recommendation ────────────────────────────────────────────────────
-aiGovernanceRouter.post('/recommendations/:id/reject', async (req: Request, res: Response) => {
+aiGovernanceRouter.post('/recommendations/:id/reject', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const { reason } = req.body
   const ok = await rejectRecommendation(r.tenantId!, req.params['id'] as string, r.auth!.sub, reason)
@@ -80,7 +81,7 @@ aiGovernanceRouter.post('/recommendations/:id/reject', async (req: Request, res:
 })
 
 // ─── Execute recommendation ───────────────────────────────────────────────────
-aiGovernanceRouter.post('/recommendations/:id/execute', async (req: Request, res: Response) => {
+aiGovernanceRouter.post('/recommendations/:id/execute', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const result = await executeRecommendation(r.tenantId!, req.params['id'] as string, r.auth!.sub)
   if (!result.executed) {
@@ -90,7 +91,7 @@ aiGovernanceRouter.post('/recommendations/:id/execute', async (req: Request, res
 })
 
 // ─── Expire stale recommendations ────────────────────────────────────────────
-aiGovernanceRouter.post('/recommendations/expire', async (req: Request, res: Response) => {
+aiGovernanceRouter.post('/recommendations/expire', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const expired = await expireStaleRecommendations(r.tenantId!)
   res.json({ data: { expired } })

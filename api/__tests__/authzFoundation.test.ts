@@ -64,11 +64,17 @@ describe('server capability registry', () => {
   })
 
   it('keeps Platform Administrator out of business authority (D2)', () => {
+    // Admin's remit is the platform, the audit trail, and AI/platform
+    // governance (§22) — nothing else.
     for (const cap of SERVER_ROLE_CAPS.admin) {
-      expect(cap.startsWith('platform.') || cap === 'audit.view', `admin holds ${cap}`).toBe(true)
+      expect(cap.startsWith('platform.') || cap === 'audit.view' || cap === 'ai.govern',
+        `admin holds ${cap}`).toBe(true)
     }
+    expect(roleHasCapability('admin', 'ai.govern'), 'admin owns AI governance').toBe(true)
     for (const cap of ['cost.view', 'cost.approve', 'portfolio.view', 'project.view',
-                       'engineering.write', 'procurement.approve', 'crm.view', 'construction.write']) {
+                       'engineering.write', 'engineering.approve', 'procurement.approve',
+                       'commissioning.approve', 'project.approve', 'crm.view', 'construction.write',
+                       'quality.verify', 'docs.publish', 'risk.approve', 'team.approve']) {
       expect(roleHasCapability('admin', cap), `admin must not hold ${cap}`).toBe(false)
     }
   })

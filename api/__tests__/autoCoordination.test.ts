@@ -9,9 +9,18 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
-  query:       (sql: string, p: unknown[]) => mockQuery(null, sql, p),
+  // ADR-014 Phase 2A: the current-user authorization lookup is answered here
+  // rather than through mockQuery, so a test rescripting mockQuery for its own
+  // rows cannot accidentally starve authorization and turn a 200 into a 401.
+  query: async (sql: string, p: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: 'user-1', tenant_id: 'tenant-1', role: 'admin', is_active: true }], rowCount: 1 }
+      : mockQuery(null, sql, p),
 }))
-vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'user-1' }; next() } }))
+// ADR-014 Phase 2A: coordination recommendation approve/dismiss is an AI
+// governance transition (`ai.govern`). The caller is the platform administrator,
+// which is the role that owns AI governance (§22) — not an implicit owner.
+vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'user-1', tid: 'tenant-1', role: 'admin' }; next() } }))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
 const { mockBuildCoord } = vi.hoisted(() => ({ mockBuildCoord: vi.fn() }))

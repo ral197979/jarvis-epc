@@ -34,6 +34,7 @@ import { tenantQuery, query } from '../db/pool'
 import { requireAuth, AuthenticatedRequest }     from '../auth'
 import { requireTenant, TenantRequest }          from '../middleware/tenant'
 import { slog }                                  from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -339,7 +340,7 @@ router.patch('/packs/:id/review', async (req: Req, res: Response) => {
 // ─── POST /finalize ───────────────────────────────────────────────────────────
 // Queues a FINALIZE_PACK job. Worker renders MD/HTML and writes paths.
 
-router.post('/finalize', async (req: Req, res: Response) => {
+router.post('/finalize', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

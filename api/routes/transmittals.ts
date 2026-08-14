@@ -24,6 +24,7 @@ import {
   getOverdueTransmittals,
 } from '../services/transmittals/transmittalService'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -90,7 +91,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /transmittals/:id/send
-router.post('/:id/send', async (req: Request, res: Response) => {
+router.post('/:id/send', requireCapability('docs.publish') as never, async (req: Request, res: Response) => {
   try {
     await sendTransmittal(tid(req), p(req, 'id'), sub(req))
     res.json({ data: { sent: true } })
@@ -115,7 +116,7 @@ router.post('/:id/respond', async (req: Request, res: Response) => {
 })
 
 // POST /transmittals/:id/close
-router.post('/:id/close', async (req: Request, res: Response) => {
+router.post('/:id/close', requireCapability('docs.publish') as never, async (req: Request, res: Response) => {
   try {
     await tenantQuery(tid(req),
       `UPDATE transmittals SET status='closed', updated_at=now()

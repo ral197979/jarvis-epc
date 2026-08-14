@@ -106,6 +106,12 @@ const ACTION_GRANTS: Record<UserRole, readonly ActionCapability[]> = {
     'platform.automation',
     'platform.identity',
     'platform.export',
+    // ADR-014 Phase 2A §22: AI/platform governance IS the platform
+    // administrator's remit — approving, rejecting and executing AI
+    // recommendations and agent actions. This is the one business-adjacent
+    // authority Admin holds, and it does not extend to any project, delivery or
+    // commercial approval.
+    'ai.govern',
   ],
 
   // Project delivery authority. Explicitly NOT cost.approve: change-order and

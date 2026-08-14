@@ -13,6 +13,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createCostEntry, listCostEntries, getCostEntry, updateCostEntry,
   deleteCostEntry, postCostEntry, voidCostEntry, getCostEntrySummary,
@@ -111,7 +112,7 @@ costEntryRouter.post('/cost-entries/:id/post', async (req: Request, res: Respons
   } catch (e) { res.status(500).json({ error: 'Failed to post cost entry' }) }
 })
 
-costEntryRouter.post('/cost-entries/:id/void', async (req: Request, res: Response) => {
+costEntryRouter.post('/cost-entries/:id/void', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await voidCostEntry(r.tenantId!, p(req, 'id'))

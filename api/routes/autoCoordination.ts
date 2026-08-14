@@ -9,6 +9,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   scanProject, listRecommendations, approveRecommendation, dismissRecommendation,
 } from '../services/coordination/autoCoordinationService'
@@ -33,7 +34,7 @@ router.get('/projects/:projectId/coordination/recommendations', async (req: Requ
   } catch (err) { res.status(500).json({ error: 'Failed to list recommendations', detail: (err as Error).message }) }
 })
 
-router.post('/coordination/recommendations/:id/approve', async (req: Request, res: Response) => {
+router.post('/coordination/recommendations/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await approveRecommendation(r.tenantId!, String(req.params.id), r.auth?.sub ?? null)
@@ -43,7 +44,7 @@ router.post('/coordination/recommendations/:id/approve', async (req: Request, re
   } catch (err) { res.status(500).json({ error: 'Approval failed', detail: (err as Error).message }) }
 })
 
-router.post('/coordination/recommendations/:id/dismiss', async (req: Request, res: Response) => {
+router.post('/coordination/recommendations/:id/dismiss', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await dismissRecommendation(r.tenantId!, String(req.params.id), r.auth?.sub ?? null)

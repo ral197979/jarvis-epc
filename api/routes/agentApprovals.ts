@@ -11,6 +11,7 @@ import {
   expireStaleApprovals,
 } from '../services/agents/agentGovernanceService'
 import { resumeFromApproval } from '../services/agents/agentTaskQueue'
+import { requireCapability } from '../authz/requireCapability'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -42,7 +43,7 @@ agentApprovalsRouter.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /api/v1/agents/approvals/:id/approve
-agentApprovalsRouter.post('/:id/approve', async (req: Request, res: Response) => {
+agentApprovalsRouter.post('/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { reviewedBy, notes } = req.body
@@ -62,7 +63,7 @@ agentApprovalsRouter.post('/:id/approve', async (req: Request, res: Response) =>
 })
 
 // POST /api/v1/agents/approvals/:id/reject
-agentApprovalsRouter.post('/:id/reject', async (req: Request, res: Response) => {
+agentApprovalsRouter.post('/:id/reject', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { reviewedBy, notes } = req.body

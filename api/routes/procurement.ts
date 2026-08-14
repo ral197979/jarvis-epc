@@ -16,6 +16,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type Req = AuthenticatedRequest & TenantRequest
@@ -233,7 +234,7 @@ purchaseOrdersRouter.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.post('/:id/approve', async (req: Req, res: Response) => {
+purchaseOrdersRouter.post('/:id/approve', requireCapability('procurement.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   if (!['owner','admin','project_manager'].includes(req.auth?.role ?? '')) {

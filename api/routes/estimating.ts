@@ -49,6 +49,7 @@ import {
 } from '../services/estimating/estimatingService'
 import { runEstimatingAgent } from '../services/estimating/estimatingAgent'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -264,7 +265,7 @@ router.post('/estimates/:id/lines', async (req: Request, res: Response) => {
 })
 
 // POST /estimates/:id/approve
-router.post('/estimates/:id/approve', async (req: Request, res: Response) => {
+router.post('/estimates/:id/approve', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   try {
     await tenantQuery(tid(req),
       `UPDATE estimates SET status='approved', approved_by=$1, approved_at=now(), updated_at=now()

@@ -31,6 +31,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createBidPackage, listBidPackages, getBidPackage,
   issueBidPackage, closeBidPackage, cancelBidPackage,
@@ -92,7 +93,7 @@ subcontractsRouter.get('/bid-packages/:id', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to get bid package' }) }
 })
 
-subcontractsRouter.post('/bid-packages/:id/issue', async (req: Request, res: Response) => {
+subcontractsRouter.post('/bid-packages/:id/issue', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const pkg = await issueBidPackage(r.tenantId!, p(req, 'id'))
@@ -101,7 +102,7 @@ subcontractsRouter.post('/bid-packages/:id/issue', async (req: Request, res: Res
   } catch (e) { res.status(500).json({ error: 'Failed to issue bid package' }) }
 })
 
-subcontractsRouter.post('/bid-packages/:id/close', async (req: Request, res: Response) => {
+subcontractsRouter.post('/bid-packages/:id/close', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const pkg = await closeBidPackage(r.tenantId!, p(req, 'id'))
@@ -110,7 +111,7 @@ subcontractsRouter.post('/bid-packages/:id/close', async (req: Request, res: Res
   } catch (e) { res.status(500).json({ error: 'Failed to close bid package' }) }
 })
 
-subcontractsRouter.post('/bid-packages/:id/cancel', async (req: Request, res: Response) => {
+subcontractsRouter.post('/bid-packages/:id/cancel', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const pkg = await cancelBidPackage(r.tenantId!, p(req, 'id'))
@@ -139,7 +140,7 @@ subcontractsRouter.post('/bid-packages/:id/submissions', async (req: Request, re
   } catch (e) { res.status(500).json({ error: 'Failed to submit bid' }) }
 })
 
-subcontractsRouter.post('/bid-submissions/:id/award', async (req: Request, res: Response) => {
+subcontractsRouter.post('/bid-submissions/:id/award', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sc = await awardBid(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown', req.body)
@@ -212,7 +213,7 @@ subcontractsRouter.get('/subcontracts/:id/invoices', async (req: Request, res: R
   } catch (e) { res.status(500).json({ error: 'Failed to list invoices' }) }
 })
 
-subcontractsRouter.post('/sc-invoices/:id/submit', async (req: Request, res: Response) => {
+subcontractsRouter.post('/sc-invoices/:id/submit', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const inv = await submitInvoice(r.tenantId!, p(req, 'id'))
@@ -221,7 +222,7 @@ subcontractsRouter.post('/sc-invoices/:id/submit', async (req: Request, res: Res
   } catch (e) { res.status(500).json({ error: 'Failed to submit invoice' }) }
 })
 
-subcontractsRouter.post('/sc-invoices/:id/approve', async (req: Request, res: Response) => {
+subcontractsRouter.post('/sc-invoices/:id/approve', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {
@@ -231,7 +232,7 @@ subcontractsRouter.post('/sc-invoices/:id/approve', async (req: Request, res: Re
   } catch (e) { res.status(500).json({ error: 'Failed to approve invoice' }) }
 })
 
-subcontractsRouter.post('/sc-invoices/:id/reject', async (req: Request, res: Response) => {
+subcontractsRouter.post('/sc-invoices/:id/reject', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {

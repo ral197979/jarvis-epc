@@ -20,10 +20,25 @@ vi.mock('../middleware/tenant', () => ({
   },
 }))
 
-vi.mock('../db/pool', () => ({
-  tenantQuery: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-  query:       vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-}))
+// ADR-014 Phase 2A: /mcp/execute now requires `platform.automation`. The caller
+// is the platform owner — the narrowest role that legitimately executes MCP
+// tools (§27 case A). The authorization lookup is answered by a wrapper ahead of
+// the scripted `query` mock, so `mockResolvedValueOnce` scripting in individual
+// tests still lines up with the handler's own queries.
+const currentUserRow = { id: 'user-abc', tenant_id: 'tenant-test', role: 'owner', is_active: true }
+vi.mock('../db/pool', () => {
+  const scripted = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+  return {
+    tenantQuery: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    query: Object.assign(
+      async (sql: string, params?: unknown[]) =>
+        /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+          ? { rows: [currentUserRow], rowCount: 1 }
+          : scripted(sql, params),
+      scripted,
+    ),
+  }
+})
 
 // Structured logger used by writeAudit's failure path — spy on it so we can
 // prove an audit-write failure is logged rather than silently swallowed.

@@ -19,6 +19,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createMeeting, getMeeting, listMeetings, updateMeeting, publishMeeting, archiveMeeting,
   listAgendaItems, addAgendaItem, updateAgendaItem, deleteAgendaItem,
@@ -86,7 +87,7 @@ meetingsRouter.patch('/meetings/:id', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to update meeting' }) }
 })
 
-meetingsRouter.post('/meetings/:id/publish', async (req: Request, res: Response) => {
+meetingsRouter.post('/meetings/:id/publish', requireCapability('docs.publish') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meeting = await publishMeeting(r.tenantId!, p(req, 'id'))
@@ -95,7 +96,7 @@ meetingsRouter.post('/meetings/:id/publish', async (req: Request, res: Response)
   } catch (e) { res.status(500).json({ error: 'Failed to publish meeting' }) }
 })
 
-meetingsRouter.post('/meetings/:id/archive', async (req: Request, res: Response) => {
+meetingsRouter.post('/meetings/:id/archive', requireCapability('docs.publish') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meeting = await archiveMeeting(r.tenantId!, p(req, 'id'))

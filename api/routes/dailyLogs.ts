@@ -17,6 +17,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -149,7 +150,7 @@ router.delete('/daily-logs/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/daily-logs/:id/submit', async (req: Request, res: Response) => {
+router.post('/daily-logs/:id/submit', requireCapability('construction.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -163,7 +164,7 @@ router.post('/daily-logs/:id/submit', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/daily-logs/:id/approve', async (req: Request, res: Response) => {
+router.post('/daily-logs/:id/approve', requireCapability('construction.approve') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

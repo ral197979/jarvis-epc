@@ -9,6 +9,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { executeRunbook, rollbackExecution, approveRunbookStep } from '../services/runbook/runbookEngine'
+import { requireCapability } from '../authz/requireCapability'
 
 export const runbooksRouter = Router()
 const auth = requireAuth as never
@@ -59,7 +60,7 @@ runbooksRouter.post('/', async (req: Request, res: Response) => {
 })
 
 // ─── Execute runbook ──────────────────────────────────────────────────────────
-runbooksRouter.post('/:id/execute', async (req: Request, res: Response) => {
+runbooksRouter.post('/:id/execute', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { mode = 'live', variables = {}, correlation_id } = req.body
   if (!['live', 'dry_run', 'simulation'].includes(mode)) {
@@ -111,7 +112,7 @@ runbooksRouter.post('/executions/:execId/rollback', async (req: Request, res: Re
 })
 
 // ─── Approve step ─────────────────────────────────────────────────────────────
-runbooksRouter.post('/executions/:execId/approve/:stepIndex', async (req: Request, res: Response) => {
+runbooksRouter.post('/executions/:execId/approve/:stepIndex', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   await approveRunbookStep(r.tenantId!, req.params['execId'] as string, Number(req.params['stepIndex']), r.auth!.sub)
   res.json({ data: { approved: true } })
