@@ -13,6 +13,7 @@ import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { processSyncUpload, pullDelta } from '../services/mobile/syncEngine'
 import { resolveConflict, listUnresolvedConflicts } from '../services/mobile/conflictResolver'
+import { requireCapability } from '../authz/requireCapability'
 
 export const syncRouter = Router()
 
@@ -97,7 +98,7 @@ syncRouter.post('/pull', async (req: Request, res: Response) => {
 
 // ─── POST /sync/resolve ───────────────────────────────────────────────────────
 
-syncRouter.post('/resolve', async (req: Request, res: Response) => {
+syncRouter.post('/resolve', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const resolvedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { conflict_id, strategy, merge_fields } = req.body as {

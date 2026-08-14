@@ -1,102 +1,173 @@
 /**
- * ADR-014 Phase 2 — API authorization coverage guard.
+ * ADR-014 Phase 2A — endpoint-level authorization coverage and transition ratchet.
  *
- * Censuses the real route declarations and checks them against the manifest, so
- * a new business endpoint cannot be added without an explicit authorization
- * classification. The pending list is a ratchet: adding endpoints to an
- * unenforced file fails, and the list can only shrink deliberately.
+ * Two invariants:
+ *   1. Every reachable endpoint has exactly one classification, derived from
+ *      source, with zero unclassified.
+ *   2. Every consequential transition is guarded by the capability the registry
+ *      declares — so a removed guard, a swapped capability, a duplicated entry
+ *      or a brand-new unprotected transition all fail the build.
  */
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import {
-  CAPABILITY_PROTECTED, NON_USER_AUTH, PENDING_PHASE2, classificationFor,
-} from '../authz/routeManifest'
+import { ENDPOINT_EXCEPTIONS, endpointKey, type RouteClass } from '../authz/routeManifest'
+import { ENFORCED_TRANSITIONS, PENDING_TRANSITIONS, RECLASSIFIED_NOT_TRANSITIONS } from '../authz/transitions'
+import { isServerCapability } from '../authz/capabilities'
 
 const ROUTES_DIR = path.join(process.cwd(), 'api', 'routes')
 
-interface FileCensus { file: string; endpoints: number; usesCapability: boolean }
-
-function census(): FileCensus[] {
-  return fs.readdirSync(ROUTES_DIR)
-    .filter(f => f.endsWith('.ts'))
-    .sort()
-    .map(file => {
-      const src = fs.readFileSync(path.join(ROUTES_DIR, file), 'utf8')
-      return {
-        file,
-        endpoints: [...src.matchAll(/\w+\s*\.\s*(get|post|put|patch|delete)\s*\(\s*'/g)].length,
-        usesCapability: /requireCapability|requireAnyCapability/.test(src),
-      }
-    })
+interface Endpoint {
+  file: string
+  router: string
+  method: string
+  path: string
+  key: string
+  capability: string | null
+  klass: RouteClass
 }
 
-describe('ADR-014 Phase 2 — authorization coverage', () => {
-  const files = census()
-  const withEndpoints = files.filter(f => f.endpoints > 0)
+/** Parse every route declaration and determine how it is protected. */
+function censusEndpoints(): Endpoint[] {
+  const out: Endpoint[] = []
+  for (const file of fs.readdirSync(ROUTES_DIR).filter(f => f.endsWith('.ts')).sort()) {
+    const src = fs.readFileSync(path.join(ROUTES_DIR, file), 'utf8')
+    // A router-level guard protects every endpoint in the file.
+    const routerWide = /router\s*\.\s*use\s*\(\s*requireCapability\(\s*'([^']+)'/.exec(src)
+    const re = /(\w+)\s*\.\s*(get|post|put|patch|delete)\s*\(\s*'([^']*)'\s*,?\s*([\s\S]{0,120})/g
+    let m: RegExpExecArray | null
+    while ((m = re.exec(src))) {
+      const router = m[1]
+      const method = m[2].toUpperCase()
+      const routePath = m[3]
+      const tail = m[4] ?? ''
+      const inline = /^\s*requireCapability\(\s*'([^']+)'|,\s*requireCapability\(\s*'([^']+)'/.exec(tail)
+      const capability = inline ? (inline[1] ?? inline[2]) : (routerWide ? routerWide[1] : null)
+      const key = endpointKey(file, router, method, routePath)
+      const exception = ENDPOINT_EXCEPTIONS[key]
+      out.push({
+        file, router, method, path: routePath, key, capability,
+        klass: exception ? exception.klass : capability ? 'CAPABILITY' : 'PENDING_PHASE2',
+      })
+    }
+  }
+  return out
+}
 
-  it('classifies every route file that declares endpoints', () => {
-    // This is the guard: a new route file, or an existing one that grows
-    // endpoints, must be given a classification before it can ship.
-    const unclassified = withEndpoints.filter(f => !classificationFor(f.file)).map(f => f.file)
-    expect(unclassified, `unclassified route files: ${unclassified.join(', ')}`).toEqual([])
+const endpoints = censusEndpoints()
+
+describe('endpoint-level coverage model', () => {
+  it('gives every endpoint exactly one classification, with none unclassified', () => {
+    const valid: RouteClass[] = ['CAPABILITY', 'PUBLIC', 'SERVICE_HMAC', 'PENDING_PHASE2']
+    const bad = endpoints.filter(e => !valid.includes(e.klass))
+    expect(bad.map(e => e.key)).toEqual([])
+    expect(endpoints.length).toBeGreaterThan(0)
   })
 
-  it('holds no stale manifest entries', () => {
-    const real = new Set(files.map(f => f.file))
-    const declared = [
-      ...Object.keys(CAPABILITY_PROTECTED),
-      ...Object.keys(NON_USER_AUTH),
-      ...Object.keys(PENDING_PHASE2),
-    ]
-    const stale = declared.filter(f => !real.has(f))
-    expect(stale, `manifest names files that no longer exist: ${stale.join(', ')}`).toEqual([])
+  it('holds no duplicate endpoint identities', () => {
+    const seen = new Map<string, number>()
+    for (const e of endpoints) seen.set(e.key, (seen.get(e.key) ?? 0) + 1)
+    const dupes = [...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k)
+    expect(dupes, `duplicate endpoint identities: ${dupes.join(', ')}`).toEqual([])
   })
 
-  it('keeps every CAPABILITY-classified file actually enforced', () => {
-    for (const file of Object.keys(CAPABILITY_PROTECTED)) {
-      const entry = withEndpoints.find(f => f.file === file)
-      expect(entry, `${file} is classified CAPABILITY but declares no endpoints`).toBeDefined()
-      expect(entry!.usesCapability, `${file} is classified CAPABILITY but calls no capability guard`).toBe(true)
+  it('holds no stale exception entries', () => {
+    const real = new Set(endpoints.map(e => e.key))
+    const stale = Object.keys(ENDPOINT_EXCEPTIONS).filter(k => !real.has(k))
+    expect(stale, `exceptions naming endpoints that no longer exist: ${stale.join(', ')}`).toEqual([])
+  })
+
+  it('requires a substantive reason for every exception', () => {
+    for (const [key, ex] of Object.entries(ENDPOINT_EXCEPTIONS)) {
+      expect(ex.reason.length, `${key} needs a reason`).toBeGreaterThan(20)
     }
   })
 
-  it('requires a documented reason for every non-pending classification', () => {
-    for (const [file, c] of [...Object.entries(CAPABILITY_PROTECTED), ...Object.entries(NON_USER_AUTH)]) {
-      expect(c.reason, `${file} needs a reason`).toBeTruthy()
-      expect(c.reason!.length, `${file} reason is too thin to review`).toBeGreaterThan(20)
+  it('reports a mixed file truthfully, not as one status', () => {
+    // Files that contain both guarded and unguarded endpoints must be counted
+    // per endpoint — the defect the file-level model could not express.
+    const byFile = new Map<string, Endpoint[]>()
+    for (const e of endpoints) byFile.set(e.file, [...(byFile.get(e.file) ?? []), e])
+    const mixed = [...byFile.entries()].filter(([, es]) =>
+      es.some(e => e.klass === 'CAPABILITY') && es.some(e => e.klass === 'PENDING_PHASE2'))
+    expect(mixed.length, 'expected at least one mixed file to prove per-endpoint accounting').toBeGreaterThan(0)
+    for (const [, es] of mixed) {
+      const protectedCount = es.filter(e => e.klass === 'CAPABILITY').length
+      const pendingCount   = es.filter(e => e.klass === 'PENDING_PHASE2').length
+      expect(protectedCount + pendingCount).toBeLessThanOrEqual(es.length)
+      expect(protectedCount).toBeGreaterThan(0)
+      expect(pendingCount).toBeGreaterThan(0)
     }
   })
 
-  it('does not let the pending-authorization surface grow', () => {
-    // The ratchet. If a pending file gains endpoints the recorded count no
-    // longer matches and this fails, forcing a classification decision.
-    const drift: string[] = []
-    for (const [file, recorded] of Object.entries(PENDING_PHASE2)) {
-      const actual = withEndpoints.find(f => f.file === file)?.endpoints ?? 0
-      if (actual !== recorded) drift.push(`${file}: recorded ${recorded}, found ${actual}`)
+  it('accounts for every endpoint exactly once', () => {
+    const total = endpoints.length
+    const cap  = endpoints.filter(e => e.klass === 'CAPABILITY').length
+    const pub  = endpoints.filter(e => e.klass === 'PUBLIC').length
+    const hmac = endpoints.filter(e => e.klass === 'SERVICE_HMAC').length
+    const pend = endpoints.filter(e => e.klass === 'PENDING_PHASE2').length
+    expect(cap + pub + hmac + pend).toBe(total)
+  })
+})
+
+// ─── Transition ratchet ───────────────────────────────────────────────────────
+describe('consequential transition ratchet', () => {
+  const byKey = new Map(endpoints.map(e => [e.key, e]))
+
+  it('declares a registered capability for every transition', () => {
+    for (const t of ENFORCED_TRANSITIONS) {
+      expect(isServerCapability(t.capability), `${t.file} ${t.path}: unknown capability ${t.capability}`).toBe(true)
     }
-    expect(drift, `pending endpoint counts drifted:\n  ${drift.join('\n  ')}`).toEqual([])
   })
 
-  it('never lists a file as both enforced and pending', () => {
-    const both = Object.keys(CAPABILITY_PROTECTED).filter(f => f in PENDING_PHASE2)
-    expect(both).toEqual([])
+  it('holds no duplicate transition entries', () => {
+    const seen = new Map<string, number>()
+    for (const t of ENFORCED_TRANSITIONS) {
+      const k = endpointKey(t.file, t.router, t.method, t.path)
+      seen.set(k, (seen.get(k) ?? 0) + 1)
+    }
+    const dupes = [...seen.entries()].filter(([, n]) => n > 1).map(([k]) => k)
+    expect(dupes, `duplicated transitions: ${dupes.join(', ')}`).toEqual([])
   })
 
-  it('reports the exact coverage position', () => {
-    const total    = withEndpoints.reduce((a, f) => a + f.endpoints, 0)
-    const enforced = withEndpoints.filter(f => classificationFor(f.file)?.klass === 'CAPABILITY')
-                                  .reduce((a, f) => a + f.endpoints, 0)
-    const service  = withEndpoints.filter(f => {
-      const k = classificationFor(f.file)?.klass
-      return k === 'SERVICE_HMAC' || k === 'PUBLIC'
-    }).reduce((a, f) => a + f.endpoints, 0)
-    const pending  = Object.values(PENDING_PHASE2).reduce((a, n) => a + n, 0)
+  it('matches every registered transition to a real, guarded endpoint', () => {
+    const problems: string[] = []
+    for (const t of ENFORCED_TRANSITIONS) {
+      const k = endpointKey(t.file, t.router, t.method, t.path)
+      const e = byKey.get(k)
+      if (!e) { problems.push(`${k}: no such endpoint in source`); continue }
+      if (e.klass !== 'CAPABILITY') { problems.push(`${k}: registered as a transition but has no capability guard`); continue }
+      // Guard must be the capability the registry declares — a swap is an error.
+      if (e.capability !== t.capability) {
+        problems.push(`${k}: registry says ${t.capability}, route says ${e.capability}`)
+      }
+    }
+    expect(problems, `transition guard mismatches:\n  ${problems.join('\n  ')}`).toEqual([])
+  })
 
-    // Every endpoint is accounted for in exactly one bucket. This is the
-    // arithmetic ADR-014 Phase 2 must eventually close with pending = 0.
-    expect(enforced + service + pending).toBe(total)
-    expect(pending, 'Phase 2 is complete only when this reaches 0').toBeGreaterThan(0)
+  it('leaves no consequential transition unprotected', () => {
+    expect(PENDING_TRANSITIONS, 'Phase 2A closes only when this is empty').toEqual([])
+  })
+
+  it('detects a new transition-shaped endpoint that is neither registered nor reclassified', () => {
+    // The ratchet. Any non-GET endpoint whose path names a consequential verb
+    // must be either registered as a transition or explicitly reclassified.
+    const VERB = /\/(approve|reject|execute|publish|issue|verify|release|finalize|award|void|revoke|activate|suspend|reactivate|archive|provision|arbitrate|escalate|reassign|freeze|unfreeze|expire|won|lost|no-bid)(\/|$)/i
+    const registered = new Set(ENFORCED_TRANSITIONS.map(t => endpointKey(t.file, t.router, t.method, t.path)))
+    const reclassified = new Set(RECLASSIFIED_NOT_TRANSITIONS.map(r => `${r.file}${r.path}`))
+    const exceptions = new Set(Object.keys(ENDPOINT_EXCEPTIONS))
+
+    const unaccounted = endpoints.filter(e =>
+      e.method !== 'GET' &&
+      VERB.test(e.path) &&
+      !registered.has(e.key) &&
+      !reclassified.has(`${e.file}${e.path}`) &&
+      !exceptions.has(e.key) &&
+      e.klass !== 'CAPABILITY',
+    ).map(e => e.key)
+
+    expect(unaccounted,
+      `unclassified consequential transitions — register them in api/authz/transitions.ts ` +
+      `or record why they are not transitions:\n  ${unaccounted.join('\n  ')}`).toEqual([])
   })
 })

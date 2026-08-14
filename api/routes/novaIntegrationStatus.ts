@@ -26,6 +26,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { novaPublicUrl } from '../services/integration/novaConfig'
 import { slog } from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -200,7 +201,7 @@ router.get('/projects/:projectId/nova-integration', async (req, res: Response) =
 // Re-queues this project's dead and failed (retrying) outbox rows for a fresh
 // delivery ladder. Owner/admin only; every invocation is audited.
 
-router.post('/projects/:projectId/nova-integration/retry', async (req, res: Response) => {
+router.post('/projects/:projectId/nova-integration/retry', requireCapability('platform.integrations') as never, async (req, res: Response) => {
   const r = req as unknown as Req
   const tenantId = r.tenantId
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }

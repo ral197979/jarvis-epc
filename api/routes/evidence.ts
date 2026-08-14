@@ -12,6 +12,7 @@
 import { Router, type Response } from 'express'
 import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 import {
   initiateUpload, confirmUpload, linkEvidence,
   getEvidenceForEntity, retryUpload,
@@ -97,7 +98,7 @@ evidenceRouter.get('/entity/:type/:id', async (req: Request, res: Response) => {
 
 // ─── POST /evidence/:id/retry ─────────────────────────────────────────────────
 
-evidenceRouter.post('/:id/retry', async (req: Request, res: Response) => {
+evidenceRouter.post('/:id/retry', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const evidenceId = req.params['id'] as string
 

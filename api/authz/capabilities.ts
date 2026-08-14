@@ -53,6 +53,7 @@ export const ACTION_CAPABILITIES = [
   'quality.write',
   'quality.verify',         // punch verify/close, NCR closure
   'safety.write',
+  'safety.approve',         // compliance task completion (terminal)
   'field.write',
   'commissioning.write',
   'commissioning.approve',  // commissioning acceptance
@@ -61,6 +62,7 @@ export const ACTION_CAPABILITIES = [
   'schedule.write',
   'risk.write',
   'risk.approve',           // risk closure
+  'portfolio.approve',      // portfolio anomaly resolution
   'team.write',
   'team.approve',           // timesheet approve/reject, assignment lifecycle
 
@@ -68,6 +70,7 @@ export const ACTION_CAPABILITIES = [
   'cost.write',
   'cost.approve',           // change orders, estimates, invoices, pay applications
   'crm.write',
+  'crm.approve',            // proposal won / lost / no-bid — commits a commercial outcome
 
   // ── procurement ─────────────────────────────────────────────────────────────
   'procurement.write',
@@ -82,6 +85,10 @@ export const ACTION_CAPABILITIES = [
   'platform.automation',    // automation admin, runbook execution
   'platform.identity',      // user/SCIM/tenant administration
   'platform.export',        // data-warehouse exports
+  // Alters security/connectivity posture: edge-node revocation, air-gap
+  // licence activation. Deliberately separate from platform.integrations so
+  // "administers integrations" does not imply "changes the security perimeter".
+  'platform.security',
 ] as const
 
 export type ActionCapability = typeof ACTION_CAPABILITIES[number]

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Enterprise Platform Routes (v8.0.0)
 // Tenant lifecycle, feature gates, usage, AI cost, support, compliance, API keys.
 
@@ -16,6 +15,7 @@ import { generateHealthReport, runPlatformChecks, recordHealthCheck } from '../s
 import { createDemoTenant, listDemoTenants, resetDemoTenant } from '../services/enterprise/demoTenantGenerator'
 import { createApiKey, listApiKeys, revokeApiKey } from '../services/enterprise/apiGatewayService'
 import { archiveTenant, suspendTenant, reactivateTenant } from '../services/enterprise/tenantArchivalService'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -32,17 +32,25 @@ const PLATFORM_ADMINS = new Set(
   (process.env['PLATFORM_ADMIN_USER_IDS'] ?? '').split(',').map(s => s.trim()).filter(Boolean),
 )
 
+/**
+ * SCOPE guard for tenant-lifecycle routes.
+ *
+ * ADR-014 Phase 2A: this no longer decides *authority* — that is
+ * `requireCapability('platform.identity')`, which runs first and reads the
+ * caller's current database role. What remains here is the scope rule the
+ * capability layer cannot express: a caller may only act on their **own**
+ * tenant, unless they are on the platform-operator allowlist. Keeping the two
+ * decisions separate avoids stacking two authorization systems on one route.
+ */
 function requireTenantAdmin(req: Request, res: Response, next: NextFunction): void {
   const auth = (req as AuthenticatedRequest).auth
   if (!auth?.sub) { res.status(401).json({ error: 'unauthenticated' }); return }
   if (PLATFORM_ADMINS.has(auth.sub)) { next(); return }
   const targetTenant = req.params.tenantId
-  const isOwnTenant  = !!targetTenant && targetTenant === auth.tid
-  const isPrivileged = auth.role === 'owner' || auth.role === 'admin'
-  if (isOwnTenant && isPrivileged) { next(); return }
+  if (!!targetTenant && targetTenant === auth.tid) { next(); return }
   res.status(403).json({
     error: 'forbidden',
-    message: 'Tenant lifecycle operations require platform-admin, or owner/admin of the target tenant.',
+    message: 'Tenant lifecycle operations are limited to your own tenant, or to a platform operator.',
   })
 }
 
@@ -56,7 +64,7 @@ function requirePlatformAdmin(req: Request, res: Response, next: NextFunction): 
 // ─── Tenant Lifecycle ─────────────────────────────────────────────────────────
 
 // POST /enterprise/tenants/:tenantId/provision
-router.post('/tenants/:tenantId/provision', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/provision', requireAuth, requireTenantAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = req.params.tenantId as string
     const result = await provisionTenant(tenantId, req.body as never)
@@ -102,7 +110,7 @@ router.get('/tenants/:tenantId/lifecycle/history', requireAuth, requireTenantAdm
 })
 
 // POST /enterprise/tenants/:tenantId/suspend
-router.post('/tenants/:tenantId/suspend', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/suspend', requireAuth, requireTenantAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
     const result = await suspendTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
@@ -113,7 +121,7 @@ router.post('/tenants/:tenantId/suspend', requireAuth, requireTenantAdmin, async
 })
 
 // POST /enterprise/tenants/:tenantId/reactivate
-router.post('/tenants/:tenantId/reactivate', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/reactivate', requireAuth, requireTenantAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
     const result = await reactivateTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
@@ -124,7 +132,7 @@ router.post('/tenants/:tenantId/reactivate', requireAuth, requireTenantAdmin, as
 })
 
 // POST /enterprise/tenants/:tenantId/archive
-router.post('/tenants/:tenantId/archive', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/archive', requireAuth, requireTenantAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const { actor, reason } = req.body as Record<string, unknown>
     const result = await archiveTenant(req.params.tenantId as string, { actor: actor as string, reason: reason as string })
@@ -372,7 +380,7 @@ router.patch('/tickets/:id/status', requireAuth, requireTenant, async (req: Requ
 })
 
 // POST /enterprise/tickets/:id/escalate
-router.post('/tickets/:id/escalate', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.post('/tickets/:id/escalate', requireAuth, requireTenant, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { reason } = req.body as Record<string, unknown>
@@ -440,7 +448,7 @@ router.get('/deployment/health', requireAuth, requirePlatformAdmin, async (_req:
 })
 
 // POST /enterprise/deployment/health/run
-router.post('/deployment/health/run', requireAuth, requirePlatformAdmin, async (_req: Request, res: Response) => {
+router.post('/deployment/health/run', requireAuth, requirePlatformAdmin, requireCapability('platform.automation') as never, async (_req: Request, res: Response) => {
   try {
     const report = await runPlatformChecks()
     res.json(report)

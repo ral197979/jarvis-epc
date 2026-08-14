@@ -13,8 +13,13 @@ const h = vi.hoisted(() => ({
 }))
 
 const mockTenantQuery = vi.fn()
+// ADR-014 Phase 2A: authorization re-resolves the caller's role from the
+// database, so the pool answers that lookup using the identity under test.
 vi.mock('../db/pool', () => ({
-  query: vi.fn(),
+  query: async (sql: string) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: h.identity.sub ?? 'u1', tenant_id: h.tenantId, role: h.identity.role, is_active: true }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
   tenantQuery: (...a: unknown[]) => mockTenantQuery(...a),
   pool: { connect: vi.fn() },
 }))
@@ -207,10 +212,16 @@ describe('POST /api/v1/projects/:id/nova-integration/retry', () => {
     expect(mockTenantQuery).not.toHaveBeenCalled()
   })
 
-  it('returns 403 when the token has no role', async () => {
+  // BEHAVIOUR CHANGE (ADR-014 Phase 2A). A token carrying no resolvable role no
+  // longer reaches the authorization decision: `resolveCurrentUser` cannot
+  // establish an active principal, which is a 401 by the Phase 2 contract
+  // (401 = we cannot say who you are; 403 = we can, and you may not). 403 is
+  // reserved for a known principal lacking the capability.
+  it('returns 401 when the token has no resolvable role', async () => {
     h.identity = { sub: 'user-1' }
     const res = await request(makeApp()).post(`/api/v1/projects/${PROJECT_ID}/nova-integration/retry`)
-    expect(res.status).toBe(403)
+    expect(res.status).toBe(401)
+    expect(mockTenantQuery).not.toHaveBeenCalled()
   })
 
   it('re-queues dead/failed rows for an admin and writes an audit row', async () => {

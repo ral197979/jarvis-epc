@@ -46,8 +46,13 @@ describe('every enforced transition is guarded at its route', () => {
     (_label, t) => {
       const src = fs.readFileSync(path.join(process.cwd(), 'api', 'routes', t.file), 'utf8')
       const esc = t.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const declared = new RegExp(`\\.${t.method.toLowerCase()}\\s*\\(\\s*'${esc}'\\s*,\\s*requireCapability\\('${t.capability}'\\)`)
-      expect(declared.test(src), `${t.file} ${t.method} ${t.path} is not guarded by ${t.capability}`).toBe(true)
+      // The capability guard need not be the first middleware: enterprise routes
+      // run a tenant-scope guard first, then authorize. Assert it appears in the
+      // declaration's middleware list, before the handler.
+      const decl = new RegExp(`\\.${t.method.toLowerCase()}\\s*\\(\\s*'${esc}'\\s*,([\\s\\S]{0,200}?)(?:async\\s*\\(|\\(req)`) 
+      const head = decl.exec(src)?.[1] ?? ''
+      expect(head.includes(`requireCapability('${t.capability}')`),
+        `${t.file} ${t.method} ${t.path} is not guarded by ${t.capability}`).toBe(true)
     },
   )
 })
@@ -79,7 +84,8 @@ describe('Viewer is denied every consequential transition', () => {
 describe('Platform Administrator holds platform and AI governance only', () => {
   it('is admitted to AI governance and platform automation', async () => {
     current = principal({ role: 'admin' })
-    for (const t of ENFORCED_TRANSITIONS.filter(x => x.capability === 'ai.govern' || x.capability === 'platform.automation')) {
+    const platformCaps = (c: string) => c === 'ai.govern' || c.startsWith('platform.')
+    for (const t of ENFORCED_TRANSITIONS.filter(x => platformCaps(x.capability) && x.capability !== 'platform.security')) {
       const res = await request(transitionApp(t.capability)).post('/t').send({})
       expect(res.status, `admin should perform ${t.operation}`).toBe(200)
     }
@@ -87,8 +93,11 @@ describe('Platform Administrator holds platform and AI governance only', () => {
 
   it('is denied every business transition', async () => {
     current = principal({ role: 'admin' })
+    // platform.security is deliberately Owner-only — it changes the security
+    // perimeter — so admin is denied it alongside every business transition.
     const business = ENFORCED_TRANSITIONS.filter(t =>
-      t.capability !== 'ai.govern' && t.capability !== 'platform.automation')
+      t.capability === 'platform.security' ||
+      (t.capability !== 'ai.govern' && !t.capability.startsWith('platform.')))
     expect(business.length).toBeGreaterThan(0)
     for (const t of business) {
       const res = await request(transitionApp(t.capability)).post('/t').send({})
@@ -185,9 +194,9 @@ describe('transition coverage', () => {
     }
   })
 
-  it('reports the outstanding transition debt honestly', () => {
+  it('has no outstanding transition debt', () => {
     // Phase 2A closes only when this reaches zero.
-    expect(PENDING_TRANSITIONS.length).toBeGreaterThan(0)
-    expect(ENFORCED_TRANSITIONS.length).toBe(44)
+    expect(PENDING_TRANSITIONS.length, 'Phase 2A closes only when this is empty').toBe(0)
+    expect(ENFORCED_TRANSITIONS.length).toBe(73)
   })
 })

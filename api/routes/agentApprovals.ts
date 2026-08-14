@@ -79,7 +79,7 @@ agentApprovalsRouter.post('/:id/reject', requireCapability('ai.govern') as never
 })
 
 // POST /api/v1/agents/approvals/expire — expire stale approvals (admin/cron)
-agentApprovalsRouter.post('/expire', async (req: Request, res: Response) => {
+agentApprovalsRouter.post('/expire', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   const expired = await expireStaleApprovals(r.tenantId!)
   res.json({ expired })

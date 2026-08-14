@@ -18,6 +18,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createProposal, listProposals, getProposal, updateProposal,
   submitProposal, markWon, markLost, markNoBid, getPipelineSummary,
@@ -103,7 +104,7 @@ proposalsRouter.post('/proposals/:id/submit', async (req: Request, res: Response
   } catch (e) { res.status(500).json({ error: 'Failed to submit proposal' }) }
 })
 
-proposalsRouter.post('/proposals/:id/won', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/won', requireCapability('crm.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await markWon(r.tenantId!, p(req, 'id'))
@@ -112,7 +113,7 @@ proposalsRouter.post('/proposals/:id/won', async (req: Request, res: Response) =
   } catch (e) { res.status(500).json({ error: 'Failed to mark proposal won' }) }
 })
 
-proposalsRouter.post('/proposals/:id/lost', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/lost', requireCapability('crm.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await markLost(r.tenantId!, p(req, 'id'))
@@ -121,7 +122,7 @@ proposalsRouter.post('/proposals/:id/lost', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to mark proposal lost' }) }
 })
 
-proposalsRouter.post('/proposals/:id/no-bid', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/no-bid', requireCapability('crm.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await markNoBid(r.tenantId!, p(req, 'id'))

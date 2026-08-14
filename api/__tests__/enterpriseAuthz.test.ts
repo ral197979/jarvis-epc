@@ -28,8 +28,13 @@ const h = vi.hoisted(() => ({
   resetDemoTenant:      vi.fn().mockResolvedValue({ ok: true }),
 }))
 
+// ADR-014 Phase 2A: authorization re-resolves the caller's role from the
+// database, so the pool answers that lookup using the identity under test.
 vi.mock('../db/pool', () => ({
-  query:       vi.fn(),
+  query: async (sql: string) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: h.identity.sub ?? 'u1', tenant_id: h.identity.tid, role: h.identity.role, is_active: true }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
   tenantQuery: vi.fn(),
   tenantTransaction: vi.fn(),
 }))
@@ -133,8 +138,14 @@ describe('AUD-001 — tenant lifecycle authorization', () => {
     expect(suspendTenant).toHaveBeenCalledWith(TENANT_A, expect.any(Object))
   })
 
+  // BEHAVIOUR CHANGE (ADR-014 Phase 2A). The PLATFORM_ADMIN_USER_IDS allowlist
+  // used to grant authority as well as cross-tenant scope, so an operator with
+  // an `engineer` role could archive any tenant. Authority is now
+  // `platform.identity`, and the allowlist only widens SCOPE — a platform
+  // operator must still hold the capability. This fixture therefore carries the
+  // platform-administrator role, which is what such an operator has in practice.
   it('allows an explicit PLATFORM admin to act on any tenant', async () => {
-    h.identity = { sub: 'platform-op', role: 'engineer', tid: TENANT_A }
+    h.identity = { sub: 'platform-op', role: 'admin', tid: TENANT_A }
     process.env['PLATFORM_ADMIN_USER_IDS'] = 'platform-op'
     // Router reads the env at module load; re-import in isolation.
     vi.resetModules()

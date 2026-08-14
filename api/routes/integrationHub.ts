@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Integration Hub Routes (v4.40.0)
  * ───────────────────────────────────────────────────────
@@ -9,6 +8,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { registerConnector, listConnectors, getConnectorHealth, enqueueIntegrationJob, completeIntegrationJob, failIntegrationJob } from '../services/integration/connectorFramework'
+import { requireCapability } from '../authz/requireCapability'
 
 export const integrationHubRouter = Router()
 const auth = requireAuth as never
@@ -62,7 +62,7 @@ integrationHubRouter.post('/sync', async (req: Request, res: Response) => {
 })
 
 // ─── Complete job (worker callback) ──────────────────────────────────────────
-integrationHubRouter.post('/jobs/:id/complete', async (req: Request, res: Response) => {
+integrationHubRouter.post('/jobs/:id/complete', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   await completeIntegrationJob(req.params['id'] as string, r.tenantId!, req.body.result ?? {})
   res.json({ data: { completed: true } })

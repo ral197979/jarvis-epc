@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Operations Center Routes (v4.35.0)
  * ─────────────────────────────────────────────────────────
@@ -22,6 +21,7 @@ import { generateInboxRecommendations, fetchRecommendationInputs } from '../serv
 import { pollEvents } from '../realtime/wsGateway'
 import { publishActionEvent } from '../services/actions/actionEventPublisher'
 import { broadcastEvent } from '../realtime/eventBroadcaster'
+import { requireCapability } from '../authz/requireCapability'
 
 export const opsRouter = Router()
 
@@ -166,7 +166,7 @@ opsRouter.get('/blockers', async (req: Request, res: Response) => {
 
 // ─── POST /ops/reassign ───────────────────────────────────────────────────────
 
-opsRouter.post('/reassign', async (req: Request, res: Response) => {
+opsRouter.post('/reassign', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId   = req.tenantId!
   const issuedBy   = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, target_user_id, reason } = req.body as {
@@ -207,7 +207,7 @@ opsRouter.post('/reassign', async (req: Request, res: Response) => {
 
 // ─── POST /ops/escalate ───────────────────────────────────────────────────────
 
-opsRouter.post('/escalate', async (req: Request, res: Response) => {
+opsRouter.post('/escalate', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const issuedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, reason } = req.body as { action_ids: string[]; reason: string }
@@ -243,7 +243,7 @@ opsRouter.post('/escalate', async (req: Request, res: Response) => {
 
 // ─── POST /ops/freeze ────────────────────────────────────────────────────────
 
-opsRouter.post('/freeze', async (req: Request, res: Response) => {
+opsRouter.post('/freeze', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const issuedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, reason } = req.body as { action_ids: string[]; reason: string }
@@ -277,7 +277,7 @@ opsRouter.post('/freeze', async (req: Request, res: Response) => {
 
 // ─── POST /ops/unfreeze ──────────────────────────────────────────────────────
 
-opsRouter.post('/unfreeze', async (req: Request, res: Response) => {
+opsRouter.post('/unfreeze', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const issuedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, reason } = req.body as { action_ids: string[]; reason: string }

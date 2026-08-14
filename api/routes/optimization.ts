@@ -67,7 +67,7 @@ router.post('/proposals/:id/approve', requireCapability('ai.govern') as never, a
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/proposals/:id/apply', async (req: Request, res: Response) => {
+router.post('/proposals/:id/apply', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { actualGain } = req.body
     const proposal = await markOptimizationApplied(tid(req), req.params.id as string, actualGain)

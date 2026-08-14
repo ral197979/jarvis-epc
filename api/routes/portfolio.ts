@@ -7,6 +7,7 @@ import { getOrComputeForecast } from '../services/twin/operationalForecastEngine
 import { detectAnomalies, listAnomalies, resolveAnomaly, markFalsePositive } from '../services/twin/anomalyDetectionEngine'
 import { generateMaintenanceRecommendations, computeAssetHealth } from '../services/twin/maintenanceForecastEngine'
 import { summarizeAnomalies } from '../services/twin/anomalyClassificationService'
+import { requireCapability } from '../authz/requireCapability'
 
 const router = Router()
 
@@ -113,7 +114,7 @@ router.post('/anomalies/detect', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/anomalies/:anomalyId/resolve', async (req: Request, res: Response) => {
+router.post('/anomalies/:anomalyId/resolve', requireCapability('portfolio.approve') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     await resolveAnomaly(req.params.anomalyId as string, tenantId)

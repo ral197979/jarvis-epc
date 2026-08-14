@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Ecosystem Platform Routes (v9.0.0)
 // 44 endpoints across federated intelligence, benchmarking, playbook marketplace,
 // plugin framework, external agents, automation adapters, knowledge graph,
@@ -30,6 +29,7 @@ import { activateLicense, getActiveLicense, getAirGapStatus } from '../services/
 import { generateCertificationEvidence, listCertificationExports } from '../services/ecosystem/certificationEvidenceService'
 
 import { createWorkflow, listWorkflows, validateWorkflowPolicy, dryRunWorkflow, publishWorkflow, rollbackWorkflow, getWorkflowVersions } from '../services/ecosystem/workflowComposerService'
+import { requireCapability } from '../authz/requireCapability'
 
 const router = Router()
 
@@ -109,7 +109,7 @@ router.post('/federated/model-versions', async (req: Request, res: Response, nex
 })
 
 // POST /api/v1/ecosystem/federated/model-versions/:id/activate (admin)
-router.post('/federated/model-versions/:id/activate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/model-versions/:id/activate', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const mv = await activateModelVersion(req.params['id'] as string)
     res.json(mv)
@@ -178,7 +178,7 @@ router.post('/marketplace/playbooks', async (req: Request, res: Response, next: 
 })
 
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/publish
-router.post('/marketplace/playbooks/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/marketplace/playbooks/:id/publish', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const playbook = await publishPlaybook(req.params['id'] as string, req.body.sandboxValidated === true)
     res.json(playbook)
@@ -270,7 +270,7 @@ router.post('/external-agents/register', async (req: Request, res: Response, nex
 })
 
 // POST /api/v1/ecosystem/external-agents/:id/execute
-router.post('/external-agents/:id/execute', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/external-agents/:id/execute', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await executeExternalAgent(req.params['id'] as string, {
       tenantId: tid(req),
@@ -367,7 +367,7 @@ router.post('/edge-nodes/:id/heartbeat', async (req: Request, res: Response, nex
 })
 
 // POST /api/v1/ecosystem/edge-nodes/:id/revoke
-router.post('/edge-nodes/:id/revoke', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/edge-nodes/:id/revoke', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await revokeEdgeNode(tid(req), req.params['id'] as string)
     res.json({ revoked: true })
@@ -384,7 +384,7 @@ router.get('/edge-nodes/admin/status', async (_req: Request, res: Response, next
 // ─── Air-Gap Mode ─────────────────────────────────────────────────────────────
 
 // POST /api/v1/ecosystem/air-gap/activate
-router.post('/air-gap/activate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/air-gap/activate', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const license = await activateLicense(tid(req), req.body)
     res.json(license)
@@ -455,7 +455,7 @@ router.post('/workflows/:id/test', async (req: Request, res: Response, next: Nex
 })
 
 // POST /api/v1/ecosystem/workflows/:id/publish
-router.post('/workflows/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/workflows/:id/publish', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const wf = await publishWorkflow(tid(req), req.params['id'] as string, req.body.publishedBy ?? 'admin')
     res.json(wf)

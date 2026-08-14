@@ -21,6 +21,7 @@ import { tenantQuery } from '../db/pool'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -184,7 +185,7 @@ router.patch('/:id', async (req: Req, res: Response) => {
 
 // ─── POST complete ────────────────────────────────────────────────────────────
 
-router.post('/:id/complete', async (req: Req, res: Response) => {
+router.post('/:id/complete', requireCapability('safety.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
