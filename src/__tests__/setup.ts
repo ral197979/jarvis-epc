@@ -8,6 +8,13 @@
 
 import '@testing-library/jest-dom'
 import { configureAxe } from 'jest-axe'
+import { dialBoundAddressFamily } from './ephemeralLoopback'
+
+// ADR-014 F5: Supertest binds its per-request server on the `::` wildcard but
+// dials http://127.0.0.1, so the kernel could hand it an ephemeral port already
+// held by an unrelated IPv4 loopback listener and route the request there. Dial
+// the family we bound. See ./ephemeralLoopback.ts for the full mechanism.
+dialBoundAddressFamily()
 
 // Configure axe defaults for the test environment.
 // CSS custom properties (--jarvis-*) resolve to empty strings in jsdom,
