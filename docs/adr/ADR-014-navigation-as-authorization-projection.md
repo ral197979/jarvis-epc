@@ -106,8 +106,10 @@ Concretely:
    Record<NavId, Capability>` covering every id in `NAVIGATION_ITEMS` *and* every hidden
    `TAB_MAP`-only route, and `ROLE_CAPS: Record<UserRole, Capability[]>` keyed on the **seven
    `user_role` enum values** — no invented roles.
-2. **One decision function.** `canSee(navId, session): boolean` reads that registry. It is the only
-   authorization predicate on the client.
+2. **One decision function.** `canSee(navId, authRole, previewRole?)` reads that registry. It is the
+   only authorization predicate on the client, and its subject is the **authenticated** role
+   (`auth.role`, from the JWT). Any client-owned preview is a second argument that can only narrow
+   the result by set intersection.
 3. **Two consumers, no third table.** `NavSidebar` filters with `canSee`. `ContentRouter` gains a
    guard that calls the same `canSee` and renders a 403 state naming the missing capability. The
    sidebar filter's `domain` branching and `PERSONAS[].tabs` are both deleted.
@@ -128,7 +130,8 @@ Concretely:
 - Closes a real authorization gap rather than restyling one: no fail-open, no unguarded routes,
   no undocumented drift, and module access enforced where it can't be bypassed.
 - Deleting two of three tables removes the drift surface permanently.
-- `procurement` and `field_ops` — currently unhandled — become first-class.
+- `procurement` and `field_ops` — currently unhandled — become first-class. (This required widening
+  `OwnerConfig['activeRole']` from five values to all seven; the registry alone was not enough.)
 - Makes the honest 403 state possible, which the shipped app has no equivalent of.
 
 **Negative / cost**
@@ -181,34 +184,157 @@ recorded in `DENVER_FEATURE_TRUTH.md` §"Verification-limit disclosure", so the 
 established by source reading, not by signing in over SSO as a `procurement` user. Verification tier
 for the *findings*: **`code`**, not `runtime`.
 
-The Phase 1 *fix*, however, is proven behaviourally — see below.
+The Phase 1 *fix* is proven behaviourally — see below.
 
-## Phase 1 implementation status (2026-08-13)
+## Phase 1 implementation status (2026-08-14, after remediation)
 
-Implemented on `docs/adr-014-authorization-projection`. **Not reviewed, not merged.**
+Implemented on `docs/adr-014-authorization-projection`. **Not reviewed, not merged, not deployed.**
 
-| Item | Where |
+### What Phase 1 is
+
+A **client authorization projection** driven by the authenticated role:
+
+- the sidebar shows only destinations the effective capabilities permit — unauthorized entries
+  disappear entirely (no greyed-out items, no locks, no empty section headings);
+- the route guard independently denies direct URLs, stale bookmarks, persisted tabs, hand-edited
+  `?tab=` values, programmatic `setTab` and localStorage manipulation;
+- the OwnerPanel position picker is a **preview**, applied by set intersection, so it can only ever
+  show a user less than they already have.
+
+### What Phase 1 is not
+
+**It is not the security boundary.** It runs in the browser and can be bypassed by calling the API
+directly. Server functional authorization is Phase 2 and is **not implemented** — approximately
+406 of 438 endpoints remain authentication-only. Until Phase 2 lands, a valid tenant JWT is
+sufficient to invoke nearly every business function regardless of what this registry says.
+
+### The Phase 1 defect this remediation closed
+
+The first Phase 1 implementation (`ed9dbcf`) built the registry correctly but wired it to the wrong
+subject: both consumers read `ownerConfig.activeRole` — a UI picker, persisted to localStorage,
+defaulting to `owner` — while `auth.role`, the role the server issues at login, was written by
+`LoginScreen` and **read by nothing**. Runtime proof of the resulting fail-open, captured before the
+fix:
+
+```text
+auth.role = viewer   ownerConfig.activeRole = owner
+sidebar rendered      = 62 / 62
+visible to that viewer: costcontrol, budget, evm, billing, system, mcp, integrations
+direct costcontrol deep link -> no 403
+```
+
+The registry was never the problem; the binding was. Two supporting defects made it invisible:
+`OwnerConfig['activeRole']` was a five-value union, so `procurement` and `field_ops` were not
+representable and their tests had to cast through `as never`; and every behavioural test set the
+preview value directly, so the suite proved the registry agreed with itself and never exercised the
+authenticated path.
+
+### Model
+
+| Input | Meaning |
 |---|---|
-| Capability registry — `USER_ROLES` (7, mirroring the DB enum), 20 `CAPABILITIES`, `SCREEN_CAP` (70 destinations), `ROLE_CAPS` | `src/config/capabilities.ts` |
-| `canSee()` — the single predicate, fails closed | `src/config/capabilities.ts` |
-| Sidebar reads `canSee`; `domain` branching and the empty-result fallback deleted | `src/components/NavSidebar.tsx` |
-| Route guard + 403 naming destination, capability and role | `src/components/ContentRouter.tsx` |
-| `PERSONAS[].tabs` deleted; write/config/audit authority retained | `src/modules/auth/index.ts` |
+| `auth.role` | The authenticated position, from the JWT. **The subject of every decision.** |
+| `ownerConfig.activeRole` | The OwnerPanel preview. Client-owned, therefore never authoritative. |
 
-**Evidence.** `npm run typecheck` clean · ESLint clean on all changed files · full suite
-**167 files / 5428 tests passing** (`npx vitest run`). 34 new tests: 21 registry tests
-(`src/__tests__/config/capabilities.test.ts`) and 13 behavioural tests
-(`src/__tests__/components/navAuthorization.test.tsx`) that render the sidebar per role and assert
-its contents equal `canSee` for all 62 nav items, and that a directly-set `activeTab` on a blocked
-destination renders 403 rather than the screen. One unrelated flake was observed on the first full
-run — `api/__tests__/tier1.test.ts` "socket hang up" under parallel load; it passed in isolation
-twice and on the full re-run, and shares no import with these changes.
+```text
+no valid authenticated role     → ∅
+valid auth, no/invalid preview  → the authenticated capabilities
+valid auth + valid preview      → auth ∩ preview
+```
 
-**Resulting projections** (sidebar items of 62 / total routes of 70): owner 62/70 · admin 62/70 ·
-project_manager 44/50 · engineer 33/38 · field_ops 24/29 · procurement 19/24 · viewer 12/17.
+Intersection is deliberate: roles are **not** a hierarchy and are not subsets of one another. An
+engineer previewing procurement gets `engineer ∩ procurement` — it must not acquire
+`procurement.view` merely because procurement holds fewer capabilities in total. Nothing in the
+implementation ranks, counts or orders roles. `effectiveWriteRole()` applies the same rule to write
+affordances, so an authenticated viewer cannot regain write controls by previewing an owner.
 
-**Behaviour changes to call out in review.** Grants are stated by function rather than by the nav
-`domain` tag, so some access moves: an engineer gains the procurement-tagged screens they could
-already reach via `subcontracts`, and loses the org-wide `projects` registry; `procurement` and
-`field_ops` lose the full sidebar they previously fell through to. This is intended, and it is the
-part of Phase 1 most worth a second opinion.
+**Local PIN mode limitation.** Only proxied (multi-tenant) mode has a server-issued role. In local
+PIN mode `LoginScreen` seeds `auth.role` from stored config, because there is no server to consult
+and the PIN is the gate. That is a property of local mode, not a fallback for proxied mode.
+
+### Role model changes
+
+- **Platform Administrator is no longer a second owner.** `admin` aliased `ALL_CAPS`. It now holds
+  `platform.admin` + `audit.view` — a four-destination rail (system, automation, integrations, MCP)
+  plus the hidden audit reader. It receives no portfolio, org-wide registry, project delivery,
+  engineering, construction, commissioning, commercial, procurement-delivery or CRM capability.
+  *Known consequence:* `personal.view` bundles the project-delivery queues (`focus`, `mywork`,
+  `actions`) with `notifications`, so withholding it leaves an admin without a personal inbox.
+  Splitting `notifications` out is a product decision, not an authorization one.
+- **Project Manager is not a portfolio role.** `project.list.all` removed (it never held
+  `portfolio.view`). A PM manages assigned projects, not the organisation-wide registry.
+- **Procurement still has no schedule visibility — a known capability-design gap.** Required-on-site
+  dates sit behind `schedule.view`, which also opens `forecast` (Monte Carlo simulation). Granting it
+  would over-grant, so it is withheld. The fix is to split `schedule.view` into dated-milestone read
+  vs forecast/simulation. Recorded for Phase 2, not worked around here.
+- **Engineer** keeps engineering and project depth and does **not** get the org-wide registry back.
+  It therefore has no listing surface from which to enter a project. That dead end is real; it
+  belongs to Phase 3 record scope (`My Projects`), not to a wider grant.
+
+### Hidden destinations
+
+Eight `TAB_MAP` destinations are absent from `NAVIGATION_ITEMS`, so a stale bookmark is the only way
+in. Five previously shared the generic `project.view`, which **every** role holds — so a viewer could
+deep-link the procurement and engineering module hubs, the labour register and the jobs register.
+Each is now mapped to the capability matching what it actually renders:
+
+| Destination | Renders | Capability | Roles |
+|---|---|---|---|
+| `commissioning` | CommissioningView | `commissioning.view` | owner, project_manager |
+| `procurement` | ProcurementView — vendors, POs, bids | `procurement.view` | owner, project_manager, procurement |
+| `engineering` | EngineeringView — deliverables, transmittals, calc | `engineering.view` | owner, project_manager, engineer |
+| `plan` | PlannerView — logistics + bid items | `procurement.view` | owner, project_manager, procurement |
+| `resources` | ResourcesView → LiView — labour items, rates | `team.view` | owner, project_manager |
+| `jobs` | JobsView — org-wide contracts/jobs register | `project.list.all` | owner |
+| `overview` | DashboardMainView — portfolio roll-up | `portfolio.view` | owner |
+| `audit` | AuditLogView — tenant audit reader | `audit.view` | owner, admin |
+
+No hidden destination is open to every role.
+
+### Resulting projections
+
+Machine-generated from the final commit. Sidebar = of 62 `NAVIGATION_ITEMS`; total = of 70
+registered destinations.
+
+| Role | Capabilities | Sidebar | Total |
+|---|---:|---:|---:|
+| owner | 20 | 62 | 70 |
+| project_manager | 14 | 43 | 48 |
+| engineer | 9 | 33 | 34 |
+| field_ops | 7 | 24 | 24 |
+| procurement | 5 | 19 | 21 |
+| viewer | 3 | 12 | 12 |
+| admin | 2 | 4 | 5 |
+
+Registry completeness at the same commit: 62 nav ids, 70 `TAB_MAP` destinations, 70 `SCREEN_CAP`
+registrations, 0 unregistered, 0 unreachable, 0 empty mappings. Elevation violations across all 49
+ordered (authenticated, preview) role pairs: **0**.
+
+### Residual gaps — open security issues, not future enhancements
+
+1. ~406 of 438 API endpoints are authentication-only; ~30 approval/state-transition endpoints
+   (timesheets, AI governance, subcontract invoices, punch verification, estimates, runbooks) have
+   no functional authorization. **Phase 2.**
+2. No user↔project membership model exists. `project_assignments.member_id` references the
+   `team_members` HR roster, which has no foreign key to `users`. No project-scoped RLS exists.
+   **Phase 3.**
+3. Jarvis / knowledge retrieval is not capability-filtered: `POST /api/v1/ask` needs only a valid
+   tenant JWT, so a route denial is bypassable via RAG. **Phase 3.**
+4. JWT roles go stale — `requireAuth` trusts `payload.role` and never re-resolves against
+   `users.role`, so a demotion does not take effect until the token expires. No token versioning or
+   session invalidation on role change. **Phase 2 decision.**
+5. Client write authority still fails open for four roles: `PERSONAS` is keyed `owner`/`exec`/`pm`/
+   `engineer`/`viewer`, so `admin`, `project_manager`, `procurement` and `field_ops` resolve through
+   `PERSONAS[role] ?? PERSONAS.owner` to owner-like write authority. `effectiveWriteRole()` closes
+   the *preview* elevation but not this; closing it requires deciding which roles may write, which
+   is product semantics.
+6. `checkPolicyServer()` falls back to client-side policy on network failure — currently inert, as it
+   is imported by `JarvisCore.jsx` but never called, and `/api/v1/policy/check` does not exist.
+7. No field-level authorization anywhere; endpoints return whole records.
+
+### Behaviour changes to call out in review
+
+Grants are stated by function rather than by the nav `domain` tag, so access moves. Every role except
+`owner` loses destinations relative to `ed9dbcf`, because the five generic-`project.view` hidden hubs
+are now properly gated. `admin` drops from 62 sidebar destinations to 4. This is the point of the
+change, and it is a visible behaviour change that needs release notes.
