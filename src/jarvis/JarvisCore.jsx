@@ -39,7 +39,7 @@ import {
 } from "../modules/store";
 import {
     _checkPolicy, _checkPolicyServer, _setAuthToken, _getAuthToken,
-    _clearAuthToken, _checkSessionTimeout, _announce, _PERSONAS, _INPUT_LIMITS,
+    _clearAuthToken, _checkSessionTimeout, _announce, _INPUT_LIMITS,
 } from "../modules/auth";
 import { _gateway, tn as _tnGateway, nn as _nnGateway, backendUrl as _backendUrl } from "../modules/gateway";
 import {
@@ -230,6 +230,7 @@ function _buildAIContext(t) {
 // Phase 19: Phase 18a wrapper functions deleted — ContentRouter uses direct lazy imports
 // Phase 18b: Navigation config extracted to src/config/navigation.ts
 import { NAVIGATION_ITEMS as Ci } from "../config/navigation";
+import { effectiveWriteRole as _effectiveWriteRole } from "../config/capabilities";
 
 // ============================================================================
 // STATE MANAGEMENT — Phase 5 (SM-01 through SM-04)
@@ -421,6 +422,12 @@ export default function JarvisCore() {
     var _gwSet       = function(v) { useAppStore.getState().setGateway({ enabled: v }); };
     var _oCfg        = useAppStore(function(s) { return s.ownerConfig; });
     var _oCfgSet     = useAppStore(function(s) { return s.setOwnerConfig; });
+    var _authRole    = useAppStore(function(s) { return s.auth.role; });
+    // ADR-014: the role every policy check below must use. Derived from the
+    // AUTHENTICATED role; the OwnerPanel preview can only narrow it. The old
+    // `_oCfg.activeRole || "owner"` read a client-owned value and fell open to
+    // owner when it was absent.
+    var _writeRole   = _effectiveWriteRole(_authRole, _oCfg.activeRole);
     var _oPanelOpen  = useAppStore(function(s) { return s.ui.ownerPanelOpen; });
     var _oPanelSet   = useAppStore(function(s) { return s.setOwnerPanel; });
     var _apiStats    = useAppStore(function(s) { return s.apiStats; });
@@ -563,33 +570,23 @@ export default function JarvisCore() {
             return j
         })
     }
-    var _activePersona = _PERSONAS[_oCfg.activeRole] || _PERSONAS.owner,
-        Se = _.map(function(d) {
-            return Ci.find(function(f) {
-                return f.id === d
-            })
-        }).filter(function(d) {
-            if (!d || K[d.id]) return false;
-            // R-21: Persona tab filter — null means all tabs allowed (owner)
-            if (!_activePersona.tabs) return true;
-            return _activePersona.tabs.indexOf(d.id) >= 0;
-        }),
-        X = _.map(function(d) {
-            return Ci.find(function(f) {
-                return f.id === d
-            })
-        }).filter(Boolean),
-        ne = ti(function(d) {
+    // ADR-014: the legacy `_activePersona.tabs` nav filter (and its `Se`/`X`
+    // results, which nothing ever read) is gone. It was the third screen-
+    // authorization table, it keyed on `_PERSONAS` — whose keys are `exec`/`pm`,
+    // not `user_role` values — and Phase 1 deleted the `tabs` field it read,
+    // leaving `!_activePersona.tabs` permanently true. NavSidebar now projects
+    // authorization from the capability registry; there is no second filter.
+    var ne = ti(function(d) {
             s(d);
             try { io.set("bizState", d) } catch(ex) { console.error("[JARVIS] Persist failed:", ex) }
         }, []),
         Z = ti(function(d, _auditAction) {
             // R-17: Owner kill switch — block writes when disabled
             // R-20: Policy-gated write check
-            if (!_checkPolicy("data:write", _oCfg, _oCfg.activeRole || "owner").allowed) {
-                console.warn("[JARVIS] Write blocked by policy (role=" + (_oCfg.activeRole || "owner") + ")");
+            if (!_checkPolicy("data:write", _oCfg, _writeRole).allowed) {
+                console.warn("[JARVIS] Write blocked by policy (role=" + _writeRole + ")");
                 // A12-17: Announce blocked action
-                if (typeof _announce === "function") _announce("Action blocked: insufficient permissions for " + (_oCfg.activeRole || "owner") + " role");
+                if (typeof _announce === "function") _announce("Action blocked: insufficient permissions for " + _writeRole + " role");
                 _auditLogSet(function(prev) {
                     var next = [{ ts: new Date().toISOString(), actor: "system", action: "WRITE_BLOCKED", changes: [_auditAction || "unknown"], id: "AUD-" + Date.now() }].concat(prev.slice(0, 499));
                     try { io.set("auditLog", next) } catch(ex) {}
@@ -656,7 +653,7 @@ export default function JarvisCore() {
         var actionLabel = (typeof action === "string" ? action : action.type || "unknown") + (meta ? " (" + JSON.stringify(meta).slice(0, 60) + ")" : "");
 
         // 1. Policy check
-        var writePolicy = _checkPolicy("data:write", _oCfg, _oCfg.activeRole || "owner");
+        var writePolicy = _checkPolicy("data:write", _oCfg, _writeRole);
         if (!writePolicy.allowed) {
             _logError("dispatch", "Blocked: " + actionLabel + " — " + writePolicy.reason);
             return false;
@@ -917,7 +914,7 @@ export default function JarvisCore() {
                 return;
             }
         }
-        if (!_checkPolicy("data:export", _oCfg, _oCfg.activeRole || "owner").allowed) {
+        if (!_checkPolicy("data:export", _oCfg, _writeRole).allowed) {
             alert("Exports are currently disabled by policy. Enable in Owner Controls or switch to Owner role.");
             console.warn("[JARVIS] Export blocked by policy");
             return;
@@ -955,7 +952,7 @@ export default function JarvisCore() {
     function _importAll(file) {
         if (!file) return;
         // R-20: Policy-gated import check
-        if (!_checkPolicy("data:import", _oCfg, _oCfg.activeRole || "owner").allowed) {
+        if (!_checkPolicy("data:import", _oCfg, _writeRole).allowed) {
             alert("Imports are disabled by policy. Switch to Owner role.");
             return;
         }
@@ -1020,7 +1017,7 @@ export default function JarvisCore() {
     return React.createElement(JarvisContext.Provider, {
         value: {
             biz: t, dispatch: _dispatch, mutate: Z, setTab: _setTab,
-            ownerCfg: _oCfg, activeRole: _oCfg.activeRole || "owner",
+            ownerCfg: _oCfg, activeRole: _writeRole,
             auditLog: _auditLog, apiStats: _apiStats, errorLog: _errorLog, sessionMetrics: _sessionMetrics, ACTIONS: JARVIS_ACTIONS
         }
     }, React.createElement(_JarvisErrorBoundary, null, React.createElement("div", {

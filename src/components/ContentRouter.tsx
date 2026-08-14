@@ -17,7 +17,7 @@ import { ViewErrorBoundary } from './ErrorBoundary'
 import WorkflowContextBar    from './shell/WorkflowContextBar'
 import GuidedFlow            from './shell/GuidedFlow'
 import { flowForTab }        from '../config/workflows'
-import { canSee, capabilityForScreen } from '../config/capabilities'
+import { canSee, capabilityForScreen, visibleScreens, effectiveWriteRole } from '../config/capabilities'
 
 // ─── Lazy load all view components ───────────────────────────────────────────
 // Using lazy() avoids bundling the entire component tree upfront.
@@ -226,16 +226,24 @@ export const TAB_MAP: Record<string, ViewEntry> = {
 export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: ContentRouterProps) {
   const activeTab   = useAppStore(s => s.ui.activeTab)
   const ownerConfig = useAppStore(s => s.ownerConfig)
+  const authRole    = useAppStore(s => s.auth.role)
 
   const ViewComponent = TAB_MAP[activeTab]
 
   // ADR-014 route guard. Hiding a nav item is not access control: a deep link, a
-  // persisted tab id from a prior session or role, or a cross-link from a KPI all
-  // set the active tab without passing the sidebar. The guard reads the same
-  // canSee() the sidebar projection reads, and fails closed.
-  const activeRole = { ...ownerConfig, ...policy }.activeRole
-  if (ViewComponent && !canSee(activeTab, activeRole)) {
+  // persisted tab id from a prior session or role, a manually edited `?tab=`, or a
+  // programmatic setTab all set the active tab without passing the sidebar. The
+  // guard reads the same canSee() the sidebar projection reads, and fails closed.
+  //
+  // Subject = the authenticated role; the OwnerPanel preview is passed second and
+  // can only narrow. Previously this read the preview alone, so an authenticated
+  // viewer with the default stored `owner` walked straight into cost control.
+  const previewRole = { ...ownerConfig, ...policy }.activeRole
+  if (ViewComponent && !canSee(activeTab, authRole, previewRole)) {
     const cap = capabilityForScreen(activeTab)
+    // Only offer a way out to a destination this user may actually open —
+    // otherwise the escape hatch lands on a second denial.
+    const landing = visibleScreens(authRole, previewRole)[0]
     return (
       <div
         role="alert"
@@ -247,16 +255,16 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
         </p>
         <p style={{ fontSize: 13, maxWidth: 420 }}>
           <code>{activeTab}</code>{cap ? <> requires <code>{cap}</code>, which</> : ' is not a registered destination and'}{' '}
-          your role ({String(activeRole ?? 'unknown')}) does not hold. You reached this from a direct
+          your role ({String(authRole ?? 'unknown')}) does not hold. You reached this from a direct
           URL, a bookmark or a stale link.
         </p>
-        {onNavigate && (
+        {onNavigate && landing && (
           <button
             type="button"
-            onClick={() => onNavigate('mywork')}
+            onClick={() => onNavigate(landing)}
             style={{ marginTop: 4, padding: '7px 14px', fontSize: 13, borderRadius: 6, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'inherit', cursor: 'pointer' }}
           >
-            Back to My Work
+            Go to an available screen
           </button>
         )}
       </div>
@@ -272,8 +280,13 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
     )
   }
 
+  // ADR-014: views gate their own write affordances on `policy.activeRole !==
+  // 'viewer'`. Handing them the raw preview role would reopen the elevation the
+  // route guard just closed — an authenticated viewer whose stored preview is
+  // `owner` would get every write control. Downstream policy therefore carries
+  // the *effective* write role, which the preview can only narrow.
   const sharedProps = {
-    policy,
+    policy: { ...policy, activeRole: effectiveWriteRole(authRole, previewRole) },
     biz,
     onNavigate,
     onAudit,

@@ -23,12 +23,23 @@ import { KpiCard }                        from './KpiCard'
 
 // ─── Types / constants ────────────────────────────────────────────────────────
 
+/**
+ * The positions this panel can *preview*. All seven `user_role` values —
+ * `procurement` and `field_ops` were previously missing, so the two roles
+ * ADR-014 exists to serve could not be selected at all.
+ *
+ * Selecting one does not change who you are. Authorization intersects the
+ * preview with your authenticated capabilities, so a preview can only ever show
+ * you less than you already have (see `effectiveCapabilities`).
+ */
 const ROLES: Array<{ value: OwnerConfig['activeRole']; label: string; icon: string }> = [
-  { value: 'owner',           label: 'Owner',           icon: '👑' },
-  { value: 'admin',          label: 'Admin',           icon: '🛡️' },
-  { value: 'project_manager',label: 'Project Manager', icon: '📋' },
-  { value: 'engineer',       label: 'Engineer',        icon: '⚙️' },
-  { value: 'viewer',         label: 'Viewer',          icon: '👁️' },
+  { value: 'owner',           label: 'Owner',                   icon: '👑' },
+  { value: 'admin',           label: 'Platform Administrator',  icon: '🛡️' },
+  { value: 'project_manager', label: 'Project Manager',         icon: '📋' },
+  { value: 'engineer',        label: 'Engineer',                icon: '⚙️' },
+  { value: 'procurement',     label: 'Procurement',             icon: '📦' },
+  { value: 'field_ops',       label: 'Field Ops',               icon: '🦺' },
+  { value: 'viewer',          label: 'Viewer',                  icon: '👁️' },
 ]
 
 function hashPin(pin: string): string {
@@ -47,6 +58,10 @@ export interface OwnerPanelProps {
 export function OwnerPanel({ backendUrl = '', version = '4.29.0' }: OwnerPanelProps) {
   const ownerConfig   = useAppStore(s => s.ownerConfig)
   const setOwnerConfig= useAppStore(s => s.setOwnerConfig)
+  // ADR-014: the authenticated position. Anything that grants authority in this
+  // panel must key on this, never on `ownerConfig.activeRole` (a client-owned
+  // preview that defaults to `owner`).
+  const authRole      = useAppStore(s => s.auth.role)
   const setOwnerPanel = useAppStore(s => s.setOwnerPanel)
   const gateway       = useAppStore(s => s.gateway)
   const setGateway    = useAppStore(s => s.setGateway)
@@ -165,8 +180,17 @@ export function OwnerPanel({ backendUrl = '', version = '4.29.0' }: OwnerPanelPr
         {/* ── Config tab ────────────────────────────────────────────────── */}
         {tab === 'config' && (
           <div>
-            {/* Role selector */}
-            <Section title="Active Role">
+            {/* Preview selector — ADR-014: this previews a position, it does not
+                change the signed-in identity. Wording matters: the old "Active
+                Role" / "Active" labelling read as authority, which is exactly the
+                misconception that let a client-owned value look authoritative. */}
+            {(authRole === 'owner' || authRole === 'admin') && (
+            <Section title="Preview as position">
+              <p style={{ fontSize: 11, color: 'var(--jarvis-ts)', margin: '0 0 8px' }}>
+                Preview how Denver looks for another position. Your signed-in position is
+                {' '}<strong>{authRole ?? 'not established'}</strong> and does not change —
+                a preview can only show you less, never more.
+              </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {ROLES.map(r => (
                   <button key={r.value} onClick={() => setOwnerConfig({ activeRole: r.value })} style={{
@@ -177,11 +201,25 @@ export function OwnerPanel({ backendUrl = '', version = '4.29.0' }: OwnerPanelPr
                   }}>
                     <span>{r.icon}</span>
                     <span style={{ fontSize: 12, fontWeight: ownerConfig.activeRole === r.value ? 700 : 400 }}>{r.label}</span>
-                    {ownerConfig.activeRole === r.value && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--jarvis-ac)', fontWeight: 700 }}>Active</span>}
+                    {ownerConfig.activeRole === r.value && <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--jarvis-ac)', fontWeight: 700 }}>Previewing</span>}
                   </button>
                 ))}
               </div>
+              {authRole && ownerConfig.activeRole !== authRole && (
+                <button
+                  type="button"
+                  onClick={() => setOwnerConfig({ activeRole: authRole })}
+                  style={{
+                    marginTop: 8, width: '100%', padding: '7px 12px', fontSize: 12,
+                    borderRadius: 6, border: '1px solid var(--jarvis-bd)',
+                    background: 'var(--jarvis-bg)', color: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  Exit preview
+                </button>
+              )}
             </Section>
+            )}
 
             {/* Feature toggles */}
             <Section title="Feature Permissions">
@@ -253,8 +291,11 @@ export function OwnerPanel({ backendUrl = '', version = '4.29.0' }: OwnerPanelPr
               )}
             </Section>
 
-            {/* Emergency wipe (owner only) */}
-            {ownerConfig.activeRole === 'owner' && (
+            {/* Emergency wipe — authenticated owner only. This was gated on
+                `ownerConfig.activeRole`, the client-owned preview that defaults
+                to `owner`, so any authenticated user saw it. Previewing a
+                narrower position hides it too, which is the point of a preview. */}
+            {authRole === 'owner' && ownerConfig.activeRole === 'owner' && (
               <Section title="Danger Zone">
                 <button
                   onClick={handleLogout}

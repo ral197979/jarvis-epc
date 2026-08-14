@@ -14,8 +14,16 @@
  * (which keyed on `exec`/`pm` — roles that do not exist in the `user_role`
  * enum), and the ad-hoc role branches those implied.
  *
- * SCOPE — this is a *view* gate only. Write authority still lives in
- * `POLICY_ACTIONS` / `canWriteData` and is unchanged by ADR-014 Phase 1.
+ * THE SUBJECT IS THE AUTHENTICATED ROLE. Every predicate here takes
+ * `auth.role` — the role the server put in the JWT and `LoginScreen` stored —
+ * as its first argument. The OwnerPanel role picker is a *preview* only: it is
+ * passed separately and can only ever *narrow* the result (set intersection).
+ * A client-controlled value can therefore never widen authority, which is the
+ * defect this file previously had (it read `ownerConfig.activeRole` alone).
+ *
+ * SCOPE — this is a *view* gate plus `effectiveWriteRole()` for the
+ * preview-narrowing of write affordances. Which roles may write at all still
+ * lives in `POLICY_ACTIONS` / `PERSONAS` and is unchanged.
  *
  * NOT A SECURITY BOUNDARY ON ITS OWN. Client-side gating hides what a user may
  * not open; it does not stop a crafted request. Server enforcement
@@ -23,8 +31,8 @@
  * lands, the API remains the authoritative gap.
  *
  * Usage:
- *   import { canSee, ROLE_CAPS, SCREEN_CAP } from '../config/capabilities'
- *   if (!canSee(tabId, role)) renderRestricted()
+ *   import { canSee } from '../config/capabilities'
+ *   if (!canSee(tabId, auth.role, previewRole)) renderRestricted()
  */
 
 /**
@@ -95,11 +103,6 @@ export const SCREEN_CAP: Record<string, Capability> = {
   timesheets:      'team.view',
   meetings:        'project.view',
   construction:    'project.view',
-  engineering:     'project.view',   // hidden route — module hub
-  procurement:     'project.view',   // hidden route — module hub
-  plan:            'project.view',   // hidden route
-  resources:       'project.view',   // hidden route
-  jobs:            'project.view',   // hidden route
 
   // ── Business development ────────────────────────────────────────────────────
   crm:             'crm.view',
@@ -125,7 +128,6 @@ export const SCREEN_CAP: Record<string, Capability> = {
   executive:       'portfolio.view',
   predict:         'portfolio.view',
   dash:            'portfolio.view',
-  overview:        'portfolio.view',  // hidden route — alternate dashboard
 
   // ── Engineering ─────────────────────────────────────────────────────────────
   feed:            'engineering.view',
@@ -168,20 +170,32 @@ export const SCREEN_CAP: Record<string, Capability> = {
   procurementrisk: 'procurement.view',
   directory:       'procurement.view',
 
-  // ── Commissioning ───────────────────────────────────────────────────────────
-  commissioning:   'commissioning.view',  // hidden route
-
   // ── AI ──────────────────────────────────────────────────────────────────────
   ask:             'assistant.use',
   coordination:    'assistant.use',
   autopilot:       'assistant.use',
 
   // ── Platform ────────────────────────────────────────────────────────────────
-  audit:           'audit.view',          // hidden route
   system:          'platform.admin',
   automation:      'platform.admin',
   integrations:    'platform.admin',
   mcp:             'platform.admin',
+
+  // ── Hidden / deep-link-only destinations ────────────────────────────────────
+  // Present in the router's TAB_MAP but absent from NAVIGATION_ITEMS, so they are
+  // reachable only by `?tab=`, a persisted `ui.activeTab`, or a programmatic
+  // setTab. Each is mapped to the capability matching *what it renders*, not to a
+  // generic one. Five of these previously shared `project.view`, which every role
+  // holds — so a stale bookmark opened the procurement and engineering module hubs
+  // for a viewer. Hidden is not a permission.
+  commissioning:   'commissioning.view',  // CommissioningView
+  audit:           'audit.view',          // AuditLogView — tenant audit reader
+  overview:        'portfolio.view',      // DashboardMainView — portfolio roll-up
+  engineering:     'engineering.view',    // EngineeringView — deliverables, transmittals, calc
+  procurement:     'procurement.view',    // ProcurementView — vendors, POs, bids
+  plan:            'procurement.view',    // PlannerView — logistics + bid items
+  resources:       'team.view',           // ResourcesView → LiView — labour items, rates
+  jobs:            'project.list.all',    // JobsView — org-wide contracts/jobs register
 }
 
 const ALL_CAPS: readonly Capability[] = CAPABILITIES
@@ -198,11 +212,34 @@ const ALL_CAPS: readonly Capability[] = CAPABILITIES
  * they matched no branch and fell through to the full sidebar.
  */
 export const ROLE_CAPS: Record<UserRole, readonly Capability[]> = {
+  /** Tenant owner — the only role holding every capability. */
   owner: ALL_CAPS,
-  admin: ALL_CAPS,
 
+  /**
+   * Platform Administrator — platform operations, *not* project delivery.
+   *
+   * `admin` previously aliased `ALL_CAPS`, making it a second owner. It is not:
+   * it administers the tenant's platform (settings, automation, integrations,
+   * MCP) and reads the audit trail. It deliberately holds no portfolio, no
+   * org-wide project registry, no project delivery, engineering, construction,
+   * commissioning, commercial or CRM capability — a platform administrator has
+   * no business reason to read the tenant's cost or customer data.
+   *
+   * Known consequence: `personal.view` is withheld too, because that capability
+   * bundles the project delivery queues (`focus`, `mywork`, `actions`) with
+   * `notifications`. An admin therefore has no personal inbox. Splitting
+   * `notifications` out is a product decision, not an authorization one.
+   */
+  admin: ['platform.admin', 'audit.view'],
+
+  /**
+   * Project delivery depth — but not a portfolio role. Holds neither
+   * `portfolio.view` nor `project.list.all`: a project manager manages assigned
+   * projects, not the organisation-wide registry. See ADR-014 for the resulting
+   * project-entry gap, which belongs to Phase 3 record scope, not to a wider grant.
+   */
   project_manager: [
-    'personal.view', 'project.view', 'project.list.all', 'team.view',
+    'personal.view', 'project.view', 'team.view',
     'schedule.view', 'risk.view', 'engineering.view', 'docs.view',
     'construction.view', 'field.view', 'quality.view', 'safety.view',
     'procurement.view', 'commissioning.view', 'assistant.use',
@@ -214,6 +251,14 @@ export const ROLE_CAPS: Record<UserRole, readonly Capability[]> = {
     'assistant.use',
   ],
 
+  /**
+   * KNOWN GAP — procurement has no schedule visibility. Required-on-site dates
+   * live behind `schedule.view`, but that capability also opens `forecast`
+   * (Monte Carlo schedule simulation), which is not procurement's business.
+   * Granting it would over-grant to make the matrix look complete, so it is
+   * withheld. The fix is to split `schedule.view` into dated-milestone read vs
+   * forecast/simulation — a capability-design change, recorded for Phase 2.
+   */
   procurement: [
     'personal.view', 'project.view', 'procurement.view', 'docs.view',
     'assistant.use',
@@ -242,22 +287,71 @@ export function capabilityForScreen(screenId: string): Capability | undefined {
 }
 
 /**
- * The single authorization predicate.
+ * The effective capability set — the one place authority is computed.
  *
- * **Fails closed.** An unknown role, an absent role, or a destination with no
- * registry entry all deny. This is the deliberate reversal of the previous
- * behaviour, where an unrecognised role fell through to `return true` and an
- * empty filter result restored the entire sidebar.
+ * `authRole` is the authenticated role (`auth.role`, from the JWT). `previewRole`
+ * is the OwnerPanel picker, which is client-controlled and therefore may only
+ * ever *remove* capabilities:
+ *
+ *     no valid authenticated role        → ∅
+ *     valid auth, no/invalid preview     → the authenticated capabilities
+ *     valid auth + valid preview         → auth ∩ preview
+ *
+ * Set intersection, deliberately: roles are **not** a hierarchy and are not
+ * subsets of one another. An engineer previewing procurement gets
+ * engineer ∩ procurement — it must not acquire `procurement.view` merely because
+ * procurement holds fewer capabilities overall. Nothing here ranks, counts or
+ * orders roles, and adding such a shortcut would reintroduce elevation.
  */
-export function canSee(screenId: string, role: unknown): boolean {
-  if (!isUserRole(role)) return false
-  const cap = capabilityForScreen(screenId)
-  if (!cap) return false
-  return ROLE_CAPS[role].includes(cap)
+export function effectiveCapabilities(authRole: unknown, previewRole?: unknown): readonly Capability[] {
+  if (!isUserRole(authRole)) return []
+  const granted = ROLE_CAPS[authRole]
+  if (!isUserRole(previewRole) || previewRole === authRole) return granted
+  const preview = ROLE_CAPS[previewRole]
+  return granted.filter(cap => preview.includes(cap))
 }
 
-/** Every destination a role may open — the sidebar projection, in registry order. */
-export function visibleScreens(role: unknown): string[] {
-  if (!isUserRole(role)) return []
-  return Object.keys(SCREEN_CAP).filter(id => canSee(id, role))
+/**
+ * The single authorization predicate. Read by both the sidebar projection
+ * ([NavSidebar]) and the route guard ([ContentRouter]) — there is no second table.
+ *
+ * **Fails closed.** An absent authenticated role, an unknown one, or a
+ * destination with no registry entry all deny. This is the deliberate reversal
+ * of the original behaviour, where an unrecognised role fell through to
+ * `return true` and an empty filter result restored the entire sidebar.
+ */
+export function canSee(screenId: string, authRole: unknown, previewRole?: unknown): boolean {
+  const cap = capabilityForScreen(screenId)
+  if (!cap) return false
+  return effectiveCapabilities(authRole, previewRole).includes(cap)
+}
+
+/** Every destination the effective capabilities open, in registry order. */
+export function visibleScreens(authRole: unknown, previewRole?: unknown): string[] {
+  const caps = effectiveCapabilities(authRole, previewRole)
+  if (!caps.length) return []
+  return Object.keys(SCREEN_CAP).filter(id => {
+    const cap = capabilityForScreen(id)
+    return !!cap && caps.includes(cap)
+  })
+}
+
+/**
+ * The role downstream views must use for write/affordance checks
+ * (`policy.activeRole !== 'viewer'`, `PERSONAS[role]`).
+ *
+ * Binding navigation to `auth.role` without this would leave a second elevation
+ * path open: an authenticated viewer whose stored preview is `owner` would still
+ * satisfy every `activeRole !== 'viewer'` affordance check. Preview may only
+ * reduce here too, so previewing `viewer` makes the UI read-only and an
+ * authenticated `viewer` stays read-only whatever the preview says.
+ *
+ * This narrows the *preview*; it does not change which roles may write at all.
+ * That still lives in `POLICY_ACTIONS` / `PERSONAS` — see ADR-014 for the
+ * residual fail-open there, which needs product semantics to close.
+ */
+export function effectiveWriteRole(authRole: unknown, previewRole?: unknown): UserRole {
+  if (!isUserRole(authRole)) return 'viewer'
+  if (isUserRole(previewRole) && previewRole === 'viewer') return 'viewer'
+  return authRole
 }

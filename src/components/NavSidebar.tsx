@@ -38,6 +38,7 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
   const setTab      = useAppStore(s => s.setTab)
   const setCollapsed= useAppStore(s => s.setSidebarCollapsed)
   const ownerConfig = useAppStore(s => s.ownerConfig)
+  const authRole    = useAppStore(s => s.auth.role)
   const cfg         = { ...ownerConfig, ...policy }
 
   const orderedItems: NavItem[] = navOrder.length
@@ -46,12 +47,18 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
 
   // ADR-014: the sidebar is a projection of effective authorization. It reads the
   // same canSee() the route guard reads — there is no sidebar-specific permission
-  // table. Fails closed: an unknown role or an unregistered destination renders
-  // nothing. (The former filter branched on the nav `domain` tag, missed the
-  // `procurement` and `field_ops` roles entirely, and restored the full nav when
-  // the result came back empty.)
+  // table.
+  //
+  // The subject is the AUTHENTICATED role. `cfg.activeRole` is the OwnerPanel
+  // preview and is passed second, where it can only narrow the result — it used
+  // to be the sole input, which meant a client-owned localStorage value (default
+  // `owner`) decided the sidebar and an authenticated viewer saw all 62 entries.
+  //
+  // Fails closed: no authenticated role, an unknown one, or an unregistered
+  // destination all render nothing. Sections with no permitted destination are
+  // dropped entirely below, so no empty group heading survives.
   const visibleItems = orderedItems.filter(item =>
-    !navHidden[item.id] && canSee(item.id, cfg.activeRole)
+    !navHidden[item.id] && canSee(item.id, authRole, cfg.activeRole)
   )
 
   function navigate(id: string) {

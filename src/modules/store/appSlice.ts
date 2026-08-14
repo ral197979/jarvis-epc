@@ -32,6 +32,7 @@
 
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
+import type { UserRole } from '../../config/capabilities'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,14 +42,27 @@ export interface OwnerConfig {
   exportsEnabled: boolean
   authEnabled:    boolean
   pinHash:        string
-  activeRole:     'owner' | 'admin' | 'project_manager' | 'engineer' | 'viewer'
+  /**
+   * The OwnerPanel *preview* position — not authorization identity.
+   *
+   * ADR-014: this is client-owned (a UI picker, persisted to localStorage), so
+   * authorization never reads it alone. `effectiveCapabilities(auth.role, this)`
+   * intersects it with the authenticated role, so it can only narrow.
+   *
+   * Typed as `UserRole` so all seven `user_role` enum values are representable.
+   * It was previously a five-value union that could not hold `procurement` or
+   * `field_ops`, which made those roles unreachable in the running app and
+   * forced `as never` casts in tests.
+   */
+  activeRole:     UserRole
 }
 
 export interface AuthState {
   isAuthenticated: boolean
   userId?:         string
   tenantId?:       string
-  role?:           string
+  /** The authenticated role, as issued by the server in the JWT. The subject of every authorization decision. */
+  role?:           UserRole
   loginAt?:        string
 }
 
