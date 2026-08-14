@@ -18,6 +18,7 @@ import path from 'node:path'
 import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
 import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
@@ -29,14 +30,14 @@ type Req = AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
+// ADR-014 Phase 2 §20: reading the tenant knowledge corpus is assistant use;
+// ingesting into it, re-embedding it or deleting sources is corpus
+// administration. Both were previously reachable by any authenticated tenant
+// user (search) or gated by an inline owner/admin check (ingest).
+router.use(requireCapability('assistant.use') as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return false
-  }
-  return true
-}
+/** Corpus administration — ingest, re-embed, mine, delete. */
+const requireCorpusAdmin = requireCapability('assistant.admin') as never
 
 function _pagination(q: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(q['page']  ?? '1'), 10))
@@ -61,8 +62,7 @@ function _pagination(q: Record<string, unknown>) {
 // Returns the BulkIngestResult.  If KNOWLEDGE_INGEST_ROOTS is set in the
 // server env, root_path must be under one of those prefixes.
 
-router.post('/bulk-ingest', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/bulk-ingest', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -171,7 +171,7 @@ router.get('/sources', async (req: Req, res: Response) => {
 
 // ─── Create / register source (+ enqueue ingest) ──────────────────────────────
 
-router.post('/sources', async (req: Req, res: Response) => {
+router.post('/sources', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -299,7 +299,7 @@ router.get('/sources/:id/chunks', async (req: Req, res: Response) => {
 
 // ─── Re-ingest ────────────────────────────────────────────────────────────────
 
-router.post('/sources/:id/reingest', async (req: Req, res: Response) => {
+router.post('/sources/:id/reingest', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -319,8 +319,7 @@ router.post('/sources/:id/reingest', async (req: Req, res: Response) => {
 
 // ─── Mine fixes from a single source ──────────────────────────────────────────
 
-router.post('/sources/:id/mine-fixes', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/sources/:id/mine-fixes', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -358,8 +357,7 @@ router.post('/sources/:id/mine-fixes', async (req: Req, res: Response) => {
 
 // ─── Embed chunks (per source) ────────────────────────────────────────────────
 
-router.post('/sources/:id/embed', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/sources/:id/embed', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -383,8 +381,7 @@ router.post('/sources/:id/embed', async (req: Req, res: Response) => {
 
 // ─── Embed in bulk — queue every source with un-embedded chunks ────────────────
 
-router.post('/embed-bulk', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/embed-bulk', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -429,8 +426,7 @@ router.get('/embed-status', async (req: Req, res: Response) => {
 
 // ─── Mine fixes in bulk — OEM + record tier only by default ────────────────────
 
-router.post('/mine-fixes-bulk', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/mine-fixes-bulk', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -450,8 +446,7 @@ router.post('/mine-fixes-bulk', async (req: Req, res: Response) => {
 
 // ─── Delete (admin) ───────────────────────────────────────────────────────────
 
-router.delete('/sources/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/sources/:id', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
