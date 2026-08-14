@@ -30,7 +30,6 @@ function listenLikeSupertest(): Promise<http.Server> {
 
 describe('ADR-014 F5 — Supertest dials the address family it bound', () => {
   it('derives a URL whose host matches the bound family', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Test = require('supertest/lib/test') as {
       prototype: { serverAddress(app: unknown, path: string): string }
     }

@@ -66,7 +66,6 @@ interface SupertestTestProto {
 export function dialBoundAddressFamily(): void {
   let proto: SupertestTestProto
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     proto = (require('supertest/lib/test') as { prototype: SupertestTestProto }).prototype
   } catch {
     return // Supertest absent (jsdom-only workers) — nothing to correct.
