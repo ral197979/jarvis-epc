@@ -520,7 +520,7 @@ type AdminReq = AuthenticatedRequest & TenantRequest
 adminRouter.use(requireAuth as never, requireTenant() as never)
 
 // POST /api/v1/scim/tokens — Generate new SCIM token
-adminRouter.post('/tokens', requireRole('owner', 'admin') as never,
+adminRouter.post('/tokens', requireCapability('platform.identity') as never, requireRole('owner', 'admin') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const tenantId = req.tenantId!
     const { label = 'primary' } = req.body as { label?: string }
@@ -564,7 +564,7 @@ adminRouter.get('/tokens', requireCapability('platform.admin') as never,
 )
 
 // DELETE /api/v1/scim/tokens/:id — Revoke token
-adminRouter.delete('/tokens/:id', requireRole('owner', 'admin') as never,
+adminRouter.delete('/tokens/:id', requireCapability('platform.identity') as never, requireRole('owner', 'admin') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const result = await query<{ id: string }>(
       'UPDATE scim_tokens SET is_active=false WHERE id=$1 AND tenant_id=$2 RETURNING id',

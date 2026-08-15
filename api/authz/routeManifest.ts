@@ -52,6 +52,15 @@ export const ENDPOINT_EXCEPTIONS: Record<string, EndpointException> = {
     klass: 'PUBLIC',
     reason: 'Spec document, flag-gated by OPENAPI_ENABLED; serves no tenant data.',
   },
+  'tenants.ts router.POST /': {
+    klass: 'PUBLIC',
+    reason: 'Tenant self-registration (ADR-014 Phase 2C-2). tenants.ts declares this route at line 45 '
+          + 'and only calls router.use(requireAuth, requireTenant()) at line 110, so no authenticated '
+          + 'session exists — or can exist — when it runs: a capability guard here would make signing up '
+          + 'impossible. It creates the tenant together with its first owner and carries its own '
+          + 'registrationLimiter (5 attempts/hour/IP). Recorded so the census states this deliberately, '
+          + 'rather than counting the signup endpoint as unprotected Phase 2 debt.',
+  },
 }
 
 /**

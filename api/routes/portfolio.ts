@@ -124,7 +124,7 @@ router.post('/anomalies/:anomalyId/resolve', requireCapability('portfolio.approv
   }
 })
 
-router.post('/anomalies/:anomalyId/false-positive', async (req: Request, res: Response) => {
+router.post('/anomalies/:anomalyId/false-positive', requireCapability('portfolio.approve') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     await markFalsePositive(req.params.anomalyId as string, tenantId)

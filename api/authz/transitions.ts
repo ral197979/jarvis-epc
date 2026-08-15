@@ -121,6 +121,11 @@ export const ENFORCED_TRANSITIONS: readonly TransitionEndpoint[] = [
   { file: 'autosignRules.ts', router: 'router', method: 'POST', path: '/arbitrate',   operation: 'arbitrate commissioning autosign', capability: 'commissioning.approve' },
   { file: 'compliance.ts', router: 'router',    method: 'POST', path: '/:id/complete', operation: 'complete compliance task',        capability: 'safety.approve' },
   { file: 'portfolio.ts', router: 'router',     method: 'POST', path: '/anomalies/:anomalyId/resolve', operation: 'resolve portfolio anomaly', capability: 'portfolio.approve' },
+  // ADR-014 Phase 2C-2 §42 — discovered by the high-sensitivity mutation sweep,
+  // not by the verb ratchet, because "false-positive" is not a consequential verb.
+  // It is a second, unguarded path to the outcome /resolve above already protects:
+  // markFalsePositive sets false_positive=true, which retires the same anomaly.
+  { file: 'portfolio.ts', router: 'router',     method: 'POST', path: '/anomalies/:anomalyId/false-positive', operation: 'dismiss portfolio anomaly as false positive', capability: 'portfolio.approve' },
   { file: 'proposals.ts', router: 'proposalsRouter', method: 'POST', path: '/proposals/:id/won',    operation: 'mark proposal won',    capability: 'crm.approve' },
   { file: 'proposals.ts', router: 'proposalsRouter', method: 'POST', path: '/proposals/:id/lost',   operation: 'mark proposal lost',   capability: 'crm.approve' },
   { file: 'proposals.ts', router: 'proposalsRouter', method: 'POST', path: '/proposals/:id/no-bid', operation: 'mark proposal no-bid', capability: 'crm.approve' },
@@ -153,6 +158,12 @@ export const ENFORCED_TRANSITIONS: readonly TransitionEndpoint[] = [
   // rather than pretending to be an ordinary cost write. cost.approve is the
   // capability the registry already names for pay applications.
   { file: 'payApplications.ts', router: 'router', method: 'PATCH', path: '/pay-applications/:id', operation: 'pay application status transition', capability: 'cost.approve' },
+  // ADR-014 Phase 2C-2 §42 — posting a draft cost entry resolves its WBS entry
+  // and commits an actual cost into EVM and cost control. Its inverse,
+  // POST /cost-entries/:id/void, has required cost.approve since Phase 2A, and
+  // posting is the only route out of draft. An operation whose undo needs
+  // approval authority must not be reachable with ordinary write authority.
+  { file: 'costEntry.ts', router: 'costEntryRouter', method: 'POST', path: '/cost-entries/:id/post', operation: 'post cost entry to the ledger', capability: 'cost.approve' },
   // The generic project PATCH could set status='completed'/'cancelled' directly.
   // The capability registry already names project closure as what
   // project.approve is for; it simply had no route to attach to until now.

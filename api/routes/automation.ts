@@ -27,14 +27,6 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return false
-  }
-  return true
-}
-
 function _pagination(q: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(q['page'] ?? '1'), 10))
   const limit = Math.min(200, Math.max(1, parseInt(String(q['limit'] ?? '50'), 10)))
@@ -82,8 +74,7 @@ router.get('/scheduled', requireCapability('platform.admin') as never, async (re
   })
 })
 
-router.post('/scheduled', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/scheduled', requireCapability('platform.automation') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -134,8 +125,7 @@ router.post('/scheduled', async (req: Req, res: Response) => {
   }
 })
 
-router.patch('/scheduled/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.patch('/scheduled/:id', requireCapability('platform.automation') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -170,8 +160,7 @@ router.patch('/scheduled/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-router.delete('/scheduled/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/scheduled/:id', requireCapability('platform.automation') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -267,7 +256,6 @@ router.get('/kpi-snapshots', requireCapability('platform.admin') as never, async
 })
 
 router.post('/background/:id/retry', requireCapability('platform.automation') as never, async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -307,8 +295,7 @@ router.get('/mcp-tools', requireCapability('platform.admin') as never, async (re
   res.json({ data: rows.rows })
 })
 
-router.post('/mcp-tools/:name/disable', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/mcp-tools/:name/disable', requireCapability('platform.automation') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -330,8 +317,7 @@ router.post('/mcp-tools/:name/disable', async (req: Req, res: Response) => {
   }
 })
 
-router.delete('/mcp-tools/:name/disable', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/mcp-tools/:name/disable', requireCapability('platform.automation') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

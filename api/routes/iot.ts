@@ -122,7 +122,7 @@ authRouter.post('/sensors/alerts/:alertId/acknowledge', requireCapability('const
   } catch (e) { res.status(500).json({ error: 'Failed to acknowledge alert' }) }
 })
 
-authRouter.post('/sensors/tokens', async (req: Request, res: Response) => {
+authRouter.post('/sensors/tokens', requireCapability('platform.security') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const { label = 'ingest-token', edgeNodeId, ttlDays } = req.body as Record<string, string>

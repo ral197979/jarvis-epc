@@ -15,7 +15,7 @@ import { generateHealthReport, runPlatformChecks, recordHealthCheck } from '../s
 import { createDemoTenant, listDemoTenants, resetDemoTenant } from '../services/enterprise/demoTenantGenerator'
 import { createApiKey, listApiKeys, revokeApiKey } from '../services/enterprise/apiGatewayService'
 import { archiveTenant, suspendTenant, reactivateTenant } from '../services/enterprise/tenantArchivalService'
-import { requireCapability } from '../authz/requireCapability'
+import { requireAllCapabilities, requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -87,7 +87,7 @@ router.get('/tenants/:tenantId/subscription', requireAuth, requireTenant, requir
 })
 
 // POST /enterprise/tenants/:tenantId/lifecycle
-router.post('/tenants/:tenantId/lifecycle', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
+router.post('/tenants/:tenantId/lifecycle', requireAuth, requireTenantAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = req.params.tenantId as string
     const { toStatus, actor, reason, metadata } = req.body as Record<string, unknown>
@@ -179,7 +179,7 @@ router.get('/features/:featureKey', requireAuth, requireTenant, requireCapabilit
 })
 
 // PUT /enterprise/features/:featureKey
-router.put('/features/:featureKey', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.put('/features/:featureKey', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const flag = await setFeatureFlag(tenantId, { featureKey: req.params.featureKey as string, ...(req.body as Record<string, unknown>) } as never)
@@ -225,7 +225,7 @@ router.get('/quota/seats', requireAuth, requireTenant, requireCapability('platfo
 // ─── Usage ────────────────────────────────────────────────────────────────────
 
 // POST /enterprise/usage
-router.post('/usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.post('/usage', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const record = await recordUsage(tenantId, req.body as never)
@@ -261,7 +261,7 @@ router.get('/usage/summary', requireAuth, requireTenant, requireCapability('plat
 // ─── AI Cost / Budget ─────────────────────────────────────────────────────────
 
 // POST /enterprise/ai-usage
-router.post('/ai-usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.post('/ai-usage', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const record = await recordAiUsage(tenantId, req.body as never)
@@ -321,7 +321,7 @@ router.get('/health-score', requireAuth, requireTenant, requireCapability('platf
 // ─── Support Tickets ──────────────────────────────────────────────────────────
 
 // POST /enterprise/tickets
-router.post('/tickets', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.post('/tickets', requireAuth, requireTenant, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const ticket = await createTicket(tenantId, req.body as never)
@@ -367,7 +367,7 @@ router.get('/tickets/:id', requireAuth, requireTenant, requireCapability('platfo
 })
 
 // PATCH /enterprise/tickets/:id/status
-router.patch('/tickets/:id/status', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.patch('/tickets/:id/status', requireAuth, requireTenant, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { status, assignee, reason } = req.body as Record<string, unknown>
@@ -394,7 +394,7 @@ router.post('/tickets/:id/escalate', requireAuth, requireTenant, requireCapabili
 // ─── Compliance Exports ───────────────────────────────────────────────────────
 
 // POST /enterprise/exports
-router.post('/exports', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.post('/exports', requireAuth, requireTenant, requireAllCapabilities('platform.export', 'platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const exportRec = await requestExport(tenantId, req.body as never)
@@ -458,7 +458,7 @@ router.post('/deployment/health/run', requireAuth, requirePlatformAdmin, require
 })
 
 // POST /enterprise/deployment/health/check
-router.post('/deployment/health/check', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
+router.post('/deployment/health/check', requireAuth, requirePlatformAdmin, requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   try {
     const check = await recordHealthCheck(req.body as never)
     res.status(201).json(check)
@@ -470,7 +470,7 @@ router.post('/deployment/health/check', requireAuth, requirePlatformAdmin, async
 // ─── Demo Tenants ─────────────────────────────────────────────────────────────
 
 // POST /enterprise/demo
-router.post('/demo', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
+router.post('/demo', requireAuth, requirePlatformAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const { templateKey, createdBy } = req.body as Record<string, unknown>
     if (!templateKey) { res.status(422).json({ error: 'validation', message: 'templateKey required' }); return }
@@ -495,7 +495,7 @@ router.get('/demo', requireAuth, requirePlatformAdmin, requireCapability('platfo
 })
 
 // POST /enterprise/demo/:tenantId/reset
-router.post('/demo/:tenantId/reset', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
+router.post('/demo/:tenantId/reset', requireAuth, requirePlatformAdmin, requireCapability('platform.identity') as never, async (req: Request, res: Response) => {
   try {
     const demo = await resetDemoTenant(req.params.tenantId as string)
     res.json(demo)
@@ -507,7 +507,7 @@ router.post('/demo/:tenantId/reset', requireAuth, requirePlatformAdmin, async (r
 // ─── API Keys ─────────────────────────────────────────────────────────────────
 
 // POST /enterprise/api-keys
-router.post('/api-keys', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.post('/api-keys', requireAuth, requireTenant, requireCapability('platform.security') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const result = await createApiKey(tenantId, req.body as never)
@@ -530,7 +530,7 @@ router.get('/api-keys', requireAuth, requireTenant, requireCapability('platform.
 })
 
 // DELETE /enterprise/api-keys/:id
-router.delete('/api-keys/:id', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.delete('/api-keys/:id', requireAuth, requireTenant, requireCapability('platform.security') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { revokedBy } = req.body as Record<string, unknown>

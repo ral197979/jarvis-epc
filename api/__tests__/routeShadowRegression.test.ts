@@ -107,11 +107,12 @@ beforeEach(() => {
 })
 
 describe('PR #22 — Change Orders route ownership', () => {
-  // ADR-014 Phase 2B-1: change-order *reads* disclose commercial value and now
-  // require `cost.view`, which Phase 1 grants to the owner alone — so the reads
-  // below are exercised as the owner. Creation is an ordinary mutation and is
-  // still reached as the project manager, which is what these tests need to
-  // prove about routing. Route ownership, not authority, is what is under test.
+  // ADR-014 Phase 2B-1: change-order *reads* disclose commercial value and
+  // require `cost.view`, which Phase 1 grants to the owner alone.
+  // ADR-014 Phase 2C-2: raising a change order now requires `cost.write`, also
+  // Owner-only, so creation is exercised as the owner as well. Route ownership,
+  // not authority, is what these tests prove — the principal is chosen to reach
+  // the handler, and the authority itself is proven in the Phase 2C-2 suites.
   it('production mount order resolves list to changeOrdersRouter (service-backed)', async () => {
     h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.listChangeOrders.mockResolvedValue({ items: [{ id: 'co-1', type: 'PCO' }], total: 1 })
@@ -130,6 +131,7 @@ describe('PR #22 — Change Orders route ownership', () => {
   })
 
   it('create preserves type / costImpact / scheduleImpactDays (no silent amount:0)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.createChangeOrder.mockResolvedValue({ id: 'co-9' })
     const res = await request(makeChangeOrderApp())
       .post('/api/v1/projects/p1/change-orders')

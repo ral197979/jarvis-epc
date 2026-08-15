@@ -36,7 +36,7 @@ costEntryRouter.use(requireTenant() as never)
 
 // ─── Per-project ──────────────────────────────────────────────────────────────
 
-costEntryRouter.post('/projects/:projectId/cost-entries', async (req: Request, res: Response) => {
+costEntryRouter.post('/projects/:projectId/cost-entries', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { description, amount, entryDate } = req.body as Record<string, unknown>
   if (!description || !amount || !entryDate) {
@@ -85,7 +85,7 @@ costEntryRouter.get('/cost-entries/:id', requireCapability('cost.view') as never
   } catch (e) { res.status(500).json({ error: 'Failed to get cost entry' }) }
 })
 
-costEntryRouter.patch('/cost-entries/:id', async (req: Request, res: Response) => {
+costEntryRouter.patch('/cost-entries/:id', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await updateCostEntry(r.tenantId!, p(req, 'id'), req.body)
@@ -94,7 +94,7 @@ costEntryRouter.patch('/cost-entries/:id', async (req: Request, res: Response) =
   } catch (e) { res.status(500).json({ error: 'Failed to update cost entry' }) }
 })
 
-costEntryRouter.delete('/cost-entries/:id', async (req: Request, res: Response) => {
+costEntryRouter.delete('/cost-entries/:id', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ok = await deleteCostEntry(r.tenantId!, p(req, 'id'))
@@ -103,7 +103,7 @@ costEntryRouter.delete('/cost-entries/:id', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to delete cost entry' }) }
 })
 
-costEntryRouter.post('/cost-entries/:id/post', async (req: Request, res: Response) => {
+costEntryRouter.post('/cost-entries/:id/post', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await postCostEntry(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown')

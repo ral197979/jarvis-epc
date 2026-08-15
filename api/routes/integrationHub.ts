@@ -17,7 +17,7 @@ type IntReq = Request & AuthenticatedRequest & TenantRequest
 integrationHubRouter.use(auth)
 
 // ─── Register connector ───────────────────────────────────────────────────────
-integrationHubRouter.post('/connect', async (req: Request, res: Response) => {
+integrationHubRouter.post('/connect', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const { name, type, config = {}, credential_ref } = req.body
   if (!name || !type) { res.status(400).json({ error: 'name and type required' }); return }
@@ -53,7 +53,7 @@ integrationHubRouter.get('/:id/health', requireCapability('platform.admin') as n
 })
 
 // ─── Trigger sync ─────────────────────────────────────────────────────────────
-integrationHubRouter.post('/sync', async (req: Request, res: Response) => {
+integrationHubRouter.post('/sync', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const { connector_id, job_type = 'sync', payload = {}, idempotency_key } = req.body
   if (!connector_id) { res.status(400).json({ error: 'connector_id required' }); return }
@@ -69,7 +69,7 @@ integrationHubRouter.post('/jobs/:id/complete', requireCapability('platform.inte
 })
 
 // ─── Fail job (worker callback) ───────────────────────────────────────────────
-integrationHubRouter.post('/jobs/:id/fail', async (req: Request, res: Response) => {
+integrationHubRouter.post('/jobs/:id/fail', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   await failIntegrationJob(req.params['id'] as string, r.tenantId!, req.body.error ?? 'unknown')
   res.json({ data: { failed: true } })

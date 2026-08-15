@@ -45,7 +45,7 @@ router.get('/projects/:projectId/budget', requireCapability('cost.view') as neve
   }
 })
 
-router.post('/projects/:projectId/budget', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/budget', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   try {
@@ -63,7 +63,7 @@ router.post('/projects/:projectId/budget', async (req: Request, res: Response) =
   }
 })
 
-router.patch('/budgets/:id', async (req: Request, res: Response) => {
+router.patch('/budgets/:id', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['name','currency','status','baseline_date',
                    'original_total','revised_total','committed_total','actual_total','forecast_total']
@@ -96,7 +96,7 @@ router.get('/budgets/:id/items', requireCapability('cost.view') as never, async 
   }
 })
 
-router.post('/budgets/:id/items', async (req: Request, res: Response) => {
+router.post('/budgets/:id/items', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.cost_code || !b.description) return res.status(400).json({ error: 'cost_code and description required' })
@@ -121,7 +121,7 @@ router.post('/budgets/:id/items', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/budget-items/:itemId', async (req: Request, res: Response) => {
+router.patch('/budget-items/:itemId', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['cost_code','description','category','unit','qty','unit_cost',
                    'original_amount','revised_amount','committed_amount','actual_amount',
@@ -141,7 +141,7 @@ router.patch('/budget-items/:itemId', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/budget-items/:itemId', async (req: Request, res: Response) => {
+router.delete('/budget-items/:itemId', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,

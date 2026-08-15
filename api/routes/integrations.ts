@@ -227,7 +227,7 @@ integrationsRouter.get('/:id', requireCapability('platform.admin') as never, asy
   res.json({ data: result.rows[0] })
 })
 
-integrationsRouter.post('/', async (req: Req, res: Response) => {
+integrationsRouter.post('/', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
@@ -243,7 +243,7 @@ integrationsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-integrationsRouter.patch('/:id', async (req: Req, res: Response) => {
+integrationsRouter.patch('/:id', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
@@ -266,7 +266,7 @@ integrationsRouter.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-integrationsRouter.post('/:id/test', async (req: Req, res: Response) => {
+integrationsRouter.post('/:id/test', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -302,7 +302,7 @@ integrationsRouter.post('/:id/test', async (req: Req, res: Response) => {
   res.json({ data: { ok, message } })
 })
 
-integrationsRouter.post('/:id/sync', async (req: Req, res: Response) => {
+integrationsRouter.post('/:id/sync', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -338,7 +338,7 @@ webhooksRouter.get('/', requireCapability('platform.admin') as never, async (req
   res.json({ data: data.rows })
 })
 
-webhooksRouter.post('/', async (req: Req, res: Response) => {
+webhooksRouter.post('/', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
@@ -356,7 +356,7 @@ webhooksRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: { ...result.rows[0], secret } })
 })
 
-webhooksRouter.patch('/:id', async (req: Req, res: Response) => {
+webhooksRouter.patch('/:id', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const fields = ['name','url','events','active','retry_max','timeout_ms','headers']
@@ -374,7 +374,7 @@ webhooksRouter.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-webhooksRouter.delete('/:id', async (req: Req, res: Response) => {
+webhooksRouter.delete('/:id', requireCapability('platform.integrations') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const result = await tenantQuery<{ id: string }>(tenantId, `

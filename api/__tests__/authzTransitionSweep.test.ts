@@ -206,6 +206,14 @@ describe('transition coverage', () => {
     // the list (subcontract status, pay-application status, lifecycle gate and
     // advance count as two), and three used a verb the list omitted entirely
     // (submittal review, compliance waive).
-    expect(ENFORCED_TRANSITIONS.length).toBe(84)
+    //
+    // Phase 2C-2 added two more, both found by the high-sensitivity mutation
+    // sweep rather than by the path ratchet, and both deliberate (ADR-014
+    // Phase 2C-2 §42 — correctness outranks counter stability):
+    //   • POST /portfolio/anomalies/:anomalyId/false-positive — a second,
+    //     unguarded path to the outcome /resolve already protects.
+    //   • POST /cost-entries/:id/post — commits an actual cost to the ledger;
+    //     its inverse /void has required cost.approve since Phase 2A.
+    expect(ENFORCED_TRANSITIONS.length).toBe(86)
   })
 })

@@ -41,7 +41,7 @@ changeOrdersRouter.use(requireTenant() as never)
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
-changeOrdersRouter.post('/projects/:projectId/change-orders', async (req: Request, res: Response) => {
+changeOrdersRouter.post('/projects/:projectId/change-orders', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title } = req.body as Record<string, unknown>
   if (!title) { res.status(400).json({ error: 'title is required' }); return }
@@ -102,7 +102,7 @@ changeOrdersRouter.get('/change-orders/:id', requireCapability('cost.view') as n
 
 // ─── Update (draft only) ──────────────────────────────────────────────────────
 
-changeOrdersRouter.patch('/change-orders/:id', async (req: Request, res: Response) => {
+changeOrdersRouter.patch('/change-orders/:id', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await updateChangeOrder(r.tenantId!, p(req, 'id'), req.body)
@@ -178,7 +178,7 @@ changeOrdersRouter.get('/change-orders/:id/tasks', requireCapability('cost.view'
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/tasks', async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/tasks', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { taskIds } = req.body as { taskIds?: string[] }
   if (!Array.isArray(taskIds) || taskIds.length === 0) {
@@ -192,7 +192,7 @@ changeOrdersRouter.post('/change-orders/:id/tasks', async (req: Request, res: Re
   }
 })
 
-changeOrdersRouter.delete('/change-orders/:id/tasks/:taskId', async (req: Request, res: Response) => {
+changeOrdersRouter.delete('/change-orders/:id/tasks/:taskId', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     await unlinkTask(r.tenantId!, p(req, 'id'), p(req, 'taskId'))

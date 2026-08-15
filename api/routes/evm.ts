@@ -35,7 +35,7 @@ evmRouter.use(requireTenant() as never)
 
 // ─── Baselines ────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/baselines', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/baselines', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const baseline = await createBaseline(r.tenantId!, {
@@ -60,7 +60,7 @@ evmRouter.get('/projects/:projectId/evm/baselines', requireCapability('cost.view
 
 // ─── WBS entries ──────────────────────────────────────────────────────────────
 
-evmRouter.post('/evm/baselines/:baselineId/wbs', async (req: Request, res: Response) => {
+evmRouter.post('/evm/baselines/:baselineId/wbs', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { projectId, entries } = req.body as { projectId: string; entries: unknown[] }
   if (!projectId || !Array.isArray(entries)) {
@@ -86,7 +86,7 @@ evmRouter.get('/evm/baselines/:baselineId/wbs', requireCapability('cost.view') a
 
 // ─── Actuals ──────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/actuals', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/actuals', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actual = await recordActual(r.tenantId!, {
@@ -112,7 +112,7 @@ evmRouter.get('/projects/:projectId/evm/actuals', requireCapability('cost.view')
 
 // ─── Progress ─────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/progress', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/progress', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const progress = await recordProgress(r.tenantId!, {
@@ -140,7 +140,7 @@ evmRouter.get('/projects/:projectId/evm/metrics', requireCapability('cost.view')
   }
 })
 
-evmRouter.post('/projects/:projectId/evm/snapshot', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/snapshot', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const statusDate = req.body.status_date as string | undefined

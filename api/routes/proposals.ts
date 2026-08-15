@@ -52,7 +52,7 @@ proposalsRouter.get('/proposals/summary', requireCapability('crm.view') as never
 
 // ─── Collection ───────────────────────────────────────────────────────────────
 
-proposalsRouter.post('/proposals', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, clientName } = req.body as Record<string, unknown>
   if (!title || !clientName) { res.status(400).json({ error: 'title and clientName are required' }); return }
@@ -84,7 +84,7 @@ proposalsRouter.get('/proposals/:id', requireCapability('crm.view') as never, as
   } catch (e) { res.status(500).json({ error: 'Failed to get proposal' }) }
 })
 
-proposalsRouter.patch('/proposals/:id', async (req: Request, res: Response) => {
+proposalsRouter.patch('/proposals/:id', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await updateProposal(r.tenantId!, p(req, 'id'), req.body)
@@ -95,7 +95,7 @@ proposalsRouter.patch('/proposals/:id', async (req: Request, res: Response) => {
 
 // ─── Status transitions ───────────────────────────────────────────────────────
 
-proposalsRouter.post('/proposals/:id/submit', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/submit', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await submitProposal(r.tenantId!, p(req, 'id'))
@@ -141,7 +141,7 @@ proposalsRouter.get('/proposals/:id/items', requireCapability('crm.view') as nev
   } catch (e) { res.status(500).json({ error: 'Failed to list proposal items' }) }
 })
 
-proposalsRouter.post('/proposals/:id/items', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/items', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { description, unitCost } = req.body as Record<string, unknown>
   if (!description || unitCost === undefined) { res.status(400).json({ error: 'description and unitCost are required' }); return }
@@ -151,7 +151,7 @@ proposalsRouter.post('/proposals/:id/items', async (req: Request, res: Response)
   } catch (e) { res.status(500).json({ error: 'Failed to add proposal item' }) }
 })
 
-proposalsRouter.patch('/proposals/:id/items/:itemId', async (req: Request, res: Response) => {
+proposalsRouter.patch('/proposals/:id/items/:itemId', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const item = await updateProposalItem(r.tenantId!, p(req, 'itemId'), req.body)
@@ -160,7 +160,7 @@ proposalsRouter.patch('/proposals/:id/items/:itemId', async (req: Request, res: 
   } catch (e) { res.status(500).json({ error: 'Failed to update proposal item' }) }
 })
 
-proposalsRouter.delete('/proposals/:id/items/:itemId', async (req: Request, res: Response) => {
+proposalsRouter.delete('/proposals/:id/items/:itemId', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     await deleteProposalItem(r.tenantId!, p(req, 'itemId'))

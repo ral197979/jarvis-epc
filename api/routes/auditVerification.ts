@@ -34,7 +34,7 @@ auditVerificationRouter.get('/integrity', requireCapability('audit.view') as nev
 })
 
 // ─── Manual snapshot ──────────────────────────────────────────────────────────
-auditVerificationRouter.post('/snapshot', async (req: Request, res: Response) => {
+auditVerificationRouter.post('/snapshot', requireCapability('audit.view') as never, async (req: Request, res: Response) => {
   const r = req as AuditReq
   await snapshotIntegrity(r.tenantId!)
   res.json({ data: { snapshotted: true } })

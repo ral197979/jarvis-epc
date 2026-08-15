@@ -651,6 +651,19 @@ export const AI_CROSS_DOMAIN_READS: readonly AiRead[] = [
     category: 'OPS_OR_READINESS_AGGREGATE', allOf: ['project.view', 'quality.view'],
     sources: ['project', 'quality'],
     reason: 'Project readiness scores computed from actions, inspections and readiness thresholds.',
+  },
+
+  // ══ added by ADR-014 Phase 2C-2 ═══════════════════════════════
+  // A POST that is a read. The high-sensitivity mutation sweep surfaced it as an
+  // unprotected mutation; inspection shows findCorrelates issues no write, and
+  // the verb is POST only because the subject payload is nested. It belongs to
+  // this gate's policy, not to Phase 2C-2's mutation registry.
+  {
+    file: 'correlations.ts', router: 'router', method: 'POST', path: '/',
+    category: 'CROSS_DOMAIN_AI_READ', allOf: [TEMPORARY_CROSS_DOMAIN_CAPABILITY],
+    sources: ['any'],
+    temporary: true,
+    reason: 'Ranks events proximate to a caller-supplied subject across audit_log, daily_logs, action_items, compliance_tasks and commissioning_packs. The audit trail alone puts it past any delivery capability, and the domain set is decided by what happened near the subject rather than at authorization time — so no conjunction of domain capabilities is truthful. ADR-014 Phase 2B-3 §24.',
   },]
 
 /** In-scope AI reads confirmed but NOT yet protected. Phase 2B-3 closes only when empty. */

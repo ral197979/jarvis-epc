@@ -24,13 +24,6 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden' })
-    return false
-  }
-  return true
-}
 
 router.get('/', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
@@ -98,8 +91,7 @@ router.get('/:id', requireCapability('commissioning.view') as never, async (req:
   res.json({ data: { baseline: baseline.rows[0], observations: observations.rows } })
 })
 
-router.delete('/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/:id', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -8,7 +8,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { createExportJob, getExportJob } from '../services/export/dataWarehouse'
-import { requireCapability } from '../authz/requireCapability'
+import { requireAllCapabilities, requireCapability } from '../authz/requireCapability'
 
 export const exportsRouter = Router()
 const auth = requireAuth as never
@@ -17,7 +17,7 @@ type ExportReq = Request & AuthenticatedRequest & TenantRequest
 exportsRouter.use(auth)
 
 // ─── Create export job ────────────────────────────────────────────────────────
-exportsRouter.post('/', async (req: Request, res: Response) => {
+exportsRouter.post('/', requireAllCapabilities('platform.export', 'platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as ExportReq
   const { name, export_type, format = 'json', filters = {} } = req.body
   if (!name || !export_type) {

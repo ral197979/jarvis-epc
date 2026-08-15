@@ -34,7 +34,7 @@ runbooksRouter.get('/', requireCapability('platform.admin') as never, async (req
 })
 
 // ─── Create runbook ───────────────────────────────────────────────────────────
-runbooksRouter.post('/', async (req: Request, res: Response) => {
+runbooksRouter.post('/', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { name, description, trigger_type = 'manual', trigger_config = {}, tags = [], steps, rollback_steps = [] } = req.body
   if (!name || !steps || !Array.isArray(steps)) {
@@ -105,7 +105,7 @@ runbooksRouter.get('/:id/executions', requireCapability('platform.admin') as nev
 })
 
 // ─── Rollback execution ───────────────────────────────────────────────────────
-runbooksRouter.post('/executions/:execId/rollback', async (req: Request, res: Response) => {
+runbooksRouter.post('/executions/:execId/rollback', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const result = await rollbackExecution(req.params['execId'] as string, r.tenantId!)
   res.json({ data: result })

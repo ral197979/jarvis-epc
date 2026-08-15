@@ -32,7 +32,7 @@ policiesRouter.get('/', requireCapability('platform.admin') as never, async (req
 })
 
 // ─── Create policy ────────────────────────────────────────────────────────────
-policiesRouter.post('/', async (req: Request, res: Response) => {
+policiesRouter.post('/', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const { name, scope = 'tenant', scope_id, policy_type, rules, priority = 100 } = req.body
   if (!name || !policy_type || !Array.isArray(rules)) {
@@ -46,7 +46,7 @@ policiesRouter.post('/', async (req: Request, res: Response) => {
 })
 
 // ─── Update policy ────────────────────────────────────────────────────────────
-policiesRouter.patch('/:id', async (req: Request, res: Response) => {
+policiesRouter.patch('/:id', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const { rules, priority, status } = req.body
   const ok = await updatePolicy(r.tenantId!, req.params['id'] as string, { rules, priority, status })

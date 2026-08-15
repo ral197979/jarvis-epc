@@ -27,13 +27,6 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return false
-  }
-  return true
-}
 
 function _pagination(q: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(q['page']  ?? '1'), 10))
@@ -209,8 +202,7 @@ router.post('/:id/verify', requireCapability('assistant.admin') as never, async 
 
 // ─── Delete (admin) ──────────────────────────────────────────────────────────
 
-router.delete('/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/:id', requireCapability('assistant.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const ok = await deleteFix(tenantId, String(req.params['id']))

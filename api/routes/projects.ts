@@ -128,7 +128,7 @@ router.get('/:id', async (req: Req, res: Response) => {
 
 // ─── POST /api/v1/projects ────────────────────────────────────────────────────
 
-router.post('/', async (req: Req, res: Response) => {
+router.post('/', requireCapability('project.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -168,7 +168,7 @@ router.post('/', async (req: Req, res: Response) => {
 
 // ─── PATCH /api/v1/projects/:id ───────────────────────────────────────────────
 
-router.patch('/:id', guardTransitionOwnedState('projects') as never, async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('project.write') as never, guardTransitionOwnedState('projects') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -285,14 +285,10 @@ router.get('/:id/summary', requireCapability('cost.view') as never, async (req: 
 // ─── PATCH /api/v1/projects/:id/agent-mode ────────────────────────────────────
 // v4.31.0: agentic kill switch. Owner/admin only. The value here gates
 // downstream agent-originated writes via api/middleware/agentMode.ts.
-router.patch('/:id/agent-mode', async (req: Req, res: Response) => {
+router.patch('/:id/agent-mode', requireCapability('ai.govern') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return
-  }
 
   const mode = (req.body as { mode?: string }).mode
   if (!['auto','review_all','frozen'].includes(mode ?? '')) {
