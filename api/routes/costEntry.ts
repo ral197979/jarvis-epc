@@ -52,7 +52,7 @@ costEntryRouter.post('/projects/:projectId/cost-entries', async (req: Request, r
   } catch (e) { res.status(500).json({ error: 'Failed to create cost entry' }) }
 })
 
-costEntryRouter.get('/projects/:projectId/cost-entries', async (req: Request, res: Response) => {
+costEntryRouter.get('/projects/:projectId/cost-entries', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entries = await listCostEntries(r.tenantId!, p(req, 'projectId'), {
@@ -66,7 +66,7 @@ costEntryRouter.get('/projects/:projectId/cost-entries', async (req: Request, re
   } catch (e) { res.status(500).json({ error: 'Failed to list cost entries' }) }
 })
 
-costEntryRouter.get('/projects/:projectId/cost-entries/summary', async (req: Request, res: Response) => {
+costEntryRouter.get('/projects/:projectId/cost-entries/summary', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getCostEntrySummary(r.tenantId!, p(req, 'projectId'))
@@ -76,7 +76,7 @@ costEntryRouter.get('/projects/:projectId/cost-entries/summary', async (req: Req
 
 // ─── Single entry ─────────────────────────────────────────────────────────────
 
-costEntryRouter.get('/cost-entries/:id', async (req: Request, res: Response) => {
+costEntryRouter.get('/cost-entries/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await getCostEntry(r.tenantId!, p(req, 'id'))

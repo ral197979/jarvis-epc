@@ -25,6 +25,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -32,7 +33,7 @@ router.use(requireAuth   as any)
 router.use(requireTenant() as any)
 
 // ─── Budget (one per project) ────────────────────────────────────────────────
-router.get('/projects/:projectId/budget', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/budget', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -82,7 +83,7 @@ router.patch('/budgets/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Budget Items ────────────────────────────────────────────────────────────
-router.get('/budgets/:id/items', async (req: Request, res: Response) => {
+router.get('/budgets/:id/items', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -152,7 +153,7 @@ router.delete('/budget-items/:itemId', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/projects/:projectId/budget/rollup', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/budget/rollup', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

@@ -46,7 +46,15 @@ vi.mock('../middleware/tenant', () => ({
 
 // budgets.ts touches the pool at request time only; mock it so importing the
 // router never opens a connection.
-vi.mock('../db/pool', () => ({ tenantQuery: vi.fn().mockResolvedValue({ rows: [] }) }))
+// ADR-014 Phase 2A/2B-1: authorization re-resolves the caller's role from the
+// database, so the pool must answer that lookup for the identity under test.
+vi.mock('../db/pool', () => ({
+  tenantQuery: vi.fn().mockResolvedValue({ rows: [] }),
+  query: async (sql: string) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: h.identity.sub, tenant_id: h.identity.tid, role: h.identity.role, is_active: true }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
+}))
 
 vi.mock('../services/changeOrders/changeOrderService', () => ({
   createChangeOrder: h.createChangeOrder, getChangeOrder: vi.fn(),
@@ -99,7 +107,13 @@ beforeEach(() => {
 })
 
 describe('PR #22 — Change Orders route ownership', () => {
+  // ADR-014 Phase 2B-1: change-order *reads* disclose commercial value and now
+  // require `cost.view`, which Phase 1 grants to the owner alone — so the reads
+  // below are exercised as the owner. Creation is an ordinary mutation and is
+  // still reached as the project manager, which is what these tests need to
+  // prove about routing. Route ownership, not authority, is what is under test.
   it('production mount order resolves list to changeOrdersRouter (service-backed)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.listChangeOrders.mockResolvedValue({ items: [{ id: 'co-1', type: 'PCO' }], total: 1 })
     const res = await request(makeChangeOrderApp()).get('/api/v1/projects/p1/change-orders')
     expect(res.status).toBe(200)
@@ -107,6 +121,7 @@ describe('PR #22 — Change Orders route ownership', () => {
   })
 
   it('list returns the { items, total } envelope, NOT the legacy { change_orders }', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.listChangeOrders.mockResolvedValue({ items: [{ id: 'co-1' }], total: 1 })
     const res = await request(makeChangeOrderApp()).get('/api/v1/projects/p1/change-orders')
     expect(res.body).toHaveProperty('items')

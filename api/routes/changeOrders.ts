@@ -59,7 +59,7 @@ changeOrdersRouter.post('/projects/:projectId/change-orders', async (req: Reques
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/projects/:projectId/change-orders', async (req: Request, res: Response) => {
+changeOrdersRouter.get('/projects/:projectId/change-orders', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const result = await listChangeOrders(r.tenantId!, {
@@ -77,7 +77,7 @@ changeOrdersRouter.get('/projects/:projectId/change-orders', async (req: Request
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/projects/:projectId/change-orders/summary', async (req: Request, res: Response) => {
+changeOrdersRouter.get('/projects/:projectId/change-orders/summary', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getChangeOrderSummary(r.tenantId!, p(req, 'projectId'))
@@ -89,7 +89,7 @@ changeOrdersRouter.get('/projects/:projectId/change-orders/summary', async (req:
 
 // ─── Get detail ───────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/change-orders/:id', async (req: Request, res: Response) => {
+changeOrdersRouter.get('/change-orders/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await getChangeOrder(r.tenantId!, p(req, 'id'))
@@ -168,7 +168,7 @@ changeOrdersRouter.post('/change-orders/:id/void', requireCapability('cost.appro
 
 // ─── Linked tasks ─────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/change-orders/:id/tasks', async (req: Request, res: Response) => {
+changeOrdersRouter.get('/change-orders/:id/tasks', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const tasks = await listLinkedTasks(r.tenantId!, p(req, 'id'))

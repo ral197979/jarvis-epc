@@ -19,7 +19,7 @@ type RunbookReq = Request & AuthenticatedRequest & TenantRequest
 runbooksRouter.use(auth)
 
 // ─── List runbooks ────────────────────────────────────────────────────────────
-runbooksRouter.get('/', async (req: Request, res: Response) => {
+runbooksRouter.get('/', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT r.id, r.name, r.description, r.trigger_type, r.status, r.tags,
@@ -77,7 +77,7 @@ runbooksRouter.post('/:id/execute', requireCapability('platform.automation') as 
 })
 
 // ─── Simulate runbook (dry-run shortcut) ──────────────────────────────────────
-runbooksRouter.post('/:id/simulate', async (req: Request, res: Response) => {
+runbooksRouter.post('/:id/simulate', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { variables = {} } = req.body
   try {
@@ -91,7 +91,7 @@ runbooksRouter.post('/:id/simulate', async (req: Request, res: Response) => {
 })
 
 // ─── Get executions ───────────────────────────────────────────────────────────
-runbooksRouter.get('/:id/executions', async (req: Request, res: Response) => {
+runbooksRouter.get('/:id/executions', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const limit = Math.min(Number(req.query['limit'] ?? 20), 100)
   const { rows } = await tenantQuery(r.tenantId!, `

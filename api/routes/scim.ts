@@ -37,6 +37,7 @@ import { query, tenantQuery } from '../db/pool'
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
 
 // ─── SCIM namespace constants ──────────────────────────────────────────────────
 
@@ -551,7 +552,7 @@ adminRouter.post('/tokens', requireRole('owner', 'admin') as never,
 )
 
 // GET /api/v1/scim/tokens — List tokens (prefix only, no raw value)
-adminRouter.get('/tokens', requireRole('owner', 'admin') as never,
+adminRouter.get('/tokens', requireCapability('platform.admin') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const result = await query(
       `SELECT id, label, token_prefix, created_at, last_used_at, expires_at, is_active
@@ -575,7 +576,7 @@ adminRouter.delete('/tokens/:id', requireRole('owner', 'admin') as never,
 )
 
 // GET /api/v1/scim/audit — SCIM operation audit log
-adminRouter.get('/audit', requireRole('owner', 'admin') as never,
+adminRouter.get('/audit', requireCapability('audit.view') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const limit  = Math.min(200, parseInt(String(req.query['limit'] ?? '50'), 10))
     const offset = Math.max(0,   parseInt(String(req.query['offset'] ?? '0'), 10))

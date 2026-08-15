@@ -27,6 +27,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import { assertSafeUrl, SsrfBlockedError } from '../lib/ssrfGuard'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -190,7 +191,7 @@ async function _deliverWebhook(opts: {
 export const integrationsRouter = Router()
 integrationsRouter.use(..._auth())
 
-integrationsRouter.get('/', async (req: Req, res: Response) => {
+integrationsRouter.get('/', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -214,7 +215,7 @@ integrationsRouter.get('/', async (req: Req, res: Response) => {
   res.json({ data: data.rows })
 })
 
-integrationsRouter.get('/:id', async (req: Req, res: Response) => {
+integrationsRouter.get('/:id', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -327,7 +328,7 @@ integrationsRouter.post('/:id/sync', async (req: Req, res: Response) => {
 export const webhooksRouter = Router()
 webhooksRouter.use(..._auth())
 
-webhooksRouter.get('/', async (req: Req, res: Response) => {
+webhooksRouter.get('/', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const data = await tenantQuery(tenantId, `
@@ -383,7 +384,7 @@ webhooksRouter.delete('/:id', async (req: Req, res: Response) => {
   res.status(204).send()
 })
 
-webhooksRouter.get('/:id/deliveries', async (req: Req, res: Response) => {
+webhooksRouter.get('/:id/deliveries', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const data = await tenantQuery(tenantId, `
@@ -399,7 +400,7 @@ webhooksRouter.get('/:id/deliveries', async (req: Req, res: Response) => {
 export const syncJobsRouter = Router()
 syncJobsRouter.use(..._auth())
 
-syncJobsRouter.get('/', async (req: Req, res: Response) => {
+syncJobsRouter.get('/', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   // v4.31.0 TS fix: `page` unused — pagination uses limit/offset directly

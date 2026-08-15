@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Policy Routes (v4.40.0)
  * ──────────────────────────────────────────────
@@ -10,6 +9,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { createPolicy, updatePolicy, evaluatePolicy } from '../services/policy/policyEngine'
+import { requireCapability } from '../authz/requireCapability'
 
 export const policiesRouter = Router()
 const auth = requireAuth as never
@@ -18,7 +18,7 @@ type PolicyReq = Request & AuthenticatedRequest & TenantRequest
 policiesRouter.use(auth)
 
 // ─── List policies ────────────────────────────────────────────────────────────
-policiesRouter.get('/', async (req: Request, res: Response) => {
+policiesRouter.get('/', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const { type, scope, status = 'active' } = req.query
   const params: unknown[] = [r.tenantId, status]
@@ -55,7 +55,7 @@ policiesRouter.patch('/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Evaluate policy (dry test) ───────────────────────────────────────────────
-policiesRouter.post('/evaluate', async (req: Request, res: Response) => {
+policiesRouter.post('/evaluate', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const { policy_type, payload, project_id, module, role } = req.body
   if (!policy_type || !payload) {
@@ -69,7 +69,7 @@ policiesRouter.post('/evaluate', async (req: Request, res: Response) => {
 })
 
 // ─── Policy audit log ─────────────────────────────────────────────────────────
-policiesRouter.get('/audit', async (req: Request, res: Response) => {
+policiesRouter.get('/audit', requireCapability('audit.view') as never, async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const limit = Math.min(Number(req.query['limit'] ?? 50), 200)
   const { rows } = await tenantQuery(r.tenantId!, `

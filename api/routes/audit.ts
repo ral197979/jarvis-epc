@@ -24,9 +24,10 @@
 
 import { Router, Response } from 'express'
 import { tenantQuery } from '../db/pool'
-import { requireAuth, requireRole, AuthenticatedRequest } from '../auth'
+import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -49,7 +50,7 @@ const ACTIONS = new Set([
 ])
 
 // ─── GET /api/v1/audit ────────────────────────────────────────────────────────
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('audit.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -139,7 +140,7 @@ router.get('/', async (req: Req, res: Response) => {
 })
 
 // ─── GET /api/v1/audit/:id ────────────────────────────────────────────────────
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('audit.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -166,7 +167,7 @@ router.get('/:id', async (req: Req, res: Response) => {
 
 // ─── GET /api/v1/audit/_meta/actions ──────────────────────────────────────────
 // Returns the allowed action values for UI filter dropdowns.
-router.get('/_meta/actions', async (_req: Req, res: Response) => {
+router.get('/_meta/actions', requireCapability('audit.view') as never, async (_req: Req, res: Response) => {
   res.json({ actions: Array.from(ACTIONS) })
 })
 
@@ -174,7 +175,7 @@ router.get('/_meta/actions', async (_req: Req, res: Response) => {
 // Required for SOC 2, ISO 27001, and enterprise compliance audits.
 // Supports: ?format=csv|json, ?from=<iso>, ?to=<iso>, ?resource=<str>, max 10k rows.
 
-router.get('/export', requireRole('owner', 'admin') as never,
+router.get('/export', requireCapability('audit.view') as never,
   async (req: Req, res: Response) => {
     const { tenantId } = req
     if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }

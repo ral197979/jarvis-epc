@@ -28,14 +28,14 @@ integrationHubRouter.post('/connect', async (req: Request, res: Response) => {
 })
 
 // ─── List connectors ──────────────────────────────────────────────────────────
-integrationHubRouter.get('/', async (req: Request, res: Response) => {
+integrationHubRouter.get('/', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const connectors = await listConnectors(r.tenantId!)
   res.json({ data: connectors })
 })
 
 // ─── Connector health ─────────────────────────────────────────────────────────
-integrationHubRouter.get('/health', async (req: Request, res: Response) => {
+integrationHubRouter.get('/health', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const connectors = await listConnectors(r.tenantId!)
   const health = await Promise.all(
@@ -44,7 +44,7 @@ integrationHubRouter.get('/health', async (req: Request, res: Response) => {
   res.json({ data: health })
 })
 
-integrationHubRouter.get('/:id/health', async (req: Request, res: Response) => {
+integrationHubRouter.get('/:id/health', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   try {
     const h = await getConnectorHealth(r.tenantId!, req.params['id'] as string)

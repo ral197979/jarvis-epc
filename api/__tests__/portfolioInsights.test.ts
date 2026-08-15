@@ -6,12 +6,25 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// ADR-014 Phase 2B-1: GET /copilot/portfolio is a cross-project roll-up, so it requires `portfolio.view` — a capability Phase 1 grants to the tenant owner alone.
+// Authorization re-resolves that role from the database on every request,
+// so the pool answers the lookup for the caller under test.
+const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'owner', is_active: true }))
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
-  query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:       (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
-vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1' }; next() } }))
+vi.mock('../auth', () => ({
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'u1', tid: 'tenant-1', role: 'owner' }
+    next()
+  },
+}))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
 import { synthesizePortfolioInsights, type PortfolioInsightsInputs } from '../services/copilot/portfolioInsightsService'

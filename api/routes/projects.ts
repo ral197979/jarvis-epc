@@ -18,6 +18,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
 // v4.31.0 TS fix: `randomBytes` unused — commented pending reintroduction
 // import { randomBytes } from 'node:crypto'
 
@@ -40,7 +41,7 @@ function _paginationParams(query: Record<string, unknown>) {
 
 // ─── GET /api/v1/projects ─────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('project.list.all') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -237,7 +238,7 @@ router.delete('/:id', async (req: Req, res: Response) => {
 
 // ─── GET /api/v1/projects/:id/summary ────────────────────────────────────────
 
-router.get('/:id/summary', async (req: Req, res: Response) => {
+router.get('/:id/summary', requireCapability('cost.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }

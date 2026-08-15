@@ -75,7 +75,7 @@ router.post('/tenants/:tenantId/provision', requireAuth, requireTenantAdmin, req
 })
 
 // GET /enterprise/tenants/:tenantId/subscription
-router.get('/tenants/:tenantId/subscription', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/tenants/:tenantId/subscription', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const sub = await getSubscription(tenantId)
@@ -100,7 +100,7 @@ router.post('/tenants/:tenantId/lifecycle', requireAuth, requireTenantAdmin, asy
 })
 
 // GET /enterprise/tenants/:tenantId/lifecycle/history
-router.get('/tenants/:tenantId/lifecycle/history', requireAuth, requireTenantAdmin, async (req: Request, res: Response) => {
+router.get('/tenants/:tenantId/lifecycle/history', requireAuth, requireTenantAdmin, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const history = await getLifecycleHistory(req.params.tenantId as string)
     res.json(history)
@@ -143,7 +143,7 @@ router.post('/tenants/:tenantId/archive', requireAuth, requireTenantAdmin, requi
 })
 
 // GET /enterprise/subscriptions (admin list)
-router.get('/subscriptions', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
+router.get('/subscriptions', requireAuth, requirePlatformAdmin, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const { lifecycleStatus, tier, limit } = req.query as Record<string, string>
     const subs = await listSubscriptions({ lifecycleStatus: lifecycleStatus as never, tier, limit: limit != null ? Number(limit) : undefined })
@@ -156,7 +156,7 @@ router.get('/subscriptions', requireAuth, requirePlatformAdmin, async (req: Requ
 // ─── Feature Flags ────────────────────────────────────────────────────────────
 
 // GET /enterprise/features
-router.get('/features', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/features', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const flags = await listFeatureFlags(tenantId)
@@ -167,7 +167,7 @@ router.get('/features', requireAuth, requireTenant, async (req: Request, res: Re
 })
 
 // GET /enterprise/features/:featureKey
-router.get('/features/:featureKey', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/features/:featureKey', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const enabled = await isFeatureEnabled(tenantId, req.params.featureKey as string)
@@ -190,7 +190,7 @@ router.put('/features/:featureKey', requireAuth, requireTenant, async (req: Requ
 })
 
 // GET /enterprise/entitlements
-router.get('/entitlements', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/entitlements', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const summary = await resolveEntitlements(tenantId)
@@ -201,7 +201,7 @@ router.get('/entitlements', requireAuth, requireTenant, async (req: Request, res
 })
 
 // GET /enterprise/quota/api
-router.get('/quota/api', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/quota/api', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const result = await checkApiQuota(tenantId)
@@ -212,7 +212,7 @@ router.get('/quota/api', requireAuth, requireTenant, async (req: Request, res: R
 })
 
 // GET /enterprise/quota/seats
-router.get('/quota/seats', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/quota/seats', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const result = await checkSeatQuota(tenantId)
@@ -236,7 +236,7 @@ router.post('/usage', requireAuth, requireTenant, async (req: Request, res: Resp
 })
 
 // GET /enterprise/usage
-router.get('/usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/usage', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { eventType, limit } = req.query as Record<string, string>
@@ -248,7 +248,7 @@ router.get('/usage', requireAuth, requireTenant, async (req: Request, res: Respo
 })
 
 // GET /enterprise/usage/summary
-router.get('/usage/summary', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/usage/summary', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const summary = await getCurrentMonthSummary(tenantId)
@@ -272,7 +272,7 @@ router.post('/ai-usage', requireAuth, requireTenant, async (req: Request, res: R
 })
 
 // GET /enterprise/ai-usage
-router.get('/ai-usage', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/ai-usage', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { agentType, model, limit } = req.query as Record<string, string>
@@ -284,7 +284,7 @@ router.get('/ai-usage', requireAuth, requireTenant, async (req: Request, res: Re
 })
 
 // GET /enterprise/ai-usage/budget
-router.get('/ai-usage/budget', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/ai-usage/budget', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const status = await getAiBudgetStatus(tenantId)
@@ -295,7 +295,7 @@ router.get('/ai-usage/budget', requireAuth, requireTenant, async (req: Request, 
 })
 
 // GET /enterprise/ai-usage/by-agent
-router.get('/ai-usage/by-agent', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/ai-usage/by-agent', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const breakdown = await getAiCostByAgent(tenantId)
@@ -308,7 +308,7 @@ router.get('/ai-usage/by-agent', requireAuth, requireTenant, async (req: Request
 // ─── Customer Health ──────────────────────────────────────────────────────────
 
 // GET /enterprise/health-score
-router.get('/health-score', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/health-score', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const score = await computeHealthScore(tenantId)
@@ -332,7 +332,7 @@ router.post('/tickets', requireAuth, requireTenant, async (req: Request, res: Re
 })
 
 // GET /enterprise/tickets
-router.get('/tickets', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/tickets', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { status, priority, assignee, limit } = req.query as Record<string, string>
@@ -344,7 +344,7 @@ router.get('/tickets', requireAuth, requireTenant, async (req: Request, res: Res
 })
 
 // GET /enterprise/tickets/sla-breaches
-router.get('/tickets/sla-breaches', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/tickets/sla-breaches', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const breaches = await getSlaBreaches(tenantId)
@@ -355,7 +355,7 @@ router.get('/tickets/sla-breaches', requireAuth, requireTenant, async (req: Requ
 })
 
 // GET /enterprise/tickets/:id
-router.get('/tickets/:id', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/tickets/:id', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const ticket = await getTicket(tenantId, req.params.id as string)
@@ -407,7 +407,7 @@ router.post('/exports', requireAuth, requireTenant, async (req: Request, res: Re
 })
 
 // GET /enterprise/exports
-router.get('/exports', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/exports', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { status, limit } = req.query as Record<string, string>
@@ -419,7 +419,7 @@ router.get('/exports', requireAuth, requireTenant, async (req: Request, res: Res
 })
 
 // GET /enterprise/exports/:id
-router.get('/exports/:id', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/exports/:id', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const exportRec = await getExport(tenantId, req.params.id as string)
@@ -438,7 +438,7 @@ router.get('/exports/:id', requireAuth, requireTenant, async (req: Request, res:
 // lifecycle routes but these were missed in that hardening pass.
 
 // GET /enterprise/deployment/health
-router.get('/deployment/health', requireAuth, requirePlatformAdmin, async (_req: Request, res: Response) => {
+router.get('/deployment/health', requireAuth, requirePlatformAdmin, requireCapability('platform.admin') as never, async (_req: Request, res: Response) => {
   try {
     const report = await generateHealthReport()
     res.json(report)
@@ -484,7 +484,7 @@ router.post('/demo', requireAuth, requirePlatformAdmin, async (req: Request, res
 })
 
 // GET /enterprise/demo
-router.get('/demo', requireAuth, requirePlatformAdmin, async (req: Request, res: Response) => {
+router.get('/demo', requireAuth, requirePlatformAdmin, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const { industry, status } = req.query as Record<string, string>
     const demos = await listDemoTenants({ industry, status })
@@ -518,7 +518,7 @@ router.post('/api-keys', requireAuth, requireTenant, async (req: Request, res: R
 })
 
 // GET /enterprise/api-keys
-router.get('/api-keys', requireAuth, requireTenant, async (req: Request, res: Response) => {
+router.get('/api-keys', requireAuth, requireTenant, requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   try {
     const tenantId = (req as unknown as Req).tenantId!
     const { status, limit } = req.query as Record<string, string>

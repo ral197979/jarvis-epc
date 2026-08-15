@@ -9,23 +9,31 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('../auth', () => ({
-  requireAuth: (_req: any, _res: any, next: any) => next(),
-}))
-
-vi.mock('../middleware/tenant', () => ({
-  requireTenant: (req: any, _res: any, next: any) => {
-    req.tenantId = 'tenant-test'
-    req.auth     = { sub: 'user-abc', tid: 'tenant-test', role: 'owner', jti: 'jti-1' }
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'user-abc', tid: 'tenant-test', role: 'admin', jti: 'jti-1' }
     next()
   },
 }))
 
-// ADR-014 Phase 2A: /mcp/execute now requires `platform.automation`. The caller
-// is the platform owner — the narrowest role that legitimately executes MCP
-// tools (§27 case A). The authorization lookup is answered by a wrapper ahead of
-// the scripted `query` mock, so `mockResolvedValueOnce` scripting in individual
-// tests still lines up with the handler's own queries.
-const currentUserRow = { id: 'user-abc', tenant_id: 'tenant-test', role: 'owner', is_active: true }
+// ADR-014 Phase 2B-1: mounted as the factory it is — `requireTenant()`. The
+// route file used to call it as `requireTenant(req, res, next)`, so this mock
+// was written as a bare middleware to match.
+vi.mock('../middleware/tenant', () => ({
+  requireTenant: () => (req: any, _res: any, next: any) => {
+    req.tenantId = 'tenant-test'
+    next()
+  },
+}))
+
+// ADR-014 Phase 2A: /mcp/execute requires `platform.automation`.
+// ADR-014 Phase 2B-1: the three reads require `platform.admin`, and /tools and
+// /ava/health no longer bypass authentication. The caller is the platform
+// administrator — the narrowest role holding both capabilities, and the role
+// whose Phase 1 screens (MCPToolsPage, AutomationView) actually read them. The
+// authorization lookup is answered by a wrapper ahead of the scripted `query`
+// mock, so `mockResolvedValueOnce` scripting in individual tests still lines up
+// with the handler's own queries.
+const currentUserRow = { id: 'user-abc', tenant_id: 'tenant-test', role: 'admin', is_active: true }
 vi.mock('../db/pool', () => {
   const scripted = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
   return {

@@ -18,6 +18,7 @@ import { buildProjectCoordination, buildPortfolioCoordination } from '../service
 import { buildProjectReport, buildPortfolioReport } from '../services/copilot/executiveReportService'
 import { buildNarrativeReport } from '../services/copilot/narrativeReportService'
 import { buildPortfolioInsights } from '../services/copilot/portfolioInsightsService'
+import { requireCapability } from '../authz/requireCapability'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -103,7 +104,7 @@ router.get('/copilot/report', async (_req: Request, res: Response) => {
 
 // ── Portfolio Copilot: cross-project comparison & resource conflicts ──────────
 
-router.get('/copilot/portfolio', async (_req: Request, res: Response) => {
+router.get('/copilot/portfolio', requireCapability('portfolio.view') as never, async (_req: Request, res: Response) => {
   const r = _req as AuthTenantReq
   try {
     const insights = await buildPortfolioInsights(r.tenantId!, new Date())

@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 import {
   listSovItems, createSovItem, listPayApplications, createPayApplication,
   getPayApplicationView, upsertPayApplicationLines, setPayApplicationStatus,
@@ -29,7 +30,7 @@ const VALID_STATUS = new Set(['draft', 'submitted', 'approved', 'paid', 'rejecte
 
 // ─── Schedule of Values ───────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/sov-items', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/sov-items', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     res.json({ data: await listSovItems(r.tenantId!, String(req.params.projectId)) })
@@ -56,7 +57,7 @@ router.post('/projects/:projectId/sov-items', async (req: Request, res: Response
 
 // ─── Pay applications ─────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/pay-applications', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/pay-applications', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     res.json({ data: await listPayApplications(r.tenantId!, String(req.params.projectId)) })
@@ -75,7 +76,7 @@ router.post('/projects/:projectId/pay-applications', async (req: Request, res: R
   } catch (err) { res.status(500).json({ error: 'Failed to create pay application', detail: (err as Error).message }) }
 })
 
-router.get('/pay-applications/:id', async (req: Request, res: Response) => {
+router.get('/pay-applications/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const view = await getPayApplicationView(r.tenantId!, String(req.params.id))

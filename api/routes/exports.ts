@@ -8,6 +8,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { createExportJob, getExportJob } from '../services/export/dataWarehouse'
+import { requireCapability } from '../authz/requireCapability'
 
 export const exportsRouter = Router()
 const auth = requireAuth as never
@@ -33,7 +34,7 @@ exportsRouter.post('/', async (req: Request, res: Response) => {
 })
 
 // ─── Get export job status ────────────────────────────────────────────────────
-exportsRouter.get('/:id', async (req: Request, res: Response) => {
+exportsRouter.get('/:id', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as ExportReq
   const job = await getExportJob(r.tenantId!, req.params['id'] as string)
   if (!job) { res.status(404).json({ error: 'Export job not found' }); return }
@@ -41,7 +42,7 @@ exportsRouter.get('/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Download (redirect to signed URL) ───────────────────────────────────────
-exportsRouter.get('/:id/download', async (req: Request, res: Response) => {
+exportsRouter.get('/:id/download', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as ExportReq
   const job = await getExportJob(r.tenantId!, req.params['id'] as string) as Record<string, unknown> | null
   if (!job) { res.status(404).json({ error: 'Not found' }); return }

@@ -205,7 +205,7 @@ subcontractsRouter.post('/subcontracts/:id/invoices', async (req: Request, res: 
   } catch (e) { res.status(500).json({ error: 'Failed to create invoice' }) }
 })
 
-subcontractsRouter.get('/subcontracts/:id/invoices', async (req: Request, res: Response) => {
+subcontractsRouter.get('/subcontracts/:id/invoices', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const invoices = await listInvoices(r.tenantId!, p(req, 'id'))

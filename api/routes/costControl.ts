@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { getCostControlSnapshot } from '../services/costControl/costControlService'
+import { requireCapability } from '../authz/requireCapability'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -18,7 +19,7 @@ export const costControlRouter = Router()
 costControlRouter.use(requireAuth    as never)
 costControlRouter.use(requireTenant() as never)
 
-costControlRouter.get('/projects/:projectId/cost-control', async (req: Request, res: Response) => {
+costControlRouter.get('/projects/:projectId/cost-control', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const snapshot = await getCostControlSnapshot(r.tenantId!, p(req, 'projectId'))

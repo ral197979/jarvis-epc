@@ -13,17 +13,32 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+/**
+ * ADR-014 Phase 2B-1: these smoke tests verify response *shape*, but the routes
+ * they exercise now require a capability, so each group must state who is
+ * calling. `CALLER.role` defaults to the project manager — the role that holds
+ * the delivery view capabilities the untouched groups need — and the groups
+ * covering a high-sensitivity domain narrow it to the role Phase 1 actually
+ * grants that domain to. Authorization re-resolves the role from the database,
+ * so the pool answers that lookup ahead of the scripted mock, keeping every
+ * `mockResolvedValueOnce` sequence aligned with the handler's own queries.
+ */
+const CALLER = vi.hoisted(() => ({ role: 'project_manager' }))
+
 // ─── Mock DB pool ─────────────────────────────────────────────────────────────
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery:       (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
   tenantTransaction: async <T>(_tenantId: string, fn: (q: any) => Promise<T>) => fn(mockQuery),
-  query:             (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:             (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ id: 'user-1', tenant_id: 'tenant-1', role: CALLER.role, is_active: true }], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
 
 vi.mock('../auth', () => ({
   requireAuth: (req: any, _res: any, next: any) => {
-    req.auth = { sub: 'user-1', tid: 'tenant-1', role: 'project_manager', jti: 'abc' }
+    req.auth = { sub: 'user-1', tid: 'tenant-1', role: CALLER.role, jti: 'abc' }
     next()
   },
   requireRole: (..._roles: string[]) => (_req: any, _res: any, next: any) => next(),
@@ -92,6 +107,7 @@ function rowStub(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  CALLER.role = 'project_manager'
 })
 
 // ─── Daily Logs ───────────────────────────────────────────────────────────────
@@ -148,6 +164,11 @@ describe('Tier-1 smoke: bim', () => {
 
 // ─── Budgets ──────────────────────────────────────────────────────────────────
 describe('Tier-1 smoke: budgets', () => {
+  // Budget, rollup and change-order reads disclose commercial value and require
+  // `cost.view`. Phase 1 grants it to the owner alone — a project manager gets
+  // 403 here now, which is the §14 boundary this gate exists to create.
+  beforeEach(() => { CALLER.role = 'owner' })
+
   it('GET /projects/:id/budget returns budget', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ total: 100000, committed: 50000 })], rowCount: 1 })
     const res = await request(app).get('/api/v1/projects/proj-1/budget')
@@ -220,6 +241,10 @@ describe('Tier-1 smoke: calculations', () => {
 
 // ─── Audit ────────────────────────────────────────────────────────────────────
 describe('Tier-1 smoke: audit', () => {
+  // The audit trail requires `audit.view`. Its holders are owner and admin;
+  // admin is the narrower of the two, so it is the caller here.
+  beforeEach(() => { CALLER.role = 'admin' })
+
   it('GET /audit returns paginated shape', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [rowStub({ action: 'create', resource: 'projects' })], rowCount: 1 })

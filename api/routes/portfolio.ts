@@ -13,7 +13,7 @@ const router = Router()
 
 // ─── Portfolio readiness ───────────────────────────────────────────────────────
 
-router.get('/readiness', async (req: Request, res: Response) => {
+router.get('/readiness', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const readiness = await computePortfolioReadiness(tenantId)
@@ -23,7 +23,7 @@ router.get('/readiness', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/readiness/:scopeType/:scopeId', async (req: Request, res: Response) => {
+router.get('/readiness/:scopeType/:scopeId', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const scopeType = req.params.scopeType as string
@@ -40,7 +40,7 @@ router.get('/readiness/:scopeType/:scopeId', async (req: Request, res: Response)
 
 // ─── Conflicts ────────────────────────────────────────────────────────────────
 
-router.get('/conflicts', async (req: Request, res: Response) => {
+router.get('/conflicts', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const conflicts = await detectPortfolioConflicts(tenantId)
@@ -52,7 +52,7 @@ router.get('/conflicts', async (req: Request, res: Response) => {
 
 // ─── Bottleneck forecast ──────────────────────────────────────────────────────
 
-router.get('/bottlenecks', async (req: Request, res: Response) => {
+router.get('/bottlenecks', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const horizonDays = req.query.horizonDays ? Number(req.query.horizonDays) : 30
@@ -65,7 +65,7 @@ router.get('/bottlenecks', async (req: Request, res: Response) => {
 
 // ─── Forecast ─────────────────────────────────────────────────────────────────
 
-router.get('/forecast', async (req: Request, res: Response) => {
+router.get('/forecast', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { forecastType = 'portfolio', scopeType = 'tenant', scopeId, horizonDays } = req.query
@@ -84,7 +84,7 @@ router.get('/forecast', async (req: Request, res: Response) => {
 
 // ─── Anomalies ────────────────────────────────────────────────────────────────
 
-router.get('/anomalies', async (req: Request, res: Response) => {
+router.get('/anomalies', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { twinId, severity, resolved, limit, offset } = req.query
@@ -102,7 +102,7 @@ router.get('/anomalies', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/anomalies/detect', async (req: Request, res: Response) => {
+router.post('/anomalies/detect', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { twinId, windowDays } = req.body
@@ -136,7 +136,7 @@ router.post('/anomalies/:anomalyId/false-positive', async (req: Request, res: Re
 
 // ─── Maintenance ──────────────────────────────────────────────────────────────
 
-router.get('/maintenance/recommendations', async (req: Request, res: Response) => {
+router.get('/maintenance/recommendations', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const entityType = (req.query.entityType as string | undefined) ?? 'equipment'
@@ -150,7 +150,7 @@ router.get('/maintenance/recommendations', async (req: Request, res: Response) =
   }
 })
 
-router.get('/maintenance/health/:twinId', async (req: Request, res: Response) => {
+router.get('/maintenance/health/:twinId', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const health = await computeAssetHealth(req.params.twinId as string, tenantId)

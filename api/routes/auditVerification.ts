@@ -8,6 +8,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { verifyChainIntegrity, snapshotIntegrity, exportAuditChain, getIntegritySnapshots } from '../services/audit/auditVerifier'
+import { requireCapability } from '../authz/requireCapability'
 
 export const auditVerificationRouter = Router()
 const auth = requireAuth as never
@@ -16,7 +17,7 @@ type AuditReq = Request & AuthenticatedRequest & TenantRequest
 auditVerificationRouter.use(auth)
 
 // ─── Verify chain integrity ───────────────────────────────────────────────────
-auditVerificationRouter.get('/verify', async (req: Request, res: Response) => {
+auditVerificationRouter.get('/verify', requireCapability('audit.view') as never, async (req: Request, res: Response) => {
   const r = req as AuditReq
   const { from, to } = req.query
   const report = await verifyChainIntegrity(r.tenantId!,
@@ -25,7 +26,7 @@ auditVerificationRouter.get('/verify', async (req: Request, res: Response) => {
 })
 
 // ─── Get integrity snapshots ──────────────────────────────────────────────────
-auditVerificationRouter.get('/integrity', async (req: Request, res: Response) => {
+auditVerificationRouter.get('/integrity', requireCapability('audit.view') as never, async (req: Request, res: Response) => {
   const r = req as AuditReq
   const days = Math.min(Number(req.query['days'] ?? 30), 90)
   const snapshots = await getIntegritySnapshots(r.tenantId!, days)
@@ -40,7 +41,7 @@ auditVerificationRouter.post('/snapshot', async (req: Request, res: Response) =>
 })
 
 // ─── Export audit chain ───────────────────────────────────────────────────────
-auditVerificationRouter.get('/export', async (req: Request, res: Response) => {
+auditVerificationRouter.get('/export', requireCapability('audit.view') as never, async (req: Request, res: Response) => {
   const r = req as AuditReq
   const limit = Math.min(Number(req.query['limit'] ?? 10000), 50000)
   const events = await exportAuditChain(r.tenantId!, limit)

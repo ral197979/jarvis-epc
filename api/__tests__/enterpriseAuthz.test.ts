@@ -209,7 +209,13 @@ describe('AUDIT-P1-01 — deployment health + demo tenant authorization', () => 
   })
 
   it('allows an explicit PLATFORM admin to run health checks and manage demo tenants', async () => {
-    h.identity = { sub: 'platform-op', role: 'engineer', tid: TENANT_A }
+    // ADR-014 Phase 2B-1: the operator allowlist and the capability model are
+    // separate axes and both must pass — the allowlist decides *which tenant* a
+    // platform operator may act on, `platform.admin` decides whether the caller
+    // may read platform configuration at all. An allowlisted account whose
+    // database role is `engineer` is now denied the deployment-health read, which
+    // is the §15 boundary. The operator here therefore holds the platform role.
+    h.identity = { sub: 'platform-op', role: 'admin', tid: TENANT_A }
     process.env['PLATFORM_ADMIN_USER_IDS'] = 'platform-op'
     vi.resetModules()
     const mod = await import('../routes/enterprise')

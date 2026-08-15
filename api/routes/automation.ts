@@ -45,8 +45,7 @@ function _pagination(q: Record<string, unknown>) {
 // GET /handlers — list job_types known to this process
 // ═══════════════════════════════════════════════════════════════════════════
 
-router.get('/handlers', (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.get('/handlers', requireCapability('platform.admin') as never, (req: Req, res: Response) => {
   res.json({ data: listRegisteredHandlers() })
 })
 
@@ -54,8 +53,7 @@ router.get('/handlers', (req: Req, res: Response) => {
 // SCHEDULED JOBS
 // ═══════════════════════════════════════════════════════════════════════════
 
-router.get('/scheduled', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.get('/scheduled', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -191,8 +189,7 @@ router.delete('/scheduled/:id', async (req: Req, res: Response) => {
 // BACKGROUND JOBS (read + retry)
 // ═══════════════════════════════════════════════════════════════════════════
 
-router.get('/background', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.get('/background', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -234,8 +231,7 @@ router.get('/background', async (req: Req, res: Response) => {
 // KPI SNAPSHOTS (history read)
 // ═══════════════════════════════════════════════════════════════════════════
 
-router.get('/kpi-snapshots', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.get('/kpi-snapshots', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -298,8 +294,7 @@ router.post('/background/:id/retry', requireCapability('platform.automation') as
 // MCP TOOL MARKETPLACE (per-tenant disable list)
 // ═══════════════════════════════════════════════════════════════════════════
 
-router.get('/mcp-tools', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.get('/mcp-tools', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

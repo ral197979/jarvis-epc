@@ -200,7 +200,7 @@ router.get('/bim-models/:modelId/takeoff', async (req: Request, res: Response) =
 // ─── Cost Library ─────────────────────────────────────────────────────────────
 
 // GET /cost-items/search?q=concrete&region=NYC&limit=20
-router.get('/cost-items/search', async (req: Request, res: Response) => {
+router.get('/cost-items/search', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const q      = qs(req.query['q'] as string | string[])
   const region = qs(req.query['region'] as string | string[])
   const limit  = qs(req.query['limit'] as string | string[])
@@ -228,7 +228,7 @@ router.post('/estimates', async (req: Request, res: Response) => {
 })
 
 // GET /estimates?project_id=...
-router.get('/estimates', async (req: Request, res: Response) => {
+router.get('/estimates', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const project_id = qs(req.query['project_id'] as string | string[])
   try {
     const estimates = await listEstimates(tid(req), project_id)
@@ -239,7 +239,7 @@ router.get('/estimates', async (req: Request, res: Response) => {
 })
 
 // GET /estimates/:id
-router.get('/estimates/:id', async (req: Request, res: Response) => {
+router.get('/estimates/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   try {
     const result = await getEstimate(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Estimate not found' }); return }

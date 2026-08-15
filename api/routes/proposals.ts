@@ -42,7 +42,7 @@ proposalsRouter.use(requireTenant() as never)
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
-proposalsRouter.get('/proposals/summary', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals/summary', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getPipelineSummary(r.tenantId!)
@@ -62,7 +62,7 @@ proposalsRouter.post('/proposals', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to create proposal' }) }
 })
 
-proposalsRouter.get('/proposals', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposals = await listProposals(r.tenantId!, {
@@ -75,7 +75,7 @@ proposalsRouter.get('/proposals', async (req: Request, res: Response) => {
 
 // ─── Single proposal ──────────────────────────────────────────────────────────
 
-proposalsRouter.get('/proposals/:id', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals/:id', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await getProposal(r.tenantId!, p(req, 'id'))
@@ -133,7 +133,7 @@ proposalsRouter.post('/proposals/:id/no-bid', requireCapability('crm.approve') a
 
 // ─── Items ────────────────────────────────────────────────────────────────────
 
-proposalsRouter.get('/proposals/:id/items', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals/:id/items', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const items = await listProposalItems(r.tenantId!, p(req, 'id'))

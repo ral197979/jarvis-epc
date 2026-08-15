@@ -22,6 +22,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest, invalidateTenantCache } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import rateLimit from 'express-rate-limit'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -110,7 +111,7 @@ router.use(requireAuth as never, requireTenant() as never)
 
 // ─── GET /tenants/me ──────────────────────────────────────────────────────────
 
-router.get('/me', async (req: Req, res: Response) => {
+router.get('/me', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -150,7 +151,7 @@ router.patch('/me', async (req: Req, res: Response) => {
 
 // ─── GET /tenants/me/users ────────────────────────────────────────────────────
 
-router.get('/me/users', async (req: Req, res: Response) => {
+router.get('/me/users', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -261,7 +262,7 @@ router.delete('/me/users/:userId', async (req: Req, res: Response) => {
 
 // ─── GET /tenants/me/usage ────────────────────────────────────────────────────
 
-router.get('/me/usage', async (req: Req, res: Response) => {
+router.get('/me/usage', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId, tenant } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
