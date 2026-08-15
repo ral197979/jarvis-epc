@@ -4,20 +4,23 @@
  *   GET   /api/v1/projects/:projectId/ncrs
  *   POST  /api/v1/projects/:projectId/ncrs
  *   PATCH /api/v1/ncrs/:id                       (status / disposition / root_cause)
+ *   POST  /api/v1/ncrs/:id/close                  (canonical closure — quality.verify)
  *   GET   /api/v1/ncrs/:id/capas
  *   POST  /api/v1/ncrs/:id/capas
  *   PATCH /api/v1/capas/:id                       (status)
+ *   POST  /api/v1/capas/:id/verify                (canonical verification — quality.verify)
  *   GET   /api/v1/projects/:projectId/ncr-summary
  */
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import {
-  listNcrs, createNcr, updateNcr, listCorrectiveActions, createCorrectiveAction,
-  updateCorrectiveActionStatus, buildNcrSummary, autoRaiseNcrsFromInspections,
+  listNcrs, createNcr, updateNcr, closeNcr, listCorrectiveActions, createCorrectiveAction,
+  updateCorrectiveActionStatus, verifyCorrectiveAction, buildNcrSummary, autoRaiseNcrsFromInspections,
 } from '../services/quality/ncrService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -43,7 +46,7 @@ router.post('/projects/:projectId/ncrs', async (req: Request, res: Response) => 
   } catch (err) { res.status(500).json({ error: 'Failed to create NCR', detail: (err as Error).message }) }
 })
 
-router.patch('/ncrs/:id', async (req: Request, res: Response) => {
+router.patch('/ncrs/:id', guardTransitionOwnedState('ncrs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { status?: string; disposition?: string; root_cause?: string }
   if (b.status && !NCR_STATUS.has(b.status)) return res.status(400).json({ error: 'invalid status' })
@@ -54,6 +57,15 @@ router.patch('/ncrs/:id', async (req: Request, res: Response) => {
     if (!row) return res.status(404).json({ error: 'NCR not found' })
     res.json({ data: row })
   } catch (err) { res.status(500).json({ error: 'Failed to update NCR', detail: (err as Error).message }) }
+})
+
+router.post('/ncrs/:id/close', requireCapability('quality.verify') as never, async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  try {
+    const row = await closeNcr(r.tenantId!, String(req.params.id))
+    if (!row) return res.status(404).json({ error: 'NCR not found or already closed' })
+    res.json({ data: row })
+  } catch (err) { res.status(500).json({ error: 'Failed to close NCR', detail: (err as Error).message }) }
 })
 
 router.get('/ncrs/:id/capas', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
@@ -73,7 +85,7 @@ router.post('/ncrs/:id/capas', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: 'Failed to create corrective action', detail: (err as Error).message }) }
 })
 
-router.patch('/capas/:id', async (req: Request, res: Response) => {
+router.patch('/capas/:id', guardTransitionOwnedState('corrective_actions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !CAPA_STATUS.has(status)) return res.status(400).json({ error: `status must be one of ${[...CAPA_STATUS].join(', ')}` })
@@ -82,6 +94,15 @@ router.patch('/capas/:id', async (req: Request, res: Response) => {
     if (!row) return res.status(404).json({ error: 'Corrective action not found' })
     res.json({ data: row })
   } catch (err) { res.status(500).json({ error: 'Failed to update corrective action', detail: (err as Error).message }) }
+})
+
+router.post('/capas/:id/verify', requireCapability('quality.verify') as never, async (req: Request, res: Response) => {
+  const r = req as AuthTenantReq
+  try {
+    const row = await verifyCorrectiveAction(r.tenantId!, String(req.params.id))
+    if (!row) return res.status(404).json({ error: 'Corrective action not found or already verified' })
+    res.json({ data: row })
+  } catch (err) { res.status(500).json({ error: 'Failed to verify corrective action', detail: (err as Error).message }) }
 })
 
 router.post('/projects/:projectId/ncrs/auto-raise', async (req: Request, res: Response) => {

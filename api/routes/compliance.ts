@@ -207,8 +207,7 @@ router.post('/:id/complete', requireCapability('safety.approve') as never, async
 
 // ─── POST waive (admin) ───────────────────────────────────────────────────────
 
-router.post('/:id/waive', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/:id/waive', requireCapability('safety.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

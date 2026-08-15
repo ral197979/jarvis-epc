@@ -19,6 +19,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 // v4.31.0 TS fix: `randomBytes` unused — commented pending reintroduction
 // import { randomBytes } from 'node:crypto'
 
@@ -167,7 +168,7 @@ router.post('/', async (req: Req, res: Response) => {
 
 // ─── PATCH /api/v1/projects/:id ───────────────────────────────────────────────
 
-router.patch('/:id', async (req: Req, res: Response) => {
+router.patch('/:id', guardTransitionOwnedState('projects') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -311,6 +312,35 @@ router.patch('/:id/agent-mode', async (req: Req, res: Response) => {
   slog('WARN', 'projects', '[api] Project agent_mode changed', {
     tenantId, projectId: id, mode, changedBy: req.auth?.sub,
   })
+  res.json({ data: result.rows[0] })
+})
+
+/**
+ * Canonical project closure (ADR-014 Phase 2A-2).
+ *
+ * `completed` and `cancelled` are terminal project states, and the capability
+ * registry already names project closure as what `project.approve` is for. The
+ * generic PATCH could set either directly, so closure had no authorization at
+ * all. One route owns both outcomes.
+ */
+router.post('/:id/close', requireCapability('project.approve') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const outcome = String((req.body as { outcome?: string }).outcome ?? 'completed')
+  if (!['completed', 'cancelled'].includes(outcome)) {
+    res.status(422).json({ error: 'validation', message: 'outcome must be one of: completed, cancelled' }); return
+  }
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE projects SET status = $1, actual_finish = COALESCE(actual_finish, CURRENT_DATE), updated_at = NOW()
+    WHERE id = $2 AND status NOT IN ('completed','cancelled')
+      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    RETURNING *
+  `, [outcome, req.params['id']])
+
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found', message: 'Project not found or already closed.' }); return }
+  slog('INFO', 'projects', '[project] Closed', { tenantId, projectId: req.params['id'], outcome, by: req.auth?.sub })
   res.json({ data: result.rows[0] })
 })
 

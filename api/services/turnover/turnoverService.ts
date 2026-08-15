@@ -125,5 +125,22 @@ export async function updatePackage(
   return decorate(rowToRaw(r.rows[0] as Row))
 }
 
+/**
+ * Canonical turnover acceptance (ADR-014 Phase 2A-2).
+ *
+ * Acceptance transfers custody of the asset to the owner, so it is split out of
+ * `updatePackage` — which now moves a package only along the pre-acceptance
+ * handoff flow. Refuses an already-accepted package so acceptance is recorded once.
+ */
+export async function acceptPackage(tenantId: string, id: string): Promise<TurnoverPackage | null> {
+  const r = await tenantQuery(tenantId,
+    `UPDATE turnover_packages SET status='accepted', updated_at=NOW()
+      WHERE tenant_id=$1 AND id=$2 AND status <> 'accepted'
+     RETURNING id, project_id, name, area, status, deliverables, commissioning_url, commissioning_status, owner_id, notes`,
+    [tenantId, id])
+  if (!r.rows.length) return null
+  return decorate(rowToRaw(r.rows[0] as Row))
+}
+
 const STATUSES = new Set(HANDOFF_FLOW as readonly string[])
 export function isValidStatus(s: string): boolean { return STATUSES.has(s) }

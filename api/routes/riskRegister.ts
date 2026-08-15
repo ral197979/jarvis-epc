@@ -12,6 +12,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import {
   createRisk, listRisks, getRisk, updateRisk, closeRisk, getRiskSummary,
   type RiskStatus, type RiskCategory,
@@ -69,7 +70,7 @@ riskRegisterRouter.get('/risks/:id', requireCapability('risk.view') as never, as
   } catch (e) { res.status(500).json({ error: 'Failed to get risk' }) }
 })
 
-riskRegisterRouter.patch('/risks/:id', async (req: Request, res: Response) => {
+riskRegisterRouter.patch('/risks/:id', guardTransitionOwnedState('risks') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await updateRisk(r.tenantId!, p(req, 'id'), req.body)

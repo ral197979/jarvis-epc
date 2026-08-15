@@ -197,6 +197,15 @@ describe('transition coverage', () => {
   it('has no outstanding transition debt', () => {
     // Phase 2A closes only when this reaches zero.
     expect(PENDING_TRANSITIONS.length, 'Phase 2A closes only when this is empty').toBe(0)
-    expect(ENFORCED_TRANSITIONS.length).toBe(73)
+    // A tripwire, not a target: the number is whatever the semantic review found,
+    // and it must change deliberately. Phase 2A closed at 73 path-named
+    // transitions. Phase 2A-2 added the 11 consequential operations the
+    // path-based ratchet could not see — five reached only through a generic
+    // status write (NCR close, CAPA verify, turnover accept, vendor approve,
+    // project close), three were dedicated endpoints whose paths name no verb in
+    // the list (subcontract status, pay-application status, lifecycle gate and
+    // advance count as two), and three used a verb the list omitted entirely
+    // (submittal review, compliance waive).
+    expect(ENFORCED_TRANSITIONS.length).toBe(84)
   })
 })

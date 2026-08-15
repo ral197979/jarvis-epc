@@ -16,6 +16,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type Req = AuthenticatedRequest & TenantRequest
@@ -103,7 +104,7 @@ vendorsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-vendorsRouter.patch('/:id', async (req: Req, res: Response) => {
+vendorsRouter.patch('/:id', guardTransitionOwnedState('vendors') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -117,18 +118,36 @@ vendorsRouter.patch('/:id', async (req: Req, res: Response) => {
   }
   if (!sets.length) { res.status(422).json({ error: 'validation', message: 'No valid fields' }); return }
 
-  // Auto-set approved fields when status changes to 'approved'
-  if (req.body['status'] === 'approved') {
-    sets.push(`approved_by = $${i++}`, `approved_at = NOW()`)
-    vals.push(req.auth?.sub ?? null)
-  }
-
   vals.push(req.params['id'])
   const result = await tenantQuery(tenantId, `
     UPDATE vendors SET ${sets.join(',')}
     WHERE id = $${i} AND tenant_id = current_setting('app.current_tenant_id',true)::uuid RETURNING *
   `, vals)
   if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  res.json({ data: result.rows[0] })
+})
+
+/**
+ * Canonical vendor approval (ADR-014 Phase 2A-2).
+ *
+ * The generic PATCH used to stamp approved_by/approved_at whenever the body said
+ * `status: 'approved'` — an approval, recorded as one, with no approval
+ * authority required. Qualifying a vendor decides who the business may buy from,
+ * so it belongs on its own route behind procurement.approve.
+ */
+vendorsRouter.post('/:id/approve', requireCapability('procurement.approve') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE vendors SET status = 'approved', approved_by = $1, approved_at = NOW()
+    WHERE id = $2 AND status <> 'approved'
+      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    RETURNING *
+  `, [req.auth?.sub ?? null, req.params['id']])
+
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found', message: 'Vendor not found or already approved.' }); return }
+  slog('INFO', 'procurement', '[vendor] Approved', { tenantId, vendorId: req.params['id'], by: req.auth?.sub })
   res.json({ data: result.rows[0] })
 })
 
@@ -211,7 +230,7 @@ purchaseOrdersRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.patch('/:id', async (req: Req, res: Response) => {
+purchaseOrdersRouter.patch('/:id', guardTransitionOwnedState('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -236,9 +255,6 @@ purchaseOrdersRouter.patch('/:id', async (req: Req, res: Response) => {
 purchaseOrdersRouter.post('/:id/approve', requireCapability('procurement.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin','project_manager'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden' }); return
-  }
 
   const result = await tenantQuery(tenantId, `
     UPDATE purchase_orders
@@ -397,14 +413,9 @@ submittalsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: row })
 })
 
-submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
+submittalsRouter.patch('/:id', guardTransitionOwnedState('submittals') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-
-  // Allowed lifecycle transitions for non-terminal status changes via PATCH.
-  // Terminal stamps (approved/approved_as_noted/revise_resubmit/rejected) must
-  // go through POST /:id/review which captures reviewer + reviewed_at.
-  const transitionalStatuses = ['draft', 'submitted', 'under_review']
 
   const fields = ['title','type','discipline','spec_section','submitted_by','due_date','metadata']
   const sets: string[] = []
@@ -418,14 +429,11 @@ submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
     }
   }
 
+  // Terminal review stamps are refused upstream by guardTransitionOwnedState;
+  // what reaches here is a transitional status, written like any other field.
   if (Object.prototype.hasOwnProperty.call(req.body, 'status')) {
-    const s = String(req.body['status'])
-    if (!transitionalStatuses.includes(s)) {
-      res.status(422).json({ error: 'validation', message: `status via PATCH must be one of: ${transitionalStatuses.join(', ')}; use POST /:id/review for terminal stamps` })
-      return
-    }
     sets.push(`status = $${i++}`)
-    vals.push(s)
+    vals.push(String(req.body['status']))
   }
 
   if (!sets.length) { res.status(422).json({ error: 'validation', message: 'No valid fields' }); return }
@@ -439,12 +447,9 @@ submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-submittalsRouter.post('/:id/review', async (req: Req, res: Response) => {
+submittalsRouter.post('/:id/review', requireCapability('construction.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin','project_manager'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'Submittal stamping requires project_manager, admin, or owner role' }); return
-  }
   const { status, review_notes } = req.body as { status?: string; review_notes?: string }
 
   const validStatuses = ['approved','approved_as_noted','revise_resubmit','rejected']

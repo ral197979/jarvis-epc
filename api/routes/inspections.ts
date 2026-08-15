@@ -19,6 +19,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -150,7 +151,7 @@ router.get('/projects/:projectId/inspections', requireCapability('quality.view')
   }
 })
 
-router.post('/projects/:projectId/inspections', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/inspections', guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const projectId = req.params.projectId as string
   const b = req.body ?? {}
@@ -234,7 +235,7 @@ router.get('/inspections/:id', requireCapability('quality.view') as never, async
   }
 })
 
-router.patch('/inspections/:id', async (req: Request, res: Response) => {
+router.patch('/inspections/:id', guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'type', 'location', 'discipline', 'status', 'scheduled_date', 'completed_date', 'inspector_id', 'results', 'notes', 'photos', 'signatures']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -264,12 +265,6 @@ router.patch('/inspections/:id', async (req: Request, res: Response) => {
 router.post('/inspections/:id/complete', requireCapability('quality.verify') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
-
-  // RBAC: finalizing an inspection is a quality gate; restrict to qualified roles.
-  const role = (r as any).auth?.role ?? ''
-  if (!['owner','admin','project_manager','engineer','inspector'].includes(role)) {
-    return res.status(403).json({ error: 'forbidden', message: 'Completing inspections requires inspector, engineer, project_manager, admin, or owner role' })
-  }
 
   // Get current inspection to access results
   const getResult = await tenantQuery(

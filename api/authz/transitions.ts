@@ -125,6 +125,43 @@ export const ENFORCED_TRANSITIONS: readonly TransitionEndpoint[] = [
   { file: 'proposals.ts', router: 'proposalsRouter', method: 'POST', path: '/proposals/:id/lost',   operation: 'mark proposal lost',   capability: 'crm.approve' },
   { file: 'proposals.ts', router: 'proposalsRouter', method: 'POST', path: '/proposals/:id/no-bid', operation: 'mark proposal no-bid', capability: 'crm.approve' },
   { file: 'sync.ts', router: 'syncRouter', method: 'POST', path: '/resolve', operation: 'resolve field-sync conflict', capability: 'field.write' },
+
+  // ── Consequential states that Phase 2A could not see (Phase 2A-2) ──────────
+  // These reach terminal business states the path-based ratchet missed because
+  // no consequential verb appears in the route path. Each now has exactly one
+  // canonical route, and the generic mutation that used to reach the same state
+  // is restricted by `api/authz/transitionStates.ts`.
+  { file: 'ncr.ts', router: 'router', method: 'POST', path: '/ncrs/:id/close',                    operation: 'close NCR',                     capability: 'quality.verify' },
+  { file: 'ncr.ts', router: 'router', method: 'POST', path: '/capas/:id/verify',                  operation: 'verify corrective action',      capability: 'quality.verify' },
+  { file: 'turnover.ts', router: 'router', method: 'POST', path: '/turnover-packages/:id/accept', operation: 'accept turnover package',       capability: 'commissioning.approve' },
+  { file: 'procurement.ts', router: 'vendorsRouter', method: 'POST', path: '/:id/approve',        operation: 'approve vendor',                capability: 'procurement.approve' },
+  { file: 'subcontracts.ts', router: 'subcontractsRouter', method: 'PATCH', path: '/subcontracts/:id/status', operation: 'subcontract lifecycle transition', capability: 'procurement.approve' },
+  { file: 'lifecycle.ts', router: 'router', method: 'POST', path: '/projects/:projectId/gates/:gateKey', operation: 'approve / waive / reset lifecycle gate', capability: 'project.approve' },
+  { file: 'lifecycle.ts', router: 'router', method: 'POST', path: '/projects/:projectId/advance',        operation: 'advance project phase',   capability: 'project.approve' },
+  // Missed by Phase 2A because 'review' was not in the consequential-verb list.
+  // Stamps reviewed_by/reviewed_at and decides approved / approved_as_noted /
+  // revise_resubmit / rejected — a decision, not a write. Guarded with
+  // construction.approve: submittals already sit in the construction domain for
+  // reads, and its holder set (Owner + PM) preserves who could stamp before,
+  // minus Admin, which ADR-014 D2 says is not a business approver.
+  { file: 'procurement.ts', router: 'submittalsRouter', method: 'POST', path: '/:id/review', operation: 'stamp submittal review', capability: 'construction.approve' },
+  // A single status endpoint driving the whole AIA billing lifecycle — it can
+  // set 'approved' and 'paid' and stamps approved_at/paid_at, with no approval
+  // authority required. Treated the same way ADR-014 Phase 2A-2 §10 decided the
+  // structurally identical subcontract-status endpoint: the endpoint IS the
+  // controlled operation, so it carries the consequence-specific capability
+  // rather than pretending to be an ordinary cost write. cost.approve is the
+  // capability the registry already names for pay applications.
+  { file: 'payApplications.ts', router: 'router', method: 'PATCH', path: '/pay-applications/:id', operation: 'pay application status transition', capability: 'cost.approve' },
+  // The generic project PATCH could set status='completed'/'cancelled' directly.
+  // The capability registry already names project closure as what
+  // project.approve is for; it simply had no route to attach to until now.
+  { file: 'projects.ts', router: 'router', method: 'POST', path: '/:id/close', operation: 'close project (completed / cancelled)', capability: 'project.approve' },
+  // Sibling of the already-guarded /:id/complete, and the more consequential of
+  // the two — waiving excuses a compliance obligation rather than satisfying it.
+  // Missed by Phase 2A because 'waive' was not in the consequential-verb list,
+  // and it was still on the legacy _requireAdmin JWT-role check.
+  { file: 'compliance.ts', router: 'router', method: 'POST', path: '/:id/waive', operation: 'waive compliance task', capability: 'safety.approve' },
 ]
 
 /**

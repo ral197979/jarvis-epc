@@ -9,7 +9,7 @@
  *   POST  /api/v1/projects/:projectId/pay-applications        (creates a draft G702)
  *   GET   /api/v1/pay-applications/:id                         (computed G702/G703)
  *   PATCH /api/v1/pay-applications/:id/lines                   (upsert this-period amounts)
- *   PATCH /api/v1/pay-applications/:id                         (status transition)
+ *   PATCH /api/v1/pay-applications/:id                         (status transition — cost.approve)
  */
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
@@ -108,7 +108,7 @@ router.patch('/pay-applications/:id/lines', async (req: Request, res: Response) 
   } catch (err) { res.status(500).json({ error: 'Failed to update lines', detail: (err as Error).message }) }
 })
 
-router.patch('/pay-applications/:id', async (req: Request, res: Response) => {
+router.patch('/pay-applications/:id', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !VALID_STATUS.has(status)) {

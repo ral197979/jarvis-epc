@@ -137,6 +137,37 @@ export async function updateNcr(
   return res.rows[0] ?? null
 }
 
+/**
+ * Canonical NCR closure (ADR-014 Phase 2A-2).
+ *
+ * Split out of `updateNcr` so closure has one authorized path: `updateNcr` no
+ * longer reaches `closed`, because `PATCH /ncrs/:id` is an ordinary quality edit
+ * and closing a non-conformance asserts it is resolved. Idempotent by refusing
+ * an already-closed NCR, so a repeated close cannot restamp closed_at.
+ */
+export async function closeNcr(tenantId: string, id: string) {
+  const res = await tenantQuery(tenantId,
+    `UPDATE ncrs SET status='closed'::ncr_status, closed_at=CURRENT_DATE, updated_at=NOW()
+      WHERE tenant_id=$1 AND id=$2 AND status <> 'closed'
+      RETURNING id, ncr_number, status, disposition, root_cause, closed_at`, [tenantId, id])
+  return res.rows[0] ?? null
+}
+
+/**
+ * Canonical CAPA verification (ADR-014 Phase 2A-2).
+ *
+ * The assignee drives their own action to `completed` through the ordinary
+ * PATCH; attesting that it actually worked is the quality gate and stamps
+ * verified_at. Refuses an already-verified action.
+ */
+export async function verifyCorrectiveAction(tenantId: string, id: string) {
+  const res = await tenantQuery(tenantId,
+    `UPDATE corrective_actions SET status='verified'::capa_status, verified_at=CURRENT_DATE, updated_at=NOW()
+      WHERE tenant_id=$1 AND id=$2 AND status <> 'verified'
+      RETURNING id, status, verified_at`, [tenantId, id])
+  return res.rows[0] ?? null
+}
+
 export async function listCorrectiveActions(tenantId: string, ncrId: string) {
   const res = await tenantQuery(tenantId,
     `SELECT id, ncr_id, type, description, status, assigned_to, due_date, completed_at, verified_at

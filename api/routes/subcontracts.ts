@@ -180,7 +180,7 @@ subcontractsRouter.get('/subcontracts/:id', requireCapability('procurement.view'
   } catch (e) { res.status(500).json({ error: 'Failed to get subcontract' }) }
 })
 
-subcontractsRouter.patch('/subcontracts/:id/status', async (req: Request, res: Response) => {
+subcontractsRouter.patch('/subcontracts/:id/status', requireCapability('procurement.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { status } = req.body as { status?: ScStatus }
   if (!status) { res.status(400).json({ error: 'status is required' }); return }

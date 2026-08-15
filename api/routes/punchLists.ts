@@ -22,6 +22,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -181,7 +182,7 @@ router.get('/punch-lists/:id/items', requireCapability('quality.view') as never,
   }
 })
 
-router.post('/punch-lists/:id/items', async (req: Request, res: Response) => {
+router.post('/punch-lists/:id/items', guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.title) return res.status(400).json({ error: 'title required' })
@@ -247,7 +248,7 @@ router.post('/punch-lists/:id/items', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/punch-items/:id', async (req: Request, res: Response) => {
+router.patch('/punch-items/:id', guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'description', 'location', 'discipline', 'priority', 'status', 'assigned_to', 'due_date', 'drawing_id', 'pin_x', 'pin_y', 'photos']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
