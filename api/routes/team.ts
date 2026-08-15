@@ -32,7 +32,7 @@ export const teamRouter = Router()
 teamRouter.use(requireAuth     as never)
 teamRouter.use(requireTenant() as never)
 
-teamRouter.get('/team/summary', async (req: Request, res: Response) => {
+teamRouter.get('/team/summary', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ summary: await getTeamSummary(r.tenantId!) }) }
   catch (e) { res.status(500).json({ error: 'Failed to load team summary' }) }
@@ -48,7 +48,7 @@ teamRouter.post('/team/members', async (req: Request, res: Response) => {
   catch (e) { res.status(500).json({ error: 'Failed to create member' }) }
 })
 
-teamRouter.get('/team/members', async (req: Request, res: Response) => {
+teamRouter.get('/team/members', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const members = await listMembers(r.tenantId!, {
@@ -59,7 +59,7 @@ teamRouter.get('/team/members', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to list members' }) }
 })
 
-teamRouter.get('/team/members/:id', async (req: Request, res: Response) => {
+teamRouter.get('/team/members/:id', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const member = await getMember(r.tenantId!, p(req, 'id'))
@@ -77,7 +77,7 @@ teamRouter.patch('/team/members/:id', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to update member' }) }
 })
 
-teamRouter.get('/team/members/:id/assignments', async (req: Request, res: Response) => {
+teamRouter.get('/team/members/:id/assignments', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ assignments: await listAssignmentsByMember(r.tenantId!, p(req, 'id')) }) }
   catch (e) { res.status(500).json({ error: 'Failed to list assignments' }) }
@@ -93,7 +93,7 @@ teamRouter.post('/team/assignments', requireCapability('team.approve') as never,
   catch (e) { res.status(500).json({ error: 'Failed to create assignment' }) }
 })
 
-teamRouter.get('/projects/:projectId/team', async (req: Request, res: Response) => {
+teamRouter.get('/projects/:projectId/team', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ assignments: await listAssignmentsByProject(r.tenantId!, p(req, 'projectId')) }) }
   catch (e) { res.status(500).json({ error: 'Failed to list project team' }) }

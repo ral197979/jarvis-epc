@@ -17,6 +17,7 @@ import {
   updateCorrectiveActionStatus, buildNcrSummary, autoRaiseNcrsFromInspections,
 } from '../services/quality/ncrService'
 
+import { requireCapability } from '../authz/requireCapability'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -26,7 +27,7 @@ const NCR_STATUS = new Set(['open', 'investigating', 'corrective_action', 'verif
 const DISPOSITION = new Set(['pending', 'use_as_is', 'rework', 'repair', 'reject', 'return'])
 const CAPA_STATUS = new Set(['open', 'in_progress', 'completed', 'verified'])
 
-router.get('/projects/:projectId/ncrs', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/ncrs', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try { res.json({ data: await listNcrs(r.tenantId!, String(req.params.projectId)) }) }
   catch (err) { res.status(500).json({ error: 'Failed to list NCRs', detail: (err as Error).message }) }
@@ -55,7 +56,7 @@ router.patch('/ncrs/:id', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: 'Failed to update NCR', detail: (err as Error).message }) }
 })
 
-router.get('/ncrs/:id/capas', async (req: Request, res: Response) => {
+router.get('/ncrs/:id/capas', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try { res.json({ data: await listCorrectiveActions(r.tenantId!, String(req.params.id)) }) }
   catch (err) { res.status(500).json({ error: 'Failed to list corrective actions', detail: (err as Error).message }) }
@@ -91,7 +92,7 @@ router.post('/projects/:projectId/ncrs/auto-raise', async (req: Request, res: Re
   } catch (err) { res.status(500).json({ error: 'Failed to auto-raise NCRs', detail: (err as Error).message }) }
 })
 
-router.get('/projects/:projectId/ncr-summary', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/ncr-summary', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildNcrSummary(r.tenantId!, String(req.params.projectId), new Date())

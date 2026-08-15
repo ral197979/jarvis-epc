@@ -25,6 +25,7 @@ import {
   createIngestToken, resolveIngestToken,
 } from '../services/iot/sensorIngestService'
 
+import { requireCapability } from '../authz/requireCapability'
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
   const v = (req.params as Record<string, string | string[]>)[key]
@@ -67,7 +68,7 @@ authRouter.post('/projects/:projectId/sensors', async (req: Request, res: Respon
   } catch (e) { res.status(500).json({ error: 'Failed to register sensor', detail: (e as Error).message }) }
 })
 
-authRouter.get('/projects/:projectId/sensors', async (req: Request, res: Response) => {
+authRouter.get('/projects/:projectId/sensors', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensors = await listSensors(r.tenantId!, p(req, 'projectId'))
@@ -75,7 +76,7 @@ authRouter.get('/projects/:projectId/sensors', async (req: Request, res: Respons
   } catch (e) { res.status(500).json({ error: 'Failed to list sensors' }) }
 })
 
-authRouter.get('/sensors/:id', async (req: Request, res: Response) => {
+authRouter.get('/sensors/:id', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensor = await getSensor(r.tenantId!, p(req, 'id'))
@@ -93,7 +94,7 @@ authRouter.patch('/sensors/:id/thresholds', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to update thresholds' }) }
 })
 
-authRouter.get('/sensors/:id/readings', async (req: Request, res: Response) => {
+authRouter.get('/sensors/:id/readings', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const readings = await getReadings(r.tenantId!, p(req, 'id'), {
@@ -105,7 +106,7 @@ authRouter.get('/sensors/:id/readings', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to get readings' }) }
 })
 
-authRouter.get('/projects/:projectId/sensors/alerts', async (req: Request, res: Response) => {
+authRouter.get('/projects/:projectId/sensors/alerts', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const alerts = await getOpenAlerts(r.tenantId!, p(req, 'projectId'))

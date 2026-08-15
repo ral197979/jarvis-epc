@@ -31,7 +31,7 @@ router.use(requireTenant() as any)
 
 // ─── Punch Lists ─────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/punch-lists', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/punch-lists', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, limit = '100', offset = '0' } = req.query
@@ -88,7 +88,7 @@ router.post('/projects/:projectId/punch-lists', async (req: Request, res: Respon
   }
 })
 
-router.get('/punch-lists/:id', async (req: Request, res: Response) => {
+router.get('/punch-lists/:id', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(
@@ -148,7 +148,7 @@ router.delete('/punch-lists/:id', async (req: Request, res: Response) => {
 
 // ─── Punch Items ─────────────────────────────────────────────────────────────
 
-router.get('/punch-lists/:id/items', async (req: Request, res: Response) => {
+router.get('/punch-lists/:id/items', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { status, priority, assigned_to } = req.query
   const params: unknown[] = [req.params.id, r.tenantId!]

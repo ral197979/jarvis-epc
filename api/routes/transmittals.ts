@@ -38,7 +38,7 @@ const p   = (req: Request, key: string) =>
   qs((req.params as Record<string, string | string[]>)[key]) ?? ''
 
 // GET /transmittals/overdue — must precede /:id
-router.get('/overdue', async (req: Request, res: Response) => {
+router.get('/overdue', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
     const rows = await getOverdueTransmittals(tid(req))
     res.json({ data: rows })
@@ -65,7 +65,7 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // GET /transmittals
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
     const rows = await listTransmittals(tid(req), {
       project_id: qs(req.query['project_id'] as string | string[]),
@@ -80,7 +80,7 @@ router.get('/', async (req: Request, res: Response) => {
 })
 
 // GET /transmittals/:id
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
     const result = await getTransmittal(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Transmittal not found' }); return }

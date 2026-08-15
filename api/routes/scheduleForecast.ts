@@ -11,12 +11,13 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildScheduleForecast } from '../services/schedule/scheduleMonteCarloService'
 
+import { requireCapability } from '../authz/requireCapability'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/:projectId/forecast', async (req: Request, res: Response) => {
+router.get('/:projectId/forecast', requireCapability('schedule.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const iterations = parseInt(String(req.query['iterations'] ?? ''), 10)
   const target = parseInt(String(req.query['target'] ?? ''), 10)

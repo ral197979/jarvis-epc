@@ -22,12 +22,13 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 
+import { requireCapability } from '../authz/requireCapability'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth   as any)
 router.use(requireTenant() as any)
 
-router.get('/projects/:projectId/drawings', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/drawings', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { discipline, set_name, limit = '200', offset = '0' } = req.query
@@ -78,7 +79,7 @@ router.post('/projects/:projectId/drawings', async (req: Request, res: Response)
   }
 })
 
-router.get('/drawings/:id', async (req: Request, res: Response) => {
+router.get('/drawings/:id', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -124,7 +125,7 @@ router.delete('/drawings/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Revisions ───────────────────────────────────────────────────────────────
-router.get('/drawings/:id/revisions', async (req: Request, res: Response) => {
+router.get('/drawings/:id/revisions', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -161,7 +162,7 @@ router.post('/drawings/:id/revisions', async (req: Request, res: Response) => {
 })
 
 // ─── Markups ─────────────────────────────────────────────────────────────────
-router.get('/drawings/:id/markups', async (req: Request, res: Response) => {
+router.get('/drawings/:id/markups', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { rev, resolved } = req.query
   const params: unknown[] = [req.params.id, r.tenantId!]

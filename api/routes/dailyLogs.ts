@@ -27,7 +27,7 @@ router.use(requireTenant() as any)
 
 const JSONB_FIELDS = new Set(['manpower','equipment','visitors','deliveries','incidents','photos'])
 
-router.get('/projects/:projectId/daily-logs', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/daily-logs', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, from, to, limit = '60', offset = '0' } = req.query
@@ -98,7 +98,7 @@ router.post('/projects/:projectId/daily-logs', async (req: Request, res: Respons
   }
 })
 
-router.get('/daily-logs/:id', async (req: Request, res: Response) => {
+router.get('/daily-logs/:id', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

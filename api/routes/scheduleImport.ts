@@ -10,6 +10,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { importSchedule, listImportJobs } from '../services/schedule/scheduleImportService'
 
+import { requireCapability } from '../authz/requireCapability'
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
   const v = (req.params as Record<string, string | string[]>)[key]
@@ -59,7 +60,7 @@ scheduleImportRouter.post(
 
 // ─── Job history ──────────────────────────────────────────────────────────────
 
-scheduleImportRouter.get('/projects/:projectId/schedule/imports', async (req: Request, res: Response) => {
+scheduleImportRouter.get('/projects/:projectId/schedule/imports', requireCapability('schedule.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const jobs = await listImportJobs(r.tenantId!, p(req, 'projectId'))

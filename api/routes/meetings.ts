@@ -57,7 +57,7 @@ meetingsRouter.post('/projects/:projectId/meetings', async (req: Request, res: R
   } catch (e) { res.status(500).json({ error: 'Failed to create meeting' }) }
 })
 
-meetingsRouter.get('/projects/:projectId/meetings', async (req: Request, res: Response) => {
+meetingsRouter.get('/projects/:projectId/meetings', requireCapability('project.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meetings = await listMeetings(r.tenantId!, p(req, 'projectId'), {
@@ -69,7 +69,7 @@ meetingsRouter.get('/projects/:projectId/meetings', async (req: Request, res: Re
   } catch (e) { res.status(500).json({ error: 'Failed to list meetings' }) }
 })
 
-meetingsRouter.get('/meetings/:id', async (req: Request, res: Response) => {
+meetingsRouter.get('/meetings/:id', requireCapability('project.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meeting = await getMeeting(r.tenantId!, p(req, 'id'))
@@ -107,7 +107,7 @@ meetingsRouter.post('/meetings/:id/archive', requireCapability('docs.publish') a
 
 // ─── Agenda items ─────────────────────────────────────────────────────────────
 
-meetingsRouter.get('/meetings/:id/agenda', async (req: Request, res: Response) => {
+meetingsRouter.get('/meetings/:id/agenda', requireCapability('project.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const items = await listAgendaItems(r.tenantId!, p(req, 'id'))
@@ -144,7 +144,7 @@ meetingsRouter.delete('/meetings/:id/agenda/:itemId', async (req: Request, res: 
 
 // ─── Action items ─────────────────────────────────────────────────────────────
 
-meetingsRouter.get('/meetings/:id/actions', async (req: Request, res: Response) => {
+meetingsRouter.get('/meetings/:id/actions', requireCapability('project.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actions = await listMeetingActions(r.tenantId!, p(req, 'id'))

@@ -28,7 +28,7 @@ router.use(requireTenant() as any)
 
 // ─── Inspection Templates ────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/inspection-templates', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/inspection-templates', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { category, discipline } = req.query
   const params: unknown[] = [r.tenantId!]
@@ -110,7 +110,7 @@ router.patch('/inspection-templates/:id', async (req: Request, res: Response) =>
 
 // ─── Inspections ────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/inspections', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/inspections', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, type, discipline, limit = '100', offset = '0' } = req.query
@@ -214,7 +214,7 @@ router.post('/projects/:projectId/inspections', async (req: Request, res: Respon
   }
 })
 
-router.get('/inspections/:id', async (req: Request, res: Response) => {
+router.get('/inspections/:id', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(

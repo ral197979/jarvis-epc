@@ -43,7 +43,7 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── GET symptoms meta (mount before /:id so it doesn't collide) ──────────────
 
-router.get('/_meta/symptoms', async (req: Req, res: Response) => {
+router.get('/_meta/symptoms', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const symptoms = await listUsedSymptoms(tenantId)
@@ -52,7 +52,7 @@ router.get('/_meta/symptoms', async (req: Req, res: Response) => {
 
 // ─── Search (POST so we can accept structured arrays without URL ugliness) ────
 
-router.post('/search', async (req: Req, res: Response) => {
+router.post('/search', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -71,7 +71,7 @@ router.post('/search', async (req: Req, res: Response) => {
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -145,7 +145,7 @@ router.post('/', async (req: Req, res: Response) => {
 
 // ─── Read ────────────────────────────────────────────────────────────────────
 
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const fix = await getFix(tenantId, String(req.params['id']))

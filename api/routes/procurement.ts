@@ -37,7 +37,7 @@ function _authMiddleware() { return [requireAuth as never, requireTenant() as ne
 export const vendorsRouter = Router()
 vendorsRouter.use(..._authMiddleware())
 
-vendorsRouter.get('/', async (req: Req, res: Response) => {
+vendorsRouter.get('/', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -71,7 +71,7 @@ vendorsRouter.get('/', async (req: Req, res: Response) => {
   res.json({ data: data.rows, meta: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-vendorsRouter.get('/:id', async (req: Req, res: Response) => {
+vendorsRouter.get('/:id', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -139,7 +139,7 @@ vendorsRouter.patch('/:id', async (req: Req, res: Response) => {
 export const purchaseOrdersRouter = Router()
 purchaseOrdersRouter.use(..._authMiddleware())
 
-purchaseOrdersRouter.get('/', async (req: Req, res: Response) => {
+purchaseOrdersRouter.get('/', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -175,7 +175,7 @@ purchaseOrdersRouter.get('/', async (req: Req, res: Response) => {
   res.json({ data: data.rows, meta: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-purchaseOrdersRouter.get('/:id', async (req: Req, res: Response) => {
+purchaseOrdersRouter.get('/:id', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -263,7 +263,7 @@ purchaseOrdersRouter.post('/:id/approve', requireCapability('procurement.approve
 export const rfisRouter = Router()
 rfisRouter.use(..._authMiddleware())
 
-rfisRouter.get('/', async (req: Req, res: Response) => {
+rfisRouter.get('/', requireCapability('construction.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -341,7 +341,7 @@ rfisRouter.post('/:id/respond', async (req: Req, res: Response) => {
 export const submittalsRouter = Router()
 submittalsRouter.use(..._authMiddleware())
 
-submittalsRouter.get('/', async (req: Req, res: Response) => {
+submittalsRouter.get('/', requireCapability('construction.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

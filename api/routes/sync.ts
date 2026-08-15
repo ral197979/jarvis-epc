@@ -126,7 +126,7 @@ syncRouter.post('/resolve', requireCapability('field.write') as never, async (re
 
 // ─── GET /sync/conflicts ──────────────────────────────────────────────────────
 
-syncRouter.get('/conflicts', async (req: Request, res: Response) => {
+syncRouter.get('/conflicts', requireCapability('field.view') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const limit    = Math.min(parseInt(req.query['limit'] as string ?? '50', 10), 200)
 

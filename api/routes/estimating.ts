@@ -95,7 +95,7 @@ router.post('/bim-models/:modelId/parse-job', async (req: Request, res: Response
 })
 
 // GET /bim-models/:modelId/parse-job
-router.get('/bim-models/:modelId/parse-job', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/parse-job', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   try {
     const status = await getParseJobStatus(tid(req), p(req, 'modelId'))
     if (!status) { res.status(404).json({ error: 'No parse job found' }); return }
@@ -106,7 +106,7 @@ router.get('/bim-models/:modelId/parse-job', async (req: Request, res: Response)
 })
 
 // GET /bim-models/:modelId/elements
-router.get('/bim-models/:modelId/elements', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/elements', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   const ifc_type   = qs(req.query['ifc_type'] as string | string[])
   const discipline = qs(req.query['discipline'] as string | string[])
   const level      = qs(req.query['level'] as string | string[])
@@ -125,7 +125,7 @@ router.get('/bim-models/:modelId/elements', async (req: Request, res: Response) 
 })
 
 // GET /bim-models/:modelId/elements/:id
-router.get('/bim-models/:modelId/elements/:id', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/elements/:id', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   try {
     const el = await getElementById(tid(req), p(req, 'id'))
     if (!el) { res.status(404).json({ error: 'Element not found' }); return }
@@ -151,7 +151,7 @@ router.post('/bim-models/:modelId/elements/:id/link', async (req: Request, res: 
 })
 
 // GET /bim-models/:modelId/quantity-summary
-router.get('/bim-models/:modelId/quantity-summary', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/quantity-summary', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   try {
     const summary = await getModelQuantitySummary(tid(req), p(req, 'modelId'))
     res.json({ data: summary })
@@ -188,7 +188,7 @@ router.post('/bim-models/:modelId/takeoff/auto', async (req: Request, res: Respo
 })
 
 // GET /bim-models/:modelId/takeoff
-router.get('/bim-models/:modelId/takeoff', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/takeoff', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
   try {
     const items = await getTakeoffItems(tid(req), p(req, 'modelId'))
     res.json({ data: items })

@@ -21,6 +21,7 @@ import {
   NotFoundError, ValidationError,
 } from '../services/epcCore'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const commissioningItemsRouter = Router()
@@ -46,7 +47,7 @@ function _handleErr(err: unknown, res: Response, where: string): void {
   res.status(500).json({ error: 'internal_error', message: 'An unexpected error occurred' })
 }
 
-commissioningItemsRouter.get('/projects/:projectId/commissioning-items', async (req: Request, res: Response) => {
+commissioningItemsRouter.get('/projects/:projectId/commissioning-items', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const items = await listCommissioningItems({

@@ -47,7 +47,7 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

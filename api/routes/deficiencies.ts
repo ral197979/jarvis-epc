@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Deficiencies API (v4.32.0)
  * ──────────────────────────────────────────────────────────────────────────────
@@ -20,6 +19,7 @@ import {
   NotFoundError, ValidationError,
 } from '../services/cxExecution'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const deficienciesRouter = Router()
@@ -44,7 +44,7 @@ function _handleErr(err: unknown, res: Response, where: string): void {
   res.status(500).json({ error: 'internal_error', message: 'An unexpected error occurred' })
 }
 
-deficienciesRouter.get('/projects/:projectId/deficiencies', async (req: Request, res: Response) => {
+deficienciesRouter.get('/projects/:projectId/deficiencies', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const items = await listDeficienciesByProject({ tenantId: r.tenantId!, projectId: String(req.params['projectId']) })

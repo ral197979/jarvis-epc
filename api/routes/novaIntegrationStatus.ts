@@ -99,7 +99,7 @@ interface ConnectionRow {
 
 // ─── GET /projects/:projectId/nova-integration ───────────────────────────────
 
-router.get('/projects/:projectId/nova-integration', async (req, res: Response) => {
+router.get('/projects/:projectId/nova-integration', requireCapability('project.view') as never, async (req, res: Response) => {
   const r = req as unknown as Req
   const tenantId = r.tenantId
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }

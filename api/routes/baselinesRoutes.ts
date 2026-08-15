@@ -17,6 +17,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -31,7 +32,7 @@ function _requireAdmin(req: Req, res: Response): boolean {
   return true
 }
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -73,7 +74,7 @@ router.get('/', async (req: Req, res: Response) => {
   res.json({ data: rows.rows, pagination: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -27,6 +27,7 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { getStorage } from '../files/storage'
 import { slog } from '../../src/modules/observability/index'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -273,7 +274,7 @@ router.post('/confirm/:versionId', requireTenant() as never, async (req: Req, re
 
 // ─── GET /presign/:versionId — presigned download URL ────────────────────────
 
-router.get('/presign/:versionId', requireTenant() as never, async (req: Req, res: Response) => {
+router.get('/presign/:versionId', requireTenant() as never, requireCapability('docs.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -290,7 +291,7 @@ router.get('/presign/:versionId', requireTenant() as never, async (req: Req, res
 
 // ─── GET /download/:token — Local backend streaming download ─────────────────
 
-router.get('/download/:token', async (req: Request, res: Response) => {
+router.get('/download/:token', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   const tokenDir = path.join(LOCAL_DIR, '.tokens')
   const metaPath = path.join(tokenDir, `dl_${req.params['token']}.json`)
 
@@ -312,7 +313,7 @@ router.get('/download/:token', async (req: Request, res: Response) => {
 
 // ─── GET /documents ───────────────────────────────────────────────────────────
 
-router.get('/documents', requireTenant() as never, async (req: Req, res: Response) => {
+router.get('/documents', requireTenant() as never, requireCapability('docs.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -345,7 +346,7 @@ router.get('/documents', requireTenant() as never, async (req: Req, res: Respons
 
 // ─── GET /documents/:id ───────────────────────────────────────────────────────
 
-router.get('/documents/:id', requireTenant() as never, async (req: Req, res: Response) => {
+router.get('/documents/:id', requireTenant() as never, requireCapability('docs.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -407,7 +408,7 @@ router.delete('/documents/:id', requireTenant() as never, async (req: Req, res: 
 
 // ─── GET /folders ─────────────────────────────────────────────────────────────
 
-router.get('/folders', requireTenant() as never, async (req: Req, res: Response) => {
+router.get('/folders', requireTenant() as never, requireCapability('docs.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

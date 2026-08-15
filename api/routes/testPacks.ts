@@ -21,6 +21,7 @@ import {
   NotFoundError, ValidationError,
 } from '../services/cxExecution'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const testPacksRouter = Router()
@@ -46,7 +47,7 @@ function _handleErr(err: unknown, res: Response, where: string): void {
   res.status(500).json({ error: 'internal_error', message: 'An unexpected error occurred' })
 }
 
-testPacksRouter.get('/projects/:projectId/test-packs', async (req: Request, res: Response) => {
+testPacksRouter.get('/projects/:projectId/test-packs', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const items = await listTestPacksByProject({ tenantId: r.tenantId!, projectId: String(req.params['projectId']) })
@@ -85,7 +86,7 @@ testPacksRouter.post('/test-packs', async (req: Request, res: Response) => {
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-testPacksRouter.get('/test-packs/:packId', async (req: Request, res: Response) => {
+testPacksRouter.get('/test-packs/:packId', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const item = await getTestPack({ tenantId: r.tenantId! }, String(req.params['packId']))

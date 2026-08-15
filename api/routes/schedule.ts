@@ -23,6 +23,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { computeCpm, CpmCycleError, CpmMissingTaskError } from '../services/cpm'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -31,7 +32,7 @@ router.use(requireTenant() as never)
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
-router.get('/:projectId/tasks', async (req: Req, res: Response) => {
+router.get('/:projectId/tasks', requireCapability('schedule.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -121,7 +122,7 @@ router.delete('/tasks/:id', async (req: Req, res: Response) => {
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
-router.get('/:projectId/dependencies', async (req: Req, res: Response) => {
+router.get('/:projectId/dependencies', requireCapability('schedule.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -186,7 +187,7 @@ router.delete('/dependencies/:id', async (req: Req, res: Response) => {
 
 // ─── CPM compute ──────────────────────────────────────────────────────────────
 
-router.get('/:projectId/cpm', async (req: Req, res: Response) => {
+router.get('/:projectId/cpm', requireCapability('schedule.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

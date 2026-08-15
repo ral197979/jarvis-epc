@@ -3,13 +3,28 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// ADR-014 Phase 2B-2: NCR and CAPA reads require `quality.view`. Phase 1
+// grants it to owner, PM, engineer and field ops; the engineer is the
+// narrowest role that legitimately raises and reads a non-conformance.
+// Authorization re-resolves that role from the database on every request,
+// so the pool answers the lookup for the caller under test.
+const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'engineer', is_active: true }))
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery:       (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
-  query:             (sql: string, p: unknown[]) => mockQuery(null, sql, p),
+  query:       (sql: string, p: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
+      : mockQuery(null, sql, p),
   tenantTransaction: async <T>(_t: string, fn: (c: any) => Promise<T>) => fn({ query: (sql: string, p: unknown[]) => mockQuery(_t, sql, p) }),
 }))
-vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1' }; next() } }))
+vi.mock('../auth', () => ({
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'u1', tid: 'tenant-1', role: 'engineer' }
+    next()
+  },
+}))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
 import { analyzeNcr, buildAutoRaisedNcr, type NcrRow, type CapaRow } from '../services/quality/ncrService'

@@ -103,7 +103,7 @@ router.post('/uploads/text-ingest', async (req: Req, res: Response) => {
 
 // ─── GET /uploads ─────────────────────────────────────────────────────────────
 
-router.get('/uploads', async (req: Req, res: Response) => {
+router.get('/uploads', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -123,7 +123,7 @@ router.get('/uploads', async (req: Req, res: Response) => {
 
 // ─── GET /balance ─────────────────────────────────────────────────────────────
 
-router.get('/balance', async (req: Req, res: Response) => {
+router.get('/balance', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -230,7 +230,7 @@ router.post('/packs/manual', async (req: Req, res: Response) => {
 
 // ─── GET /packs ───────────────────────────────────────────────────────────────
 
-router.get('/packs', async (req: Req, res: Response) => {
+router.get('/packs', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -276,7 +276,7 @@ router.get('/packs', async (req: Req, res: Response) => {
 
 // ─── GET /packs/:id ───────────────────────────────────────────────────────────
 
-router.get('/packs/:id', async (req: Req, res: Response) => {
+router.get('/packs/:id', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -379,7 +379,7 @@ router.post('/finalize', requireCapability('commissioning.approve') as never, as
 
 // ─── GET /jobs ────────────────────────────────────────────────────────────────
 
-router.get('/jobs', async (req: Req, res: Response) => {
+router.get('/jobs', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -411,7 +411,7 @@ router.get('/jobs', async (req: Req, res: Response) => {
 // ─── GET /packs/:id/download/:format ─────────────────────────────────────────
 // Streams a generated artifact. format: 'markdown' | 'html' | 'pdf'
 
-router.get('/packs/:id/download/:format', async (req: Req, res: Response) => {
+router.get('/packs/:id/download/:format', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

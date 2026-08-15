@@ -45,7 +45,7 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── GET list ─────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('safety.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -86,7 +86,7 @@ router.get('/', async (req: Req, res: Response) => {
 
 // ─── GET one ──────────────────────────────────────────────────────────────────
 
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('safety.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

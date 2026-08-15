@@ -6,13 +6,27 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// ADR-014 Phase 2B-2: The lifecycle map is a `project.view` read, but the
+// same suite approves a gate, which is an ADR-014 Phase 2A transition
+// requiring `project.approve`. The project manager is the narrowest role
+// holding both.
+// Authorization re-resolves that role from the database on every request,
+// so the pool answers the lookup for the caller under test.
+const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 't1', role: 'project_manager', is_active: true }))
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
-  query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:       (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
 vi.mock('../auth', () => ({
-  requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1', tid: 't1' }; next() },
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'u1', tid: 't1', role: 'project_manager' }
+    next()
+  },
 }))
 vi.mock('../middleware/tenant', () => ({
   requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() },

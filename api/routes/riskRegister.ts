@@ -31,7 +31,7 @@ export const riskRegisterRouter = Router()
 riskRegisterRouter.use(requireAuth     as never)
 riskRegisterRouter.use(requireTenant() as never)
 
-riskRegisterRouter.get('/projects/:projectId/risks/summary', async (req: Request, res: Response) => {
+riskRegisterRouter.get('/projects/:projectId/risks/summary', requireCapability('risk.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ summary: await getRiskSummary(r.tenantId!, p(req, 'projectId')) }) }
   catch (e) { res.status(500).json({ error: 'Failed to load risk summary' }) }
@@ -49,7 +49,7 @@ riskRegisterRouter.post('/projects/:projectId/risks', async (req: Request, res: 
   } catch (e) { res.status(500).json({ error: 'Failed to create risk' }) }
 })
 
-riskRegisterRouter.get('/projects/:projectId/risks', async (req: Request, res: Response) => {
+riskRegisterRouter.get('/projects/:projectId/risks', requireCapability('risk.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risks = await listRisks(r.tenantId!, p(req, 'projectId'), {
@@ -60,7 +60,7 @@ riskRegisterRouter.get('/projects/:projectId/risks', async (req: Request, res: R
   } catch (e) { res.status(500).json({ error: 'Failed to list risks' }) }
 })
 
-riskRegisterRouter.get('/risks/:id', async (req: Request, res: Response) => {
+riskRegisterRouter.get('/risks/:id', requireCapability('risk.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await getRisk(r.tenantId!, p(req, 'id'))

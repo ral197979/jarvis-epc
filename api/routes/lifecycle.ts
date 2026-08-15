@@ -12,6 +12,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { getProjectLifecycle, setGate, advancePhase } from '../services/lifecycle/lifecycleService'
 
+import { requireCapability } from '../authz/requireCapability'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -19,7 +20,7 @@ router.use(requireTenant() as never)
 
 const ACTIONS = new Set(['approve', 'waive', 'reset'])
 
-router.get('/projects/:projectId/lifecycle', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/lifecycle', requireCapability('project.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const lc = await getProjectLifecycle(r.tenantId!, String(req.params.projectId), new Date())

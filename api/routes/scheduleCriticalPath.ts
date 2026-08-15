@@ -9,12 +9,13 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildCriticalPath, buildWhatIf, type WhatIfChange } from '../services/schedule/scheduleCriticalPathService'
 
+import { requireCapability } from '../authz/requireCapability'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/:projectId/critical-path', async (req: Request, res: Response) => {
+router.get('/:projectId/critical-path', requireCapability('schedule.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildCriticalPath(r.tenantId!, String(req.params.projectId))
