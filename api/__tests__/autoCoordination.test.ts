@@ -6,6 +6,8 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+const CALLER = vi.hoisted(() => ({ role: 'admin' }))
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
@@ -14,13 +16,25 @@ vi.mock('../db/pool', () => ({
   // rows cannot accidentally starve authorization and turn a 200 into a 401.
   query: async (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
-      ? { rows: [{ id: 'user-1', tenant_id: 'tenant-1', role: 'admin', is_active: true }], rowCount: 1 }
+      ? { rows: [{ id: 'user-1', tenant_id: 'tenant-1', role: CALLER.role, is_active: true }], rowCount: 1 }
       : mockQuery(null, sql, p),
 }))
 // ADR-014 Phase 2A: coordination recommendation approve/dismiss is an AI
 // governance transition (`ai.govern`). The caller is the platform administrator,
 // which is the role that owns AI governance (§22) — not an implicit owner.
-vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'user-1', tid: 'tenant-1', role: 'admin' }; next() } }))
+//
+// ADR-014 Phase 2B-3: the READ is a different question. Coordination
+// recommendations carry `source` values of rfi, submittal, action, schedule,
+// bim or change_order and a `commercial_gate` category, so listing them
+// requires the source domains too — including cost.view, whose only holder is
+// the owner. Governing AI and reading what AI produced are separate
+// authorities, so the two are exercised as different callers.
+vi.mock('../auth', () => ({
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'user-1', tid: 'tenant-1', role: CALLER.role }
+    next()
+  },
+}))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
 const { mockBuildCoord } = vi.hoisted(() => ({ mockBuildCoord: vi.fn() }))
@@ -66,7 +80,7 @@ function makeApp() {
 }
 
 describe('Autonomous coordination routes', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => { vi.clearAllMocks(); CALLER.role = 'admin' })
 
   it('POST /scan generates recommendations from the Coordination engine', async () => {
     mockBuildCoord.mockResolvedValue(briefing(ISSUES))
@@ -78,6 +92,8 @@ describe('Autonomous coordination routes', () => {
   })
 
   it('GET recommendations lists them', async () => {
+    // The read needs the source domains, not ai.govern — see the header note.
+    CALLER.role = 'owner'
     mockQuery.mockResolvedValue({ rows: [{ id: 'rec1', status: 'proposed', title: 'x' }], rowCount: 1 })
     const res = await request(makeApp()).get('/api/v1/projects/p1/coordination/recommendations?status=proposed')
     expect(res.status).toBe(200)

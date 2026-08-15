@@ -24,14 +24,14 @@ const tid = (req: Request): string => (req as unknown as { tenantId: string }).t
 
 // ─── Resource analysis ────────────────────────────────────────────────────────
 
-router.get('/resources', async (req: Request, res: Response) => {
+router.get('/resources', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const allocations = await analyzeResourceUtilization(tid(req))
     res.json(allocations)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/resources/balance-plan', async (req: Request, res: Response) => {
+router.get('/resources/balance-plan', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const plan = await buildWorkloadBalancePlan(tid(req))
     res.json(plan)
@@ -47,7 +47,7 @@ router.post('/proposals', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/proposals', async (req: Request, res: Response) => {
+router.get('/proposals', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { status, optimizationType, limit } = req.query as Record<string, string>
     const proposals = await listOptimizationProposals(tid(req), {
@@ -75,7 +75,7 @@ router.post('/proposals/:id/apply', requireCapability('ai.govern') as never, asy
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/proposals/summary', async (req: Request, res: Response) => {
+router.get('/proposals/summary', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const summary = await getOptimizationSummary(tid(req))
     res.json(summary)

@@ -5,6 +5,7 @@ import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { enqueueTask } from '../services/agents/agentTaskQueue'
 import { orchestrate } from '../services/agents/agentOrchestrator'
 
+import { requireCapability } from '../authz/requireCapability'
 type R = Request & AuthenticatedRequest & TenantRequest
 
 export const agentReadinessRouter = Router()
@@ -12,7 +13,7 @@ agentReadinessRouter.use(requireAuth     as never)
 agentReadinessRouter.use(requireTenant() as never)
 
 // GET /api/v1/agents/readiness/plan/:scope/:id
-agentReadinessRouter.get('/plan/:scope/:id', async (req: Request, res: Response) => {
+agentReadinessRouter.get('/plan/:scope/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const task = await enqueueTask({
     tenantId:   r.tenantId!,

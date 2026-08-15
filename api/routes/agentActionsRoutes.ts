@@ -17,6 +17,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { stats as actionStats, markReviewed } from '../services/agentActions'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -31,7 +32,7 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── GET /_stats — mount BEFORE /:id so the param route doesn't swallow it ──
 
-router.get('/_stats', async (req: Req, res: Response) => {
+router.get('/_stats', requireCapability('ai.govern') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -50,7 +51,7 @@ router.get('/_stats', async (req: Req, res: Response) => {
 
 // ─── GET list ─────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('crossdomain.read') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -95,7 +96,7 @@ router.get('/', async (req: Req, res: Response) => {
 
 // ─── GET one ──────────────────────────────────────────────────────────────────
 
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('crossdomain.read') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

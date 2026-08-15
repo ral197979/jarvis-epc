@@ -18,17 +18,17 @@ export const agentsRouter = Router()
 agentsRouter.use(requireAuth as never, requireTenant() as never)
 
 // GET /api/v1/agents — list registered agents
-agentsRouter.get('/', (_req: Request, res: Response) => {
+agentsRouter.get('/', requireCapability('ai.govern') as never, (_req: Request, res: Response) => {
   res.json({ agents: getAllAgents() })
 })
 
 // GET /api/v1/agents/capabilities — list all capabilities
-agentsRouter.get('/capabilities', (_req: Request, res: Response) => {
+agentsRouter.get('/capabilities', requireCapability('ai.govern') as never, (_req: Request, res: Response) => {
   res.json({ capabilities: getAllCapabilities() })
 })
 
 // GET /api/v1/agents/objectives — list available objectives
-agentsRouter.get('/objectives', (_req: Request, res: Response) => {
+agentsRouter.get('/objectives', requireCapability('ai.govern') as never, (_req: Request, res: Response) => {
   res.json({ objectives: getAvailableObjectives() })
 })
 
@@ -74,7 +74,7 @@ agentsRouter.post('/execute', requireCapability('ai.govern') as never, async (re
 })
 
 // GET /api/v1/agents/tasks — list tasks
-agentsRouter.get('/tasks', async (req: Request, res: Response) => {
+agentsRouter.get('/tasks', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { status, agentType, limit, offset } = req.query
 
@@ -88,7 +88,7 @@ agentsRouter.get('/tasks', async (req: Request, res: Response) => {
 })
 
 // GET /api/v1/agents/tasks/:id — get task
-agentsRouter.get('/tasks/:id', async (req: Request, res: Response) => {
+agentsRouter.get('/tasks/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const task = await getTask(p(req, 'id'), r.tenantId!)
   if (!task) return res.status(404).json({ error: 'Task not found' })
@@ -96,7 +96,7 @@ agentsRouter.get('/tasks/:id', async (req: Request, res: Response) => {
 })
 
 // GET /api/v1/agents/executions — list executions
-agentsRouter.get('/executions', async (req: Request, res: Response) => {
+agentsRouter.get('/executions', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { agentType, limit, offset } = req.query
 
@@ -109,7 +109,7 @@ agentsRouter.get('/executions', async (req: Request, res: Response) => {
 })
 
 // GET /api/v1/agents/executions/:id — get execution detail
-agentsRouter.get('/executions/:id', async (req: Request, res: Response) => {
+agentsRouter.get('/executions/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const execId = p(req, 'id')
   const [execution, events, traces] = await Promise.all([

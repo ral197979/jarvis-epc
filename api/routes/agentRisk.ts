@@ -4,13 +4,14 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { enqueueTask } from '../services/agents/agentTaskQueue'
 
+import { requireCapability } from '../authz/requireCapability'
 type R = Request & AuthenticatedRequest & TenantRequest
 
 export const agentRiskRouter = Router()
 agentRiskRouter.use(requireAuth as never, requireTenant() as never)
 
 // GET /api/v1/agents/risk/overview — risk summary for a scope
-agentRiskRouter.get('/overview', async (req: Request, res: Response) => {
+agentRiskRouter.get('/overview', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { scopeType, scopeId } = req.query
 

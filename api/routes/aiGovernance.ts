@@ -25,7 +25,7 @@ type AiReq = Request & AuthenticatedRequest & TenantRequest
 aiGovernanceRouter.use(auth)
 
 // ─── List pending recommendations ────────────────────────────────────────────
-aiGovernanceRouter.get('/recommendations', async (req: Request, res: Response) => {
+aiGovernanceRouter.get('/recommendations', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const limit = Math.min(Number(req.query['limit'] ?? 50), 200)
   const recs = await listPendingRecommendations(r.tenantId!, limit)
@@ -53,7 +53,7 @@ aiGovernanceRouter.post('/recommendations', async (req: Request, res: Response) 
 })
 
 // ─── Preview recommendation ───────────────────────────────────────────────────
-aiGovernanceRouter.get('/recommendations/:id/preview', async (req: Request, res: Response) => {
+aiGovernanceRouter.get('/recommendations/:id/preview', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   try {
     const preview = await previewRecommendation(r.tenantId!, req.params['id'] as string)

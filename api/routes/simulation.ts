@@ -11,6 +11,7 @@ import { createSimulationSession, runReplay, runWhatIf, getSimulationResults } f
 import { tenantQuery } from '../db/pool'
 import { log } from '../lib/logger'
 
+import { requireCapability } from '../authz/requireCapability'
 export const simulationRouter = Router()
 const auth = requireAuth as never
 type SimReq = Request & AuthenticatedRequest & TenantRequest
@@ -45,7 +46,7 @@ simulationRouter.post('/what-if', async (req: Request, res: Response) => {
 })
 
 // ─── Get simulation results ───────────────────────────────────────────────────
-simulationRouter.get('/:id/results', async (req: Request, res: Response) => {
+simulationRouter.get('/:id/results', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as SimReq
   const result = await getSimulationResults(r.tenantId!, req.params['id'] as string)
   if (!result) { res.status(404).json({ error: 'Simulation not found' }); return }
@@ -53,7 +54,7 @@ simulationRouter.get('/:id/results', async (req: Request, res: Response) => {
 })
 
 // ─── List sessions ────────────────────────────────────────────────────────────
-simulationRouter.get('/', async (req: Request, res: Response) => {
+simulationRouter.get('/', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as SimReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT id, simulation_type, status, events_replayed, replay_checksum,

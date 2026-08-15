@@ -87,7 +87,7 @@ evidenceRouter.post('/link', async (req: Request, res: Response) => {
 
 // ─── GET /evidence/entity/:type/:id ──────────────────────────────────────────
 
-evidenceRouter.get('/entity/:type/:id', async (req: Request, res: Response) => {
+evidenceRouter.get('/entity/:type/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const entityType = req.params['type'] as string
   const entityId   = req.params['id'] as string
@@ -109,7 +109,7 @@ evidenceRouter.post('/:id/retry', requireCapability('platform.automation') as ne
 
 // ─── GET /evidence/:id ────────────────────────────────────────────────────────
 
-evidenceRouter.get('/:id', async (req: Request, res: Response) => {
+evidenceRouter.get('/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const evidenceId = req.params['id'] as string
 

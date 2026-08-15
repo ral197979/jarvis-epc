@@ -31,6 +31,7 @@ import {
   recordSimulationOutcome,
 } from '../services/adaptive/simulationLearningService'
 
+import { requireCapability } from '../authz/requireCapability'
 const router = Router()
 const tid = (req: Request): string => (req as unknown as { tenantId: string }).tenantId
 
@@ -43,7 +44,7 @@ router.post('/feedback', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/feedback', async (req: Request, res: Response) => {
+router.get('/feedback', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { feedbackType, signal, agentType, limit, windowDays } = req.query as Record<string, string>
     const items = await listFeedback(tid(req), {
@@ -57,14 +58,14 @@ router.get('/feedback', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/feedback/health', async (req: Request, res: Response) => {
+router.get('/feedback/health', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const health = await getLearningHealth(tid(req))
     res.json(health)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/feedback/signals/:type', async (req: Request, res: Response) => {
+router.get('/feedback/signals/:type', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const windowDays = req.query.windowDays != null ? Number(req.query.windowDays) : 30
     const summary = await aggregateSignals(tid(req), req.params.type as never, windowDays)
@@ -72,7 +73,7 @@ router.get('/feedback/signals/:type', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/feedback/source/:sourceType/:sourceId', async (req: Request, res: Response) => {
+router.get('/feedback/source/:sourceType/:sourceId', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const history = await getFeedbackHistory(tid(req), req.params.sourceType as string, req.params.sourceId as string)
     res.json(history)
@@ -96,7 +97,7 @@ router.patch('/outcomes/:id/measurement', async (req: Request, res: Response) =>
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/outcomes/effectiveness', async (req: Request, res: Response) => {
+router.get('/outcomes/effectiveness', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const windowDays = req.query.windowDays != null ? Number(req.query.windowDays) : 30
     const reports = await getAgentEffectiveness(tid(req), windowDays)
@@ -104,7 +105,7 @@ router.get('/outcomes/effectiveness', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/outcomes/top', async (req: Request, res: Response) => {
+router.get('/outcomes/top', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit != null ? Number(req.query.limit) : 10
     const top = await getTopEffectiveOutcomes(tid(req), limit)
@@ -129,7 +130,7 @@ router.post('/forecast-accuracy/:id/actual', async (req: Request, res: Response)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/forecast-accuracy/stats/:type', async (req: Request, res: Response) => {
+router.get('/forecast-accuracy/stats/:type', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const horizon = req.query.horizon != null ? Number(req.query.horizon) : undefined
     const windowDays = req.query.windowDays != null ? Number(req.query.windowDays) : 90
@@ -138,7 +139,7 @@ router.get('/forecast-accuracy/stats/:type', async (req: Request, res: Response)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/forecast-accuracy', async (req: Request, res: Response) => {
+router.get('/forecast-accuracy', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { forecastType, entityId, windowDays, limit, unmeasuredOnly } = req.query as Record<string, string>
     const records = await listAccuracyRecords(tid(req), {
@@ -162,7 +163,7 @@ router.post('/calibrate', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/calibrate/drift/:type', async (req: Request, res: Response) => {
+router.get('/calibrate/drift/:type', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const summary = await getDriftSummary(tid(req), req.params.type as never)
     res.json(summary)
@@ -179,7 +180,7 @@ router.post('/rank', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/rank/top', async (req: Request, res: Response) => {
+router.get('/rank/top', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit != null ? Number(req.query.limit) : 10
     const { agentType } = req.query as Record<string, string>
@@ -190,14 +191,14 @@ router.get('/rank/top', async (req: Request, res: Response) => {
 
 // ─── Adaptive anomaly patterns ────────────────────────────────────────────────
 
-router.get('/anomaly-patterns', async (req: Request, res: Response) => {
+router.get('/anomaly-patterns', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const patterns = await listAnomalyPatterns(tid(req))
     res.json(patterns)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/anomaly-patterns/:type', async (req: Request, res: Response) => {
+router.get('/anomaly-patterns/:type', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { entityType } = req.query as Record<string, string>
     const pattern = await getAnomalyPattern(tid(req), req.params.type as string, entityType)
@@ -222,7 +223,7 @@ router.post('/memory', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/memory', async (req: Request, res: Response) => {
+router.get('/memory', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { agentType, scopeType, scopeId, minConfidence, limit } = req.query as Record<string, string>
     const memories = await listMemories(tid(req), {
@@ -236,7 +237,7 @@ router.get('/memory', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/memory/:agentType/:scopeType/:key', async (req: Request, res: Response) => {
+router.get('/memory/:agentType/:scopeType/:key', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { scopeId } = req.query as Record<string, string>
     const memory = await recallMemory(tid(req), {
@@ -275,7 +276,7 @@ router.post('/simulation-outcomes', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/simulation-outcomes', async (req: Request, res: Response) => {
+router.get('/simulation-outcomes', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const limit = req.query.limit != null ? Number(req.query.limit) : 20
     const outcomes = await listSimulationOutcomes(tid(req), limit)
@@ -283,7 +284,7 @@ router.get('/simulation-outcomes', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/simulation-outcomes/stats', async (req: Request, res: Response) => {
+router.get('/simulation-outcomes/stats', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const windowDays = req.query.windowDays != null ? Number(req.query.windowDays) : 90
     const stats = await getScenarioAccuracyStats(tid(req), windowDays)

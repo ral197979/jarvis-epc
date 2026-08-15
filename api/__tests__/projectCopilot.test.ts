@@ -8,13 +8,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ─── Mock DB pool (used only by the route smoke test) ─────────────────────────
+// ADR-014 Phase 2B-3: The project focus briefing requires assistant.use AND
+// project.view AND construction.view AND risk.view AND quality.view AND
+// cost.view, because it selects budget, committed, actual and forecast cost
+// alongside RFI, submittal, risk, inspection and punch data. cost.view has
+// exactly one holder, so the owner is not a convenience here — it is the
+// only role that satisfies the expression.
+// Authorization re-resolves that role from the database on every request,
+// so the pool answers the lookup for the caller under test.
+const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 't1', role: 'owner', is_active: true }))
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
-  query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:       (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
 vi.mock('../auth', () => ({
-  requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1', tid: 't1' }; next() },
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'u1', tid: 't1', role: 'owner' }
+    next()
+  },
 }))
 vi.mock('../middleware/tenant', () => ({
   requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() },

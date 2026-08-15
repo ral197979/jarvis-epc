@@ -89,6 +89,25 @@ export const ACTION_CAPABILITIES = [
   // licence activation. Deliberately separate from platform.integrations so
   // "administers integrations" does not imply "changes the security perimeter".
   'platform.security',
+
+  // ── cross-domain read (ADR-014 Phase 2B-3) ─────────────────────────────────
+  // TEMPORARY, Owner-only. Not an action: this list is really "server-only
+  // capabilities with no Phase 1 counterpart", and this is the one read
+  // capability in it, because the client has no notion of "may read a payload
+  // whose source domains cannot be bounded".
+  //
+  // It guards endpoints whose response is assembled from free-form JSONB whose
+  // provenance the schema does not record — digital-twin state captures, agent
+  // memory and execution output, the realtime event log, optimisation
+  // proposals, recommendation before/after snapshots. For those, no conjunction
+  // of domain capabilities is truthful, because the domain set is decided at
+  // write time, not at authorization time.
+  //
+  // Owner-only is a deliberate fail-closed placeholder, NOT a policy. It is
+  // superseded the moment those payloads carry source-domain provenance and a
+  // retrieval filter can enforce it — ADR-014 Phase 3. Every endpoint relying
+  // on it is enumerated in `api/authz/aiCrossDomainReads.ts`.
+  'crossdomain.read',
 ] as const
 
 export type ActionCapability = typeof ACTION_CAPABILITIES[number]

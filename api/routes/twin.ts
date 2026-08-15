@@ -14,6 +14,7 @@ import { buildStateGraph, getDegradedNodes } from '../services/twin/stateGraphEn
 import { bfsTraversal, getImpactedByFailure } from '../services/twin/graphTraversalService'
 import { propagateRisk } from '../services/twin/graphRiskPropagation'
 
+import { requireCapability } from '../authz/requireCapability'
 const router = Router()
 
 // ─── Twin CRUD ─────────────────────────────────────────────────────────────────
@@ -28,7 +29,7 @@ router.post('/', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { entityType, status, limit, offset } = req.query
@@ -45,7 +46,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId', async (req: Request, res: Response) => {
+router.get('/:twinId', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const twin = await getTwin(req.params.twinId as string, tenantId)
@@ -56,7 +57,7 @@ router.get('/:twinId', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/entity/:entityType/:entityId', async (req: Request, res: Response) => {
+router.get('/entity/:entityType/:entityId', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const twin = await getTwinByEntity(
@@ -71,7 +72,7 @@ router.get('/entity/:entityType/:entityId', async (req: Request, res: Response) 
   }
 })
 
-router.patch('/:twinId/status', async (req: Request, res: Response) => {
+router.patch('/:twinId/status', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     await updateTwinStatus(req.params.twinId as string, tenantId, req.body.status)
@@ -83,7 +84,7 @@ router.patch('/:twinId/status', async (req: Request, res: Response) => {
 
 // ─── State & sync ──────────────────────────────────────────────────────────────
 
-router.get('/:twinId/state', async (req: Request, res: Response) => {
+router.get('/:twinId/state', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const state = await getCurrentState(req.params.twinId as string, tenantId)
@@ -130,7 +131,7 @@ router.post('/:twinId/events', async (req: Request, res: Response) => {
 
 // ─── Snapshots ─────────────────────────────────────────────────────────────────
 
-router.get('/:twinId/snapshots', async (req: Request, res: Response) => {
+router.get('/:twinId/snapshots', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const snapshots = await listSnapshots(
@@ -144,7 +145,7 @@ router.get('/:twinId/snapshots', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId/snapshots/latest', async (req: Request, res: Response) => {
+router.get('/:twinId/snapshots/latest', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const snapshot = await getLatestSnapshot(req.params.twinId as string, tenantId)
@@ -155,7 +156,7 @@ router.get('/:twinId/snapshots/latest', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId/snapshots/:snapshotId', async (req: Request, res: Response) => {
+router.get('/:twinId/snapshots/:snapshotId', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const snapshot = await getSnapshot(req.params.snapshotId as string, tenantId)
@@ -190,7 +191,7 @@ router.post('/:twinId/relationships', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId/relationships', async (req: Request, res: Response) => {
+router.get('/:twinId/relationships', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const direction = (req.query.direction as string) ?? 'both'
@@ -217,7 +218,7 @@ router.delete('/:twinId/relationships', async (req: Request, res: Response) => {
 
 // ─── Graph & traversal ────────────────────────────────────────────────────────
 
-router.get('/graph/overview', async (req: Request, res: Response) => {
+router.get('/graph/overview', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const graph = await buildStateGraph(tenantId)
@@ -234,7 +235,7 @@ router.get('/graph/overview', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId/traverse', async (req: Request, res: Response) => {
+router.get('/:twinId/traverse', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const graph = await buildStateGraph(tenantId)
@@ -246,7 +247,7 @@ router.get('/:twinId/traverse', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId/impact', async (req: Request, res: Response) => {
+router.get('/:twinId/impact', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const graph = await buildStateGraph(tenantId)
@@ -257,7 +258,7 @@ router.get('/:twinId/impact', async (req: Request, res: Response) => {
   }
 })
 
-router.get('/:twinId/risk-propagation', async (req: Request, res: Response) => {
+router.get('/:twinId/risk-propagation', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const graph = await buildStateGraph(tenantId)

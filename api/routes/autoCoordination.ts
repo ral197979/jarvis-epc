@@ -9,7 +9,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
-import { requireCapability } from '../authz/requireCapability'
+import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
 import {
   scanProject, listRecommendations, approveRecommendation, dismissRecommendation,
 } from '../services/coordination/autoCoordinationService'
@@ -26,7 +26,7 @@ router.post('/projects/:projectId/coordination/scan', async (req: Request, res: 
   } catch (err) { res.status(500).json({ error: 'Scan failed', detail: (err as Error).message }) }
 })
 
-router.get('/projects/:projectId/coordination/recommendations', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/coordination/recommendations', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = typeof req.query['status'] === 'string' ? req.query['status'] : undefined
   try {

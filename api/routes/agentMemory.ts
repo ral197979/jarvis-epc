@@ -12,6 +12,7 @@ import {
   purgeExpiredMemory,
 } from '../services/agents/agentMemoryService'
 
+import { requireCapability } from '../authz/requireCapability'
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
   const v = (req.params as Record<string, string | string[]>)[key]
@@ -22,7 +23,7 @@ export const agentMemoryRouter = Router()
 agentMemoryRouter.use(requireAuth as never, requireTenant() as never)
 
 // GET /api/v1/agents/memory — query memory
-agentMemoryRouter.get('/', async (req: Request, res: Response) => {
+agentMemoryRouter.get('/', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { agentType, scopeType, scopeId, memoryType, minConfidence, limit } = req.query
 
@@ -50,7 +51,7 @@ agentMemoryRouter.post('/', async (req: Request, res: Response) => {
 })
 
 // GET /api/v1/agents/memory/:agentType/:scope/:scopeId/:key — recall specific entry
-agentMemoryRouter.get('/:agentType/:scopeType/:scopeId/:key', async (req: Request, res: Response) => {
+agentMemoryRouter.get('/:agentType/:scopeType/:scopeId/:key', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const entry = await recallMemory(
     r.tenantId!,
@@ -77,7 +78,7 @@ agentMemoryRouter.delete('/:agentType/:scopeType/:scopeId/:key', async (req: Req
 })
 
 // GET /api/v1/agents/memory/:entryId/links — get linked memories
-agentMemoryRouter.get('/:entryId/links', async (req: Request, res: Response) => {
+agentMemoryRouter.get('/:entryId/links', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { linkType } = req.query
   const entries = await getLinkedMemories(

@@ -23,7 +23,7 @@ export const agentApprovalsRouter = Router()
 agentApprovalsRouter.use(requireAuth as never, requireTenant() as never)
 
 // GET /api/v1/agents/approvals — list pending approvals
-agentApprovalsRouter.get('/', async (req: Request, res: Response) => {
+agentApprovalsRouter.get('/', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { agentType } = req.query
 
@@ -35,7 +35,7 @@ agentApprovalsRouter.get('/', async (req: Request, res: Response) => {
 })
 
 // GET /api/v1/agents/approvals/:id — get approval detail
-agentApprovalsRouter.get('/:id', async (req: Request, res: Response) => {
+agentApprovalsRouter.get('/:id', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   const approval = await getApproval(p(req, 'id'), r.tenantId!)
   if (!approval) return res.status(404).json({ error: 'Approval not found' })

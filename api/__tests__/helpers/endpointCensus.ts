@@ -21,8 +21,19 @@ export interface CensusEndpoint {
   path:       string
   /** Mounted path(s). `[]` when the router is never mounted (dead route). */
   effective:  string[]
-  /** The capability the route's own guard declares, or `null`. */
+  /**
+   * The capability the route's own guard declares, or `null`. For a
+   * `requireAllCapabilities(...)` guard this is the FIRST capability — the two
+   * earlier read gates compare against it and their routes all use
+   * `requireCapability`, so their meaning is unchanged.
+   */
   capability: string | null
+  /**
+   * The complete requirement. One entry for `requireCapability`, every entry
+   * for `requireAllCapabilities`, `null` when unguarded. ADR-014 Phase 2B-3
+   * needs the whole conjunction: a dropped capability must be detectable.
+   */
+  allCapabilities: string[] | null
   key:        string
 }
 
@@ -97,8 +108,21 @@ export function censusWithEffectivePaths(): CensusEndpoint[] {
       const [, router, verb, routePath] = m
       const tail   = m[4] ?? ''
       const method = verb.toUpperCase()
+
+      // `requireAllCapabilities('a', 'b', …)` — capture the whole argument list
+      // so a dropped capability is visible, not just the first one.
+      const all = /(?:^\s*|,\s*)requireAllCapabilities\(([^)]*)\)/.exec(tail)
+      const allCaps = all
+        ? [...all[1].matchAll(/'([^']+)'/g)].map(x => x[1])
+        : null
+
       const inline = /^\s*require(?:Any)?Capability\(\s*'([^']+)'|,\s*require(?:Any)?Capability\(\s*'([^']+)'/.exec(tail)
-      const capability = inline ? (inline[1] ?? inline[2]) : (routerWide ? routerWide[1] : null)
+      const capability = allCaps?.length
+        ? allCaps[0]
+        : inline ? (inline[1] ?? inline[2]) : (routerWide ? routerWide[1] : null)
+      const allCapabilities = allCaps?.length
+        ? allCaps
+        : capability ? [capability] : null
 
       const exported = names.get(router)
       const prefixes = allMounts
@@ -106,7 +130,7 @@ export function censusWithEffectivePaths(): CensusEndpoint[] {
         .map(mo => mo.prefix)
 
       out.push({
-        file, router, method, path: routePath, capability,
+        file, router, method, path: routePath, capability, allCapabilities,
         key: `${file} ${router}.${method} ${routePath}`,
         effective: [...new Set(prefixes)].map(p => `${p}${routePath}`.replace(/\/+$/, '') || '/'),
       })

@@ -107,3 +107,61 @@ export function requireAnyCapability(...capabilities: ServerCapability[]): Reque
     next()
   }
 }
+
+/**
+ * Require *all* of several capabilities (ADR-014 Phase 2B-3).
+ *
+ * Why this exists rather than stacking `requireCapability` calls
+ * ─────────────────────────────────────────────────────────────
+ * Stacking is functionally equivalent — `resolveCurrentUser` memoises per
+ * request, so N guards still cost one lookup. But an AI endpoint that
+ * synthesises across five domains needs five capabilities on one route, and
+ * with stacking the coverage census reads only the first: a dropped
+ * requirement would be invisible to the ratchet. One call keeps the whole
+ * requirement in a single parseable token, so removing a capability is a
+ * detectable change.
+ *
+ * This is AND, and the distinction from `requireAnyCapability` is the point.
+ * A response containing both engineering and cost data must not be opened by
+ * `requireAnyCapability('engineering.view', 'cost.view')`: that hands the cost
+ * half to an engineering-only caller and the engineering half to a cost-only
+ * one. Fails closed on an empty list, an unknown capability, or any missing
+ * grant. The denial names no capability — the log records which one was short.
+ */
+export function requireAllCapabilities(...capabilities: ServerCapability[]): RequestHandler {
+  if (!capabilities.length) {
+    throw new Error('[authz] requireAllCapabilities needs at least one capability')
+  }
+  for (const capability of capabilities) {
+    if (!isServerCapability(capability)) {
+      throw new Error(`[authz] unknown capability: ${String(capability)}`)
+    }
+  }
+
+  return async (req, res: Response, next: NextFunction): Promise<void> => {
+    const authReq = req as AuthorizedRequest
+
+    const user = await resolveCurrentUser(authReq)
+    if (!user) {
+      res.status(401).json({ error: 'unauthenticated' })
+      return
+    }
+
+    const missing = capabilities.filter(capability => !roleHasCapability(user.role, capability))
+    if (missing.length) {
+      slog('WARN', 'authz', '[denied]', {
+        userId:     user.id,
+        tenantId:   user.tenantId,
+        role:       user.role,
+        capability: capabilities.join('&'),
+        missing:    missing.join(','),
+        method:     req.method,
+        path:       req.originalUrl ?? req.url,
+      })
+      res.status(403).json({ error: 'forbidden' })
+      return
+    }
+
+    next()
+  }
+}

@@ -21,13 +21,13 @@ import { generateInboxRecommendations, fetchRecommendationInputs } from '../serv
 import { pollEvents } from '../realtime/wsGateway'
 import { publishActionEvent } from '../services/actions/actionEventPublisher'
 import { broadcastEvent } from '../realtime/eventBroadcaster'
-import { requireCapability } from '../authz/requireCapability'
+import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
 
 export const opsRouter = Router()
 
 // ─── GET /ops/overview ────────────────────────────────────────────────────────
 
-opsRouter.get('/overview', async (req: Request, res: Response) => {
+opsRouter.get('/overview', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 
@@ -77,7 +77,7 @@ opsRouter.get('/overview', async (req: Request, res: Response) => {
 
 // ─── GET /ops/live-feed ───────────────────────────────────────────────────────
 
-opsRouter.get('/live-feed', async (req: Request, res: Response) => {
+opsRouter.get('/live-feed', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const lastSeq  = parseInt(req.query['last_seq'] as string ?? '0', 10)
   const scope    = (req.query['scope'] as string) ?? 'tenant'
@@ -92,7 +92,7 @@ opsRouter.get('/live-feed', async (req: Request, res: Response) => {
 
 // ─── GET /ops/readiness ───────────────────────────────────────────────────────
 
-opsRouter.get('/readiness', async (req: Request, res: Response) => {
+opsRouter.get('/readiness', requireAllCapabilities('project.view', 'quality.view') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 
@@ -116,7 +116,7 @@ opsRouter.get('/readiness', async (req: Request, res: Response) => {
 
 // ─── GET /ops/escalations ─────────────────────────────────────────────────────
 
-opsRouter.get('/escalations', async (req: Request, res: Response) => {
+opsRouter.get('/escalations', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const limit    = Math.min(parseInt(req.query['limit'] as string ?? '50', 10), 200)
 
@@ -141,7 +141,7 @@ opsRouter.get('/escalations', async (req: Request, res: Response) => {
 
 // ─── GET /ops/blockers ────────────────────────────────────────────────────────
 
-opsRouter.get('/blockers', async (req: Request, res: Response) => {
+opsRouter.get('/blockers', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
 
   const res2 = await tenantQuery(tenantId, `
@@ -330,7 +330,7 @@ opsRouter.post('/incident', async (req: Request, res: Response) => {
 
 // ─── GET /ops/recommendations ──────────────────────────────────────────────────
 
-opsRouter.get('/recommendations', async (req: Request, res: Response) => {
+opsRouter.get('/recommendations', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 
