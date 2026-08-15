@@ -168,18 +168,21 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     const reclassified = RECLASSIFIED_MUTATIONS.length
     const newlyConsequential = NEWLY_DISCOVERED_CONSEQUENTIAL.length
 
-    expect(HIGH_SENSITIVITY_MUTATIONS.length, 'registry size, including the D1 submit route').toBe(98)
-    expect(highSensitivityProtected).toBe(93)
+    // Phase 2C-2A added DELETE /projects/:id (D4) to the registry and closed
+    // POST /commissioning/credits (D3), so protected moves 93 -> 94 and
+    // escalations resolved 7 -> 8. The two hybrid IoT routes stay pending.
+    expect(HIGH_SENSITIVITY_MUTATIONS.length, 'registry size, including the D1 submit route').toBe(99)
+    expect(highSensitivityProtected).toBe(94)
     expect(newlyConsequential).toBe(2)
     expect(unregisteredProtected).toBe(4)
-    expect(escalationsResolved).toBe(7)
+    expect(escalationsResolved).toBe(8)
     expect(reclassified).toBe(1)
 
     const exit = ENTRY
       - highSensitivityProtected - newlyConsequential
       - unregisteredProtected - escalationsResolved - reclassified
     expect(exit, 'exit backlog must equal the measured pending-mutation count').toBe(pendingMutations.length)
-    expect(pendingMutations.length).toBe(71)
+    expect(pendingMutations.length).toBe(69)
 
     // The added route must actually exist and be guarded, or the exclusion above
     // would be a way to hide an unprotected endpoint.
@@ -196,29 +199,21 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     expect(byAction('REGISTER_AND_PROTECT_IN_2C2')).toBe(3)
     expect(byAction('CLASSIFICATION_CORRECTION')).toBe(2)
     expect(byAction('REGISTER_FOR_LATER_SLICE')).toBe(17)
-    expect(byAction('SERVICE_BOUNDARY')).toBe(4)
-    expect(byAction('OWNER_POLICY_REQUIRED')).toBe(2)
+    // Phase 2C-2A moved the two hybrid IoT routes from OWNER_POLICY_REQUIRED to
+    // SERVICE_BOUNDARY once their authentication model was made deterministic.
+    expect(byAction('SERVICE_BOUNDARY')).toBe(6)
+    expect(byAction('OWNER_POLICY_REQUIRED')).toBe(0)
   })
 
-  it('resolves the eight Phase 2C-1 escalations, seven closed and one named as policy', () => {
+  it('resolves all eight Phase 2C-1 escalations, with none left open', () => {
     expect(ESCALATED_DELIVERY_MUTATIONS.length).toBe(8)
-    const resolved = ESCALATED_DELIVERY_MUTATIONS.filter(e => byKey.get(key(e))?.capability)
-    const open     = ESCALATED_DELIVERY_MUTATIONS.filter(e => !byKey.get(key(e))?.capability)
-    expect(resolved.length).toBe(7)
-    expect(open.map(key)).toEqual(['commissioning.ts router.POST /credits'])
-    // The one left open must be named as a policy dependency, not silently dropped.
-    expect(POLICY_DEPENDENT_MUTATIONS.map(key)).toContain('commissioning.ts router.POST /credits')
+    const open = ESCALATED_DELIVERY_MUTATIONS.filter(e => !byKey.get(key(e))?.capability)
+    expect(open.map(key), 'Phase 2C-2A closed the last escalation (D3)').toEqual([])
   })
 
-  it('gives every policy dependency a live, unchanged guard and a real reason', () => {
-    for (const p of POLICY_DEPENDENT_MUTATIONS) {
-      const e = byKey.get(key(p))
-      expect(e, `${key(p)}: no such endpoint`).toBeDefined()
-      // Deliberately NOT capability-protected — describing it as protected would be the lie.
-      expect(e!.capability, `${key(p)} must stay unguarded until the owner decides`).toBeNull()
-      expect(p.current).toMatch(/UNCHANGED/)
-      expect(p.why.length).toBeGreaterThan(120)
-    }
+  it('carries no remaining owner-policy dependency', () => {
+    // ADR-014 Phase 2C-2A §16 — the required exit invariant.
+    expect(POLICY_DEPENDENT_MUTATIONS.map(key)).toEqual([])
   })
 })
 
@@ -289,6 +284,9 @@ describe('§38 effective capability holders, asserted so a grant change fails th
       'cost.approve':          ['owner'],
       'cost.write':            ['owner'],
       'portfolio.approve':     ['owner'],
+      // ADR-014 D4, added by Phase 2C-2A. Owner alone, deliberately narrower
+      // than both project.write and project.approve.
+      'project.delete':        ['owner'],
       'safety.approve':        ['owner'],
       'crm.write':             ['owner'],
       'crossdomain.read':      ['owner'],
