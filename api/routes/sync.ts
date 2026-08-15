@@ -19,7 +19,7 @@ export const syncRouter = Router()
 
 // ─── POST /sync/register ──────────────────────────────────────────────────────
 
-syncRouter.post('/register', async (req: Request, res: Response) => {
+syncRouter.post('/register', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const userId   = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { device_token, device_name, device_platform, app_version, push_token } = req.body as {
@@ -52,7 +52,7 @@ syncRouter.post('/register', async (req: Request, res: Response) => {
 
 // ─── POST /sync/upload ────────────────────────────────────────────────────────
 
-syncRouter.post('/upload', async (req: Request, res: Response) => {
+syncRouter.post('/upload', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const { device_id, mutations, client_watermark } = req.body as {
     device_id:         string
@@ -88,7 +88,7 @@ syncRouter.post('/upload', async (req: Request, res: Response) => {
 
 // ─── POST /sync/pull ──────────────────────────────────────────────────────────
 
-syncRouter.post('/pull', async (req: Request, res: Response) => {
+syncRouter.post('/pull', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const { since_watermark, limit } = req.body as { since_watermark?: string; limit?: number }
 

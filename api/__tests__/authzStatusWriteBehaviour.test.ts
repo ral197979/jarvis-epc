@@ -178,13 +178,19 @@ describe('§15 Owner must also use the canonical transition', () => {
   })
 
   it('refuses every role the generic write, capability holders included', async () => {
-    // Proves the refusal is about the canonical path, not about privilege:
-    // project_manager holds quality.verify and is still refused here.
+    // Two layers now stand between a caller and a transition-owned state, and
+    // the order matters. Phase 2C-1 put quality.write on this route, so a role
+    // without it is turned away by authorization (403) before the state guard
+    // is consulted. A role that HOLDS quality.write gets past authorization and
+    // is then refused on the shape of the mutation (422) — which is the point:
+    // holding the write capability, and even holding quality.verify, still does
+    // not make the generic route a way to close a punch item.
     for (const role of ALL_ROLES) {
       mockQuery.mockClear()
       setCurrent(principal({ role }))
       const res = await request(makeApp()).patch('/api/v1/punch-items/pi-1').send({ status: 'closed' })
-      expect(res.status, `${role} must be refused the generic transition write`).toBe(422)
+      const holdsWrite = ['owner', 'project_manager', 'engineer', 'field_ops'].includes(role)
+      expect(res.status, `${role} must be refused the generic transition write`).toBe(holdsWrite ? 422 : 403)
       expect(mutated(), `${role} mutated through the generic route`).toBe(false)
     }
   })

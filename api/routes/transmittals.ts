@@ -48,7 +48,7 @@ router.get('/overdue', requireCapability('docs.view') as never, async (req: Requ
 })
 
 // POST /transmittals
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
   const b = req.body as Record<string, unknown>
   if (!b['subject'] || !b['purpose'] || !b['from_party'] || !b['to_party'] ||
       !Array.isArray(b['to_contacts']) || !Array.isArray(b['items'])) {
@@ -101,7 +101,7 @@ router.post('/:id/send', requireCapability('docs.publish') as never, async (req:
 })
 
 // POST /transmittals/:id/respond
-router.post('/:id/respond', async (req: Request, res: Response) => {
+router.post('/:id/respond', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
   const { response, notes } = req.body as { response?: string; notes?: string }
   const valid = ['approved','approved_with_comments','revise_and_resubmit','rejected','received','no_exception_taken']
   if (!response || !valid.includes(response)) {

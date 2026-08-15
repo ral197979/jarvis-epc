@@ -55,7 +55,7 @@ testPacksRouter.get('/projects/:projectId/test-packs', requireCapability('commis
   } catch (err) { _handleErr(err, res, 'list') }
 })
 
-testPacksRouter.post('/test-packs', async (req: Request, res: Response) => {
+testPacksRouter.post('/test-packs', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   // F05 hard rule — minimum required fields for real scope.
@@ -94,7 +94,7 @@ testPacksRouter.get('/test-packs/:packId', requireCapability('commissioning.view
   } catch (err) { _handleErr(err, res, 'get') }
 })
 
-testPacksRouter.patch('/test-packs/:packId', async (req: Request, res: Response) => {
+testPacksRouter.patch('/test-packs/:packId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

@@ -51,7 +51,7 @@ router.get('/projects/:projectId/calc-sessions', requireCapability('engineering.
 })
 
 // ─── Save a new session ────────────────────────────────────────────────────────
-router.post('/projects/:projectId/calc-sessions', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/calc-sessions', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { projectId } = req.params
   const { tool_name, tool_version, input_summary, output_summary, pid_svg, notes } = req.body
@@ -108,7 +108,7 @@ router.get('/calc-sessions/:id', requireCapability('engineering.view') as never,
 })
 
 // ─── Update notes ─────────────────────────────────────────────────────────────
-router.patch('/calc-sessions/:id', async (req: Request, res: Response) => {
+router.patch('/calc-sessions/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { notes } = req.body
   if (typeof notes !== 'string') return res.status(400).json({ error: 'notes (string) required' })
@@ -125,7 +125,7 @@ router.patch('/calc-sessions/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Delete session ───────────────────────────────────────────────────────────
-router.delete('/calc-sessions/:id', async (req: Request, res: Response) => {
+router.delete('/calc-sessions/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   try {
     await tenantQuery(r.tenantId,

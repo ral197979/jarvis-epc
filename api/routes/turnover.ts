@@ -26,7 +26,7 @@ router.get('/projects/:projectId/turnover-packages', requireCapability('docs.vie
   catch (err) { res.status(500).json({ error: 'Failed to list turnover packages', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/turnover-packages', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/turnover-packages', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const name = (req.body as { name?: string }).name
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' })
@@ -36,7 +36,7 @@ router.post('/projects/:projectId/turnover-packages', async (req: Request, res: 
   } catch (err) { res.status(500).json({ error: 'Failed to create turnover package', detail: (err as Error).message }) }
 })
 
-router.patch('/turnover-packages/:id', guardTransitionOwnedState('turnover_packages') as never, async (req: Request, res: Response) => {
+router.patch('/turnover-packages/:id', requireCapability('docs.write') as never, guardTransitionOwnedState('turnover_packages') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { status?: string }
   if (b.status !== undefined && !isValidStatus(b.status)) return res.status(400).json({ error: 'invalid status' })

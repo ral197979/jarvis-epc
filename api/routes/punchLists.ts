@@ -69,7 +69,7 @@ router.get('/projects/:projectId/punch-lists', requireCapability('quality.view')
   }
 })
 
-router.post('/projects/:projectId/punch-lists', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/punch-lists', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const b = req.body ?? {}
@@ -114,7 +114,7 @@ router.get('/punch-lists/:id', requireCapability('quality.view') as never, async
   }
 })
 
-router.patch('/punch-lists/:id', async (req: Request, res: Response) => {
+router.patch('/punch-lists/:id', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'description', 'status']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -136,7 +136,7 @@ router.patch('/punch-lists/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/punch-lists/:id', async (req: Request, res: Response) => {
+router.delete('/punch-lists/:id', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!, 'DELETE FROM punch_lists WHERE id=$1 AND tenant_id=$2', [req.params.id, r.tenantId!])
@@ -182,7 +182,7 @@ router.get('/punch-lists/:id/items', requireCapability('quality.view') as never,
   }
 })
 
-router.post('/punch-lists/:id/items', guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
+router.post('/punch-lists/:id/items', requireCapability('quality.write') as never, guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.title) return res.status(400).json({ error: 'title required' })
@@ -248,7 +248,7 @@ router.post('/punch-lists/:id/items', guardTransitionOwnedState('punch_items') a
   }
 })
 
-router.patch('/punch-items/:id', guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
+router.patch('/punch-items/:id', requireCapability('quality.write') as never, guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'description', 'location', 'discipline', 'priority', 'status', 'assigned_to', 'due_date', 'drawing_id', 'pin_x', 'pin_y', 'photos']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -306,7 +306,7 @@ router.post('/punch-items/:id/close', requireCapability('quality.verify') as nev
   }
 })
 
-router.delete('/punch-items/:id', async (req: Request, res: Response) => {
+router.delete('/punch-items/:id', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!, 'DELETE FROM punch_items WHERE id=$1 AND tenant_id=$2', [req.params.id, r.tenantId!])

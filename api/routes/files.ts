@@ -72,7 +72,7 @@ function _isIfcFile(filename: unknown): boolean {
 // ─── POST /request-upload ─────────────────────────────────────────────────────
 // Creates a document + version record, returns a presigned upload URL.
 
-router.post('/request-upload', requireTenant() as never, async (req: Req, res: Response) => {
+router.post('/request-upload', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -186,7 +186,7 @@ router.post('/request-upload', requireTenant() as never, async (req: Req, res: R
 
 // ─── PUT /upload/:token — Local backend file receive ─────────────────────────
 
-router.put('/upload/:token', async (req: Request, res: Response) => {
+router.put('/upload/:token', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
   const { token } = req.params
   const tokenDir  = path.join(LOCAL_DIR, '.tokens')
   const metaPath  = path.join(tokenDir, `${token}.json`)
@@ -227,7 +227,7 @@ router.put('/upload/:token', async (req: Request, res: Response) => {
 // ─── POST /confirm/:versionId ─────────────────────────────────────────────────
 // Called after upload completes. Sets version + document status to 'active'.
 
-router.post('/confirm/:versionId', requireTenant() as never, async (req: Req, res: Response) => {
+router.post('/confirm/:versionId', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -369,7 +369,7 @@ router.get('/documents/:id', requireTenant() as never, requireCapability('docs.v
 
 // ─── PATCH /documents/:id ─────────────────────────────────────────────────────
 
-router.patch('/documents/:id', requireTenant() as never, async (req: Req, res: Response) => {
+router.patch('/documents/:id', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -393,7 +393,7 @@ router.patch('/documents/:id', requireTenant() as never, async (req: Req, res: R
 
 // ─── DELETE /documents/:id ────────────────────────────────────────────────────
 
-router.delete('/documents/:id', requireTenant() as never, async (req: Req, res: Response) => {
+router.delete('/documents/:id', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -430,7 +430,7 @@ router.get('/folders', requireTenant() as never, requireCapability('docs.view') 
 
 // ─── POST /folders ────────────────────────────────────────────────────────────
 
-router.post('/folders', requireTenant() as never, async (req: Req, res: Response) => {
+router.post('/folders', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -52,7 +52,7 @@ deficienciesRouter.get('/projects/:projectId/deficiencies', requireCapability('q
   } catch (err) { _handleErr(err, res, 'list') }
 })
 
-deficienciesRouter.post('/deficiencies', async (req: Request, res: Response) => {
+deficienciesRouter.post('/deficiencies', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.code || !b.title) {
@@ -80,7 +80,7 @@ deficienciesRouter.post('/deficiencies', async (req: Request, res: Response) => 
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-deficienciesRouter.patch('/deficiencies/:deficiencyId', async (req: Request, res: Response) => {
+deficienciesRouter.patch('/deficiencies/:deficiencyId', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

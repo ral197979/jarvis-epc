@@ -101,7 +101,7 @@ router.get('/:id', requireCapability('safety.view') as never, async (req: Req, r
 
 // ─── POST create ──────────────────────────────────────────────────────────────
 
-router.post('/', async (req: Req, res: Response) => {
+router.post('/', requireCapability('safety.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -148,7 +148,7 @@ router.post('/', async (req: Req, res: Response) => {
 
 // ─── PATCH update ─────────────────────────────────────────────────────────────
 
-router.patch('/:id', async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('safety.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

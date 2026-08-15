@@ -90,7 +90,7 @@ vendorsRouter.get('/:id', requireCapability('procurement.view') as never, async 
   res.json({ data: result.rows[0] })
 })
 
-vendorsRouter.post('/', async (req: Req, res: Response) => {
+vendorsRouter.post('/', requireCapability('procurement.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -104,7 +104,7 @@ vendorsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-vendorsRouter.patch('/:id', guardTransitionOwnedState('vendors') as never, async (req: Req, res: Response) => {
+vendorsRouter.patch('/:id', requireCapability('procurement.write') as never, guardTransitionOwnedState('vendors') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -214,7 +214,7 @@ purchaseOrdersRouter.get('/:id', requireCapability('procurement.view') as never,
   res.json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.post('/', async (req: Req, res: Response) => {
+purchaseOrdersRouter.post('/', requireCapability('procurement.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -230,7 +230,7 @@ purchaseOrdersRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.patch('/:id', guardTransitionOwnedState('purchase_orders') as never, async (req: Req, res: Response) => {
+purchaseOrdersRouter.patch('/:id', requireCapability('procurement.write') as never, guardTransitionOwnedState('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -308,7 +308,7 @@ rfisRouter.get('/', requireCapability('construction.view') as never, async (req:
   res.json({ data: data.rows })
 })
 
-rfisRouter.post('/', async (req: Req, res: Response) => {
+rfisRouter.post('/', requireCapability('construction.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -336,7 +336,7 @@ rfisRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: row })
 })
 
-rfisRouter.post('/:id/respond', async (req: Req, res: Response) => {
+rfisRouter.post('/:id/respond', requireCapability('construction.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const { response } = req.body as { response?: string }
@@ -385,7 +385,7 @@ submittalsRouter.get('/', requireCapability('construction.view') as never, async
   res.json({ data: data.rows })
 })
 
-submittalsRouter.post('/', async (req: Req, res: Response) => {
+submittalsRouter.post('/', requireCapability('construction.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -413,7 +413,7 @@ submittalsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: row })
 })
 
-submittalsRouter.patch('/:id', guardTransitionOwnedState('submittals') as never, async (req: Req, res: Response) => {
+submittalsRouter.patch('/:id', requireCapability('construction.write') as never, guardTransitionOwnedState('submittals') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

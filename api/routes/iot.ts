@@ -60,7 +60,7 @@ const authRouter = Router()
 authRouter.use(requireAuth   as never)
 authRouter.use(requireTenant() as never)
 
-authRouter.post('/projects/:projectId/sensors', async (req: Request, res: Response) => {
+authRouter.post('/projects/:projectId/sensors', requireCapability('construction.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensor = await registerSensor(r.tenantId!, { projectId: p(req, 'projectId'), ...req.body })
@@ -85,7 +85,7 @@ authRouter.get('/sensors/:id', requireCapability('construction.view') as never, 
   } catch (e) { res.status(500).json({ error: 'Failed to get sensor' }) }
 })
 
-authRouter.patch('/sensors/:id/thresholds', async (req: Request, res: Response) => {
+authRouter.patch('/sensors/:id/thresholds', requireCapability('construction.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensor = await updateSensorThresholds(r.tenantId!, p(req, 'id'), req.body)
@@ -114,7 +114,7 @@ authRouter.get('/projects/:projectId/sensors/alerts', requireCapability('constru
   } catch (e) { res.status(500).json({ error: 'Failed to get alerts' }) }
 })
 
-authRouter.post('/sensors/alerts/:alertId/acknowledge', async (req: Request, res: Response) => {
+authRouter.post('/sensors/alerts/:alertId/acknowledge', requireCapability('construction.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     await acknowledgeAlert(r.tenantId!, p(req, 'alertId'), r.auth?.sub ?? 'unknown')

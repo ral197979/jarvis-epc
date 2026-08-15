@@ -34,7 +34,7 @@ router.get('/projects/:projectId/safety/observations', requireCapability('safety
   catch (err) { res.status(500).json({ error: 'Failed to list observations', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/safety/observations', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/safety/observations', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { description?: string }
   if (!b.description || !String(b.description).trim()) return res.status(400).json({ error: 'description is required' })
@@ -44,7 +44,7 @@ router.post('/projects/:projectId/safety/observations', async (req: Request, res
   } catch (err) { res.status(500).json({ error: 'Failed to create observation', detail: (err as Error).message }) }
 })
 
-router.patch('/safety/observations/:id', async (req: Request, res: Response) => {
+router.patch('/safety/observations/:id', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !OBS_STATUS.has(status)) return res.status(400).json({ error: `status must be one of ${[...OBS_STATUS].join(', ')}` })
@@ -63,7 +63,7 @@ router.get('/projects/:projectId/safety/incidents', requireCapability('safety.vi
   catch (err) { res.status(500).json({ error: 'Failed to list incidents', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/safety/incidents', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/safety/incidents', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { description?: string }
   if (!b.description || !String(b.description).trim()) return res.status(400).json({ error: 'description is required' })
@@ -73,7 +73,7 @@ router.post('/projects/:projectId/safety/incidents', async (req: Request, res: R
   } catch (err) { res.status(500).json({ error: 'Failed to create incident', detail: (err as Error).message }) }
 })
 
-router.patch('/safety/incidents/:id', async (req: Request, res: Response) => {
+router.patch('/safety/incidents/:id', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !INC_STATUS.has(status)) return res.status(400).json({ error: `status must be one of ${[...INC_STATUS].join(', ')}` })

@@ -38,7 +38,7 @@ riskRegisterRouter.get('/projects/:projectId/risks/summary', requireCapability('
   catch (e) { res.status(500).json({ error: 'Failed to load risk summary' }) }
 })
 
-riskRegisterRouter.post('/projects/:projectId/risks', async (req: Request, res: Response) => {
+riskRegisterRouter.post('/projects/:projectId/risks', requireCapability('risk.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, category, probability, impact } = req.body as Record<string, unknown>
   if (!title || !category || !probability || !impact) {
@@ -70,7 +70,7 @@ riskRegisterRouter.get('/risks/:id', requireCapability('risk.view') as never, as
   } catch (e) { res.status(500).json({ error: 'Failed to get risk' }) }
 })
 
-riskRegisterRouter.patch('/risks/:id', guardTransitionOwnedState('risks') as never, async (req: Request, res: Response) => {
+riskRegisterRouter.patch('/risks/:id', requireCapability('risk.write') as never, guardTransitionOwnedState('risks') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await updateRisk(r.tenantId!, p(req, 'id'), req.body)

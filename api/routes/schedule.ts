@@ -48,7 +48,7 @@ router.get('/:projectId/tasks', requireCapability('schedule.view') as never, asy
   res.json({ data: rows.rows })
 })
 
-router.post('/:projectId/tasks', async (req: Req, res: Response) => {
+router.post('/:projectId/tasks', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -78,7 +78,7 @@ router.post('/:projectId/tasks', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-router.patch('/tasks/:id', async (req: Req, res: Response) => {
+router.patch('/tasks/:id', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -106,7 +106,7 @@ router.patch('/tasks/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-router.delete('/tasks/:id', async (req: Req, res: Response) => {
+router.delete('/tasks/:id', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -138,7 +138,7 @@ router.get('/:projectId/dependencies', requireCapability('schedule.view') as nev
   res.json({ data: rows.rows })
 })
 
-router.post('/:projectId/dependencies', async (req: Req, res: Response) => {
+router.post('/:projectId/dependencies', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -171,7 +171,7 @@ router.post('/:projectId/dependencies', async (req: Req, res: Response) => {
   }
 })
 
-router.delete('/dependencies/:id', async (req: Req, res: Response) => {
+router.delete('/dependencies/:id', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

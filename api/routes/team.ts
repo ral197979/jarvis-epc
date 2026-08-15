@@ -38,7 +38,7 @@ teamRouter.get('/team/summary', requireCapability('team.view') as never, async (
   catch (e) { res.status(500).json({ error: 'Failed to load team summary' }) }
 })
 
-teamRouter.post('/team/members', async (req: Request, res: Response) => {
+teamRouter.post('/team/members', requireCapability('team.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { firstName, lastName, role } = req.body as Record<string, unknown>
   if (!firstName || !lastName || !role) {
@@ -68,7 +68,7 @@ teamRouter.get('/team/members/:id', requireCapability('team.view') as never, asy
   } catch (e) { res.status(500).json({ error: 'Failed to get member' }) }
 })
 
-teamRouter.patch('/team/members/:id', async (req: Request, res: Response) => {
+teamRouter.patch('/team/members/:id', requireCapability('team.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const member = await updateMember(r.tenantId!, p(req, 'id'), req.body)

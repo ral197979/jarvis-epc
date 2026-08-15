@@ -62,7 +62,7 @@ systemsRouter.get('/projects/:projectId/systems', requireCapability('commissioni
   } catch (err) { _handleErr(err, res, 'listSystems') }
 })
 
-systemsRouter.post('/projects/:projectId/systems', async (req: Request, res: Response) => {
+systemsRouter.post('/projects/:projectId/systems', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.code || !b.name) {
@@ -83,7 +83,7 @@ systemsRouter.post('/projects/:projectId/systems', async (req: Request, res: Res
   } catch (err) { _handleErr(err, res, 'createSystem') }
 })
 
-systemsRouter.patch('/systems/:systemId', async (req: Request, res: Response) => {
+systemsRouter.patch('/systems/:systemId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {
@@ -99,7 +99,7 @@ systemsRouter.patch('/systems/:systemId', async (req: Request, res: Response) =>
 // ─── SUBSYSTEMS ───────────────────────────────────────────────────────────────
 
 // POST body must include projectId so the service can verify system-in-project scope.
-systemsRouter.post('/systems/:systemId/subsystems', async (req: Request, res: Response) => {
+systemsRouter.post('/systems/:systemId/subsystems', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.code || !b.name) {
@@ -121,7 +121,7 @@ systemsRouter.post('/systems/:systemId/subsystems', async (req: Request, res: Re
   } catch (err) { _handleErr(err, res, 'createSubsystem') }
 })
 
-systemsRouter.patch('/subsystems/:subsystemId', async (req: Request, res: Response) => {
+systemsRouter.patch('/subsystems/:subsystemId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {
@@ -144,7 +144,7 @@ systemsRouter.get('/projects/:projectId/tags', requireCapability('commissioning.
   } catch (err) { _handleErr(err, res, 'listTags') }
 })
 
-systemsRouter.post('/systems/:systemId/tags', async (req: Request, res: Response) => {
+systemsRouter.post('/systems/:systemId/tags', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.tagNo || !b.equipmentName) {
@@ -171,7 +171,7 @@ systemsRouter.post('/systems/:systemId/tags', async (req: Request, res: Response
   } catch (err) { _handleErr(err, res, 'createTag') }
 })
 
-systemsRouter.patch('/tags/:tagId', async (req: Request, res: Response) => {
+systemsRouter.patch('/tags/:tagId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

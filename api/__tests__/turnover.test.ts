@@ -3,10 +3,18 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// ADR-014 Phase 2C-1: turnover packages are the docs domain, so the routes now
+// require docs.write, resolved from the database rather than the token.
+const AUTHZ_USER = { id: 'u1', tenant_id: 't1', role: 'project_manager', is_active: true }
+const isCurrentUserLookup = (sql: string) => /FROM\s+users\s+WHERE\s+id/i.test(sql)
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
-  query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:       (sql: string, params: unknown[]) =>
+    isCurrentUserLookup(sql)
+      ? Promise.resolve({ rows: [AUTHZ_USER], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
 vi.mock('../auth', () => ({
   requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1', tid: 't1' }; next() },

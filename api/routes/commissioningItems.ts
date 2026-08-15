@@ -58,7 +58,7 @@ commissioningItemsRouter.get('/projects/:projectId/commissioning-items', require
   } catch (err) { _handleErr(err, res, 'list') }
 })
 
-commissioningItemsRouter.post('/commissioning-items', async (req: Request, res: Response) => {
+commissioningItemsRouter.post('/commissioning-items', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.systemId || !b.itemType || !b.title) {
@@ -88,7 +88,7 @@ commissioningItemsRouter.post('/commissioning-items', async (req: Request, res: 
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-commissioningItemsRouter.patch('/commissioning-items/:itemId', async (req: Request, res: Response) => {
+commissioningItemsRouter.patch('/commissioning-items/:itemId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

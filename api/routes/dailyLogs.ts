@@ -59,7 +59,7 @@ router.get('/projects/:projectId/daily-logs', requireCapability('construction.vi
   }
 })
 
-router.post('/projects/:projectId/daily-logs', guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/daily-logs', requireCapability('construction.write') as never, guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const projectId = req.params.projectId as string
   const b = req.body ?? {}
@@ -113,7 +113,7 @@ router.get('/daily-logs/:id', requireCapability('construction.view') as never, a
   }
 })
 
-router.patch('/daily-logs/:id', guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
+router.patch('/daily-logs/:id', requireCapability('construction.write') as never, guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['log_date','weather','temp_f','wind_mph','humidity_pct',
     'manpower','equipment','visitors','deliveries',
@@ -139,7 +139,7 @@ router.patch('/daily-logs/:id', guardTransitionOwnedState('daily_logs') as never
   }
 })
 
-router.delete('/daily-logs/:id', async (req: Request, res: Response) => {
+router.delete('/daily-logs/:id', requireCapability('construction.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,

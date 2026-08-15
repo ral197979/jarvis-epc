@@ -33,8 +33,11 @@ scheduleImportRouter.use(requireTenant() as never)
 
 // ─── Upload + import ──────────────────────────────────────────────────────────
 
+// Authorization precedes multipart parsing: an unauthorized caller must not get
+// as far as having their upload buffered (ADR-014 Phase 2C-1 §15).
 scheduleImportRouter.post(
   '/projects/:projectId/schedule/import',
+  requireCapability('schedule.write') as never,
   upload.single('file') as never,
   async (req: Request, res: Response) => {
     const r = req as R & { file?: Express.Multer.File }

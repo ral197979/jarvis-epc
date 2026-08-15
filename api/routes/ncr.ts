@@ -36,7 +36,7 @@ router.get('/projects/:projectId/ncrs', requireCapability('quality.view') as nev
   catch (err) { res.status(500).json({ error: 'Failed to list NCRs', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/ncrs', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/ncrs', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { title?: string }
   if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'title is required' })
@@ -46,7 +46,7 @@ router.post('/projects/:projectId/ncrs', async (req: Request, res: Response) => 
   } catch (err) { res.status(500).json({ error: 'Failed to create NCR', detail: (err as Error).message }) }
 })
 
-router.patch('/ncrs/:id', guardTransitionOwnedState('ncrs') as never, async (req: Request, res: Response) => {
+router.patch('/ncrs/:id', requireCapability('quality.write') as never, guardTransitionOwnedState('ncrs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { status?: string; disposition?: string; root_cause?: string }
   if (b.status && !NCR_STATUS.has(b.status)) return res.status(400).json({ error: 'invalid status' })
@@ -74,7 +74,7 @@ router.get('/ncrs/:id/capas', requireCapability('quality.view') as never, async 
   catch (err) { res.status(500).json({ error: 'Failed to list corrective actions', detail: (err as Error).message }) }
 })
 
-router.post('/ncrs/:id/capas', async (req: Request, res: Response) => {
+router.post('/ncrs/:id/capas', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { description?: string }
   if (!b.description || !String(b.description).trim()) return res.status(400).json({ error: 'description is required' })
@@ -85,7 +85,7 @@ router.post('/ncrs/:id/capas', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: 'Failed to create corrective action', detail: (err as Error).message }) }
 })
 
-router.patch('/capas/:id', guardTransitionOwnedState('corrective_actions') as never, async (req: Request, res: Response) => {
+router.patch('/capas/:id', requireCapability('quality.write') as never, guardTransitionOwnedState('corrective_actions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !CAPA_STATUS.has(status)) return res.status(400).json({ error: `status must be one of ${[...CAPA_STATUS].join(', ')}` })
@@ -105,7 +105,7 @@ router.post('/capas/:id/verify', requireCapability('quality.verify') as never, a
   } catch (err) { res.status(500).json({ error: 'Failed to verify corrective action', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/ncrs/auto-raise', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/ncrs/auto-raise', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await autoRaiseNcrsFromInspections(r.tenantId!, String(req.params.projectId), r.auth?.sub ?? null)

@@ -11,12 +11,21 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 
 // ─── Mock DB pool ─────────────────────────────────────────────────────────────
+// ADR-014 Phase 2C-1: /test-packs now requires commissioning.write, which is
+// resolved from the database rather than the token, so the current-user lookup
+// has to be answered. Project manager holds commissioning.write.
+const AUTHZ_USER = { id: 'user-1', tenant_id: 'tenant-1', role: 'project_manager', is_active: true }
+const isCurrentUserLookup = (sql: string) => /FROM\s+users\s+WHERE\s+id/i.test(sql)
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery:       (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
   tenantTransaction: async <T>(_tenantId: string, fn: (q: any) => Promise<T>) =>
     fn({ query: (sql: string, params: unknown[]) => mockQuery(null, sql, params) }),
-  query:             (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:             (sql: string, params: unknown[]) =>
+    isCurrentUserLookup(sql)
+      ? Promise.resolve({ rows: [AUTHZ_USER], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
 
 vi.mock('../auth', () => ({

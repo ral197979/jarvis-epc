@@ -58,7 +58,7 @@ subcontractsRouter.use(requireTenant() as never)
 
 // ─── Bid packages ─────────────────────────────────────────────────────────────
 
-subcontractsRouter.post('/projects/:projectId/bid-packages', async (req: Request, res: Response) => {
+subcontractsRouter.post('/projects/:projectId/bid-packages', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title } = req.body as Record<string, unknown>
   if (!title) { res.status(400).json({ error: 'title is required' }); return }
@@ -130,7 +130,7 @@ subcontractsRouter.get('/bid-packages/:id/submissions', requireCapability('procu
   } catch (e) { res.status(500).json({ error: 'Failed to list bid submissions' }) }
 })
 
-subcontractsRouter.post('/bid-packages/:id/submissions', async (req: Request, res: Response) => {
+subcontractsRouter.post('/bid-packages/:id/submissions', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { vendorId } = req.body as Record<string, unknown>
   if (!vendorId) { res.status(400).json({ error: 'vendorId is required' }); return }
@@ -151,7 +151,7 @@ subcontractsRouter.post('/bid-submissions/:id/award', requireCapability('procure
 
 // ─── Subcontracts ─────────────────────────────────────────────────────────────
 
-subcontractsRouter.post('/projects/:projectId/subcontracts', async (req: Request, res: Response) => {
+subcontractsRouter.post('/projects/:projectId/subcontracts', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { vendorId, title, contractValue } = req.body as Record<string, unknown>
   if (!vendorId || !title || contractValue == null) {
@@ -193,7 +193,7 @@ subcontractsRouter.patch('/subcontracts/:id/status', requireCapability('procurem
 
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 
-subcontractsRouter.post('/subcontracts/:id/invoices', async (req: Request, res: Response) => {
+subcontractsRouter.post('/subcontracts/:id/invoices', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { periodStart, periodEnd, grossAmount } = req.body as Record<string, unknown>
   if (!periodStart || !periodEnd || grossAmount == null) {

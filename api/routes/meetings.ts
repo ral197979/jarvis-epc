@@ -43,7 +43,7 @@ meetingsRouter.use(requireTenant() as never)
 
 // ─── Meetings ─────────────────────────────────────────────────────────────────
 
-meetingsRouter.post('/projects/:projectId/meetings', async (req: Request, res: Response) => {
+meetingsRouter.post('/projects/:projectId/meetings', requireCapability('project.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, meetingDate } = req.body as Record<string, unknown>
   if (!title || !meetingDate) { res.status(400).json({ error: 'title and meetingDate are required' }); return }
@@ -78,7 +78,7 @@ meetingsRouter.get('/meetings/:id', requireCapability('project.view') as never, 
   } catch (e) { res.status(500).json({ error: 'Failed to get meeting' }) }
 })
 
-meetingsRouter.patch('/meetings/:id', async (req: Request, res: Response) => {
+meetingsRouter.patch('/meetings/:id', requireCapability('project.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meeting = await updateMeeting(r.tenantId!, p(req, 'id'), req.body)
@@ -115,7 +115,7 @@ meetingsRouter.get('/meetings/:id/agenda', requireCapability('project.view') as 
   } catch (e) { res.status(500).json({ error: 'Failed to list agenda items' }) }
 })
 
-meetingsRouter.post('/meetings/:id/agenda', async (req: Request, res: Response) => {
+meetingsRouter.post('/meetings/:id/agenda', requireCapability('project.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { topic } = req.body as Record<string, unknown>
   if (!topic) { res.status(400).json({ error: 'topic is required' }); return }
@@ -125,7 +125,7 @@ meetingsRouter.post('/meetings/:id/agenda', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to add agenda item' }) }
 })
 
-meetingsRouter.patch('/meetings/:id/agenda/:itemId', async (req: Request, res: Response) => {
+meetingsRouter.patch('/meetings/:id/agenda/:itemId', requireCapability('project.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const item = await updateAgendaItem(r.tenantId!, p(req, 'itemId'), req.body)
@@ -134,7 +134,7 @@ meetingsRouter.patch('/meetings/:id/agenda/:itemId', async (req: Request, res: R
   } catch (e) { res.status(500).json({ error: 'Failed to update agenda item' }) }
 })
 
-meetingsRouter.delete('/meetings/:id/agenda/:itemId', async (req: Request, res: Response) => {
+meetingsRouter.delete('/meetings/:id/agenda/:itemId', requireCapability('project.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     await deleteAgendaItem(r.tenantId!, p(req, 'itemId'))
@@ -152,7 +152,7 @@ meetingsRouter.get('/meetings/:id/actions', requireCapability('project.view') as
   } catch (e) { res.status(500).json({ error: 'Failed to list action items' }) }
 })
 
-meetingsRouter.post('/meetings/:id/actions', async (req: Request, res: Response) => {
+meetingsRouter.post('/meetings/:id/actions', requireCapability('project.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, projectId } = req.body as Record<string, unknown>
   if (!title || !projectId) { res.status(400).json({ error: 'title and projectId are required' }); return }
