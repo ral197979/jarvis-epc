@@ -127,6 +127,9 @@ export const HIGH_SENSITIVITY_MUTATIONS: readonly SensitiveMutation[] = [
     note: 'guardTransitionOwnedState("projects") still runs after the capability and still refuses status=completed|cancelled and current_phase. '
         + 'The row also carries budget/committed_cost/actual_cost/forecast_cost; Phase 2B-2 already recorded projects.* as MIXED_PAYLOAD_PHASE3 '
         + 'and this slice inherits that deferral rather than opening a second taxonomy. See RESIDUAL_MIXED_PAYLOAD_WRITE below.' },
+  { file: 'projects.ts', router: 'router', method: 'DELETE', path: '/:id', domain: 'project', capability: 'project.delete',
+    previousGuard: "['owner','admin'] on the JWT role",
+    note: 'ADR-014 D4, closed in Phase 2C-2A. Hard deletion carries its own authority rather than borrowing project.write or project.approve — the latter would have extended irreversible destruction of the project root to every project manager. project.delete is held by owner alone and the holder set is asserted as an exact equality.' },
   { file: 'projects.ts', router: 'router', method: 'PATCH', path: '/:id/agent-mode', domain: 'project', capability: 'ai.govern',
     previousGuard: "['owner','admin'] on the JWT role",
     note: 'Sets the project agent autonomy mode (auto | review_all | frozen) — how much an agent may do without human review. That is AI governance, which ADR-014 Phase 2A §22 already assigns to ai.govern. Holders {owner, admin} are exactly the legacy set, so this is holder-neutral and fixes the stale-token read.' },
@@ -361,10 +364,10 @@ export const UNREGISTERED_MUTATION_DECISIONS: readonly UnregisteredDecision[] = 
       evidence: 'scimRouter carries a router-wide requireScimToken: a SHA-256 token-hash lookup against scim_tokens requiring is_active and honouring expires_at, which binds req.scimTenantId from the verified row. There is no user session, so no user capability can apply — the same conclusion Phase 2B-1 reached for the GET half of this router. Left in the pending count rather than reclassified, because the manifest\'s SERVICE_HMAC class means HMAC and this is a bearer token.',
     }
   }),
-  { file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/iot/ingest', action: 'OWNER_POLICY_REQUIRED', domain: 'construction',
-    evidence: 'Dual-auth machine ingest: ingestAuth accepts a 64-hex bearer ingest token OR a user JWT. Attaching a user capability would deny the token path outright, and whether that path should exist is the same open decision as POST /sensors/tokens (§18.2). The two must be settled together.' },
-  { file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/sensors/:uid/readings', action: 'OWNER_POLICY_REQUIRED', domain: 'construction',
-    evidence: 'Same dual-auth ingest model as POST /iot/ingest.' },
+  { file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/iot/ingest', action: 'SERVICE_BOUNDARY', domain: 'construction',
+    evidence: 'ADR-014 D5, closed in Phase 2C-2A. Hybrid by design and now deterministic: a 64-hex bearer credential commits the request to the verified service path, anything else to the session path under platform.integrations. Registered in HYBRID_AUTH_MUTATIONS; stays PENDING_PHASE2 because no census class truthfully describes "service credential OR user capability".' },
+  { file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/sensors/:uid/readings', action: 'SERVICE_BOUNDARY', domain: 'construction',
+    evidence: 'Identical hybrid model to POST /iot/ingest; closed by ADR-014 D6 in Phase 2C-2A and registered in HYBRID_AUTH_MUTATIONS.' },
   { file: 'denverMcp.ts', router: 'router', method: 'POST', path: '/call', action: 'CLASSIFICATION_CORRECTION', domain: 'dead_route',
     evidence: 'denverMcpRouter is never mounted in server.ts, so no request can reach the handler — the same DEAD_ROUTE conclusion Phase 2B-1 and Phase 2B-2 recorded for its GET half. Left in the pending count; the coverage model counts declarations, and removing a declaration to lower a counter is exactly what §37 forbids.' },
 ]
@@ -384,15 +387,102 @@ export interface PolicyDependentMutation {
   why:       string
 }
 
-export const POLICY_DEPENDENT_MUTATIONS: readonly PolicyDependentMutation[] = [
-  { file: 'commissioning.ts', router: 'router', method: 'POST', path: '/credits',
-    current: "_requireRole(req, res, 'owner', 'admin') on the JWT role — UNCHANGED",
-    candidates: 'cost.approve {owner} · a platform entitlement capability {owner, admin}',
-    why: 'Inserts into billing_credits with a caller-supplied delta — it grants (or removes) a purchased entitlement. ADR-014 Phase 2C-2 §18.1 asks specifically whether an existing capability legitimately governs credit issuance. cost.approve is the commercial approval authority but its charter names change orders, estimates, invoices and pay applications, not credit issuance; a platform framing would keep admin but deny the commercial reading. The two candidates have different holder sets, so choosing between them decides policy rather than deriving it.' },
-  { file: 'projects.ts', router: 'router', method: 'DELETE', path: '/:id',
-    current: "['owner','admin'] on the JWT role — UNCHANGED",
-    candidates: 'project.approve {owner, project_manager} · cost.approve {owner}',
-    why: 'Hard-deletes the project row and with it the delivery and commercial history every other domain hangs off. No capability expresses "may delete a project": project.approve would BROADEN the operation to every project manager in the tenant, which no evidence supports, and cost.approve frames a delivery act as a commercial one. Deletion is the one case where guessing wrong is unrecoverable.' },
+export const POLICY_DEPENDENT_MUTATIONS: readonly PolicyDependentMutation[] = []
+
+/**
+ * ADR-014 Phase 2C-2A — the owner decisions that emptied the list above.
+ *
+ * Each entry names what the owner decided, what the route carried before, and
+ * what it carries now. The ratchet asserts the route really does carry the
+ * declared capability, so a reverted guard fails the build rather than leaving a
+ * report that says "closed".
+ */
+export interface OwnerPolicyResolution {
+  decision: 'D3' | 'D4' | 'D5' | 'D6' | 'D7'
+  file: string; router: string; method: string; path: string
+  before: string
+  after:  string
+  /** The capability now required of a *user* principal, when there is one. */
+  capability?: ServerCapability
+  rationale: string
+}
+
+export const OWNER_POLICY_RESOLUTIONS: readonly OwnerPolicyResolution[] = [
+  { decision: 'D3',
+    file: 'commissioning.ts', router: 'router', method: 'POST', path: '/credits',
+    before: "_requireRole(req, res, 'owner', 'admin') — the JWT role claim",
+    after:  "requireCapability('platform.admin') — the live database role",
+    capability: 'platform.admin',
+    rationale: 'Credit issuance is platform entitlement administration, not ordinary project cost approval: the route writes billing_credits with a caller-supplied delta that may add or remove entitlement, which is not the approval of a change order, estimate, invoice or pay application that cost.approve exists for. platform.admin already governs platform feature and usage administration and its holders are {owner, admin} — exactly the legacy role set — so the authority is preserved while the stale-token read is closed.' },
+
+  { decision: 'D4',
+    file: 'projects.ts', router: 'router', method: 'DELETE', path: '/:id',
+    before: "['owner','admin'] on the JWT role, inline in the handler",
+    after:  "requireCapability('project.delete') — a new capability held by owner alone",
+    capability: 'project.delete',
+    rationale: 'Hard deletion irreversibly removes the project root and the delivery and commercial history hanging off it. Reusing project.approve would have extended that to every project manager, a broadening explicitly rejected; project.write is ordinary editing. Under ADR-014 §27 the distinction is materially meaningful, no existing capability expresses it, and the real workflow needs it, so a new capability is authorised. Granted to owner only, and the holder set is asserted as an exact equality so an accidental future grant fails the ratchet.' },
+
+  { decision: 'D5',
+    file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/iot/ingest',
+    before: 'requireAuth + requireTenant + a permissive ingestAuth that fell through to session authentication when the machine token failed',
+    after:  "hybridIngestAuth('platform.integrations') — deterministic mode selection, fail-closed",
+    capability: 'platform.integrations',
+    rationale: 'See HYBRID_AUTH_MUTATIONS below.' },
+
+  { decision: 'D6',
+    file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/sensors/:uid/readings',
+    before: 'requireAuth + requireTenant + the same permissive ingestAuth fall-through',
+    after:  "hybridIngestAuth('platform.integrations') — deterministic mode selection, fail-closed",
+    capability: 'platform.integrations',
+    rationale: 'See HYBRID_AUTH_MUTATIONS below.' },
+
+  { decision: 'D7',
+    file: 'scim.ts', router: 'scimRouter', method: 'POST', path: '/Users',
+    before: 'the supplied role was written to users.role with no validation — a live SCIM token could create or promote a user to owner',
+    after:  '_rejectScimRole refuses `owner` and any role the repository does not define, on create, replace and patch alike',
+    rationale: 'A SCIM provisioning credential federates identity; it is not business authority. owner holds every capability in the registry, so allowing the protocol to assign it made the provisioning token a route to full tenant control. Non-owner roles the protocol legitimately provisions today, admin included, are unchanged — this narrows one authority rather than redesigning SCIM role policy.' },
+]
+
+/**
+ * Routes whose authentication model is legitimately EITHER a verified service
+ * credential OR a user capability, and which therefore cannot be described by a
+ * single census class.
+ *
+ * These stay numerically `PENDING_PHASE2`. That is deliberate and it is the
+ * honest answer: the manifest's `SERVICE_HMAC` means HMAC and this is a bearer
+ * token, `CAPABILITY` would claim a user capability always applies when for the
+ * machine path there is no user at all, and inventing a class purely to move a
+ * counter is what ADR-014 Phase 2C-2 §37 forbids. Their **authorization** status
+ * is closed and proven; their **census** status is unchanged, and the two are
+ * reported separately.
+ *
+ * The ratchet asserts, from source, that each route really does carry
+ * `hybridIngestAuth('<capability>')` — so this cannot become a bucket that
+ * unprotected routes are quietly moved into.
+ */
+export interface HybridAuthMutation {
+  file: string; router: string; method: string; path: string
+  /** The middleware whose presence in source the ratchet requires. */
+  middleware: 'hybridIngestAuth'
+  /** The capability a human caller must hold. */
+  userCapability: ServerCapability
+  /** How the machine path authenticates, and how its tenant is bound. */
+  serviceCredential: string
+  censusClass: 'PENDING_PHASE2'
+  reason: string
+}
+
+export const HYBRID_AUTH_MUTATIONS: readonly HybridAuthMutation[] = [
+  { file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/iot/ingest',
+    middleware: 'hybridIngestAuth', userCapability: 'platform.integrations',
+    serviceCredential: 'A 64-hex bearer ingest token, SHA-256-hashed and looked up in sensor_ingest_tokens with revoked_at IS NULL and expires_at honoured; tenant is bound from the verified row and no caller-supplied identifier can override it.',
+    censusClass: 'PENDING_PHASE2',
+    reason: 'Machine ingest and human integration use are both legitimate and carry different authority. Credential ISSUANCE stays platform.security on POST /sensors/tokens; ordinary integration USE by a session is platform.integrations. The two must not be collapsed merely because both concern IoT.' },
+  { file: 'iot.ts', router: 'iotRouter', method: 'POST', path: '/sensors/:uid/readings',
+    middleware: 'hybridIngestAuth', userCapability: 'platform.integrations',
+    serviceCredential: 'Identical to POST /iot/ingest: the same 64-hex bearer token, the same hashed lookup with revocation and expiry honoured, and the same tenant binding taken from the verified row rather than from the request.',
+    censusClass: 'PENDING_PHASE2',
+    reason: 'Identical model to POST /iot/ingest; the single-reading webhook variant of the same surface.' },
 ]
 
 /**

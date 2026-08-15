@@ -46,6 +46,12 @@ export const ACTION_CAPABILITIES = [
   // ── delivery ────────────────────────────────────────────────────────────────
   'project.write',
   'project.approve',        // lifecycle gates, project closure
+  // ADR-014 D4. Hard deletion of a project root is NOT ordinary project
+  // authority and NOT project approval authority. It irreversibly removes the
+  // row every delivery and commercial record hangs off, so reusing
+  // project.approve would hand that to every project manager — a broadening the
+  // owner explicitly rejected. Granted to `owner` alone; see ACTION_GRANTS.
+  'project.delete',
   'construction.write',
   'construction.approve',   // daily-log approval
   'engineering.write',

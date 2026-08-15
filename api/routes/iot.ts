@@ -11,11 +11,14 @@
  *   POST   /api/v1/sensors/alerts/:alertId/acknowledge  — ack alert
  *   POST   /api/v1/sensors/tokens                       — create ingest token
  *
- * Ingest (accepts Bearer ingest token OR normal auth):
+ * Ingest — hybrid, ADR-014 D5/D6. Either a verified 64-hex machine ingest token
+ * (no user principal, tenant bound from the token row) OR a session holding
+ * `platform.integrations` against the live database role. The mode is decided
+ * once from the credential's shape and never reconsidered:
  *   POST   /api/v1/iot/ingest                           — batch ingest (Telegraf/EMQX webhook)
  *   POST   /api/v1/sensors/:uid/readings                — single reading ingest
  */
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response, RequestHandler } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import {
@@ -26,6 +29,7 @@ import {
 } from '../services/iot/sensorIngestService'
 
 import { requireCapability } from '../authz/requireCapability'
+import type { ServerCapability } from '../authz/capabilities'
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
   const v = (req.params as Record<string, string | string[]>)[key]
@@ -33,23 +37,83 @@ const p = (req: Request, key: string) => {
 }
 const qs = (v: unknown) => Array.isArray(v) ? v[0] as string : v as string | undefined
 
-// ─── Ingest token middleware ───────────────────────────────────────────────────
-// Allows either a normal JWT (requireAuth) OR a bearer ingest token.
+// ─── Hybrid ingest authentication (ADR-014 D5/D6) ─────────────────────────────
+//
+// Sensor ingest is legitimately reachable two ways, and the two carry different
+// authority:
+//
+//   machine — a verified 64-hex ingest credential issued by POST /sensors/tokens
+//             (itself platform.security). There is no user principal, so no user
+//             capability can be evaluated; tenant is bound from the verified
+//             token row and nothing the caller sends can override it.
+//   human   — a normal session, which must additionally hold
+//             platform.integrations against the LIVE database principal. Using
+//             an integration is ordinary integration administration; issuing the
+//             credential that drives it is not, and stays platform.security.
+//
+// The classification is DETERMINISTIC and FAILS CLOSED. The previous middleware
+// tried the token and, on failure, fell through to session authentication — so a
+// malformed or revoked machine credential could be re-interpreted as a different
+// credential type. It also ran behind an unconditional `requireAuth`, which made
+// the machine path unreachable in practice. Both are corrected here: the shape of
+// the presented credential decides the mode once, and a credential that claims to
+// be an ingest token and is not is refused outright.
+const INGEST_TOKEN_SHAPE = /^[0-9a-f]{64}$/i
 
-async function ingestAuth(req: Request, res: Response, next: () => void): Promise<void> {
-  const auth = req.headers['authorization'] ?? ''
-  const bearer = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+interface IngestRequest extends Request { ingestMode?: 'service' | 'user' }
 
-  // Try normal auth first (sets tenantId via requireTenant)
-  if (bearer && bearer.length === 64) {
-    // 64-char hex = our ingest token
-    const resolved = await resolveIngestToken(bearer)
-    if (!resolved) { res.status(401).json({ error: 'Invalid ingest token' }); return }
-    ;(req as R).tenantId = resolved.tenantId
-    next(); return
+/** Run an ordinary express middleware chain to completion, or to its own response. */
+function runChain(chain: RequestHandler[], req: Request, res: Response, done: () => void): void {
+  let i = 0
+  const step = (): void => {
+    const mw = chain[i++]
+    if (!mw) { done(); return }
+    try {
+      const out = mw(req, res, step as never) as unknown
+      if (out && typeof (out as Promise<unknown>).catch === 'function') {
+        ;(out as Promise<unknown>).catch(() => {
+          if (!res.headersSent) res.status(500).json({ error: 'authorization_failed' })
+        })
+      }
+    } catch {
+      if (!res.headersSent) res.status(500).json({ error: 'authorization_failed' })
+    }
   }
-  // Fall through to normal auth (handled by caller route)
-  next()
+  step()
+}
+
+/**
+ * @param capability the capability a *human* caller must hold. Named explicitly
+ *   at the call site so the authorization registry and its ratchet can read the
+ *   requirement out of source rather than trusting a comment.
+ */
+function hybridIngestAuth(capability: ServerCapability): RequestHandler {
+  const userChain: RequestHandler[] = [
+    requireAuth as unknown as RequestHandler,
+    requireTenant() as unknown as RequestHandler,
+    requireCapability(capability),
+  ]
+  return (req: Request, res: Response, next): void => {
+    const header = req.headers['authorization'] ?? ''
+    const bearer = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
+
+    if (INGEST_TOKEN_SHAPE.test(bearer)) {
+      // Committed to the service path. A bad token is refused here; it is never
+      // reconsidered as a session credential.
+      void resolveIngestToken(bearer).then(resolved => {
+        if (!resolved) { res.status(401).json({ error: 'Invalid ingest token' }); return }
+        ;(req as R).tenantId = resolved.tenantId
+        ;(req as IngestRequest).ingestMode = 'service'
+        next()
+      }).catch(() => {
+        if (!res.headersSent) res.status(401).json({ error: 'Invalid ingest token' })
+      })
+      return
+    }
+
+    ;(req as IngestRequest).ingestMode = 'user'
+    runChain(userChain, req, res, () => next())
+  }
 }
 
 export const iotRouter = Router()
@@ -137,7 +201,7 @@ authRouter.post('/sensors/tokens', requireCapability('platform.security') as nev
 // Accepts two formats:
 //   1. Array of {sensorUid, value, ts?, quality?, raw?}
 //   2. Telegraf line: [{name, tags:{sensor_uid}, fields:{value}, timestamp}]
-iotRouter.post('/iot/ingest', requireAuth as never, requireTenant() as never, ingestAuth as never, async (req: Request, res: Response) => {
+iotRouter.post('/iot/ingest', hybridIngestAuth('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as R
   const body = req.body as unknown
 
@@ -176,7 +240,7 @@ iotRouter.post('/iot/ingest', requireAuth as never, requireTenant() as never, in
 })
 
 // Per-sensor single reading (simple webhook / direct API)
-iotRouter.post('/sensors/:uid/readings', requireAuth as never, requireTenant() as never, ingestAuth as never, async (req: Request, res: Response) => {
+iotRouter.post('/sensors/:uid/readings', hybridIngestAuth('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { value, ts, quality, raw } = req.body as Record<string, unknown>
   if (value == null) { res.status(400).json({ error: 'value is required' }); return }

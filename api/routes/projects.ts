@@ -213,16 +213,16 @@ router.patch('/:id', requireCapability('project.write') as never, guardTransitio
 
 // ─── DELETE /api/v1/projects/:id ──────────────────────────────────────────────
 
-router.delete('/:id', async (req: Req, res: Response) => {
+// ADR-014 D4 — hard deletion carries its own authority, `project.delete`, held
+// by `owner` alone. It is deliberately neither project.write (ordinary editing)
+// nor project.approve: the latter would extend irreversible destruction of the
+// project root, and the delivery and commercial history hanging off it, to every
+// project manager. The previous check read the JWT role, so a demoted owner kept
+// the power until the token expired; authority is now the live database role.
+router.delete('/:id', requireCapability('project.delete') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-
-  // Only owner/admin can delete
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'Insufficient role to delete projects.' })
-    return
-  }
 
   const result = await tenantQuery<{ id: string }>(tenantId, `
     DELETE FROM projects

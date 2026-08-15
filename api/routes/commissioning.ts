@@ -64,14 +64,6 @@ async function _creditBalance(tenantId: string): Promise<number> {
   return parseInt(res.rows[0]?.balance ?? '0', 10)
 }
 
-function _requireRole(req: Req, res: Response, ...roles: string[]): boolean {
-  if (!req.auth?.role || !roles.includes(req.auth.role)) {
-    res.status(403).json({ error: 'forbidden', message: `Requires one of: ${roles.join(', ')}` })
-    return false
-  }
-  return true
-}
-
 // ─── POST /uploads/text-ingest ────────────────────────────────────────────────
 // Accepts a plain-text document (spec section, notes) and stores it as a
 // SourceUpload record. Returns the upload ID for use in generate-draft.
@@ -134,10 +126,15 @@ router.get('/balance', requireCapability('commissioning.view') as never, async (
 // ─── POST /credits ────────────────────────────────────────────────────────────
 // Grant credits manually. Owner / admin only.
 
-router.post('/credits', async (req: Req, res: Response) => {
+// ADR-014 D3 — credit issuance is platform entitlement administration, not
+// ordinary project cost approval: it writes billing_credits with a caller-supplied
+// delta that may add or remove entitlement. platform.admin already governs
+// platform feature and usage administration and its holders are {owner, admin} —
+// exactly the legacy role set — so the authority is unchanged while the decision
+// moves from the JWT claim to the live database principal.
+router.post('/credits', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!_requireRole(req, res, 'owner', 'admin')) return
 
   const { delta, reason } = req.body as { delta: number; reason: string }
   if (!delta || !reason) {
