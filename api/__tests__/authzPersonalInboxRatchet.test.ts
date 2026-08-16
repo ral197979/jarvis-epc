@@ -26,6 +26,7 @@ import {
   ACTION_ASSIGNMENT_FIELDS,
   CLOSED_LIVE_DEFECTS,
   KNOWN_SHADOWED_ROUTES,
+  NOTIFICATION_OWNERSHIP_RESOLUTION,
 } from '../authz/personalInboxAuthorization'
 import { DEFERRED_DELIVERY_READS } from '../authz/projectDeliveryReads'
 import { AI_CROSS_DOMAIN_MUTATIONS } from '../authz/aiCrossDomainMutations'
@@ -57,8 +58,10 @@ const stripComments = (s: string) => s
 /** The declaration + handler body of one route. */
 function handlerBody(m: { file: string; router: string; method: string; path: string }): string {
   const esc = m.path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // The closing `})` may be indented when the route spreads its guards over
+  // several lines, so do not anchor it to column 0.
   const re = new RegExp(
-    `${m.router}\\s*\\.\\s*${m.method.toLowerCase()}\\s*\\(\\s*'${esc}'[\\s\\S]*?\\n\\}\\)`,
+    `${m.router}\\s*\\.\\s*${m.method.toLowerCase()}\\s*\\(\\s*'${esc}'[\\s\\S]*?\\n\\s*\\}\\)`,
   )
   return re.exec(src(m.file))?.[0] ?? ''
 }
@@ -68,18 +71,21 @@ const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 // ─── 1. Scope reconciles ──────────────────────────────────────────────────────
 describe('the Phase 2C-4A entry set', () => {
-  it('covers exactly the 29 implementation endpoints', () => {
-    expect(PERSONAL_INBOX_ENDPOINTS.length).toBe(29)
+  it('covers all 36 Personal Inbox endpoints after Phase 2C-4B', () => {
+    // 29 closed by Phase 2C-4A + the 7 notification routes closed by 2C-4B.
+    expect(PERSONAL_INBOX_ENDPOINTS.length).toBe(36)
     const reads = PERSONAL_INBOX_ENDPOINTS.filter(e => e.kind === 'READ').length
     const muts  = PERSONAL_INBOX_ENDPOINTS.filter(e => e.kind === 'MUTATION').length
-    expect(reads, '14 actions + 2 personalAgent + 1 myWork').toBe(17)
-    expect(muts, '9 actions + 3 personalAgent').toBe(12)
+    expect(reads, '14 actions + 2 personalAgent + 1 myWork + 2 notifications').toBe(19)
+    expect(muts, '9 actions + 3 personalAgent + 5 notifications').toBe(17)
   })
 
   it('reconciles by file', () => {
     const byFile: Record<string, number> = {}
     for (const e of PERSONAL_INBOX_ENDPOINTS) byFile[e.file] = (byFile[e.file] ?? 0) + 1
-    expect(byFile).toEqual({ 'actions.ts': 23, 'personalAgent.ts': 5, 'myWork.ts': 1 })
+    expect(byFile).toEqual({
+      'actions.ts': 23, 'personalAgent.ts': 5, 'myWork.ts': 1, 'notifications.ts': 7,
+    })
   })
 
   it('names only endpoints that exist in source', () => {
@@ -113,14 +119,10 @@ describe('the Phase 2C-4A entry set', () => {
     expect(overlap, `already owned by an earlier slice: ${overlap.join(', ')}`).toEqual([])
   })
 
-  it('accounts for all 36 Personal Inbox endpoints — 29 closed, 7 deferred', () => {
-    expect(DEFERRED_NOTIFICATIONS.length).toBe(7)
+  it('accounts for all 36 Personal Inbox endpoints, with nothing left deferred', () => {
+    expect(DEFERRED_NOTIFICATIONS.length, 'Phase 2C-4B closed the deferral').toBe(0)
     expect(PERSONAL_INBOX_ENDPOINTS.length + DEFERRED_NOTIFICATIONS.length).toBe(36)
-
-    const closed = new Set(PERSONAL_INBOX_ENDPOINTS.map(key))
-    const deferred = new Set(DEFERRED_NOTIFICATIONS.map(key))
-    const intersection = [...closed].filter(k => deferred.has(k))
-    expect(intersection, 'a route cannot be both closed and deferred').toEqual([])
+    expect(NOTIFICATION_OWNERSHIP_RESOLUTION.endpointsClosed).toBe(7)
   })
 
   it('closes every Phase 2B-2 PERSONAL_INBOX deferred read except the notification pair', () => {
@@ -133,10 +135,7 @@ describe('the Phase 2C-4A entry set', () => {
     const stillOpen = deferredReads
       .filter(d => !closedReads.has(`${d.file} ${d.method} ${d.path}`))
       .map(d => `${d.file} ${d.method} ${d.path}`)
-    expect(stillOpen.sort(), 'only notifications may remain deferred').toEqual([
-      'notifications.ts GET /notifications',
-      'notifications.ts GET /notifications/count',
-    ])
+    expect(stillOpen, 'every Phase 2B-2 PERSONAL_INBOX read is now closed').toEqual([])
   })
 })
 
@@ -230,7 +229,7 @@ describe('self-scoped routes prove ownership, not just capability', () => {
       // Any of the three approved live-principal paths: the helper itself, the
       // personalAgent wrapper around it, or the action-access guard that
       // resolves it. What is banned is deriving identity from the token.
-      if (!/personalPrincipal\(|personalIds\(|requireActionAccess\(/.test(body)) {
+      if (!/personalPrincipal\(|personalIds\(|principalOf\(|requireActionAccess\(/.test(body)) {
         problems.push(`${key(e)} never resolves the live principal`)
       }
     }
@@ -244,7 +243,8 @@ describe('tenant-wide Personal Inbox routes require personal.admin', () => {
 
   it('covers the seven tenant-wide reads and the two SLA policy mutations', () => {
     expect(tenantWide.filter(e => e.kind === 'READ').length).toBe(7)
-    expect(tenantWide.filter(e => e.kind === 'MUTATION').length).toBe(2)
+    // 2 SLA policy mutations + the notification scan closed by Phase 2C-4B.
+    expect(tenantWide.filter(e => e.kind === 'MUTATION').length).toBe(3)
   })
 
   it('requires personal.admin and nothing weaker', () => {
@@ -412,56 +412,77 @@ describe('no in-scope route authorizes from the token', () => {
   })
 })
 
-// ─── 8. Notifications stay deferred AND stay pending ──────────────────────────
-describe('the notification deferral', () => {
-  it('names all seven endpoints', () => {
-    expect(DEFERRED_NOTIFICATIONS.filter(e => e.kind === 'READ').length).toBe(2)
-    expect(DEFERRED_NOTIFICATIONS.filter(e => e.kind === 'MUTATION').length).toBe(5)
+// ─── 8. The notification deferral is closed by building the model ────────────
+describe('the notification ownership model', () => {
+  const notif = PERSONAL_INBOX_ENDPOINTS.filter(e => e.file === 'notifications.ts')
+
+  it('closes all seven routes', () => {
+    expect(notif.length).toBe(7)
+    expect(notif.filter(e => e.kind === 'READ').length).toBe(2)
+    expect(notif.filter(e => e.kind === 'MUTATION').length).toBe(5)
   })
 
-  it('leaves every one of them unguarded and therefore still PENDING_PHASE2', () => {
-    for (const e of DEFERRED_NOTIFICATIONS) {
+  it('guards reads with personal.view, personal state with personal.write, scan with personal.admin', () => {
+    const cap = (path: string) => notif.find(e => e.path === path)!.capabilities
+    expect(cap('/notifications')).toEqual(['personal.view'])
+    expect(cap('/notifications/count')).toEqual(['personal.view'])
+    for (const path of ['/notifications/:id/read', '/notifications/:id/dismiss',
+                        '/notifications/read-all', '/notifications/clear']) {
+      expect(cap(path), path).toEqual(['personal.write'])
+    }
+    expect(cap('/notifications/scan')).toEqual(['personal.admin'])
+  })
+
+  it('leaves none of them PENDING_PHASE2', () => {
+    for (const e of notif) {
       const live = byKey.get(key(e))
       expect(live, `${key(e)}: no such endpoint`).toBeDefined()
-      expect(live!.capability,
-        `${key(e)} must stay pending — the deferral must not silently close it`).toBeNull()
+      expect(live!.capability, `${key(e)} must be guarded`).not.toBeNull()
       expect(ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)],
-        `${key(e)} must not be excepted out of the census`).toBeUndefined()
+        `${key(e)} must be genuinely guarded, not excepted out of the census`).toBeUndefined()
     }
   })
 
-  it('states the ownership-model reason on every entry', () => {
-    for (const e of DEFERRED_NOTIFICATIONS) {
-      expect(e.classification).toBe('DEFERRED_NOTIFICATION_OWNERSHIP_MODEL')
-      expect(e.reason).toMatch(/no user\/recipient\/owner column/)
+  it('binds every notification route to the live principal and its delivery row', () => {
+    const s = stripComments(src('notifications.ts'))
+    expect(s, 'identity must come from the live principal').toMatch(/personalPrincipal\(/)
+    expect(s, 'no token-derived identity').not.toMatch(/req\.auth\??\.userId/)
+    expect(s, 'no token-derived authority').not.toMatch(/req\.auth\??\.role/)
+  })
+
+  it('accepts no caller-supplied recipient, audience or capability set', () => {
+    // Comments stripped: the header explains that these cannot be submitted,
+    // and an explanation must never satisfy the assertion.
+    const s = stripComments(src('notifications.ts'))
+    for (const forbidden of ['recipient_id', 'required_capabilities', 'audience',
+                             'read_for_user', 'dismiss_for_user']) {
+      expect(s, `${forbidden} must not be readable from a request`).not.toContain(forbidden)
     }
   })
 
-  it('changed no notification route', () => {
-    const s = src('notifications.ts')
-    expect(s, 'no capability guard may have been added').not.toMatch(/requireCapability/)
-    expect(s, 'no personal capability may appear').not.toMatch(/personal\./)
+  it('records how the deferral was resolved', () => {
+    expect(NOTIFICATION_OWNERSHIP_RESOLUTION.decision).toBe('D13')
+    expect(NOTIFICATION_OWNERSHIP_RESOLUTION.migration).toMatch(/085/)
+    expect(NOTIFICATION_OWNERSHIP_RESOLUTION.legacyBackfill).toMatch(/LEGACY_OWNER_ONLY/)
   })
 })
 
 // ─── 9. Exit backlog ──────────────────────────────────────────────────────────
 describe('the Phase 2C-4A exit backlog', () => {
-  it('leaves exactly 12 pending ordinary mutations, in four named groups', () => {
+  it('leaves exactly 7 pending ordinary mutations, in three named groups', () => {
     const pending = endpoints
       .filter(e => MUTATION_METHODS.has(e.method) && !e.capability)
       .filter(e => !ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)])
-    expect(pending.length).toBe(12)
+    expect(pending.length).toBe(7)
 
     const byFile: Record<string, number> = {}
     for (const e of pending) byFile[e.file] = (byFile[e.file] ?? 0) + 1
-    expect(byFile).toEqual({
-      'notifications.ts': 5, 'scim.ts': 4, 'iot.ts': 2, 'denverMcp.ts': 1,
-    })
+    expect(byFile).toEqual({ 'scim.ts': 4, 'iot.ts': 2, 'denverMcp.ts': 1 })
   })
 
   it('leaves no pending endpoint in the three closed files', () => {
     const stillPending = endpoints
-      .filter(e => (PI_FILES as readonly string[]).includes(e.file) && !e.capability)
+      .filter(e => [...PI_FILES, 'notifications.ts'].includes(e.file) && !e.capability)
       .map(e => e.key)
     expect(stillPending,
       `actions/personalAgent/myWork must be fully closed:\n  ${stillPending.join('\n  ')}`).toEqual([])

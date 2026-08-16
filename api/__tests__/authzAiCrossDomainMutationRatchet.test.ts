@@ -435,19 +435,19 @@ describe('registry hygiene', () => {
   })
 
   it('accounts for the whole exit backlog by group', () => {
-    // The groups Phase 2C-3 deferred summed to 24 at ITS exit. Phase 2C-4A has
-    // since closed 12 of them — the actions.ts and personalAgent.ts halves of
-    // the Personal Inbox group — leaving notifications.ts deferred on an
-    // ownership-model contradiction. This still asserts the invariant that
-    // matters: every mutation Phase 2C-3 left pending belongs to a NAMED group,
-    // and no unexplained mutation has appeared since.
+    // The groups Phase 2C-3 deferred summed to 24 at ITS exit. Phase 2C-4A then
+    // closed 12 (actions.ts, personalAgent.ts) and Phase 2C-4B the remaining 5
+    // (notifications.ts, once D13 supplied an ownership model). This still
+    // asserts the invariant that matters: every mutation Phase 2C-3 left pending
+    // belongs to a NAMED group, and no unexplained mutation has appeared since.
     const total = Object.values(PHASE_2C3_OUT_OF_SCOPE).reduce((s, g) => s + g.count, 0)
     expect(total, 'the groups Phase 2C-3 deferred').toBe(24)
 
     const pending = endpoints
       .filter(e => MUTATION_METHODS.has(e.method) && !e.capability)
       .filter(e => !ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)])
-    expect(pending.length, 'after the Phase 2C-4A Personal Inbox core closure').toBe(12)
+    expect(pending.length,
+      'after the Personal Inbox closures — 2C-4A core, then 2C-4B notifications').toBe(7)
     for (const e of pending) {
       expect(OUT_OF_SCOPE_FILES.has(e.file),
         `${e.key} is pending but belongs to no deferred group`).toBe(true)

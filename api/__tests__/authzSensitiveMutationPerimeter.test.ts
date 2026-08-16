@@ -205,14 +205,15 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     // 3 personalAgent.ts mutations. Subtracted explicitly, for the same reason
     // the Phase 2C-3 term is: an earlier slice's proof must not be able to pass
     // because a later slice shrank the set it measures against.
-    const closedByPhase2C4A = PERSONAL_INBOX_ENDPOINTS.filter(e => e.kind === 'MUTATION').length
-    expect(closedByPhase2C4A, 'the Phase 2C-4A mutation scope').toBe(12)
-    expect(exit - closedByPhase2C3 - closedByPhase2C4A,
+    // Phase 2C-4A closed 12 (actions 9, personalAgent 3); Phase 2C-4B then
+    // closed the 5 notification mutations once D13 supplied an ownership model.
+    const closedByPersonalInbox = PERSONAL_INBOX_ENDPOINTS.filter(e => e.kind === 'MUTATION').length
+    expect(closedByPersonalInbox, 'the Personal Inbox mutation scope, 2C-4A + 2C-4B').toBe(17)
+    expect(exit - closedByPhase2C3 - closedByPersonalInbox,
       'exit backlog must equal the measured pending-mutation count').toBe(pendingMutations.length)
 
-    // The remainder: notifications 5 (deferred ownership model), SCIM 4,
-    // hybrid IoT 2, dead denverMcp route 1.
-    expect(pendingMutations.length).toBe(12)
+    // The remainder: SCIM 4, hybrid IoT 2, dead denverMcp route 1.
+    expect(pendingMutations.length).toBe(7)
 
     // The added route must actually exist and be guarded, or the exclusion above
     // would be a way to hide an unprotected endpoint.

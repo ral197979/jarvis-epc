@@ -55,8 +55,12 @@ export type PersonalInboxClassification =
   | 'PERSONAL_TENANT_ADMIN_MUTATION'
   /** Personal state AND assistant invocation — a real conjunction. */
   | 'PERSONAL_ASSISTANT_MUTATION'
-  /** Named, but not closed: the data model has no personal scope to enforce. */
-  | 'DEFERRED_NOTIFICATION_OWNERSHIP_MODEL'
+  /** Per-user notification delivery read. ADR-014 Phase 2C-4B. */
+  | 'NOTIFICATION_SELF_READ'
+  /** Per-user notification delivery state change. ADR-014 Phase 2C-4B. */
+  | 'NOTIFICATION_SELF_MUTATION'
+  /** Tenant scan + recipient fan-out across every inbox. Owner only. */
+  | 'NOTIFICATION_TENANT_ADMIN_MUTATION'
 
 /** How a route is bound to a principal. */
 export type PersonalScope =
@@ -220,6 +224,42 @@ export const PERSONAL_INBOX_ENDPOINTS: readonly PersonalInboxEndpoint[] = [
     reason: 'Closes an assistant-gate bypass. This calls the same askJarvis() engine as /api/v1/ask — which is gated router-wide by assistant.use — and it persists chat_sessions plus chat_messages and consumes AI budget. Guarded by personal.write alone it would be a cheaper path to Jarvis for a principal the assistant gate refuses. The conjunction is behaviourally real: field_ops holds personal.write but not assistant.use and is refused.',
   },
 
+  // ══ notifications.ts — closed by ADR-014 Phase 2C-4B ═════════════════════
+  // Phase 2C-4A deferred these seven because the table had no recipient column
+  // and read_at/dismissed_at were shared per-tenant row state. D13 split the row
+  // into a shared alert event plus per-user `notification_deliveries`, so a
+  // personal scope now exists to authorize against.
+  //
+  // Both checks are required on every one of them: the delivery must belong to
+  // the live principal, AND the principal must still hold the event's
+  // `required_capabilities`. Delivery membership is not permanent authorization.
+  ...(['/notifications', '/notifications/count'] as const).map(path => ({
+    file: 'notifications.ts', router: 'notificationsRouter', method: 'GET' as const, path,
+    kind: 'READ' as const, classification: 'NOTIFICATION_SELF_READ' as const,
+    capabilities: ['personal.view'] as readonly ServerCapability[], scope: 'SELF' as const,
+    ownershipRule: 'joins notification_deliveries on user_id = live principal, and re-checks n.required_capabilities against the principal\'s current capability set',
+    reason: 'Returns only this user\'s deliveries. The live source-authority re-check is what makes a demotion take effect immediately: a user who received a budget alert while holding cost.view stops seeing it the moment the database says they do not, without waiting for a token to expire.',
+  })),
+  ...([
+    ['/notifications/:id/read', 'marks one of the caller\'s own deliveries read'],
+    ['/notifications/:id/dismiss', 'dismisses one of the caller\'s own deliveries'],
+    ['/notifications/read-all', 'marks every accessible delivery of THIS user read'],
+    ['/notifications/clear', 'dismisses THIS user\'s deliveries; the shared event and every other inbox survive'],
+  ] as const).map(([path, what]) => ({
+    file: 'notifications.ts', router: 'notificationsRouter', method: 'POST' as const, path,
+    kind: 'MUTATION' as const, classification: 'NOTIFICATION_SELF_MUTATION' as const,
+    capabilities: ['personal.write'] as readonly ServerCapability[], scope: 'SELF' as const,
+    ownershipRule: 'UPDATE targets notification_deliveries WHERE user_id = live principal, gated on the event\'s required_capabilities',
+    reason: `${what}. Before Phase 2C-4B this wrote notifications.read_at / dismissed_at — shared tenant columns — so one user acting changed what every other user saw, and "clear" wiped the whole tenant's feed. The :id is an event id, never a delivery id, so no value a caller can supply names a peer's row.`,
+  })),
+  {
+    file: 'notifications.ts', router: 'notificationsRouter', method: 'POST', path: '/notifications/scan',
+    kind: 'MUTATION', classification: 'NOTIFICATION_TENANT_ADMIN_MUTATION',
+    capabilities: ['personal.admin'], scope: 'TENANT_ADMIN',
+    ownershipRule: 'capability-only — personal.admin IS the tenant-wide authority',
+    reason: 'Scans every module in the tenant and fans deliveries out across every user\'s inbox. That is Personal Inbox administration, so owner only. Deliberately not platform.admin (ADR-014 D2 keeps the platform administrator out of business workflow) and not personal.write (every ordinary holder has it). The guard runs before any scan query, so a refused caller creates no event and no delivery.',
+  },
+
   // ══ myWork.ts ════════════════════════════════════════════════════════════
   {
     file: 'myWork.ts', router: 'router', method: 'GET', path: '/my-work',
@@ -231,26 +271,18 @@ export const PERSONAL_INBOX_ENDPOINTS: readonly PersonalInboxEndpoint[] = [
 ]
 
 /**
- * `notifications.ts` — named, deliberately NOT closed, still PENDING_PHASE2.
+ * The notification deferral, CLOSED by ADR-014 Phase 2C-4B.
  *
- * ADR-014 Phase 2C-4A §5 (owner decision). The blocked Phase 2C-4 analysis
- * proved from `api/db/migrations/064_notifications.sql` that the table carries
- * tenant_id, category, priority, title, body, source_type, source_id, link_tab,
- * read_at, dismissed_at and created_at — and **no user, recipient or owner
- * column**. `read_at`/`dismissed_at` are single columns on a shared tenant row,
- * so one user marking a notification read marks it read for everyone, and every
- * service call takes only a tenant id.
+ * Phase 2C-4A recorded seven endpoints it could not close: `notifications` had
+ * no user/recipient/owner column, and `read_at`/`dismissed_at` were single
+ * columns on a shared tenant row, so the required "user A cannot mutate user B's
+ * notification" invariant was not expressible against the schema.
  *
- * There is therefore no personal scope to enforce, and the required
- * "user A cannot mutate user B's notification" invariant is not expressible
- * against this schema. Filtering by the caller would be fabricated ownership,
- * which §5 forbids; the fail-closed owner-only alternative is also explicitly
- * withheld, because it decides product behaviour that belongs with the schema
- * decision.
- *
- * These 7 endpoints keep their current behaviour and remain counted as pending
- * debt. They are named here so an unexplained omission and a deliberate deferral
- * cannot look the same. ADR-014 Phase 2C-4B owns the resolution.
+ * Owner decision D13 supplied the missing model — a shared alert event plus
+ * per-user `notification_deliveries` (migration 085) — and all seven are now
+ * registered above with a real ownership rule. The list is kept, empty, so the
+ * ratchet can assert the deferral was closed by building the model rather than
+ * by quietly deleting the record of it.
  */
 export interface DeferredNotificationEndpoint {
   file: string; router: string; method: string; path: string
@@ -259,29 +291,17 @@ export interface DeferredNotificationEndpoint {
   reason: string
 }
 
-const NOTIF_REASON =
-  'The notifications table has no user/recipient/owner column and read_at/dismissed_at are shared '
-  + 'per-tenant row state, so there is no personal scope to enforce and no per-user read model to '
-  + 'authorize against. Deferred whole to ADR-014 Phase 2C-4B, which must decide the data model and '
-  + 'the product behaviour together. Unchanged and still PENDING_PHASE2.'
+export const DEFERRED_NOTIFICATIONS: readonly DeferredNotificationEndpoint[] = []
 
-export const DEFERRED_NOTIFICATIONS: readonly DeferredNotificationEndpoint[] = [
-  ...(['/notifications', '/notifications/count'] as const).map(path => ({
-    file: 'notifications.ts', router: 'notificationsRouter', method: 'GET', path,
-    kind: 'READ' as const,
-    classification: 'DEFERRED_NOTIFICATION_OWNERSHIP_MODEL' as const,
-    reason: NOTIF_REASON,
-  })),
-  ...([
-    '/notifications/scan', '/notifications/read-all', '/notifications/clear',
-    '/notifications/:id/read', '/notifications/:id/dismiss',
-  ] as const).map(path => ({
-    file: 'notifications.ts', router: 'notificationsRouter', method: 'POST', path,
-    kind: 'MUTATION' as const,
-    classification: 'DEFERRED_NOTIFICATION_OWNERSHIP_MODEL' as const,
-    reason: NOTIF_REASON,
-  })),
-]
+/** What Phase 2C-4B replaced, kept so the ratchet can assert it stays replaced. */
+export const NOTIFICATION_OWNERSHIP_RESOLUTION = {
+  decision: 'D13',
+  migration: '085_notification_deliveries.sql',
+  before: 'one tenant-shared row; read_at/dismissed_at global to the tenant; no recipient column',
+  after:  'shared alert event + per-user notification_deliveries, unique per (notification_id, user_id)',
+  legacyBackfill: 'LEGACY_OWNER_ONLY under crossdomain.read — D14',
+  endpointsClosed: 7,
+} as const
 
 /**
  * Fields that decide *who owns* an action rather than how it is progressing.

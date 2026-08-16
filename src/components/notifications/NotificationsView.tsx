@@ -179,6 +179,10 @@ export default function NotificationsView({ onNavigate }: Props) {
     setScanning(true)
     try {
       const res  = await fetch('/api/v1/notifications/scan', { method: 'POST' })
+      // ADR-014 Phase 2C-4B: scanning fans alerts out across every user's inbox,
+      // so it is owner-only (personal.admin). Report that plainly instead of the
+      // generic failure — the rest of this view stays available to any holder.
+      if (res.status === 403) { setLastScan('Scanning requires owner permission'); return }
       const data = await res.json() as { inserted: number }
       setLastScan(`${data.inserted} new alert${data.inserted !== 1 ? 's' : ''} generated`)
       await load()
