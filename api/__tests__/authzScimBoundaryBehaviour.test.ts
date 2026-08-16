@@ -237,6 +237,31 @@ describe('a credential cannot reach another tenant', () => {
     expect(tenantsUsed()).toEqual([TENANT_A])
   })
 
+  // Every route, not just the list. A tenant override that only the list route
+  // ignores is not tenant isolation — mutation testing caught exactly that gap:
+  // a `req.query.tenantId ?? req.scimTenantId` on GET /Users/:id survived a
+  // suite that checked the override on the collection alone.
+  const TENANT_OVERRIDE: Array<[string, () => request.Test]> = [
+    ['GET /Users',      () => request(makeApp()).get(`/scim/v2/Users?tenantId=${TENANT_B}`)],
+    ['GET /Users/:id',  () => request(makeApp()).get(`/scim/v2/Users/${USER_B}?tenantId=${TENANT_B}`)],
+    ['POST /Users',     () => request(makeApp()).post(`/scim/v2/Users?tenantId=${TENANT_B}`).send({ userName: 'x@y.com', tenantId: TENANT_B })],
+    ['PUT /Users/:id',  () => request(makeApp()).put(`/scim/v2/Users/${USER_B}?tenantId=${TENANT_B}`).send({ displayName: 'X', tenantId: TENANT_B })],
+    ['PATCH /Users/:id', () => request(makeApp()).patch(`/scim/v2/Users/${USER_B}?tenantId=${TENANT_B}`).send({ Operations: [{ op: 'replace', path: 'active', value: false }], tenantId: TENANT_B })],
+    ['DELETE /Users/:id', () => request(makeApp()).delete(`/scim/v2/Users/${USER_B}?tenantId=${TENANT_B}`)],
+  ]
+
+  it.each(TENANT_OVERRIDE)('%s scopes to the credential tenant, never a supplied one', async (_label, send) => {
+    await send().set('Authorization', 'Bearer tok-a')
+    expect(tenantsUsed(), 'every query must be scoped to the credential tenant').toEqual([TENANT_A])
+    expect(USERS[TENANT_B][0]['is_active'], 'tenant B state is unchanged').toBe(true)
+  })
+
+  it.each(TENANT_OVERRIDE)('%s discloses no tenant B data under a tenant override', async (label, send) => {
+    const res = await send().set('Authorization', 'Bearer tok-a')
+    expect(JSON.stringify(res.body), `${label} leaked a tenant B identifier`).not.toContain(USER_B)
+    expect(JSON.stringify(res.body), `${label} leaked a tenant B email`).not.toContain('b@x.com')
+  })
+
   it('cannot escape tenant scope through the SCIM filter', async () => {
     const res = await request(makeApp())
       .get(`/scim/v2/Users?filter=${encodeURIComponent('userName eq "b@x.com"')}`)
