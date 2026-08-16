@@ -72,7 +72,13 @@ router.get('/entity/:entityType/:entityId', requireCapability('crossdomain.read'
   }
 })
 
-router.patch('/:twinId/status', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+// ADR-014 Phase 2C-5 §17 — this is a write. `updateTwinStatus` runs
+// `UPDATE operational_twins SET status = $3`, so guarding it with
+// `crossdomain.read` let a read-only holder change persisted twin state. It now
+// carries the same `crossdomain.write` the sibling writes in this file already
+// use (POST /:twinId/sync, POST /:twinId/events, …); no new capability was
+// introduced and no role gained authority it did not already hold for twin writes.
+router.patch('/:twinId/status', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     await updateTwinStatus(req.params.twinId as string, tenantId, req.body.status)

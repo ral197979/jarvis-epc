@@ -196,7 +196,13 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     // Subtracted explicitly rather than by lowering ENTRY: this slice's
     // arithmetic must keep proving what THIS slice closed, and a later slice
     // must not be able to make that proof pass by shrinking the entry set.
-    const closedByPhase2C3 = AI_CROSS_DOMAIN_MUTATIONS.length + PHASE_2C3_CONSEQUENTIAL.length
+    // `addedIn` excluded: AI_CROSS_DOMAIN_MUTATIONS is a living registry, and
+    // Phase 2C-5 added `twin.ts PATCH /:twinId/status` to it as a semantic
+    // correction. That endpoint was never part of the Phase 2C-3 scope — it was
+    // already guarded, just with a READ capability — so counting it here would
+    // inflate a historical number rather than describe what 2C-3 closed.
+    const closedByPhase2C3 = AI_CROSS_DOMAIN_MUTATIONS.filter(m => m.addedIn === undefined).length
+      + PHASE_2C3_CONSEQUENTIAL.length
     expect(closedByPhase2C3, 'the Phase 2C-3 scope').toBe(45)
     expect(exit - closedByPhase2C3,
       'the backlog Phase 2C-3 left behind').toBe(24)
@@ -210,10 +216,23 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     const closedByPersonalInbox = PERSONAL_INBOX_ENDPOINTS.filter(e => e.kind === 'MUTATION').length
     expect(closedByPersonalInbox, 'the Personal Inbox mutation scope, 2C-4A + 2C-4B').toBe(17)
     expect(exit - closedByPhase2C3 - closedByPersonalInbox,
+      'the backlog Phase 2C-4B left behind').toBe(7)
+
+    // ADR-014 Phase 2C-5 closed that final 7 — SCIM 4, hybrid IoT 2,
+    // denverMcp 1 — by establishing a trust boundary for each in
+    // ENDPOINT_EXCEPTIONS rather than by giving a machine protocol a user
+    // capability. Counted from the census, not from a literal, so the term is
+    // only satisfied while those endpoints really do carry a boundary class.
+    const closedByPhase2C5 = census.filter(e =>
+      EXCEPTIONS.has(e.key) && !e.capability && e.method !== 'GET' &&
+      ['scim.ts', 'iot.ts', 'denverMcp.ts'].includes(e.file)).length
+    expect(closedByPhase2C5, 'the Phase 2C-5 residual mutation scope').toBe(7)
+
+    expect(exit - closedByPhase2C3 - closedByPersonalInbox - closedByPhase2C5,
       'exit backlog must equal the measured pending-mutation count').toBe(pendingMutations.length)
 
-    // The remainder: SCIM 4, hybrid IoT 2, dead denverMcp route 1.
-    expect(pendingMutations.length).toBe(7)
+    // Phase 2 exit: no ordinary mutation remains pending anywhere.
+    expect(pendingMutations.map(e => e.key)).toEqual([])
 
     // The added route must actually exist and be guarded, or the exclusion above
     // would be a way to hide an unprotected endpoint.

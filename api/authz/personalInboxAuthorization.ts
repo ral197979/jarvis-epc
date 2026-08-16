@@ -311,30 +311,45 @@ export const NOTIFICATION_OWNERSHIP_RESOLUTION = {
 export const ACTION_ASSIGNMENT_FIELDS = ['assigned_to_user_id', 'assigned_to_role'] as const
 
 /**
- * Pre-existing route shadowing found while closing this surface — NOT introduced
- * here, and NOT fixed here.
+ * Route shadowing in `actions.ts` — found by Phase 2C-4A, REPAIRED by
+ * Phase 2C-5 §24. Empty is the closed state, and it is asserted, not assumed.
  *
- * `actions.ts` declares `GET /:id` before three literal single-segment GET
- * routes, so Express resolves `/actions/sla-rules`, `/actions/delegations` and
- * `/actions/inbox` to the single-action handler. Each therefore looks up an
- * action whose id is the literal string and answers 404 for everyone.
+ * What it was: `actions.ts` declared `GET /:id` before three literal
+ * single-segment GET routes, so Express — which matches in declaration order —
+ * resolved `/actions/sla-rules`, `/actions/delegations` and `/actions/inbox` to
+ * the single-action handler. Each looked up an action whose id was the literal
+ * string and answered 404 for everyone.
  *
- * Security consequence: none. The shadowing is strictly MORE restrictive than
- * the guard each route declares — nothing is disclosed and nothing is written.
- * The declared guards below are correct and take effect the moment the
- * declaration order is fixed.
+ * Phase 2C-4A recorded it rather than repairing it, on the grounds that
+ * reordering makes three endpoints reachable for the first time — a functional
+ * change that slice did not authorize — and noted the security consequence as
+ * "none, strictly more restrictive". Phase 2C-5 §23 re-examined that and found
+ * the second half incomplete: `/inbox` declares `personal.admin` while
+ * `GET /:id` declares `personal.view`, so the request was being served under the
+ * WEAKER guard. Nothing leaked, because the handler 404s, but the assertion that
+ * the shadow was purely restrictive did not hold at the authorization layer.
+ * Two live client callers (`UnifiedOperationsInbox.tsx`, `ActionClusterView.tsx`)
+ * were also 404ing against a surface the product presents as working.
  *
- * It is recorded rather than repaired because reordering would make three
- * endpoints reachable for the first time, which is a functional change to the
- * Action Center rather than an authorization one, and ADR-014 Phase 2C-4A does
- * not authorize it. The ratchet asserts this set does not GROW, so a new shadow
- * cannot appear unnoticed.
+ * Phase 2C-5 §24 moved the three declarations above `GET /:id`. No handler body,
+ * path or guard changed. `authzActionsRouteResolution.test.ts` proves which
+ * handler now serves each path, proves `/:id` still resolves, and proves
+ * `/inbox` is refused for a `personal.view`-only role — so a regression in
+ * declaration order fails the build rather than silently re-shadowing.
+ *
+ * The constant is kept, empty, rather than deleted: the ratchet asserts it is
+ * empty, which is a stronger statement than the assertion disappearing.
  */
-export const KNOWN_SHADOWED_ROUTES = [
-  { file: 'actions.ts', router: 'actionsRouter', method: 'GET', path: '/sla-rules',   shadowedBy: 'GET /:id' },
-  { file: 'actions.ts', router: 'actionsRouter', method: 'GET', path: '/delegations', shadowedBy: 'GET /:id' },
-  { file: 'actions.ts', router: 'actionsRouter', method: 'GET', path: '/inbox',       shadowedBy: 'GET /:id' },
-] as const
+export interface ShadowedRoute {
+  file:       string
+  router:     string
+  method:     string
+  path:       string
+  /** The earlier declaration that consumes this path. */
+  shadowedBy: string
+}
+
+export const KNOWN_SHADOWED_ROUTES: readonly ShadowedRoute[] = []
 
 /** Live defects this slice closed, kept so the ratchet can assert they stay closed. */
 export const CLOSED_LIVE_DEFECTS = [

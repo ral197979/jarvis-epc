@@ -469,14 +469,27 @@ describe('the notification ownership model', () => {
 
 // ─── 9. Exit backlog ──────────────────────────────────────────────────────────
 describe('the Phase 2C-4A exit backlog', () => {
-  it('leaves exactly 7 pending ordinary mutations, in three named groups', () => {
+  it('has been fully drained by Phase 2C-5, and the seven are accounted for', () => {
+    // At Phase 2C-4A exit this asserted exactly 7 pending ordinary mutations in
+    // three named groups: scim.ts 4, iot.ts 2, denverMcp.ts 1. ADR-014
+    // Phase 2C-5 closed all seven by establishing a trust boundary for each
+    // rather than by inventing a user capability, so the pending count is now
+    // zero. The group decomposition is still asserted below — against the
+    // endpoints that carry a boundary exception — so "drained" cannot be
+    // achieved by the endpoints quietly disappearing.
     const pending = endpoints
       .filter(e => MUTATION_METHODS.has(e.method) && !e.capability)
       .filter(e => !ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)])
-    expect(pending.length).toBe(7)
+    expect(pending.map(e => e.key), 'Phase 2C-5 exit: zero pending ordinary mutations').toEqual([])
+
+    const closed = endpoints
+      .filter(e => MUTATION_METHODS.has(e.method) && !e.capability)
+      .filter(e => ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)])
+      .filter(e => ['scim.ts', 'iot.ts', 'denverMcp.ts'].includes(e.file))
+    expect(closed.length, 'the same seven, now boundary-classified').toBe(7)
 
     const byFile: Record<string, number> = {}
-    for (const e of pending) byFile[e.file] = (byFile[e.file] ?? 0) + 1
+    for (const e of closed) byFile[e.file] = (byFile[e.file] ?? 0) + 1
     expect(byFile).toEqual({ 'scim.ts': 4, 'iot.ts': 2, 'denverMcp.ts': 1 })
   })
 

@@ -85,9 +85,20 @@ const OUT_OF_SCOPE_FILES = new Set(
 )
 const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
-/** Everything this slice decided, keyed identically to the census. */
+/**
+ * Semantic corrections a LATER slice added to this registry. They were not in
+ * the Phase 2C-3 entry census, so they are held out of the frozen entry-set
+ * reconstruction below and asserted on their own terms instead — see
+ * "Phase 2C-5 semantic corrections". Bumping the historical 45 to absorb them
+ * would destroy the very fact that ratchet exists to preserve.
+ */
+const PHASE_2C5_CORRECTIONS = AI_CROSS_DOMAIN_MUTATIONS.filter(m => m.addedIn === 'PHASE_2C5')
+
+/** Everything the Phase 2C-3 slice decided, keyed identically to the census. */
 const dispositionByKey = new Map<string, string>([
-  ...AI_CROSS_DOMAIN_MUTATIONS.map(m => [key(m), m.disposition] as [string, string]),
+  ...AI_CROSS_DOMAIN_MUTATIONS
+    .filter(m => m.addedIn === undefined)
+    .map(m => [key(m), m.disposition] as [string, string]),
   ...NEWLY_DISCOVERED_CONSEQUENTIAL.map(m => [key(m), 'CONSEQUENTIAL_TRANSITION'] as [string, string]),
 ])
 
@@ -436,21 +447,48 @@ describe('registry hygiene', () => {
 
   it('accounts for the whole exit backlog by group', () => {
     // The groups Phase 2C-3 deferred summed to 24 at ITS exit. Phase 2C-4A then
-    // closed 12 (actions.ts, personalAgent.ts) and Phase 2C-4B the remaining 5
-    // (notifications.ts, once D13 supplied an ownership model). This still
-    // asserts the invariant that matters: every mutation Phase 2C-3 left pending
-    // belongs to a NAMED group, and no unexplained mutation has appeared since.
+    // closed 12 (actions.ts, personalAgent.ts), Phase 2C-4B the next 5
+    // (notifications.ts, once D13 supplied an ownership model), and Phase 2C-5
+    // the last 7 (SCIM 4, IoT hybrid 2, denverMcp 1) by giving each a trust
+    // boundary in ENDPOINT_EXCEPTIONS rather than a user capability.
     const total = Object.values(PHASE_2C3_OUT_OF_SCOPE).reduce((s, g) => s + g.count, 0)
     expect(total, 'the groups Phase 2C-3 deferred').toBe(24)
 
     const pending = endpoints
       .filter(e => MUTATION_METHODS.has(e.method) && !e.capability)
       .filter(e => !ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)])
-    expect(pending.length,
-      'after the Personal Inbox closures — 2C-4A core, then 2C-4B notifications').toBe(7)
-    for (const e of pending) {
-      expect(OUT_OF_SCOPE_FILES.has(e.file),
-        `${e.key} is pending but belongs to no deferred group`).toBe(true)
+    expect(pending.map(e => e.key),
+      'ADR-014 Phase 2C-5 exit: no ordinary mutation may remain pending').toEqual([])
+
+    // Non-vacuity: the seven Phase 2C-5 closed above are still real endpoints
+    // that still carry no user capability — they are accounted for by an
+    // explicit trust-boundary exception, not by having quietly disappeared.
+    const closedByException = endpoints
+      .filter(e => MUTATION_METHODS.has(e.method) && !e.capability)
+      .filter(e => ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)])
+      .filter(e => OUT_OF_SCOPE_FILES.has(e.file))
+      .map(e => e.key).sort()
+    expect(closedByException, 'the seven mutations Phase 2C-5 closed by trust boundary').toEqual([
+      'denverMcp.ts router.POST /call',
+      'iot.ts iotRouter.POST /iot/ingest',
+      'iot.ts iotRouter.POST /sensors/:uid/readings',
+      'scim.ts scimRouter.DELETE /Users/:id',
+      'scim.ts scimRouter.PATCH /Users/:id',
+      'scim.ts scimRouter.POST /Users',
+      'scim.ts scimRouter.PUT /Users/:id',
+    ])
+  })
+
+  it('registers the Phase 2C-5 semantic corrections, and only those', () => {
+    // Held out of the frozen Phase 2C-3 entry set above; asserted here so the
+    // hold-out cannot become a place to hide an unexamined mutation.
+    expect(PHASE_2C5_CORRECTIONS.map(key).sort()).toEqual([
+      'twin.ts router.PATCH /:twinId/status',
+    ])
+    for (const m of PHASE_2C5_CORRECTIONS) {
+      const e = byKey.get(key(m))
+      expect(e, `${key(m)} must still exist in source`).toBeTruthy()
+      expect(e!.allCapabilities, `${key(m)} guard must match the registry`).toEqual([...m.allOf])
     }
   })
 })

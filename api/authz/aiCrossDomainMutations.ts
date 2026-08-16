@@ -74,6 +74,15 @@ export interface AiMutation {
   /** Set when the entry relies on the temporary Owner-only fail-closed policy. */
   temporary?: boolean
   /**
+   * Set when the entry was NOT part of the Phase 2C-3 entry census but was added
+   * by a later slice as a semantic correction. The Phase 2C-3 ratchet
+   * reconstructs its frozen 45-endpoint entry set from source plus this
+   * registry, so a later addition would silently inflate a historical count.
+   * Entries carrying this marker are excluded from that reconstruction and
+   * asserted separately, which keeps both facts true at once.
+   */
+  addedIn?: 'PHASE_2C5'
+  /**
    * The persisted effect, in the words of the handler. `'none'` marks a
    * classification correction — asserted against the source by the ratchet.
    */
@@ -215,6 +224,17 @@ export const AI_CROSS_DOMAIN_MUTATIONS: readonly AiMutation[] = [
     effect: 'DELETE FROM twin_relationships',
     reason: 'Removes an edge from the same graph; deletion is not lesser authority than creation.',
   },
+  // ADR-014 Phase 2C-5 §17 — semantic correction. Registered in
+  // `aiCrossDomainReads.ts` as a CROSS_DOMAIN_AI_READ until Phase 2C-5, and
+  // guarded on the route by `crossdomain.read`, even though the handler writes.
+  // A read capability can no longer change twin status.
+  {
+    file: 'twin.ts', router: 'router', method: 'PATCH', path: '/:twinId/status',
+    disposition: 'CROSS_DOMAIN_MUTATION', allOf: ['crossdomain.write'], temporary: true,
+    addedIn: 'PHASE_2C5',
+    effect: 'UPDATE operational_twins SET status',
+    reason: 'updateTwinStatus writes the sync-health status of a twin over the unbounded twin_entity_type set. It is the same persisted object POST /:twinId/sync maintains, so it carries the same crossdomain.write authority rather than the crossdomain.read it was declared with before Phase 2C-5.',
+  },
 
   // ── optimization.ts (5) ────────────────────────────────────────────────────
   // Only one of the five writes. The other four synthesize a report and return
@@ -338,7 +358,7 @@ export const AI_CROSS_DOMAIN_MUTATIONS: readonly AiMutation[] = [
     file: 'agentRisk.ts', router: 'agentRiskRouter', method: 'POST', path: '/analyze',
     disposition: 'CROSS_DOMAIN_MUTATION', allOf: ['crossdomain.write'], temporary: true,
     effect: 'INSERT INTO agent_tasks (durable job)',
-    reason: 'Identical enqueueTask to GET /agents/risk/overview, which Phase 2B-3 set at crossdomain.read — "risk-agent synthesis across the tenant, distinct from the project risk register". Deliberately NOT risk.write: it writes no risk register row.',
+    reason: 'Enqueues the analyze_risk job for a scope. Until Phase 2C-5 the identical enqueueTask was also reachable through GET /agents/risk/overview at crossdomain.read; §19 removed that side effect, so this route is now the ONLY way to create the job and the read half merely observes it. Deliberately NOT risk.write: it writes no risk register row.',
   },
   {
     file: 'agentRisk.ts', router: 'agentRiskRouter', method: 'POST', path: '/mitigate',

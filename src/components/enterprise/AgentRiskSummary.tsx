@@ -15,6 +15,12 @@ interface RiskTask {
 
 interface Props {
   tenantId: string
+  /**
+   * The principal recorded as having requested the analysis. Required because
+   * running an analysis is a mutation (POST /agents/risk/analyze,
+   * `crossdomain.write`) and the route records `created_by` from this value.
+   */
+  userId: string
   scopeType?: string
   scopeId?: string
   autoLoad?: boolean
@@ -57,13 +63,24 @@ function GaugeMeter({ score }: { score: number }) {
   )
 }
 
-export function AgentRiskSummary({ tenantId, scopeType = 'global', scopeId = '', autoLoad = false }: Props) {
+// ADR-014 Phase 2C-5 §19–§22. Loading this card used to CREATE durable agent
+// work: `GET /agents/risk/overview` enqueued an analysis task, so simply
+// rendering the card wrote to the queue under a read capability. Reading and
+// running are now separate actions against separate routes:
+//
+//   load  → GET  /agents/risk/overview   (crossdomain.read)  observes the latest
+//   run   → POST /agents/risk/analyze    (crossdomain.write) creates the task
+//
+// A caller holding only read authority can still see the newest analysis; it can
+// no longer cause one.
+export function AgentRiskSummary({ tenantId, userId, scopeType = 'global', scopeId = '', autoLoad = false }: Props) {
   const [task, setTask] = useState<RiskTask | null>(null)
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
 
   useEffect(() => {
-    if (autoLoad) void triggerAnalysis()
+    // Read-only on mount. This deliberately no longer starts an analysis.
+    if (autoLoad) void loadLatest()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, scopeId])
 
@@ -76,10 +93,37 @@ export function AgentRiskSummary({ tenantId, scopeType = 'global', scopeId = '',
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [polling, task])
 
-  async function triggerAnalysis() {
+  /** Read the newest analysis for this scope. Creates nothing. */
+  async function loadLatest() {
     setLoading(true)
     try {
       const res = await fetch(`/api/v1/agents/risk/overview?tenantId=${tenantId}&scopeType=${scopeType}&scopeId=${scopeId}`)
+      const data = await res.json() as {
+        task: { taskId: string; status: string; result?: RiskTask['result'] } | null
+      }
+      if (!data.task) { setTask(null); return }
+      setTask({
+        taskId: data.task.taskId,
+        status: data.task.status as RiskTask['status'],
+        result: data.task.result,
+      })
+      // Keep watching only while the observed task is still in flight.
+      if (data.task.status === 'queued' || data.task.status === 'running') setPolling(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  /** Start a new analysis. This is the mutation — it needs crossdomain.write. */
+  async function runAnalysis() {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/v1/agents/risk/analyze?tenantId=${tenantId}`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ scopeType, scopeId, requestedBy: userId }),
+      })
+      if (!res.ok) return
       const data = await res.json() as { taskId: string; status: string }
       setTask({ taskId: data.taskId, status: 'queued' })
       setPolling(true)
@@ -111,21 +155,33 @@ export function AgentRiskSummary({ tenantId, scopeType = 'global', scopeId = '',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Risk Assessment</h3>
-        <button
-          onClick={() => void triggerAnalysis()}
-          disabled={loading || polling}
-          style={{
-            padding: '6px 14px', border: '1px solid #d1d5db', background: '#fff',
-            borderRadius: '6px', cursor: 'pointer', fontSize: '13px',
-          }}
-        >
-          {loading || polling ? '⟳ Analyzing…' : '↺ Refresh'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => void loadLatest()}
+            disabled={loading || polling}
+            style={{
+              padding: '6px 14px', border: '1px solid #d1d5db', background: '#fff',
+              borderRadius: '6px', cursor: 'pointer', fontSize: '13px',
+            }}
+          >
+            ↺ Refresh
+          </button>
+          <button
+            onClick={() => void runAnalysis()}
+            disabled={loading || polling}
+            style={{
+              padding: '6px 14px', border: '1px solid #d1d5db', background: '#fff',
+              borderRadius: '6px', cursor: 'pointer', fontSize: '13px',
+            }}
+          >
+            {loading || polling ? '⟳ Analyzing…' : '▶ Run analysis'}
+          </button>
+        </div>
       </div>
 
       {!task && !loading && (
         <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
-          Click Refresh to run risk analysis
+          No risk analysis has been run for this scope yet — choose Run analysis
         </div>
       )}
 

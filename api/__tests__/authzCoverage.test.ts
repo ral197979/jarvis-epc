@@ -57,9 +57,18 @@ function censusEndpoints(): Endpoint[] {
 const endpoints = censusEndpoints()
 
 describe('endpoint-level coverage model', () => {
+  // Every class the model may assign. ADR-014 Phase 2C-5 added the three
+  // machine/reachability boundaries: SERVICE_TOKEN (SCIM's verified per-tenant
+  // bearer credential), HYBRID_SERVICE_CAPABILITY (IoT ingest's two independent
+  // trust paths) and UNMOUNTED (declared on a router server.ts never mounts).
+  const VALID_CLASSES: RouteClass[] = [
+    'CAPABILITY', 'PUBLIC', 'SERVICE_HMAC',
+    'SERVICE_TOKEN', 'HYBRID_SERVICE_CAPABILITY', 'UNMOUNTED',
+    'PENDING_PHASE2',
+  ]
+
   it('gives every endpoint exactly one classification, with none unclassified', () => {
-    const valid: RouteClass[] = ['CAPABILITY', 'PUBLIC', 'SERVICE_HMAC', 'PENDING_PHASE2']
-    const bad = endpoints.filter(e => !valid.includes(e.klass))
+    const bad = endpoints.filter(e => !VALID_CLASSES.includes(e.klass))
     expect(bad.map(e => e.key)).toEqual([])
     expect(endpoints.length).toBeGreaterThan(0)
   })
@@ -101,12 +110,12 @@ describe('endpoint-level coverage model', () => {
   })
 
   it('accounts for every endpoint exactly once', () => {
-    const total = endpoints.length
-    const cap  = endpoints.filter(e => e.klass === 'CAPABILITY').length
-    const pub  = endpoints.filter(e => e.klass === 'PUBLIC').length
-    const hmac = endpoints.filter(e => e.klass === 'SERVICE_HMAC').length
-    const pend = endpoints.filter(e => e.klass === 'PENDING_PHASE2').length
-    expect(cap + pub + hmac + pend).toBe(total)
+    // Summed over EVERY class, so adding a class without adding it here cannot
+    // make the arithmetic appear to balance while endpoints go uncounted.
+    const counted = VALID_CLASSES
+      .map(k => endpoints.filter(e => e.klass === k).length)
+      .reduce((a, b) => a + b, 0)
+    expect(counted).toBe(endpoints.length)
   })
 })
 

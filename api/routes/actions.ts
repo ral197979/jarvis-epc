@@ -244,6 +244,143 @@ actionsRouter.get('/summary', requireCapability('personal.admin') as never, asyn
   })
 })
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LITERAL SINGLE-SEGMENT ROUTES — must stay above GET /:id
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// ADR-014 Phase 2C-5 §24. Express matches in DECLARATION order, so while these
+// three were declared after `GET /:id` every request to /actions/sla-rules,
+// /actions/delegations and /actions/inbox was served by the single-action
+// handler and answered 404 — proved behaviourally in
+// api/__tests__/authzActionsRouteResolution.test.ts before this repair.
+//
+// /inbox additionally lost authority: it declares `personal.admin`, `GET /:id`
+// declares `personal.view`, so the weaker guard was the one that ran.
+//
+// Only the declarations moved; no handler body, path or guard changed. The
+// bodies that follow each POST/PATCH sibling stayed in their domain sections.
+
+actionsRouter.get('/sla-rules', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  const rows = await tenantQuery(tenantId, `
+    SELECT * FROM sla_rules
+    WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    ORDER BY action_type, system_type NULLS LAST
+  `, [])
+  res.json({ data: rows.rows })
+})
+
+actionsRouter.get('/delegations', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  const principal = await personalPrincipal(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const userId = principal.id
+
+  const rows = await tenantQuery(tenantId, `
+    SELECT d.*,
+           u1.email AS delegator_email,
+           u2.email AS delegate_email
+    FROM   approval_delegations d
+    JOIN   users u1 ON u1.id = d.user_id
+    JOIN   users u2 ON u2.id = d.delegate_user_id
+    WHERE  d.tenant_id = current_setting('app.current_tenant_id',true)::uuid
+      AND  (d.user_id = $1 OR d.delegate_user_id = $1)
+    ORDER  BY d.created_at DESC
+  `, [userId])
+
+  res.json({ data: rows.rows })
+})
+
+actionsRouter.get('/inbox', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const {
+    module, project_id, assignee, priority, status,
+    escalation_level, overdue_only, system_type,
+    limit: limitStr = '50', cursor,
+  } = req.query as Record<string, string>
+
+  const conds: string[] = []
+  const vals: unknown[] = []
+  let i = 1
+
+  const effectiveStatus = status ?? 'open'
+  if (effectiveStatus !== 'all') {
+    conds.push(`a.status = $${i++}`); vals.push(effectiveStatus)
+  }
+  if (module)      { conds.push(`a.source_module = $${i++}`);        vals.push(module) }
+  if (project_id)  { conds.push(`a.project_id = $${i++}`);           vals.push(project_id) }
+  if (assignee)    { conds.push(`a.assigned_to_user_id = $${i++}`);  vals.push(assignee) }
+  if (priority)    { conds.push(`a.priority = $${i++}`);             vals.push(priority) }
+  if (system_type) { conds.push(`a.system_type = $${i++}`);          vals.push(system_type) }
+  if (overdue_only === 'true') {
+    conds.push(`a.due_at IS NOT NULL AND a.due_at < NOW()`)
+  }
+  if (escalation_level) {
+    conds.push(`(SELECT MAX(ae2.escalation_level) FROM action_escalations ae2 WHERE ae2.action_id = a.id) = $${i++}`)
+    vals.push(parseInt(escalation_level, 10))
+  }
+  if (cursor) { conds.push(`a.created_at < $${i++}`); vals.push(cursor) }
+
+  const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
+  const lim   = Math.min(200, Math.max(1, parseInt(limitStr, 10)))
+
+  const rows = await tenantQuery(tenantId, `
+    SELECT
+      a.*,
+      p.code        AS project_code,
+      p.name        AS project_name,
+      u.email       AS assigned_user_email,
+      MAX(ae.escalation_level)                               AS max_escalation_level,
+      COUNT(ae.id)                                           AS escalation_count,
+      ROUND(EXTRACT(EPOCH FROM (NOW() - a.created_at)) / 3600.0, 1) AS age_hours,
+      CASE WHEN a.due_at IS NOT NULL
+        THEN ROUND(EXTRACT(EPOCH FROM (a.due_at - NOW())) / 60.0)
+        ELSE NULL END                                        AS sla_remaining_minutes,
+      sla.sla_status,
+      (SELECT COUNT(*) FROM action_relations ar
+       WHERE ar.tenant_id = a.tenant_id
+         AND ar.target_action_id = a.id
+         AND ar.relation_type IN ('blocks','spawned_from')
+         AND ar.deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM actions bl WHERE bl.id = ar.source_action_id
+                       AND bl.status NOT IN ('completed','cancelled'))
+      ) AS blocked_by_count,
+      (SELECT COUNT(*) FROM action_relations ar2
+       WHERE ar2.tenant_id = a.tenant_id
+         AND (ar2.source_action_id = a.id OR ar2.target_action_id = a.id)
+         AND ar2.deleted_at IS NULL
+      ) AS dependency_count
+    FROM  actions a
+    LEFT JOIN projects            p   ON p.id = a.project_id
+    LEFT JOIN users               u   ON u.id = a.assigned_to_user_id
+    LEFT JOIN action_escalations  ae  ON ae.action_id = a.id
+    LEFT JOIN action_sla_state    sla ON sla.action_id = a.id
+    WHERE a.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+    GROUP BY a.id, p.code, p.name, u.email, sla.sla_status
+    ORDER BY
+      CASE a.priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
+      a.due_at ASC NULLS LAST,
+      a.created_at DESC
+    LIMIT $${i}
+  `, [...vals, lim])
+
+  const data = rows.rows.map((r: Record<string, unknown>) => ({
+    ...r,
+    is_blocked:        (parseInt(String(r['blocked_by_count'] ?? '0'), 10)) > 0,
+    escalation_status: r['max_escalation_level'] ? `L${r['max_escalation_level']}` : 'none',
+  }))
+
+  const nextCursor = data.length === lim
+    ? (data[data.length - 1] as unknown as { created_at: string } | undefined)?.created_at ?? null
+    : null
+
+  res.json({ data, meta: { limit: lim, next_cursor: nextCursor } })
+})
+
 // ─── GET /api/v1/actions/:id ─────────────────────────────────────────────────
 
 actionsRouter.get('/:id', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
@@ -345,17 +482,6 @@ actionsRouter.patch('/:id',
 // SLA RULES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-actionsRouter.get('/sla-rules', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
-  const { tenantId } = req
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const rows = await tenantQuery(tenantId, `
-    SELECT * FROM sla_rules
-    WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid
-    ORDER BY action_type, system_type NULLS LAST
-  `, [])
-  res.json({ data: rows.rows })
-})
-
 actionsRouter.post('/sla-rules', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -421,28 +547,6 @@ actionsRouter.patch('/sla-rules/:id', requireCapability('personal.admin') as nev
 // ═══════════════════════════════════════════════════════════════════════════════
 // APPROVAL DELEGATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
-
-actionsRouter.get('/delegations', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
-  const { tenantId } = req
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const principal = await personalPrincipal(req)
-  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
-  const userId = principal.id
-
-  const rows = await tenantQuery(tenantId, `
-    SELECT d.*,
-           u1.email AS delegator_email,
-           u2.email AS delegate_email
-    FROM   approval_delegations d
-    JOIN   users u1 ON u1.id = d.user_id
-    JOIN   users u2 ON u2.id = d.delegate_user_id
-    WHERE  d.tenant_id = current_setting('app.current_tenant_id',true)::uuid
-      AND  (d.user_id = $1 OR d.delegate_user_id = $1)
-    ORDER  BY d.created_at DESC
-  `, [userId])
-
-  res.json({ data: rows.rows })
-})
 
 actionsRouter.post('/delegations', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
@@ -551,94 +655,6 @@ actionsRouter.patch('/delegations/:id', requireCapability('personal.write') as n
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ─── GET /api/v1/actions/inbox ────────────────────────────────────────────────
-
-actionsRouter.get('/inbox', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
-  const { tenantId } = req
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-
-  const {
-    module, project_id, assignee, priority, status,
-    escalation_level, overdue_only, system_type,
-    limit: limitStr = '50', cursor,
-  } = req.query as Record<string, string>
-
-  const conds: string[] = []
-  const vals: unknown[] = []
-  let i = 1
-
-  const effectiveStatus = status ?? 'open'
-  if (effectiveStatus !== 'all') {
-    conds.push(`a.status = $${i++}`); vals.push(effectiveStatus)
-  }
-  if (module)      { conds.push(`a.source_module = $${i++}`);        vals.push(module) }
-  if (project_id)  { conds.push(`a.project_id = $${i++}`);           vals.push(project_id) }
-  if (assignee)    { conds.push(`a.assigned_to_user_id = $${i++}`);  vals.push(assignee) }
-  if (priority)    { conds.push(`a.priority = $${i++}`);             vals.push(priority) }
-  if (system_type) { conds.push(`a.system_type = $${i++}`);          vals.push(system_type) }
-  if (overdue_only === 'true') {
-    conds.push(`a.due_at IS NOT NULL AND a.due_at < NOW()`)
-  }
-  if (escalation_level) {
-    conds.push(`(SELECT MAX(ae2.escalation_level) FROM action_escalations ae2 WHERE ae2.action_id = a.id) = $${i++}`)
-    vals.push(parseInt(escalation_level, 10))
-  }
-  if (cursor) { conds.push(`a.created_at < $${i++}`); vals.push(cursor) }
-
-  const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
-  const lim   = Math.min(200, Math.max(1, parseInt(limitStr, 10)))
-
-  const rows = await tenantQuery(tenantId, `
-    SELECT
-      a.*,
-      p.code        AS project_code,
-      p.name        AS project_name,
-      u.email       AS assigned_user_email,
-      MAX(ae.escalation_level)                               AS max_escalation_level,
-      COUNT(ae.id)                                           AS escalation_count,
-      ROUND(EXTRACT(EPOCH FROM (NOW() - a.created_at)) / 3600.0, 1) AS age_hours,
-      CASE WHEN a.due_at IS NOT NULL
-        THEN ROUND(EXTRACT(EPOCH FROM (a.due_at - NOW())) / 60.0)
-        ELSE NULL END                                        AS sla_remaining_minutes,
-      sla.sla_status,
-      (SELECT COUNT(*) FROM action_relations ar
-       WHERE ar.tenant_id = a.tenant_id
-         AND ar.target_action_id = a.id
-         AND ar.relation_type IN ('blocks','spawned_from')
-         AND ar.deleted_at IS NULL
-         AND EXISTS (SELECT 1 FROM actions bl WHERE bl.id = ar.source_action_id
-                       AND bl.status NOT IN ('completed','cancelled'))
-      ) AS blocked_by_count,
-      (SELECT COUNT(*) FROM action_relations ar2
-       WHERE ar2.tenant_id = a.tenant_id
-         AND (ar2.source_action_id = a.id OR ar2.target_action_id = a.id)
-         AND ar2.deleted_at IS NULL
-      ) AS dependency_count
-    FROM  actions a
-    LEFT JOIN projects            p   ON p.id = a.project_id
-    LEFT JOIN users               u   ON u.id = a.assigned_to_user_id
-    LEFT JOIN action_escalations  ae  ON ae.action_id = a.id
-    LEFT JOIN action_sla_state    sla ON sla.action_id = a.id
-    WHERE a.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    GROUP BY a.id, p.code, p.name, u.email, sla.sla_status
-    ORDER BY
-      CASE a.priority WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 ELSE 4 END,
-      a.due_at ASC NULLS LAST,
-      a.created_at DESC
-    LIMIT $${i}
-  `, [...vals, lim])
-
-  const data = rows.rows.map((r: Record<string, unknown>) => ({
-    ...r,
-    is_blocked:        (parseInt(String(r['blocked_by_count'] ?? '0'), 10)) > 0,
-    escalation_status: r['max_escalation_level'] ? `L${r['max_escalation_level']}` : 'none',
-  }))
-
-  const nextCursor = data.length === lim
-    ? (data[data.length - 1] as unknown as { created_at: string } | undefined)?.created_at ?? null
-    : null
-
-  res.json({ data, meta: { limit: lim, next_cursor: nextCursor } })
-})
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 

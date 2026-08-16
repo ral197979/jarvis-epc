@@ -25,6 +25,7 @@ import { HIGH_SENSITIVITY_READS } from '../authz/highSensitivityReads'
 import { PROJECT_DELIVERY_READS, MIXED_PAYLOAD_DELIVERY_READS } from '../authz/projectDeliveryReads'
 import { ENDPOINT_EXCEPTIONS } from '../authz/routeManifest'
 import { ENFORCED_TRANSITIONS } from '../authz/transitions'
+import { AI_CROSS_DOMAIN_MUTATIONS } from '../authz/aiCrossDomainMutations'
 import { isServerCapability, SERVER_ROLE_CAPS, USER_ROLES, type UserRole } from '../authz/capabilities'
 import { ROLE_CAPS as CLIENT_ROLE_CAPS, CAPABILITIES as CLIENT_CAPABILITIES } from '../../src/config/capabilities'
 import { censusWithEffectivePaths } from './helpers/endpointCensus'
@@ -267,6 +268,13 @@ describe('AI / cross-domain read ratchet', () => {
   // them more strictly than this one. Routing them there is not an exemption:
   // an unregistered transition still fails, just in the other suite.
   const transitions = new Set(ENFORCED_TRANSITIONS.map(t => `${t.file} ${t.router}.${t.method} ${t.path}`))
+  // A route registered as an AI / cross-domain MUTATION is accounted for by the
+  // mutation ratchet, which checks it more strictly than this sweep does.
+  // Needed because READ_SHAPED_PATH matches nouns like `/status`, so a genuine
+  // write such as `twin.ts PATCH /:twinId/status` is "read-shaped" by name.
+  // Excluding it here is not an exemption: the same endpoint must still appear
+  // in AI_CROSS_DOMAIN_MUTATIONS with a guard the census agrees with.
+  const aiMutations = new Set(AI_CROSS_DOMAIN_MUTATIONS.map(key))
 
   it('leaves no read-shaped endpoint in an AI route file unaccounted for', () => {
     const unaccounted = endpoints.filter(e => {
@@ -274,6 +282,7 @@ describe('AI / cross-domain read ratchet', () => {
       if (!isReadCandidate(e)) return false
       if (registered.has(e.key) || otherGates.has(e.key) || exceptions.has(e.key)) return false
       if (transitions.has(e.key)) return false
+      if (aiMutations.has(e.key)) return false
       if (reclassified.has(`${e.file} ${e.method} ${e.path}`)) return false
       return true
     }).map(e => `${e.method} ${e.effective[0] ?? e.path}  (${e.key})`)

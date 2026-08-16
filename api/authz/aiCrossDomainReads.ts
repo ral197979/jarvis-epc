@@ -344,14 +344,14 @@ export const AI_CROSS_DOMAIN_READS: readonly AiRead[] = [
     category: 'CROSS_DOMAIN_AI_READ', allOf: ['crossdomain.read'],
     sources: ['any'],
     temporary: true,
-    reason: 'Agent-generated readiness plan synthesised across whichever domains the agent consulted.',
+    reason: 'Agent-generated readiness plan synthesised across whichever domains the agent consulted. ADR-014 Phase 2C-5 §19: this route used to enqueue a generate_readiness_plan task, so a read capability created durable work. It now reads the newest such task for the scope and enqueues nothing; the orchestrator (POST /agents/readiness/coordinate, ai.govern) remains the creation path.',
   },
   {
     file: 'agentRisk.ts', router: 'agentRiskRouter', method: 'GET', path: '/overview',
     category: 'CROSS_DOMAIN_AI_READ', allOf: ['crossdomain.read'],
     sources: ['any'],
     temporary: true,
-    reason: 'Risk-agent synthesis across the tenant, distinct from the project risk register.',
+    reason: 'Risk-agent synthesis across the tenant, distinct from the project risk register. ADR-014 Phase 2C-5 §19: this route used to enqueue an analyze_risk task, so a read capability created durable work. It now reads the newest such task for the scope; POST /agents/risk/analyze (crossdomain.write) remains the creation path.',
   },
   {
     file: 'agents.ts', router: 'agentsRouter', method: 'GET', path: '/tasks',
@@ -584,13 +584,13 @@ export const AI_CROSS_DOMAIN_READS: readonly AiRead[] = [
     temporary: true,
     reason: '`twin_entity_type` spans project, system, subsystem, equipment, tag, workflow, action, inspection, deficiency, permit, vendor, workforce, site and region, and `twin_state_snapshots.state` is an unbounded "full state capture" JSONB. No capability filter exists over twin content. ADR-014 Phase 2B-3 §20C, §27.',
   },
-  {
-    file: 'twin.ts', router: 'router', method: 'PATCH', path: '/:twinId/status',
-    category: 'CROSS_DOMAIN_AI_READ', allOf: ['crossdomain.read'],
-    sources: ['any'],
-    temporary: true,
-    reason: '`twin_entity_type` spans project, system, subsystem, equipment, tag, workflow, action, inspection, deficiency, permit, vendor, workforce, site and region, and `twin_state_snapshots.state` is an unbounded "full state capture" JSONB. No capability filter exists over twin content. ADR-014 Phase 2B-3 §20C, §27.',
-  },
+  // `twin.ts PATCH /:twinId/status` was registered here as a CROSS_DOMAIN_AI_READ.
+  // It is not a read: the handler calls `updateTwinStatus`, which runs
+  // `UPDATE operational_twins SET status = $3, updated_at = now()`. ADR-014
+  // Phase 2C-5 §17 moved it to `crossdomain.write` and re-registered it in
+  // `AI_CROSS_DOMAIN_MUTATIONS` as a CROSS_DOMAIN_MUTATION. Removed from this
+  // registry rather than left behind, because the perimeter test asserts that the
+  // set of routes using `crossdomain.read` equals the set listed here as temporary.
   {
     file: 'twin.ts', router: 'router', method: 'GET', path: '/:twinId/traverse',
     category: 'CROSS_DOMAIN_AI_READ', allOf: ['crossdomain.read'],

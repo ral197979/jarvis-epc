@@ -318,12 +318,13 @@ describe('action assignment fields require personal.admin', () => {
 
 // ══ tenant-wide reads ═════════════════════════════════════════════════════════
 describe('tenant-wide action reads require personal.admin', () => {
-  // `/inbox` is omitted deliberately: GET /:id is declared before it in
-  // actions.ts, so a request to /actions/inbox resolves to the single-action
-  // handler and 404s for everyone. That shadowing is pre-existing, strictly more
-  // restrictive than the guard declared on /inbox, and is asserted as a known
-  // defect in the ratchet rather than silently relied on here.
-  const ROUTES = ['/api/v1/actions', '/api/v1/actions/overdue',
+  // `/inbox` was omitted here until ADR-014 Phase 2C-5 §24: GET /:id was declared
+  // before it in actions.ts, so a request to /actions/inbox resolved to the
+  // single-action handler and 404'd for everyone — including, crucially, under
+  // that handler's WEAKER personal.view guard. Phase 2C-5 moved the literal
+  // declarations above /:id, so /inbox is now genuinely reachable and genuinely
+  // governed by personal.admin, and it belongs in this sweep like its siblings.
+  const ROUTES = ['/api/v1/actions', '/api/v1/actions/inbox', '/api/v1/actions/overdue',
     '/api/v1/actions/summary', '/api/v1/actions/analytics/overview',
     '/api/v1/actions/analytics/trends', '/api/v1/actions/analytics/workload']
 
