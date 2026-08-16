@@ -19,7 +19,7 @@ const router = Router()
 
 // ─── Twin CRUD ─────────────────────────────────────────────────────────────────
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const twin = await registerTwin({ tenantId, ...req.body })
@@ -95,7 +95,7 @@ router.get('/:twinId/state', requireCapability('crossdomain.read') as never, asy
   }
 })
 
-router.post('/:twinId/sync', async (req: Request, res: Response) => {
+router.post('/:twinId/sync', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const result = await syncTwin(tenantId, req.params.twinId as string, req.body.state, req.body.triggeringEventId)
@@ -105,7 +105,7 @@ router.post('/:twinId/sync', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/register-sync', async (req: Request, res: Response) => {
+router.post('/register-sync', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { entityType, entityId, name, state, description, metadata, triggeringEventId } = req.body
@@ -118,7 +118,7 @@ router.post('/register-sync', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/:twinId/events', async (req: Request, res: Response) => {
+router.post('/:twinId/events', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { eventId, eventType, stateDelta, occurredAt } = req.body
@@ -167,7 +167,7 @@ router.get('/:twinId/snapshots/:snapshotId', requireCapability('crossdomain.read
   }
 })
 
-router.post('/:twinId/snapshots', async (req: Request, res: Response) => {
+router.post('/:twinId/snapshots', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const snapshot = await captureSnapshot(
@@ -181,7 +181,7 @@ router.post('/:twinId/snapshots', async (req: Request, res: Response) => {
 
 // ─── Relationships ─────────────────────────────────────────────────────────────
 
-router.post('/:twinId/relationships', async (req: Request, res: Response) => {
+router.post('/:twinId/relationships', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const rel = await addRelationship({ tenantId, fromTwinId: req.params.twinId as string, ...req.body })
@@ -205,7 +205,7 @@ router.get('/:twinId/relationships', requireCapability('crossdomain.read') as ne
   }
 })
 
-router.delete('/:twinId/relationships', async (req: Request, res: Response) => {
+router.delete('/:twinId/relationships', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { toTwinId, relType } = req.body

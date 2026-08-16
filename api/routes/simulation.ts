@@ -19,7 +19,7 @@ type SimReq = Request & AuthenticatedRequest & TenantRequest
 simulationRouter.use(auth)
 
 // ─── Replay historical events ─────────────────────────────────────────────────
-simulationRouter.post('/replay', async (req: Request, res: Response) => {
+simulationRouter.post('/replay', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const r = req as SimReq
   const { replay_from, replay_to, project_id, limit = 500 } = req.body
   const sessionId = await createSimulationSession(r.tenantId!, r.auth!.sub, {
@@ -32,7 +32,7 @@ simulationRouter.post('/replay', async (req: Request, res: Response) => {
 })
 
 // ─── What-if scenario ─────────────────────────────────────────────────────────
-simulationRouter.post('/what-if', async (req: Request, res: Response) => {
+simulationRouter.post('/what-if', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const r = req as SimReq
   const { replay_from, replay_to, synthetic_events = [], limit = 500 } = req.body
   if (!Array.isArray(synthetic_events)) {

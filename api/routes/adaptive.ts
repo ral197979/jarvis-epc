@@ -37,7 +37,7 @@ const tid = (req: Request): string => (req as unknown as { tenantId: string }).t
 
 // ─── Learning feedback ────────────────────────────────────────────────────────
 
-router.post('/feedback', async (req: Request, res: Response) => {
+router.post('/feedback', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const feedback = await recordFeedback(tid(req), req.body)
     res.status(201).json(feedback)
@@ -82,14 +82,14 @@ router.get('/feedback/source/:sourceType/:sourceId', requireCapability('ai.gover
 
 // ─── Recommendation outcomes ──────────────────────────────────────────────────
 
-router.post('/outcomes', async (req: Request, res: Response) => {
+router.post('/outcomes', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const outcome = await recordOutcome(tid(req), req.body)
     res.status(201).json(outcome)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.patch('/outcomes/:id/measurement', async (req: Request, res: Response) => {
+router.patch('/outcomes/:id/measurement', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const { effectivenessScore, afterState } = req.body
     const outcome = await updateOutcomeMeasurement(tid(req), req.params.id as string, effectivenessScore, afterState)
@@ -115,14 +115,14 @@ router.get('/outcomes/top', requireCapability('crossdomain.read') as never, asyn
 
 // ─── Forecast accuracy ────────────────────────────────────────────────────────
 
-router.post('/forecast-accuracy', async (req: Request, res: Response) => {
+router.post('/forecast-accuracy', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const record = await recordPrediction(tid(req), req.body)
     res.status(201).json(record)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/forecast-accuracy/:id/actual', async (req: Request, res: Response) => {
+router.post('/forecast-accuracy/:id/actual', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { actualValue } = req.body
     const record = await recordActual(tid(req), req.params.id as string, actualValue)
@@ -155,7 +155,7 @@ router.get('/forecast-accuracy', requireCapability('ai.govern') as never, async 
 
 // ─── Calibration ──────────────────────────────────────────────────────────────
 
-router.post('/calibrate', async (req: Request, res: Response) => {
+router.post('/calibrate', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { forecastType, predictedValue, horizon, entityId } = req.body
     const result = await calibratePrediction(tid(req), forecastType, predictedValue, horizon, entityId)
@@ -172,7 +172,7 @@ router.get('/calibrate/drift/:type', requireCapability('ai.govern') as never, as
 
 // ─── Recommendation ranking ───────────────────────────────────────────────────
 
-router.post('/rank', async (req: Request, res: Response) => {
+router.post('/rank', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { candidates } = req.body
     const ranked = await rankRecommendations(tid(req), candidates)
@@ -206,7 +206,7 @@ router.get('/anomaly-patterns/:type', requireCapability('ai.govern') as never, a
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/anomaly-patterns/:anomalyId/feedback', async (req: Request, res: Response) => {
+router.post('/anomaly-patterns/:anomalyId/feedback', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { anomalyType, entityType, isFalsePositive } = req.body
     await recordAnomalyFeedback(tid(req), req.params.anomalyId as string, anomalyType, entityType, isFalsePositive)
@@ -216,7 +216,7 @@ router.post('/anomaly-patterns/:anomalyId/feedback', async (req: Request, res: R
 
 // ─── Operational memory ───────────────────────────────────────────────────────
 
-router.post('/memory', async (req: Request, res: Response) => {
+router.post('/memory', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     await storeMemory(tid(req), req.body)
     res.status(204).end()
@@ -251,7 +251,7 @@ router.get('/memory/:agentType/:scopeType/:key', requireCapability('crossdomain.
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/memory/decay', async (req: Request, res: Response) => {
+router.post('/memory/decay', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const { agentType, scopeType, scopeId } = req.body
     const count = await applyMemoryDecay(tid(req), agentType, scopeType, scopeId)
@@ -259,7 +259,7 @@ router.post('/memory/decay', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/memory/reinforce', async (req: Request, res: Response) => {
+router.post('/memory/reinforce', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const { agentType, scopeType, scopeId, key, confidenceBoost } = req.body
     await reinforceMemory(tid(req), agentType, scopeType, scopeId, key, confidenceBoost)
@@ -269,7 +269,7 @@ router.post('/memory/reinforce', async (req: Request, res: Response) => {
 
 // ─── Simulation learning ──────────────────────────────────────────────────────
 
-router.post('/simulation-outcomes', async (req: Request, res: Response) => {
+router.post('/simulation-outcomes', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const outcome = await recordSimulationOutcome(tid(req), req.body)
     res.status(201).json(outcome)

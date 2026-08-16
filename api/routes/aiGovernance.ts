@@ -33,7 +33,7 @@ aiGovernanceRouter.get('/recommendations', requireCapability('ai.govern') as nev
 })
 
 // ─── Queue recommendation (internal / testing) ────────────────────────────────
-aiGovernanceRouter.post('/recommendations', async (req: Request, res: Response) => {
+aiGovernanceRouter.post('/recommendations', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const { action_id, recommended_action, category, confidence_score, impact_score,
           urgency_score, reason, data_signals, affected_entities, rollback_plan,

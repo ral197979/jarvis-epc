@@ -39,7 +39,7 @@ agentMemoryRouter.get('/', requireCapability('crossdomain.read') as never, async
 })
 
 // POST /api/v1/agents/memory — store memory
-agentMemoryRouter.post('/', async (req: Request, res: Response) => {
+agentMemoryRouter.post('/', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     // Inject tenantId from auth — overrides any client-supplied value
@@ -65,7 +65,7 @@ agentMemoryRouter.get('/:agentType/:scopeType/:scopeId/:key', requireCapability(
 })
 
 // DELETE /api/v1/agents/memory/:agentType/:scope/:scopeId/:key — forget
-agentMemoryRouter.delete('/:agentType/:scopeType/:scopeId/:key', async (req: Request, res: Response) => {
+agentMemoryRouter.delete('/:agentType/:scopeType/:scopeId/:key', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const deleted = await forgetMemory(
     r.tenantId!,
@@ -90,7 +90,7 @@ agentMemoryRouter.get('/:entryId/links', requireCapability('crossdomain.read') a
 })
 
 // POST /api/v1/agents/memory/purge — purge expired entries
-agentMemoryRouter.post('/purge', async (req: Request, res: Response) => {
+agentMemoryRouter.post('/purge', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const purged = await purgeExpiredMemory(r.tenantId!)
   res.json({ purged })

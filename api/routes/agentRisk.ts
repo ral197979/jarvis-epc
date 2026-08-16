@@ -28,7 +28,7 @@ agentRiskRouter.get('/overview', requireCapability('crossdomain.read') as never,
 })
 
 // POST /api/v1/agents/risk/analyze — trigger risk analysis with payload
-agentRiskRouter.post('/analyze', async (req: Request, res: Response) => {
+agentRiskRouter.post('/analyze', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { scopeType, scopeId, requestedBy } = req.body
@@ -51,7 +51,7 @@ agentRiskRouter.post('/analyze', async (req: Request, res: Response) => {
 })
 
 // POST /api/v1/agents/risk/mitigate — recommend mitigations
-agentRiskRouter.post('/mitigate', async (req: Request, res: Response) => {
+agentRiskRouter.post('/mitigate', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { scopeType, scopeId, requestedBy } = req.body

@@ -114,6 +114,38 @@ export const ACTION_CAPABILITIES = [
   // retrieval filter can enforce it — ADR-014 Phase 3. Every endpoint relying
   // on it is enumerated in `api/authz/aiCrossDomainReads.ts`.
   'crossdomain.read',
+
+  // ── cross-domain write (ADR-014 Phase 2C-3, owner decision D8) ─────────────
+  // TEMPORARY, Owner-only. The mutation companion to `crossdomain.read`, and
+  // deliberately a SEPARATE capability rather than a reuse of it.
+  //
+  // The two currently have identical holder sets. That is a coincidence of
+  // today's policy, not an identity of authority: `crossdomain.read` says a
+  // principal may *observe* a payload whose source domains cannot be bounded;
+  // this says a principal may *create or change* persisted cross-domain state.
+  // Authorizing a write with a capability whose name and definition are a read
+  // would make the registry lie about what it permits, and would silently widen
+  // the write surface the day the read policy is relaxed — which Phase 3 is
+  // expected to do. ADR-014 materiality test: read authority and mutation
+  // authority are materially distinct even when their holders coincide.
+  //
+  // It guards persisted synthesized state whose provenance the schema does not
+  // record: digital-twin registration/sync/snapshots/relationships, agent and
+  // operational memory, recommendation before/after outcomes, optimisation
+  // proposals, scenario and replay sessions, durable agent-task creation, and
+  // evidence assets whose `entity_type` is an open string.
+  //
+  // SCOPE LIMIT — it governs the synthesized artifact, never the contributing
+  // business domains. A route protected by this alone must not write project
+  // delivery, cost, procurement, safety, commissioning, identity or platform
+  // security state; such a route needs the corresponding domain authority too,
+  // or is a consequential transition. Asserted by the Phase 2C-3 ratchet.
+  //
+  // Owner-only is a fail-closed placeholder, NOT a policy, superseded when
+  // those payloads carry source-domain provenance — ADR-014 Phase 3. Every
+  // endpoint relying on it is enumerated in
+  // `api/authz/aiCrossDomainMutations.ts`.
+  'crossdomain.write',
 ] as const
 
 export type ActionCapability = typeof ACTION_CAPABILITIES[number]

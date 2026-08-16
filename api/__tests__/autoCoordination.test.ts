@@ -83,6 +83,12 @@ describe('Autonomous coordination routes', () => {
   beforeEach(() => { vi.clearAllMocks(); CALLER.role = 'admin' })
 
   it('POST /scan generates recommendations from the Coordination engine', async () => {
+    // ADR-014 Phase 2C-3: the scan is not an AI-governance action either. It
+    // reads the same six domains the GET does — projects, rfis/submittals,
+    // bim_issues, schedule and change_orders — and writes what it synthesises,
+    // so it carries the identical conjunction. Admin holds ai.govern but none of
+    // those domains, so the caller here is the owner, as it is for the GET.
+    CALLER.role = 'owner'
     mockBuildCoord.mockResolvedValue(briefing(ISSUES))
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 }) // upserts
     const res = await request(makeApp()).post('/api/v1/projects/p1/coordination/scan')

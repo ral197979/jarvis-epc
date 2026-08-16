@@ -111,7 +111,7 @@ router.get('/:id', requireCapability('crossdomain.read') as never, async (req: R
 
 // ─── POST review ──────────────────────────────────────────────────────────────
 
-router.post('/:id/review', async (req: Req, res: Response) => {
+router.post('/:id/review', requireCapability('ai.govern') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

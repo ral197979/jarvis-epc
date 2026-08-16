@@ -26,6 +26,10 @@ import { HIGH_SENSITIVITY_READS } from '../authz/highSensitivityReads'
 import { PROJECT_DELIVERY_MUTATIONS, ESCALATED_DELIVERY_MUTATIONS } from '../authz/projectDeliveryMutations'
 import { ENFORCED_TRANSITIONS } from '../authz/transitions'
 import { AI_CROSS_DOMAIN_READS } from '../authz/aiCrossDomainReads'
+import {
+  AI_CROSS_DOMAIN_MUTATIONS,
+  NEWLY_DISCOVERED_CONSEQUENTIAL as PHASE_2C3_CONSEQUENTIAL,
+} from '../authz/aiCrossDomainMutations'
 import { isServerCapability, SERVER_ROLE_CAPS, ALL_ROLES_FOR_TEST } from './helpers/capabilityHolders'
 
 const census = censusWithEffectivePaths()
@@ -181,8 +185,23 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     const exit = ENTRY
       - highSensitivityProtected - newlyConsequential
       - unregisteredProtected - escalationsResolved - reclassified
-    expect(exit, 'exit backlog must equal the measured pending-mutation count').toBe(pendingMutations.length)
-    expect(pendingMutations.length).toBe(69)
+    expect(exit, 'the Phase 2C-2 exit backlog is unchanged by later slices').toBe(69)
+
+    // Phase 2C-2 exited at 69. ADR-014 Phase 2C-3 then closed the 45 AI /
+    // cross-domain endpoints that were the largest part of that backlog: 36
+    // protected mutations, 2 escalated to transitions.ts, and 7 proved to
+    // perform no write and moved into the Phase 2B-3 read perimeter.
+    //
+    // Subtracted explicitly rather than by lowering ENTRY: this slice's
+    // arithmetic must keep proving what THIS slice closed, and a later slice
+    // must not be able to make that proof pass by shrinking the entry set.
+    const closedByPhase2C3 = AI_CROSS_DOMAIN_MUTATIONS.length + PHASE_2C3_CONSEQUENTIAL.length
+    expect(closedByPhase2C3, 'the Phase 2C-3 scope').toBe(45)
+    expect(exit - closedByPhase2C3,
+      'exit backlog must equal the measured pending-mutation count').toBe(pendingMutations.length)
+
+    // The remainder: Personal Inbox 17, SCIM 4, hybrid IoT 2, dead route 1.
+    expect(pendingMutations.length).toBe(24)
 
     // The added route must actually exist and be guarded, or the exclusion above
     // would be a way to hide an unprotected endpoint.

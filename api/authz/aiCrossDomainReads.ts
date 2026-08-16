@@ -664,7 +664,65 @@ export const AI_CROSS_DOMAIN_READS: readonly AiRead[] = [
     sources: ['any'],
     temporary: true,
     reason: 'Ranks events proximate to a caller-supplied subject across audit_log, daily_logs, action_items, compliance_tasks and commissioning_packs. The audit trail alone puts it past any delivery capability, and the domain set is decided by what happened near the subject rather than at authorization time — so no conjunction of domain capabilities is truthful. ADR-014 Phase 2B-3 §24.',
-  },]
+  },
+
+  // ══ added by ADR-014 Phase 2C-3 ═══════════════════════════════
+  // Seven more POSTs that are reads. The AI / cross-domain mutation sweep
+  // reported all seven as unprotected mutations because the backlog is derived
+  // partly from HTTP method; inspection of each service shows no INSERT, UPDATE,
+  // DELETE or durable job anywhere in the call graph. They are registered here,
+  // under this gate's policy, rather than left in the mutation registry to keep
+  // a count intact. `api/authz/aiCrossDomainMutations.ts` records the same seven
+  // as CLASSIFICATION_CORRECTION_READ so the arithmetic reconciles from either
+  // side.
+  {
+    file: 'adaptive.ts', router: 'router', method: 'POST', path: '/calibrate',
+    category: 'AI_GOVERNANCE_READ', allOf: ['ai.govern'],
+    sources: ['ai-governance'],
+    reason: 'calibratePrediction reads getAccuracyStats and returns a bias-adjusted number; forecastCalibrationEngine.ts contains no write. Forecast accuracy is model-quality telemetry, not business data — its sibling GET /calibrate/drift/:type is already ai.govern. ADR-014 Phase 2C-3 §6.',
+  },
+  {
+    file: 'adaptive.ts', router: 'router', method: 'POST', path: '/rank',
+    category: 'CROSS_DOMAIN_AI_READ', allOf: [TEMPORARY_CROSS_DOMAIN_CAPABILITY],
+    sources: ['any'],
+    temporary: true,
+    reason: 'rankRecommendations scores the candidates supplied in the body against getAgentEffectiveness; recommendationRankingEngine.ts contains no write. The historical effectiveness it reads spans whatever entities the recommendations touched, which is why GET /rank/top is crossdomain.read. ADR-014 Phase 2C-3 §6.',
+  },
+  {
+    file: 'optimization.ts', router: 'router', method: 'POST', path: '/strategy',
+    category: 'CROSS_DOMAIN_AI_READ', allOf: [TEMPORARY_CROSS_DOMAIN_CAPABILITY],
+    sources: ['any'],
+    temporary: true,
+    reason: 'generateStrategyPlan SELECTs operational_twins, operational_anomalies and optimization_feedback and returns a plan; operationalStrategyPlanner.ts contains no INSERT, UPDATE or DELETE. Twin entity types span every domain, so provenance is unbounded. ADR-014 Phase 2C-3 §6.',
+  },
+  {
+    file: 'optimization.ts', router: 'router', method: 'POST', path: '/consensus',
+    category: 'CROSS_DOMAIN_AI_READ', allOf: [TEMPORARY_CROSS_DOMAIN_CAPABILITY],
+    sources: ['any'],
+    temporary: true,
+    reason: 'buildConsensus reconciles the votes supplied in the body against historical effectiveness. The only query in optimizationCoordinator.ts is the SELECT inside getOptimizationSummary; the agent votes concern any domain. ADR-014 Phase 2C-3 §6.',
+  },
+  {
+    file: 'optimization.ts', router: 'router', method: 'POST', path: '/coordinate',
+    category: 'CROSS_DOMAIN_AI_READ', allOf: [TEMPORARY_CROSS_DOMAIN_CAPABILITY],
+    sources: ['any'],
+    temporary: true,
+    reason: 'coordinateRecommendations deduplicates and ranks the inputs supplied in the body via rankRecommendations. No write in optimizationCoordinator.ts, and the recommendations span any domain. ADR-014 Phase 2C-3 §6.',
+  },
+  {
+    file: 'optimization.ts', router: 'router', method: 'POST', path: '/root-cause',
+    category: 'CROSS_DOMAIN_AI_READ', allOf: [TEMPORARY_CROSS_DOMAIN_CAPABILITY],
+    sources: ['any'],
+    temporary: true,
+    reason: 'synthesizeRootCause SELECTs operational_anomalies, realtime_event_log and twin_state_snapshots and returns a report; rootCauseSynthesisEngine.ts contains no write. realtime_event_log payloads carry no bounded provenance — the same reason ops /live-feed is crossdomain.read. ADR-014 Phase 2C-3 §6.',
+  },
+  {
+    file: 'agents.ts', router: 'agentsRouter', method: 'POST', path: '/plan',
+    category: 'AI_GOVERNANCE_READ', allOf: ['ai.govern'],
+    sources: ['ai-governance'],
+    reason: 'orchestrate() is called with options.dryRun = true and returns { tasksCreated: 0 } before enqueueTask or openExecution runs. checkGovernance is invoked without an executionId so it appends no execution event, and evaluateAgentPolicies is read-only. The response describes the agent plan and its governance level — AI control-plane information, which is what GET /agents/objectives already discloses under ai.govern. ADR-014 Phase 2C-3 §6.',
+  },
+]
 
 /** In-scope AI reads confirmed but NOT yet protected. Phase 2B-3 closes only when empty. */
 export const PENDING_AI_READS: readonly AiRead[] = []
@@ -685,5 +743,5 @@ export const RECLASSIFIED_NOT_AI_READS: readonly ReclassifiedAiRead[] = [
   {
     file: 'aiGovernance.ts', method: 'POST', path: '/recommendations',
     category: 'ORDINARY_MUTATION',
-    reason: 'Matched the read-shaped path sweep on /recommendations, but `queueRecommendation` inserts a row into ai_recommendation_queue. An ordinary mutation — Phase 2C (§39).',
+    reason: 'Matched the read-shaped path sweep on /recommendations, but `queueRecommendation` inserts a row into ai_recommendation_queue. An ordinary mutation — Phase 2C (§39). Closed by ADR-014 Phase 2C-3 as an AI_GOVERNANCE_MUTATION under ai.govern; it stays reclassified here because it is a mutation, not a read.',
   },]

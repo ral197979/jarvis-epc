@@ -33,7 +33,7 @@ agentsRouter.get('/objectives', requireCapability('ai.govern') as never, (_req: 
 })
 
 // POST /api/v1/agents/plan — dry-run plan without executing
-agentsRouter.post('/plan', async (req: Request, res: Response) => {
+agentsRouter.post('/plan', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { objective, scope, scopeId, context, requestedBy } = req.body

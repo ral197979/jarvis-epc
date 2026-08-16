@@ -85,6 +85,10 @@ export const ENFORCED_TRANSITIONS: readonly TransitionEndpoint[] = [
   { file: 'autoCoordination.ts', router: 'router', method: 'POST', path: '/coordination/recommendations/:id/approve', operation: 'approve coordination recommendation', capability: 'ai.govern' },
   { file: 'autoCoordination.ts', router: 'router', method: 'POST', path: '/coordination/recommendations/:id/dismiss', operation: 'dismiss coordination recommendation', capability: 'ai.govern' },
   { file: 'optimization.ts', router: 'router',    method: 'POST', path: '/proposals/:id/approve',       operation: 'approve optimization proposal', capability: 'ai.govern' },
+  // ── AI governance: discovered by ADR-014 Phase 2C-3 ────────────────────────
+  // Both are second paths to outcomes this registry already protects.
+  { file: 'agentReadiness.ts', router: 'agentReadinessRouter', method: 'POST', path: '/coordinate', operation: 'orchestrate autonomous agent execution', capability: 'ai.govern' },
+  { file: 'agentActionsRoutes.ts', router: 'router', method: 'POST', path: '/:id/review', operation: 'record human verdict on an autonomous agent action', capability: 'ai.govern' },
 
   // ── Platform automation ────────────────────────────────────────────────────
   { file: 'runbooks.ts', router: 'runbooksRouter', method: 'POST', path: '/:id/execute',                      operation: 'execute runbook',          capability: 'platform.automation' },

@@ -214,6 +214,16 @@ describe('transition coverage', () => {
     //     unguarded path to the outcome /resolve already protects.
     //   • POST /cost-entries/:id/post — commits an actual cost to the ledger;
     //     its inverse /void has required cost.approve since Phase 2A.
-    expect(ENFORCED_TRANSITIONS.length).toBe(86)
+    //
+    // Phase 2C-3 added two more, both second paths to outcomes this registry
+    // already protects, and both found by handler inspection rather than by the
+    // path ratchet (ADR-014 Phase 2C-3 §8):
+    //   • POST /agents/readiness/coordinate — calls orchestrate() with no
+    //     dryRun, so it enqueues tasks and opens executions exactly as
+    //     POST /agents/execute does, which has required ai.govern since Phase 2A.
+    //   • POST /agent-actions/:id/review — records the human verdict
+    //     (confirmed | overridden | reversed) on an action an agent already took;
+    //     POST /agent-approvals/:id/approve has required ai.govern since Phase 2A.
+    expect(ENFORCED_TRANSITIONS.length).toBe(88)
   })
 })

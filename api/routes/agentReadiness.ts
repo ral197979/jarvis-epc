@@ -27,7 +27,7 @@ agentReadinessRouter.get('/plan/:scope/:id', requireCapability('crossdomain.read
 })
 
 // POST /api/v1/agents/readiness/coordinate
-agentReadinessRouter.post('/coordinate', async (req: Request, res: Response) => {
+agentReadinessRouter.post('/coordinate', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const { scopeType, scopeId } = req.body as Record<string, string>
@@ -49,7 +49,7 @@ agentReadinessRouter.post('/coordinate', async (req: Request, res: Response) => 
 })
 
 // POST /api/v1/agents/readiness/assess
-agentReadinessRouter.post('/assess', async (req: Request, res: Response) => {
+agentReadinessRouter.post('/assess', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const { scopeType, scopeId } = req.body as Record<string, string | undefined>

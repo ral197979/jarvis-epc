@@ -11,7 +11,7 @@ const router = Router()
 
 // ─── Scenarios ────────────────────────────────────────────────────────────────
 
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const userId: string = (req as unknown as { userId: string }).userId ?? 'system'
@@ -49,7 +49,7 @@ router.get('/:scenarioId', requireCapability('crossdomain.read') as never, async
   }
 })
 
-router.post('/:scenarioId/run', async (req: Request, res: Response) => {
+router.post('/:scenarioId/run', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const scenario = await runScenario(req.params.scenarioId as string, tenantId)
@@ -59,7 +59,7 @@ router.post('/:scenarioId/run', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/:scenarioId/cancel', async (req: Request, res: Response) => {
+router.post('/:scenarioId/cancel', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     await cancelScenario(req.params.scenarioId as string, tenantId)

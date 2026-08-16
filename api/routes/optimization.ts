@@ -40,7 +40,7 @@ router.get('/resources/balance-plan', requireCapability('crossdomain.read') as n
 
 // ─── Optimization proposals ───────────────────────────────────────────────────
 
-router.post('/proposals', async (req: Request, res: Response) => {
+router.post('/proposals', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const proposal = await proposeOptimization(tid(req), req.body)
     res.status(201).json(proposal)
@@ -84,7 +84,7 @@ router.get('/proposals/summary', requireCapability('crossdomain.read') as never,
 
 // ─── Strategy planning ────────────────────────────────────────────────────────
 
-router.post('/strategy', async (req: Request, res: Response) => {
+router.post('/strategy', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { horizon, objectives } = req.body ?? {}
     const plan = await generateStrategyPlan(tid(req), { horizon, objectives })
@@ -94,7 +94,7 @@ router.post('/strategy', async (req: Request, res: Response) => {
 
 // ─── Multi-agent consensus ────────────────────────────────────────────────────
 
-router.post('/consensus', async (req: Request, res: Response) => {
+router.post('/consensus', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { topic, votes } = req.body
     const result = await buildConsensus(tid(req), topic, votes)
@@ -102,7 +102,7 @@ router.post('/consensus', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/coordinate', async (req: Request, res: Response) => {
+router.post('/coordinate', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { inputs } = req.body
     const result = await coordinateRecommendations(tid(req), inputs)
@@ -112,7 +112,7 @@ router.post('/coordinate', async (req: Request, res: Response) => {
 
 // ─── Root cause synthesis ─────────────────────────────────────────────────────
 
-router.post('/root-cause', async (req: Request, res: Response) => {
+router.post('/root-cause', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { entityId, entityType, windowHours, anomalyIds } = req.body ?? {}
     const report = await synthesizeRootCause(tid(req), { entityId, entityType, windowHours, anomalyIds })
