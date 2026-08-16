@@ -30,6 +30,7 @@ import {
   AI_CROSS_DOMAIN_MUTATIONS,
   NEWLY_DISCOVERED_CONSEQUENTIAL as PHASE_2C3_CONSEQUENTIAL,
 } from '../authz/aiCrossDomainMutations'
+import { PERSONAL_INBOX_ENDPOINTS } from '../authz/personalInboxAuthorization'
 import { isServerCapability, SERVER_ROLE_CAPS, ALL_ROLES_FOR_TEST } from './helpers/capabilityHolders'
 
 const census = censusWithEffectivePaths()
@@ -198,10 +199,20 @@ describe('§44 every mutation pending at entry is accounted for', () => {
     const closedByPhase2C3 = AI_CROSS_DOMAIN_MUTATIONS.length + PHASE_2C3_CONSEQUENTIAL.length
     expect(closedByPhase2C3, 'the Phase 2C-3 scope').toBe(45)
     expect(exit - closedByPhase2C3,
+      'the backlog Phase 2C-3 left behind').toBe(24)
+
+    // ADR-014 Phase 2C-4A then closed the Personal Inbox core: 9 actions.ts and
+    // 3 personalAgent.ts mutations. Subtracted explicitly, for the same reason
+    // the Phase 2C-3 term is: an earlier slice's proof must not be able to pass
+    // because a later slice shrank the set it measures against.
+    const closedByPhase2C4A = PERSONAL_INBOX_ENDPOINTS.filter(e => e.kind === 'MUTATION').length
+    expect(closedByPhase2C4A, 'the Phase 2C-4A mutation scope').toBe(12)
+    expect(exit - closedByPhase2C3 - closedByPhase2C4A,
       'exit backlog must equal the measured pending-mutation count').toBe(pendingMutations.length)
 
-    // The remainder: Personal Inbox 17, SCIM 4, hybrid IoT 2, dead route 1.
-    expect(pendingMutations.length).toBe(24)
+    // The remainder: notifications 5 (deferred ownership model), SCIM 4,
+    // hybrid IoT 2, dead denverMcp route 1.
+    expect(pendingMutations.length).toBe(12)
 
     // The added route must actually exist and be guarded, or the exclusion above
     // would be a way to hide an unprotected endpoint.

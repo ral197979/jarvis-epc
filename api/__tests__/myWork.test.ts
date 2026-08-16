@@ -11,10 +11,17 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
-  query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  // ADR-014 Phase 2C-4A: /my-work is now guarded by `personal.view` and scopes to
+  // the live database principal, so the current-user lookup is answered here
+  // rather than through mockQuery — otherwise it would consume the first entry of
+  // the mockResolvedValueOnce chain below and turn a 200 into a 401.
+  query: async (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: 'u1', tenant_id: 'tenant-1', role: 'project_manager', is_active: true }], rowCount: 1 }
+      : mockQuery(null, sql, params),
 }))
 vi.mock('../auth', () => ({
-  requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1', tid: 't1' }; next() },
+  requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1', tid: 'tenant-1' }; next() },
 }))
 vi.mock('../middleware/tenant', () => ({
   requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() },

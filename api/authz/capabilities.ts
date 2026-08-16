@@ -86,6 +86,28 @@ export const ACTION_CAPABILITIES = [
   'assistant.admin',        // knowledge ingest, corpus administration
   'ai.govern',              // AI recommendation approve/reject/execute, agent approvals
 
+  // ── Personal Inbox (ADR-014 Phase 2C-4A, owner decisions D10-R / D11) ──────
+  // `personal.view` (Phase 1) says a principal may SEE their own inbox. These
+  // two say what they may CHANGE, and on whose behalf.
+  //
+  // personal.write — the caller's OWN Personal Inbox workflow state: their
+  // assigned actions, their delegations, their personal-agent memory. It is
+  // never sufficient on its own: every self-scoped route also proves record
+  // ownership against the live principal, because `same tenant` is not `mine`.
+  //
+  // D10-R holder set: exactly the `personal.view` holders MINUS viewer. The
+  // earlier proposal made the two sets equal, which would have granted viewer an
+  // action capability and reversed ADR-014 D3. D3 stands: viewer is read-only,
+  // and `authzFoundation` still asserts viewer holds no action capability at all.
+  'personal.write',
+  // personal.admin — tenant-wide Personal Inbox policy (SLA rules) and
+  // explicitly cross-user administration: reassigning an action to another user,
+  // reading the tenant-wide queue, administering someone else's delegation.
+  // Owner only. Deliberately NOT admin: ADR-014 D2 makes Admin a platform
+  // administrator, not a business-workflow administrator, and another user's
+  // work queue is business workflow.
+  'personal.admin',
+
   // ── platform ────────────────────────────────────────────────────────────────
   'platform.integrations',
   'platform.automation',    // automation admin, runbook execution
@@ -194,6 +216,7 @@ const ACTION_GRANTS: Record<UserRole, readonly ActionCapability[]> = {
     'risk.write', 'risk.approve',
     'team.write', 'team.approve',
     'procurement.write',
+    'personal.write',
   ],
 
   engineer: [
@@ -204,11 +227,13 @@ const ACTION_GRANTS: Record<UserRole, readonly ActionCapability[]> = {
     'docs.write',
     'schedule.write',
     'risk.write',
+    'personal.write',
   ],
 
   procurement: [
     'procurement.write',
     'docs.write',
+    'personal.write',
   ],
 
   field_ops: [
@@ -216,9 +241,12 @@ const ACTION_GRANTS: Record<UserRole, readonly ActionCapability[]> = {
     'construction.write',
     'quality.write',
     'safety.write',
+    'personal.write',
   ],
 
-  // ADR-014 D3: read-only. No action capability, ever.
+  // ADR-014 D3: read-only. No action capability, ever — including
+  // `personal.write`. ADR-014 Phase 2C-4A D10-R settled this explicitly: a
+  // viewer sees its Personal Inbox and changes nothing in it.
   viewer: [],
 }
 
