@@ -94,6 +94,30 @@ function makeApp() {
 }
 
 describe('Related route smoke', () => {
+  // ADR-014 Phase 3A added source and target authorization to this route, so the
+  // smoke test can no longer feed the handler a positional queue of rows: the
+  // principal lookup and the project-scope lookup now run first, and project ids
+  // must be real uuids because scope is resolved against a `uuid` column.
+  const PROJECT = '11111111-2222-4333-8444-555555555555'
+  const OWNER   = 'aaaaaaaa-2222-4333-8444-555555555555'
+
+  /** SQL-aware so the handler's own query order cannot break the fixture. */
+  const respondAs = (role: string) => (_tenant: unknown, sql: string) => {
+    if (/FROM users/i.test(sql) && /is_active/i.test(sql)) {
+      // tenant_id must equal the token's `tid` claim — resolveCurrentUser
+      // refuses a row whose tenant disagrees with the token, by design.
+      return Promise.resolve({ rows: [{ id: OWNER, tenant_id: 't1', role, is_active: true }] })
+    }
+    if (/FROM rfis/i.test(sql) && /project_id/i.test(sql)) {
+      return Promise.resolve({ rows: [{ project_id: PROJECT, assigned_to_user_id: null }] })
+    }
+    if (/FROM projects/i.test(sql)) return Promise.resolve({ rows: [{ id: PROJECT }] })
+    if (/FROM change_orders/i.test(sql)) {
+      return Promise.resolve({ rows: [{ id: 'co1', co_number: 5, title: 'x', status: 'submitted', project_id: PROJECT }] })
+    }
+    return Promise.resolve({ rows: [] })
+  }
+
   beforeEach(() => vi.clearAllMocks())
 
   it('rejects an unknown source with 400', async () => {
@@ -101,13 +125,23 @@ describe('Related route smoke', () => {
     expect(res.status).toBe(400)
   })
 
-  it('GET /related/rfi/:id returns groups', async () => {
-    mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: 'co1', co_number: 5, title: 'x', status: 'submitted', project_id: 'p1' }] })
-      .mockResolvedValueOnce({ rows: [] })
-    const res = await request(makeApp()).get('/api/v1/related/rfi/r1')
+  it('GET /related/rfi/:id returns groups for a caller authorized to both ends', async () => {
+    // owner holds construction.view (the source) and cost.view (the change-order
+    // target), and reaches every project in its own tenant.
+    mockQuery.mockImplementation(respondAs('owner'))
+    const res = await request(makeApp()).get(`/api/v1/related/rfi/${PROJECT}`)
     expect(res.status).toBe(200)
     expect(res.body.data.source).toBe('rfi')
     expect(res.body.data.groups.length).toBe(1)
+  })
+
+  it('omits a target the caller has no functional authority for', async () => {
+    // engineer holds construction.view, so the RFI source is readable — but not
+    // cost.view, so the change order it produced must not appear. The group is
+    // dropped entirely rather than returned empty.
+    mockQuery.mockImplementation(respondAs('engineer'))
+    const res = await request(makeApp()).get(`/api/v1/related/rfi/${PROJECT}`)
+    expect(res.status).toBe(200)
+    expect(res.body.data.groups).toEqual([])
   })
 })

@@ -16,19 +16,19 @@
 import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
-import { ENDPOINT_EXCEPTIONS, endpointKey, type RouteClass } from '../authz/routeManifest'
+import { ENDPOINT_EXCEPTIONS, type RouteClass } from '../authz/routeManifest'
 import { RESIDUAL_ENDPOINTS, CONSEQUENTIAL_NOTE } from '../authz/residualTaxonomy'
-import { censusWithEffectivePaths } from './helpers/endpointCensus'
+import { classifiedCensus, ALL_ROUTE_CLASSES } from './helpers/endpointCensus'
 import { USER_ROLES, SERVER_ROLE_CAPS, type UserRole } from '../authz/capabilities'
 
-const endpoints = censusWithEffectivePaths()
+// ADR-014 Phase 3A §30 — one classification engine. This file previously
+// carried a third private copy of the classification rule; it now consumes the
+// canonical one like every other gate.
+const endpoints = classifiedCensus()
 const key = (r: { file: string; router: string; method: string; path: string }) =>
   `${r.file} ${r.router}.${r.method} ${r.path}`
 
-const classOf = (e: { file: string; router: string; method: string; path: string; capability: string | null }): RouteClass => {
-  const ex = ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)]
-  return ex ? ex.klass : e.capability ? 'CAPABILITY' : 'PENDING_PHASE2'
-}
+const classOf = (e: { klass: RouteClass }): RouteClass => e.klass
 
 const routeSrc = (file: string) =>
   fs.readFileSync(path.join(process.cwd(), 'api', 'routes', file), 'utf8')
@@ -40,34 +40,38 @@ const holders = (capability: string): UserRole[] =>
 describe('ADR-014 Phase 2 exit: the exact pending set', () => {
   const pending = endpoints.filter(e => classOf(e) === 'PENDING_PHASE2')
 
-  it('leaves exactly the two Phase-3-owned reads pending, and nothing else', () => {
-    expect(pending.map(e => e.key).sort(),
-      'the ONLY endpoints that may remain PENDING_PHASE2 are the two whose ' +
-      'unresolved question is record scope, which Phase 3 owns').toEqual([
-      'projects.ts router.GET /:id',
-      'related.ts router.GET /related/:source/:id',
-    ])
+  it('leaves nothing at all pending — ADR-014 Phase 3A closed the last two', () => {
+    // Phase 2C-5 exited with exactly two PENDING_PHASE2 endpoints, both reads
+    // whose unresolved question was record scope. ADR-014 Phase 3A closed both.
+    // The assertion is CONVERTED rather than deleted: it now proves the closure
+    // instead of proving the deferral.
+    expect(pending.map(e => e.key)).toEqual([])
   })
 
   it('leaves no pending ordinary mutation anywhere', () => {
     expect(pending.filter(e => e.method !== 'GET').map(e => e.key)).toEqual([])
   })
 
-  it('leaves the two pending reads genuinely reachable, so this is a real deferral', () => {
-    // Non-vacuity: a deferral that pointed at a dead route would prove nothing.
-    for (const e of pending) {
+  it('closed the two former deferrals into record-scope enforcement, not into a label', () => {
+    // Non-vacuity: the two endpoints Phase 2C-5 deferred must still exist, still
+    // be mounted, and now carry BOTH a functional requirement and machine-
+    // verifiable record scope. Relabelling them CAPABILITY would fail here.
+    const closed = endpoints.filter(e =>
+      e.key === 'projects.ts router.GET /:id' ||
+      e.key === 'related.ts router.GET /related/:source/:id')
+
+    expect(closed.length, 'both former Phase-3 reads must still exist').toBe(2)
+    for (const e of closed) {
       expect(e.effective.length, `${e.key} must still be mounted`).toBeGreaterThan(0)
+      expect(e.klass, `${e.key} must be record-scoped`).toBe('CAPABILITY_RECORD_SCOPE')
+      expect(e.enforcesRecordScope, `${e.key} must call the record-scope layer`).toBe(true)
     }
-    expect(pending.map(e => e.effective[0]).sort())
+    expect(closed.map(e => e.effective[0]).sort())
       .toEqual(['/api/v1/projects/:id', '/api/v1/related/:source/:id'])
   })
 
   it('classifies every endpoint, with none unclassified', () => {
-    const KNOWN: RouteClass[] = [
-      'CAPABILITY', 'PUBLIC', 'SERVICE_HMAC',
-      'SERVICE_TOKEN', 'HYBRID_SERVICE_CAPABILITY', 'UNMOUNTED', 'PENDING_PHASE2',
-    ]
-    const counted = KNOWN
+    const counted = ALL_ROUTE_CLASSES
       .map(k => endpoints.filter(e => classOf(e) === k).length)
       .reduce((a, b) => a + b, 0)
     expect(counted, 'every endpoint carries exactly one known class').toBe(endpoints.length)

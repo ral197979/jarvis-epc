@@ -22,6 +22,15 @@ export interface RelatedItem {
   identifier: string | null
   title:      string
   status:     string | null
+  /**
+   * The assignee of a SELF-scoped target (today: `action`). ADR-014 Phase 3A
+   * needs it to decide record scope for Personal Inbox records, whose owner is
+   * the person they are assigned to rather than the project they hang off.
+   *
+   * INTERNAL. `related.ts` strips it after filtering — it is authorization
+   * input, not part of the response contract.
+   */
+  assignedToUserId?: string | null
 }
 export interface RelatedGroup { key: string; label: string; items: RelatedItem[] }
 export interface RelatedResult { source: string; id: string; groups: RelatedGroup[] }
@@ -39,11 +48,12 @@ const sn = (v: unknown): string | null => (v == null ? null : String(v))
 /** actions linked to a record via the unified Action spine. `module` is the plural table name. */
 async function linkedActions(tenantId: string, moduleName: string, id: string): Promise<RelatedItem[]> {
   const r = await tenantQuery(tenantId,
-    `SELECT id, title, status, project_id FROM actions WHERE tenant_id=$1 AND source_module=$2 AND source_id=$3 LIMIT 100`,
+    `SELECT id, title, status, project_id, assigned_to_user_id FROM actions WHERE tenant_id=$1 AND source_module=$2 AND source_id=$3 LIMIT 100`,
     [tenantId, moduleName, id])
   return (r.rows as Row[]).map(row => ({
     source: 'action', sourceId: s(row.id), tab: TAB.action, parentId: null,
     projectId: sn(row.project_id), identifier: null, title: s(row.title) || 'Action', status: sn(row.status),
+    assignedToUserId: sn(row.assigned_to_user_id),
   }))
 }
 

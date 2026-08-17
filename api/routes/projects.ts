@@ -20,6 +20,9 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
+import { resolveCurrentUser } from '../authz/currentUser'
+import { canAccessProject } from '../authz/recordScope'
+import { roleHasCapability } from '../authz/capabilities'
 // v4.31.0 TS fix: `randomBytes` unused — commented pending reintroduction
 // import { randomBytes } from 'node:crypto'
 
@@ -38,6 +41,29 @@ function _paginationParams(query: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(query['page']  ?? '1'), 10))
   const limit = Math.min(100, Math.max(1, parseInt(String(query['limit'] ?? '25'), 10)))
   return { page, limit, offset: (page - 1) * limit }
+}
+
+/**
+ * The commercial columns on `projects`. ADR-014 Phase 2B-2 recorded this route
+ * as MIXED_PAYLOAD_PHASE3 precisely because they travel in the same row as the
+ * delivery context, and `cost.view` is owner-only.
+ */
+const PROJECT_COST_FIELDS = [
+  'budget', 'committed_cost', 'actual_cost', 'forecast_cost', 'contingency_pct',
+] as const
+
+/**
+ * The project row as this reader may see it.
+ *
+ * Removed, not nulled: a `budget: null` is indistinguishable from a project
+ * with no budget set, which would make the response lie rather than withhold.
+ * An absent key says "not disclosed to you".
+ */
+function projectForReader(row: Record<string, unknown>, role: string): Record<string, unknown> {
+  if (roleHasCapability(role, 'cost.view')) return row
+  const visible = { ...row }
+  for (const f of PROJECT_COST_FIELDS) delete visible[f]
+  return visible
 }
 
 // ─── GET /api/v1/projects ─────────────────────────────────────────────────────
@@ -95,10 +121,44 @@ router.get('/', requireCapability('project.list.all') as never, async (req: Req,
 
 // ─── GET /api/v1/projects/:id ─────────────────────────────────────────────────
 
-router.get('/:id', async (req: Req, res: Response) => {
+/**
+ * ADR-014 Phase 3A — the first record-scoped read.
+ *
+ * Before Phase 3A this route carried NO capability guard at all: any
+ * authenticated principal in the tenant could open any project, including its
+ * budget and cost columns. It was the larger of the two endpoints Phase 2
+ * deliberately deferred, recorded as MIXED_PAYLOAD_PHASE3 because neither
+ * available capability was correct on its own — `project.view` would have
+ * disclosed the commercial columns to every delivery role, and `cost.view`
+ * (owner-only) would have closed the project record to all of them.
+ *
+ * Phase 3A resolves that by separating the two questions the row asks:
+ *
+ *   route authority   project.view      — may this principal read project context
+ *   record scope      responsible-user  — may this principal read THIS project
+ *   field authority   cost.view         — may this principal see the money
+ *
+ * Order matters: scope is decided from a light `SELECT id` before the payload
+ * query runs, so a refused caller never causes the project row, its client
+ * name, its status or its six summary sub-counts to be loaded at all.
+ */
+router.get('/:id', requireCapability('project.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  // Live principal, not the token's claims — a membership revoked a second ago
+  // must take effect now, without waiting for the JWT to expire.
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+  if (!await canAccessProject(principal, String(id))) {
+    // Deliberately indistinguishable from a project that does not exist. A 403
+    // here would confirm the id is real, which is itself information about
+    // another team's work. Same body as the not-found branch below.
+    res.status(404).json({ error: 'not_found', message: 'Project not found.' })
+    return
+  }
 
   const result = await tenantQuery(tenantId, `
     SELECT p.*,
@@ -123,7 +183,7 @@ router.get('/:id', async (req: Req, res: Response) => {
   const project = result.rows[0]
   if (!project) { res.status(404).json({ error: 'not_found', message: 'Project not found.' }); return }
 
-  res.json({ data: project })
+  res.json({ data: projectForReader(project as Record<string, unknown>, principal.role) })
 })
 
 // ─── POST /api/v1/projects ────────────────────────────────────────────────────

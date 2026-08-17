@@ -18,6 +18,16 @@
 export type RouteClass =
   /** Guarded by `requireCapability` / `requireAnyCapability`. */
   | 'CAPABILITY'
+  /**
+   * Guarded by a functional capability AND by machine-verifiable record scope.
+   * ADR-014 Phase 3A: the caller must both be allowed to perform the function
+   * and be allowed to reach the specific record.
+   *
+   * DERIVED, never declared. The census awards this class only when the
+   * handler's own source calls into `api/authz/recordScope.ts`, so a route
+   * cannot be labelled record-scoped without enforcing it.
+   */
+  | 'CAPABILITY_RECORD_SCOPE'
   /** Deliberately reachable without a user session. */
   | 'PUBLIC'
   /** Machine-to-machine; authenticated by HMAC signature, not a user role. */

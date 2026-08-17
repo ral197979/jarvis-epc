@@ -12,6 +12,7 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import { ENDPOINT_EXCEPTIONS, endpointKey, type RouteClass } from '../../authz/routeManifest'
 
 export interface CensusEndpoint {
   file:       string
@@ -35,7 +36,52 @@ export interface CensusEndpoint {
    */
   allCapabilities: string[] | null
   key:        string
+  /**
+   * The handler source, from the route declaration to its closing `})`.
+   * ADR-014 Phase 3A needs it to prove record-scope enforcement from SOURCE
+   * rather than from a hand-maintained label.
+   */
+  body:       string
+  /**
+   * Whether the handler actually calls the canonical record-scope layer.
+   * Derived, never declared — a manifest entry claiming record scope without
+   * this is a lie the census must catch.
+   */
+  enforcesRecordScope: boolean
+  /**
+   * Whether the handler enforces the functional capability through the record
+   * scope policy registry rather than through a route-level guard. True only
+   * for polymorphic routes whose capability requirement varies per resource.
+   */
+  enforcesPolicyCapability: boolean
 }
+
+/**
+ * The canonical record-scope entry points. A handler that calls one of these
+ * has had its object scope decided by `api/authz/recordScope.ts`, which is the
+ * only place the project-membership rule is implemented.
+ */
+const RECORD_SCOPE_CALLS = [
+  'canAccessProject(',
+  'authorizeSource(',
+  'filterAuthorizedTargets(',
+  'filterAccessibleProjectIds(',
+  'filterByParentProject(',
+] as const
+
+/**
+ * The subset of those calls that enforce the FUNCTIONAL CAPABILITY too, by
+ * reading it from `recordScopePolicies.ts` per resource type.
+ *
+ * This distinction matters for a polymorphic route. `/related/:source/:id`
+ * carries no route-level `requireCapability`, and correctly so: it spans nine
+ * resource types across five domains, and no single capability is both safe and
+ * useful across them — which is exactly why Phase 2 deferred it. Its capability
+ * requirement is per-target and lives in the policy registry, applied by these
+ * two functions. A route reaching the record-scope layer through only the
+ * scope-only helpers still needs its own guard.
+ */
+const POLICY_CAPABILITY_CALLS = ['authorizeSource(', 'filterAuthorizedTargets('] as const
 
 const ROUTES_DIR = path.join(process.cwd(), 'api', 'routes')
 const SERVER_TS  = path.join(process.cwd(), 'api', 'server.ts')
@@ -90,6 +136,13 @@ function exportedNames(src: string): Map<string, string> {
   return map
 }
 
+/** One handler's source, declaration through its closing `})` at column 0. */
+function handlerBody(src: string, router: string, verb: string, routePath: string): string {
+  const esc = routePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp(`${router}\\s*\\.\\s*${verb}\\s*\\(\\s*'${esc}'[\\s\\S]*?\\n\\}\\)`)
+  return re.exec(src)?.[0] ?? ''
+}
+
 export function censusWithEffectivePaths(): CensusEndpoint[] {
   const serverSrc = fs.readFileSync(SERVER_TS, 'utf8')
   const imports   = routerImports(serverSrc)
@@ -129,12 +182,74 @@ export function censusWithEffectivePaths(): CensusEndpoint[] {
         .filter(mo => mo.file === file && (exported === '__default__' || exported === undefined || mo.name === exported))
         .map(mo => mo.prefix)
 
+      const body = handlerBody(src, router, verb, routePath)
+
       out.push({
         file, router, method, path: routePath, capability, allCapabilities,
         key: `${file} ${router}.${method} ${routePath}`,
         effective: [...new Set(prefixes)].map(p => `${p}${routePath}`.replace(/\/+$/, '') || '/'),
+        body,
+        enforcesRecordScope: RECORD_SCOPE_CALLS.some(c => body.includes(c)),
+        enforcesPolicyCapability: POLICY_CAPABILITY_CALLS.some(c => body.includes(c)),
       })
     }
   }
   return out
 }
+
+// ─── The single classification engine (ADR-014 Phase 3A §30) ──────────────────
+//
+// Phase 2C-5 found two census implementations that disagreed: this helper, and
+// a private parser inside `authzCoverage.test.ts` that recognised only
+// `requireCapability` and therefore reported 23 pending endpoints where the
+// canonical model reported 2. Two sources of truth about which endpoints are
+// protected is one too many, so classification now lives here and
+// `authzCoverage.test.ts` consumes it.
+
+export interface ClassifiedEndpoint extends CensusEndpoint {
+  klass: RouteClass
+}
+
+/**
+ * The class of one endpoint, derived from source and the deliberate-exception
+ * manifest. Nothing here is hand-maintained per endpoint except the exceptions,
+ * which carry their own reasons and are checked for staleness.
+ *
+ * `CAPABILITY_RECORD_SCOPE` is derived, not declared: an endpoint earns it by
+ * having BOTH a capability guard AND a call into the canonical record-scope
+ * layer. Labelling a route record-scoped without enforcing it cannot pass.
+ */
+export function classifyEndpoint(e: CensusEndpoint): RouteClass {
+  const exception = ENDPOINT_EXCEPTIONS[endpointKey(e.file, e.router, e.method, e.path)]
+  if (exception) return exception.klass
+
+  if (e.capability) {
+    // A route-level guard supplies the functional half; record scope, if the
+    // handler enforces it, supplies the object half.
+    return e.enforcesRecordScope ? 'CAPABILITY_RECORD_SCOPE' : 'CAPABILITY'
+  }
+
+  // No route-level guard. This is only acceptable when BOTH halves come from
+  // the policy registry — a per-resource capability AND a per-record scope,
+  // applied by `authorizeSource` / `filterAuthorizedTargets`. Anything else
+  // with no guard is Phase-2 debt, exactly as before.
+  if (e.enforcesRecordScope && e.enforcesPolicyCapability) return 'CAPABILITY_RECORD_SCOPE'
+  return 'PENDING_PHASE2'
+}
+
+/** The whole census, classified. The one entry point every gate should use. */
+export function classifiedCensus(): ClassifiedEndpoint[] {
+  return censusWithEffectivePaths().map(e => ({ ...e, klass: classifyEndpoint(e) }))
+}
+
+/** Every class the model may assign, for exhaustive-sum assertions. */
+export const ALL_ROUTE_CLASSES: readonly RouteClass[] = [
+  'CAPABILITY',
+  'CAPABILITY_RECORD_SCOPE',
+  'PUBLIC',
+  'SERVICE_HMAC',
+  'SERVICE_TOKEN',
+  'HYBRID_SERVICE_CAPABILITY',
+  'UNMOUNTED',
+  'PENDING_PHASE2',
+]

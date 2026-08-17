@@ -9,63 +9,30 @@
  *      or a brand-new unprotected transition all fail the build.
  */
 import { describe, it, expect } from 'vitest'
-import fs from 'node:fs'
-import path from 'node:path'
 import { ENDPOINT_EXCEPTIONS, endpointKey, type RouteClass } from '../authz/routeManifest'
 import { ENFORCED_TRANSITIONS, PENDING_TRANSITIONS, RECLASSIFIED_NOT_TRANSITIONS } from '../authz/transitions'
 import { isServerCapability } from '../authz/capabilities'
+import { classifiedCensus, ALL_ROUTE_CLASSES } from './helpers/endpointCensus'
 
-const ROUTES_DIR = path.join(process.cwd(), 'api', 'routes')
-
-interface Endpoint {
-  file: string
-  router: string
-  method: string
-  path: string
-  key: string
-  capability: string | null
-  klass: RouteClass
-}
-
-/** Parse every route declaration and determine how it is protected. */
-function censusEndpoints(): Endpoint[] {
-  const out: Endpoint[] = []
-  for (const file of fs.readdirSync(ROUTES_DIR).filter(f => f.endsWith('.ts')).sort()) {
-    const src = fs.readFileSync(path.join(ROUTES_DIR, file), 'utf8')
-    // A router-level guard protects every endpoint in the file.
-    const routerWide = /router\s*\.\s*use\s*\(\s*requireCapability\(\s*'([^']+)'/.exec(src)
-    const re = /(\w+)\s*\.\s*(get|post|put|patch|delete)\s*\(\s*'([^']*)'\s*,?\s*([\s\S]{0,120})/g
-    let m: RegExpExecArray | null
-    while ((m = re.exec(src))) {
-      const router = m[1]
-      const method = m[2].toUpperCase()
-      const routePath = m[3]
-      const tail = m[4] ?? ''
-      const inline = /^\s*requireCapability\(\s*'([^']+)'|,\s*requireCapability\(\s*'([^']+)'/.exec(tail)
-      const capability = inline ? (inline[1] ?? inline[2]) : (routerWide ? routerWide[1] : null)
-      const key = endpointKey(file, router, method, routePath)
-      const exception = ENDPOINT_EXCEPTIONS[key]
-      out.push({
-        file, router, method, path: routePath, key, capability,
-        klass: exception ? exception.klass : capability ? 'CAPABILITY' : 'PENDING_PHASE2',
-      })
-    }
-  }
-  return out
-}
-
-const endpoints = censusEndpoints()
+/**
+ * ADR-014 Phase 3A §30 — one classification engine.
+ *
+ * This file used to carry its OWN route parser. It recognised only
+ * `requireCapability`, so it counted every `requireAnyCapability` and
+ * `requireAllCapabilities` route as unguarded and reported 23 pending endpoints
+ * where the canonical census reported 2. It asserted no count, so it never
+ * failed — it simply told a different story about which endpoints were
+ * protected. Phase 2C-5 recorded that as a residual risk; Phase 3A removes it.
+ *
+ * Classification now comes from `helpers/endpointCensus.ts` and nowhere else.
+ * The assertions below are unchanged in intent — only their input is now shared.
+ */
+const endpoints = classifiedCensus()
 
 describe('endpoint-level coverage model', () => {
-  // Every class the model may assign. ADR-014 Phase 2C-5 added the three
-  // machine/reachability boundaries: SERVICE_TOKEN (SCIM's verified per-tenant
-  // bearer credential), HYBRID_SERVICE_CAPABILITY (IoT ingest's two independent
-  // trust paths) and UNMOUNTED (declared on a router server.ts never mounts).
-  const VALID_CLASSES: RouteClass[] = [
-    'CAPABILITY', 'PUBLIC', 'SERVICE_HMAC',
-    'SERVICE_TOKEN', 'HYBRID_SERVICE_CAPABILITY', 'UNMOUNTED',
-    'PENDING_PHASE2',
-  ]
+  // The class list is imported, not restated — a class added to the engine
+  // without being accounted for here would otherwise pass silently.
+  const VALID_CLASSES: readonly RouteClass[] = ALL_ROUTE_CLASSES
 
   it('gives every endpoint exactly one classification, with none unclassified', () => {
     const bad = endpoints.filter(e => !VALID_CLASSES.includes(e.klass))
@@ -93,20 +60,35 @@ describe('endpoint-level coverage model', () => {
   })
 
   it('reports a mixed file truthfully, not as one status', () => {
-    // Files that contain both guarded and unguarded endpoints must be counted
-    // per endpoint — the defect the file-level model could not express.
-    const byFile = new Map<string, Endpoint[]>()
+    // The defect the file-level model could not express: one route file whose
+    // endpoints do not all share a status. Until Phase 3A the discriminating
+    // pair was CAPABILITY + PENDING_PHASE2; that pair no longer exists because
+    // no endpoint is pending any more. The invariant is the general one — a
+    // file may hold endpoints of DIFFERENT classes, and each is counted on its
+    // own — so it is asserted generally rather than retired.
+    const byFile = new Map<string, typeof endpoints>()
     for (const e of endpoints) byFile.set(e.file, [...(byFile.get(e.file) ?? []), e])
-    const mixed = [...byFile.entries()].filter(([, es]) =>
-      es.some(e => e.klass === 'CAPABILITY') && es.some(e => e.klass === 'PENDING_PHASE2'))
+
+    const mixed = [...byFile.entries()]
+      .filter(([, es]) => new Set(es.map(e => e.klass)).size > 1)
     expect(mixed.length, 'expected at least one mixed file to prove per-endpoint accounting').toBeGreaterThan(0)
-    for (const [, es] of mixed) {
-      const protectedCount = es.filter(e => e.klass === 'CAPABILITY').length
-      const pendingCount   = es.filter(e => e.klass === 'PENDING_PHASE2').length
-      expect(protectedCount + pendingCount).toBeLessThanOrEqual(es.length)
-      expect(protectedCount).toBeGreaterThan(0)
-      expect(pendingCount).toBeGreaterThan(0)
+
+    for (const [file, es] of mixed) {
+      const classes = new Set(es.map(e => e.klass))
+      expect(classes.size, `${file} must hold more than one class to be mixed`).toBeGreaterThan(1)
+      // Per-endpoint accounting: the per-class counts sum to the file total,
+      // which a file-level label could never express.
+      const summed = [...classes]
+        .map(k => es.filter(e => e.klass === k).length)
+        .reduce((a, b) => a + b, 0)
+      expect(summed, `${file} endpoints must be counted individually`).toBe(es.length)
     }
+
+    // Non-vacuity: projects.ts is the Phase 3A example — GET /:id is now
+    // record-scoped while its siblings are ordinary capability routes.
+    const projects = byFile.get('projects.ts') ?? []
+    expect(new Set(projects.map(e => e.klass)).size,
+      'projects.ts must remain a mixed file').toBeGreaterThan(1)
   })
 
   it('accounts for every endpoint exactly once', () => {

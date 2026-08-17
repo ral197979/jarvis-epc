@@ -15,12 +15,6 @@ interface RiskTask {
 
 interface Props {
   tenantId: string
-  /**
-   * The principal recorded as having requested the analysis. Required because
-   * running an analysis is a mutation (POST /agents/risk/analyze,
-   * `crossdomain.write`) and the route records `created_by` from this value.
-   */
-  userId: string
   scopeType?: string
   scopeId?: string
   autoLoad?: boolean
@@ -73,7 +67,7 @@ function GaugeMeter({ score }: { score: number }) {
 //
 // A caller holding only read authority can still see the newest analysis; it can
 // no longer cause one.
-export function AgentRiskSummary({ tenantId, userId, scopeType = 'global', scopeId = '', autoLoad = false }: Props) {
+export function AgentRiskSummary({ tenantId, scopeType = 'global', scopeId = '', autoLoad = false }: Props) {
   const [task, setTask] = useState<RiskTask | null>(null)
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
@@ -121,7 +115,9 @@ export function AgentRiskSummary({ tenantId, userId, scopeType = 'global', scope
       const res = await fetch(`/api/v1/agents/risk/analyze?tenantId=${tenantId}`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ scopeType, scopeId, requestedBy: userId }),
+        // No actor is sent: ADR-014 Phase 3A §31 makes the server record the
+        // authenticated principal, so a client-supplied one would be ignored.
+        body:    JSON.stringify({ scopeType, scopeId }),
       })
       if (!res.ok) return
       const data = await res.json() as { taskId: string; status: string }

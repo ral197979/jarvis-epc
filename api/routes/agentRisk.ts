@@ -40,13 +40,20 @@ agentRiskRouter.get('/overview', requireCapability('crossdomain.read') as never,
 })
 
 // POST /api/v1/agents/risk/analyze — trigger risk analysis with payload
+//
+// ADR-014 Phase 3A §31 — audit-actor forgery closed. `created_by` was taken
+// from the request body (`requestedBy`), so any caller authorized to run an
+// analysis could record a DIFFERENT user as the one who requested it. The
+// persisted actor is now the authenticated subject from the verified token,
+// which is the repository standard (cf. exports.ts, agentReadiness POST /assess).
+//
+// `requestedBy` is no longer required: it had no remaining effect, and demanding
+// a field the server ignores would misdescribe the contract. A body that still
+// sends it is accepted and the value is discarded.
 agentRiskRouter.post('/analyze', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { scopeType, scopeId, requestedBy } = req.body
-    if (!requestedBy) {
-      return res.status(400).json({ error: 'requestedBy required' })
-    }
+    const { scopeType, scopeId } = req.body
 
     const task = await enqueueTask({
       tenantId: r.tenantId!,
@@ -54,7 +61,7 @@ agentRiskRouter.post('/analyze', requireCapability('crossdomain.write') as never
       taskType: 'analyze_risk',
       priority: 3,
       payload: { scopeType: scopeType ?? 'global', scopeId: scopeId ?? '' },
-      createdBy: requestedBy,
+      createdBy: r.auth?.sub ?? 'system',
     })
     res.status(202).json({ taskId: task.id, status: 'queued' })
   } catch (err: unknown) {
@@ -63,13 +70,11 @@ agentRiskRouter.post('/analyze', requireCapability('crossdomain.write') as never
 })
 
 // POST /api/v1/agents/risk/mitigate — recommend mitigations
+// Same ADR-014 Phase 3A §31 correction as POST /analyze above.
 agentRiskRouter.post('/mitigate', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { scopeType, scopeId, requestedBy } = req.body
-    if (!requestedBy) {
-      return res.status(400).json({ error: 'requestedBy required' })
-    }
+    const { scopeType, scopeId } = req.body
 
     const task = await enqueueTask({
       tenantId: r.tenantId!,
@@ -77,7 +82,7 @@ agentRiskRouter.post('/mitigate', requireCapability('crossdomain.write') as neve
       taskType: 'recommend_mitigation',
       priority: 3,
       payload: { scopeType: scopeType ?? 'global', scopeId: scopeId ?? '' },
-      createdBy: requestedBy,
+      createdBy: r.auth?.sub ?? 'system',
     })
     res.status(202).json({ taskId: task.id, status: 'queued' })
   } catch (err: unknown) {
