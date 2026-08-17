@@ -66,14 +66,21 @@ const baseProject = (id: string, tenant: string, pm: string | null): ProjectRow 
   forecast_cost: 900_000, contingency_pct: 10,
 })
 
-interface Caller { id: string; tenantId: string; role: UserRole; active?: boolean; exists?: boolean }
+interface Caller {
+  id: string; tenantId: string
+  /** The role the DATABASE row carries — the live authority. */
+  role: UserRole
+  /** The role the TOKEN claims, when it deliberately disagrees with the row. */
+  jwtRole?: UserRole
+  active?: boolean; exists?: boolean
+}
 let caller: Caller
 const setCaller = (c: Caller) => { caller = c; (globalThis as Record<string, unknown>)['__p3a'] = c }
 
 vi.mock('../auth', () => ({
   requireAuth: (req: Record<string, unknown>, _res: unknown, next: () => void) => {
     const c = (globalThis as Record<string, unknown>)['__p3a'] as Caller
-    req['auth'] = { sub: c.id, tid: c.tenantId, role: c.role, jti: 'jti' }
+    req['auth'] = { sub: c.id, tid: c.tenantId, role: c.jwtRole ?? c.role, jti: 'jti' }
     next()
   },
   requireRole: () => (_r: unknown, _s: unknown, next: () => void) => next(),
@@ -96,6 +103,7 @@ vi.mock('../authz/transitionStates', () => ({
 }))
 
 import projectsRouter from '../routes/projects'
+import { filterAccessibleProjectIds, canAccessProject, resolveProjectScope } from '../authz/recordScope'
 
 const makeApp = () => {
   const app = express()
@@ -134,15 +142,27 @@ beforeEach(() => {
       return { rows: [{ id: caller.id, tenant_id: caller.tenantId, role: caller.role, is_active: caller.active !== false }] }
     }
 
-    // 2. Record scope. Mirrors recordScope.ts: always tenant-bounded, and for a
-    //    non-owner additionally bounded by the responsible-user columns.
+    // 2. Record scope.
+    //
+    // The fixture HONOURS the SQL it is given rather than reimplementing the
+    // rule. If the production query stops asking for the tenant predicate or
+    // the responsible-user predicate, this returns the extra rows a real
+    // database would return — so deleting either predicate from
+    // `recordScope.ts` is visible here as a behavioural failure, not merely as
+    // a source-inspection failure.
     if (/SELECT id FROM projects/i.test(sql)) {
-      const ids = (params[0] ?? []) as string[]
-      const uid = params[1] as string | undefined
+      const boundedByTenant = /tenant_id = current_setting/i.test(sql)
+      const boundedByIds    = /id = ANY\(\$1::uuid\[\]\)/i.test(sql)
+      // `filterAccessibleProjectIds` passes (ids, uid); `resolveProjectScope`
+      // asks for the whole set and passes (uid) alone.
+      const ids = boundedByIds ? (params[0] ?? []) as string[] : null
+      const uid = (boundedByIds ? params[1] : params[0]) as string | undefined
+      const boundedByMembership = /project_manager = \$\d/i.test(sql)
+
       const rows = PROJECTS
-        .filter(p => p.tenant_id === tenant)
-        .filter(p => ids.includes(p.id))
-        .filter(p => uid === undefined
+        .filter(p => !boundedByTenant || p.tenant_id === tenant)
+        .filter(p => ids === null || ids.includes(p.id))
+        .filter(p => !boundedByMembership || uid === undefined
           || p.project_manager === uid || p.lead_engineer === uid || p.created_by === uid)
         .map(p => ({ id: p.id }))
       return { rows }
@@ -318,13 +338,27 @@ describe('scope is live database state, never the token', () => {
   })
 
   it('refuses a stale token claiming owner over a live non-owner', async () => {
-    // The token says owner — which would be tenant-wide — but the row says
-    // engineer, and the engineer is not attached to PROJECT_B.
-    setCaller({ id: USER_A, tenantId: TENANT_A, role: 'engineer' })
-    ;(globalThis as Record<string, unknown>)['__p3a'] = { ...caller, role: 'engineer' }
-    const app = makeApp()
-    const res = await request(app).get(`/api/v1/projects/${PROJECT_B}`)
-    expect(res.status).toBe(404)
+    // The token claims owner, which would be tenant-wide and would open
+    // PROJECT_B. The database row says engineer, and that engineer is attached
+    // to nothing. Scope must follow the ROW, so the request is refused.
+    setCaller({ id: USER_A, tenantId: TENANT_A, role: 'engineer', jwtRole: 'owner' })
+    expect((await get(PROJECT_B)).status, 'the token claim must not confer scope').toBe(404)
+  })
+
+  it('still admits that caller to the project the ROW entitles it to', async () => {
+    // Non-vacuity for the case above: the refusal is about scope, not about the
+    // divergence itself breaking every request.
+    setCaller({ id: USER_A, tenantId: TENANT_A, role: 'engineer', jwtRole: 'owner' })
+    expect((await get(PROJECT_A)).status).toBe(200)
+  })
+
+  it('does not let a stale owner claim unlock the commercial columns', async () => {
+    // Field authority is live too: cost.view belongs to owner, and the token
+    // says owner — but the row says engineer.
+    setCaller({ id: USER_A, tenantId: TENANT_A, role: 'engineer', jwtRole: 'owner' })
+    const res = await get(PROJECT_A)
+    expect(res.status).toBe(200)
+    expect(res.body.data).not.toHaveProperty('budget')
   })
 })
 
@@ -391,5 +425,56 @@ describe('the project detail read has no side effects', () => {
       .map(sqlOf)
       .filter(s => /\b(INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/i.test(s))
     expect(writes, 'a GET must not write').toEqual([])
+  })
+})
+
+// ─── 9. The resolver itself, without the route on top ─────────────────────────
+//
+// The project payload query carries its OWN tenant predicate, which is correct
+// defence in depth — but it also means a tenant leak in the SCOPE query alone
+// would still 404 at the route and stay invisible. These exercise the resolver
+// directly so the scope query is held to the boundary on its own merits.
+describe('filterAccessibleProjectIds is bounded independently of the route', () => {
+  const owner    = { id: OWNER_A, tenantId: TENANT_A, role: 'owner' as UserRole }
+  const attached = { id: USER_A,  tenantId: TENANT_A, role: 'project_manager' as UserRole }
+
+  it('never returns a foreign-tenant project, even to the owner', async () => {
+    const got = await filterAccessibleProjectIds(owner, [PROJECT_A, PROJECT_B, PROJECT_C])
+    expect([...got].sort(), 'the owner is tenant-wide, not global').toEqual([PROJECT_A, PROJECT_B].sort())
+    expect(got.has(PROJECT_C), 'PROJECT_C belongs to tenant B').toBe(false)
+  })
+
+  it('returns only attached projects to a non-owner', async () => {
+    const got = await filterAccessibleProjectIds(attached, [PROJECT_A, PROJECT_B, PROJECT_C])
+    expect([...got]).toEqual([PROJECT_A])
+  })
+
+  it('answers a single-project question consistently', async () => {
+    expect(await canAccessProject(owner, PROJECT_C)).toBe(false)
+    expect(await canAccessProject(owner, PROJECT_B)).toBe(true)
+    expect(await canAccessProject(attached, PROJECT_B)).toBe(false)
+    expect(await canAccessProject(attached, PROJECT_A)).toBe(true)
+  })
+
+  it('refuses a malformed project id rather than passing it to the database', async () => {
+    // `id = ANY($1::uuid[])` would raise on a non-uuid; the resolver filters it
+    // out and denies instead, which must not become an implicit grant.
+    expect(await canAccessProject(owner, 'not-a-uuid')).toBe(false)
+    expect(await canAccessProject(owner, '')).toBe(false)
+    const got = await filterAccessibleProjectIds(owner, ['not-a-uuid', PROJECT_A])
+    expect([...got]).toEqual([PROJECT_A])
+  })
+
+  it('returns nothing at all when the lookup fails', async () => {
+    mockQuery.mockImplementationOnce(async () => { throw new Error('connection reset') })
+    const got = await filterAccessibleProjectIds(owner, [PROJECT_A])
+    expect([...got], 'a failed lookup must never be an implicit grant').toEqual([])
+  })
+
+  it('reports the owner as tenant-wide and a non-owner as a bounded set', async () => {
+    expect(await resolveProjectScope(owner)).toEqual({ kind: 'ALL_IN_TENANT' })
+    const scope = await resolveProjectScope(attached)
+    expect(scope.kind).toBe('PROJECT_SET')
+    expect(scope.kind === 'PROJECT_SET' ? [...scope.projectIds] : []).toEqual([PROJECT_A])
   })
 })

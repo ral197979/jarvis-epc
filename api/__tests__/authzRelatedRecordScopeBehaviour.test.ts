@@ -107,11 +107,17 @@ beforeEach(() => {
       if (id === RFI_OUT) return { rows: [{ project_id: PROJ_OUT, assigned_to_user_id: null }] }
       return { rows: [] }
     }
-    // Record scope: the caller is attached to PROJ_IN only. Owner sees both.
+    // Record scope: the caller is attached to PROJ_IN only; the owner branch
+    // (no membership predicate in the SQL) reaches both.
+    //
+    // As in the project suite, the fixture honours the SQL it is handed rather
+    // than reimplementing the rule, so dropping the responsible-user predicate
+    // from `recordScope.ts` widens what this returns and fails the isolation
+    // assertions behaviourally.
     if (/SELECT id FROM projects/i.test(sql)) {
       const ids = (params[0] ?? []) as string[]
-      const uid = params[1] as string | undefined
-      const visible = uid === undefined ? [PROJ_IN, PROJ_OUT] : [PROJ_IN]
+      const boundedByMembership = /project_manager = \$2/i.test(sql)
+      const visible = boundedByMembership ? [PROJ_IN] : [PROJ_IN, PROJ_OUT]
       return { rows: ids.filter(i => visible.includes(i)).map(id => ({ id })) }
     }
     if (/FROM change_orders/i.test(sql)) return { rows: changeOrders }
