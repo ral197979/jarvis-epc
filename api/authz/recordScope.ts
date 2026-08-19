@@ -13,16 +13,24 @@
  *
  * ─── The canonical project-scope relationship ────────────────────────────────
  *
- * A non-Owner reaches a project only through a responsible-user assignment
- * recorded ON THE PROJECT ROW ITSELF:
+ * A non-Owner reaches a project through an ACTIVE row in `project_members`:
  *
- *     projects.project_manager  → users(id)
- *     projects.lead_engineer    → users(id)
- *     projects.created_by       → users(id)
+ *     project_members (tenant_id, project_id, user_id, source, active_from, active_to)
  *
- * These are real foreign keys to the login principal table, written by the
- * project write routes and read back by `projects.ts` today. They are the only
- * authoritative user↔project relationship the repository contains.
+ * ADR-014 Phase 3B replaced the previous rule, which read three columns on the
+ * project row itself — `project_manager`, `lead_engineer`, `created_by`. That
+ * rule was correct enforcement on an insufficient model: it could express at
+ * most three principals per project, so every other legitimate participant was
+ * refused. Those columns remain truthful BUSINESS fields and are still written
+ * and displayed; they are simply no longer the authorization source. The
+ * project write workflows keep a corresponding membership row in step
+ * transactionally, and migration 086 backfilled every historical link, so there
+ * is ONE runtime authorization truth rather than two (§21).
+ *
+ * Membership is additive by SOURCE. A user who both created a project and is
+ * its lead engineer holds two rows, and revoking one leaves the other standing.
+ * Access requires at least one active source; it does not require any
+ * particular one.
  *
  * `project_assignments` was considered and REJECTED: its `member_id` references
  * `team_members`, an HR/workforce roster (first/last name, phone, trade,
@@ -43,8 +51,10 @@
  * cache. Revoking a membership therefore takes effect on the next request,
  * without waiting for a token to expire.
  */
+import type { RequestHandler } from 'express'
 import { tenantQuery } from '../db/pool'
-import type { CurrentUser } from './currentUser'
+import { resolveCurrentUser, type CurrentUser, type AuthorizedRequest } from './currentUser'
+import { roleHasCapability } from './capabilities'
 
 /**
  * What a principal may reach.
@@ -56,8 +66,19 @@ export type ProjectScope =
   | { kind: 'ALL_IN_TENANT' }
   | { kind: 'PROJECT_SET'; projectIds: ReadonlySet<string> }
 
-/** The role that reaches every project in its own tenant. */
-const TENANT_WIDE_ROLE = 'owner'
+/**
+ * The authority that reaches every project in its own tenant.
+ *
+ * A CAPABILITY, not a role name. `project.list.all` is the explicit authority
+ * to see the whole tenant portfolio (owner-only today), so keying on it keeps
+ * the authorization layer free of hard-coded role special cases and states the
+ * reason rather than the holder. It is still tenant-BOUNDED: every query below
+ * carries the tenant predicate on both branches.
+ */
+const TENANT_WIDE_CAPABILITY = 'project.list.all'
+
+const reachesWholeTenant = (principal: CurrentUser): boolean =>
+  roleHasCapability(principal.role, TENANT_WIDE_CAPABILITY)
 
 /**
  * Project ids are `uuid` columns. A malformed id cannot match one, and passing
@@ -66,7 +87,45 @@ const TENANT_WIDE_ROLE = 'owner'
  */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/**
+ * The active-membership test, with ONE definition of what "active" means.
+ *
+ * Correlated against `p` (the projects row) so the membership tenant and the
+ * project tenant must agree at query time as well as at write time, and
+ * parameterised by position because the two callers below number their
+ * arguments differently.
+ */
+const activeMembershipExists = (userParam: string): string => `
+          EXISTS (
+                SELECT 1 FROM project_members m
+                 WHERE m.project_id = p.id
+                   AND m.user_id    = ${userParam}
+                   AND m.tenant_id  = p.tenant_id
+                   AND m.active_from <= NOW()
+                   AND (m.active_to IS NULL OR m.active_to > NOW()))`
+
 export const isProjectId = (v: unknown): v is string => typeof v === 'string' && UUID.test(v)
+
+/**
+ * The record-scope predicate for a COLLECTION query, as a SQL fragment.
+ *
+ * Collections cannot use `filterAccessibleProjectIds`: filtering after the fact
+ * would mean loading rows the caller may not see, and would make `COUNT(*)`,
+ * `LIMIT` and `OFFSET` describe the wrong set. So the same membership rule is
+ * expressed as a predicate the query applies itself — one definition of
+ * "active member", shared with the batched resolver above.
+ *
+ * Returns `''` for a tenant-wide principal, whose scope is already the tenant
+ * predicate the caller's query carries.
+ *
+ * The fragment correlates on `p`, so the query MUST alias `projects` as `p`.
+ * `userParam` is the caller-chosen placeholder for the principal id; the value
+ * is bound by the caller, never interpolated here.
+ */
+export function projectScopeSql(principal: CurrentUser, userParam: string): string {
+  if (reachesWholeTenant(principal)) return ''
+  return `AND ${activeMembershipExists(userParam)}`
+}
 
 /**
  * The accessible subset of `projectIds`, in ONE database round-trip regardless
@@ -83,7 +142,7 @@ export async function filterAccessibleProjectIds(
   const candidates = [...new Set(projectIds.filter(isProjectId))]
   if (candidates.length === 0) return new Set()
 
-  const isTenantWide = principal.role === TENANT_WIDE_ROLE
+  const isTenantWide = reachesWholeTenant(principal)
 
   // The tenant predicate is present on BOTH branches. An Owner is tenant-wide,
   // not global — a project in another tenant is not reachable by anyone.
@@ -91,10 +150,10 @@ export async function filterAccessibleProjectIds(
     ? `SELECT id FROM projects
         WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
           AND id = ANY($1::uuid[])`
-    : `SELECT id FROM projects
-        WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
-          AND id = ANY($1::uuid[])
-          AND (project_manager = $2 OR lead_engineer = $2 OR created_by = $2)`
+    : `SELECT p.id FROM projects p
+        WHERE p.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+          AND p.id = ANY($1::uuid[])
+          AND ${activeMembershipExists('$2')}`
 
   const params: unknown[] = isTenantWide ? [candidates] : [candidates, principal.id]
 
@@ -125,18 +184,50 @@ export async function canAccessProject(
  * It exists so a caller can report scope truthfully without re-deriving it.
  */
 export async function resolveProjectScope(principal: CurrentUser): Promise<ProjectScope> {
-  if (principal.role === TENANT_WIDE_ROLE) return { kind: 'ALL_IN_TENANT' }
+  if (reachesWholeTenant(principal)) return { kind: 'ALL_IN_TENANT' }
   try {
     const res = await tenantQuery<{ id: string }>(
       principal.tenantId,
-      `SELECT id FROM projects
-        WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
-          AND (project_manager = $1 OR lead_engineer = $1 OR created_by = $1)`,
+      `SELECT p.id FROM projects p
+        WHERE p.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+          AND ${activeMembershipExists('$1')}`,
       [principal.id],
     )
     return { kind: 'PROJECT_SET', projectIds: new Set(res.rows.map(r => r.id)) }
   } catch {
     return { kind: 'PROJECT_SET', projectIds: new Set() }
+  }
+}
+
+/**
+ * Express guard for a route whose PATH carries the project it operates on.
+ *
+ * ADR-014 Phase 3B. Roughly fifty project-child collections share one shape —
+ * `/projects/:projectId/<something>` — and for all of them record scope is the
+ * same question: may this caller reach that project? Expressing it once, as a
+ * guard, keeps the rule in the canonical resolver instead of scattering
+ * membership SQL through fifty handlers.
+ *
+ * Ordering matters. This runs AFTER the route's functional capability guard, so
+ * a caller lacking the domain capability is refused 403 on the functional
+ * dimension and never causes a scope lookup; a caller holding it but not
+ * scoped to the project gets 404, the same answer as a project that does not
+ * exist.
+ *
+ * The project id is read from the route parameter — never from the body, the
+ * query string, or a header.
+ */
+export function requireProjectScope(param = 'projectId'): RequestHandler {
+  return async (req, res, next): Promise<void> => {
+    const projectId = (req.params as Record<string, string | undefined>)[param]
+    const principal = await resolveCurrentUser(req as AuthorizedRequest)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+    if (!projectId || !await canAccessProject(principal, projectId)) {
+      res.status(404).json({ error: 'not_found', message: 'Project not found.' })
+      return
+    }
+    next()
   }
 }
 

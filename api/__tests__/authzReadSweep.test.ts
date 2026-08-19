@@ -103,8 +103,23 @@ describe('the sweep exercises a real, fully guarded perimeter', () => {
     expect(READS.length).toBe(HIGH_SENSITIVITY_READS.length)
   })
 
-  it('covers all six domains', () => {
-    for (const d of DOMAINS) expect(inDomain(d).length, `no reads registered for ${d}`).toBeGreaterThan(0)
+  it('covers every domain that still has a high-sensitivity read', () => {
+    // ADR-014 Phase 3B emptied `project_registry`: its only member,
+    // `projects.ts GET /`, became a record-scoped collection whose commercial
+    // columns are stripped per reader, so it moved to
+    // RECLASSIFIED_NOT_HIGH_SENSITIVITY_READS. The domain is kept in the
+    // pattern table — it still correctly classifies `/api/v1/projects` — but it
+    // has no member to sweep, and asserting otherwise would force a fake entry.
+    const EMPTIED_BY_PHASE_3B = new Set(['project_registry'])
+    for (const d of DOMAINS) {
+      if (EMPTIED_BY_PHASE_3B.has(d)) {
+        expect(inDomain(d).length, `${d} is expected to be empty since Phase 3B`).toBe(0)
+        continue
+      }
+      expect(inDomain(d).length, `no reads registered for ${d}`).toBeGreaterThan(0)
+    }
+    // Non-vacuity: the sweep must still cover the other five.
+    expect(DOMAINS.filter(d => !EMPTIED_BY_PHASE_3B.has(d)).length).toBe(5)
   })
 })
 

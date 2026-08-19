@@ -63,6 +63,16 @@ export interface CensusEndpoint {
  */
 const RECORD_SCOPE_CALLS = [
   'canAccessProject(',
+  // ADR-014 Phase 3B: the COLLECTION form of the same rule. A list endpoint
+  // cannot use the batched id filter — it must push the predicate into its own
+  // query so COUNT, LIMIT and OFFSET describe the authorized set — so this is
+  // the record-scope call a scoped collection makes.
+  'projectScopeSql(',
+  // ADR-014 Phase 3B: the guard form, for a route whose PATH names the project
+  // it operates on. Roughly fifty project-child collections share that shape,
+  // so the rule is expressed once as middleware rather than as fifty copies of
+  // the membership SQL.
+  'requireProjectScope(',
   'authorizeSource(',
   'filterAuthorizedTargets(',
   'filterAccessibleProjectIds(',

@@ -15,6 +15,8 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { resolveCurrentUser } from '../authz/currentUser'
+import { projectScopeSql } from '../authz/recordScope'
 import { requireCapability } from '../authz/requireCapability'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
@@ -294,6 +296,20 @@ rfisRouter.get('/', requireCapability('construction.view') as never, async (req:
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3B — record scope, applied in SQL.
+  //
+  // `?project_id=` is an optional FILTER, so it cannot be the scope: without it
+  // this route would return every RFI in the tenant. The membership predicate
+  // is therefore ANDed unconditionally and outside the caller's filters, which
+  // means naming another team's project narrows to nothing rather than
+  // widening (§28). The query already joins `projects p`, which the shared
+  // predicate correlates on.
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = projectScopeSql(principal, `$${i}`)
+  const scopeVals = scope ? [principal.id] : []
+  const j = i + scopeVals.length
+
   const data = await tenantQuery(tenantId, `
     SELECT r.*, p.code AS project_code,
            rb.display_name AS raised_by_name, at.display_name AS assigned_to_name
@@ -302,8 +318,9 @@ rfisRouter.get('/', requireCapability('construction.view') as never, async (req:
     LEFT JOIN users rb ON rb.id = r.raised_by
     LEFT JOIN users at ON at.id = r.assigned_to
     WHERE r.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    ORDER BY r.created_at DESC LIMIT $${i} OFFSET $${i+1}
-  `, [...vals, limit, offset])
+    ${scope}
+    ORDER BY r.created_at DESC LIMIT $${j} OFFSET $${j+1}
+  `, [...vals, ...scopeVals, limit, offset])
 
   res.json({ data: data.rows })
 })
@@ -371,6 +388,14 @@ submittalsRouter.get('/', requireCapability('construction.view') as never, async
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3B — same record-scope contract as the RFI collection above:
+  // ?project_id is a filter, membership is the mandatory outer predicate.
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = projectScopeSql(principal, `$${i}`)
+  const scopeVals = scope ? [principal.id] : []
+  const j = i + scopeVals.length
+
   const data = await tenantQuery(tenantId, `
     SELECT s.*, p.code AS project_code,
            sb.display_name AS submitted_by_name, rv.display_name AS reviewed_by_name
@@ -379,8 +404,9 @@ submittalsRouter.get('/', requireCapability('construction.view') as never, async
     LEFT JOIN users sb ON sb.id = s.submitted_by
     LEFT JOIN users rv ON rv.id = s.reviewed_by
     WHERE s.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    ORDER BY s.created_at DESC LIMIT $${i} OFFSET $${i+1}
-  `, [...vals, limit, offset])
+    ${scope}
+    ORDER BY s.created_at DESC LIMIT $${j} OFFSET $${j+1}
+  `, [...vals, ...scopeVals, limit, offset])
 
   res.json({ data: data.rows })
 })

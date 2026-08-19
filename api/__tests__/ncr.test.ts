@@ -12,7 +12,9 @@ const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'e
 
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
-  tenantQuery:       (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
+  tenantQuery: (t: string, sql: string, p: unknown[]) => /SELECT (id|p\.id) FROM projects/i.test(String(sql))
+    ? Promise.resolve({ rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
+    : mockQuery(t, sql, p),
   query:       (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -110,7 +112,7 @@ describe('NCR / CAPA routes', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('POST NCR requires a title', async () => {
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs').send({ severity: 'major' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs').send({ severity: 'major' })
     expect(res.status).toBe(400)
   })
 
@@ -120,7 +122,7 @@ describe('NCR / CAPA routes', () => {
       if (/INSERT INTO ncrs/.test(sql)) return { rows: [{ id: 'n1', ncr_number: 7, title: 'Weld defect', severity: 'major', status: 'open' }], rowCount: 1 }
       return { rows: [] }
     })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs').send({ title: 'Weld defect', severity: 'major' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs').send({ title: 'Weld defect', severity: 'major' })
     expect(res.status).toBe(201)
     expect(res.body.data.ncr_number).toBe(7)
   })
@@ -138,7 +140,7 @@ describe('NCR / CAPA routes', () => {
       if (/FROM corrective_actions/.test(sql)) return { rows: [{ status: 'open', due_date: '2026-06-01' }] }
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/projects/p1/ncr-summary')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncr-summary')
     expect(res.status).toBe(200)
     expect(res.body.data.totals.openCritical).toBe(1)
     expect(res.body.data.overdueCapas).toBe(1)
@@ -156,7 +158,7 @@ describe('NCR / CAPA routes', () => {
       if (/INSERT INTO ncrs/.test(sql)) return { rows: [{ id: 'n1', ncr_number: 4, title: 'Failed inspection: Pour', severity: 'major', status: 'open', source: 'inspection', source_ref: 'insp1' }], rowCount: 1 }
       return { rows: [] }
     })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs/auto-raise').send({})
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs/auto-raise').send({})
     expect(res.status).toBe(201)
     expect(res.body.data.count).toBe(1)
     expect(res.body.data.created[0].source).toBe('inspection')
@@ -167,7 +169,7 @@ describe('NCR / CAPA routes', () => {
       if (/FROM inspections/.test(sql)) return { rows: [] }   // all failed inspections already have NCRs
       return { rows: [] }
     })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs/auto-raise').send({})
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs/auto-raise').send({})
     expect(res.status).toBe(200)
     expect(res.body.data.count).toBe(0)
   })

@@ -18,6 +18,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   createChangeOrder, getChangeOrder, listChangeOrders, updateChangeOrder,
   submitChangeOrder, approveChangeOrder, rejectChangeOrder, voidChangeOrder,
@@ -59,7 +60,7 @@ changeOrdersRouter.post('/projects/:projectId/change-orders', requireCapability(
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/projects/:projectId/change-orders', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.get('/projects/:projectId/change-orders', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const result = await listChangeOrders(r.tenantId!, {
@@ -77,7 +78,7 @@ changeOrdersRouter.get('/projects/:projectId/change-orders', requireCapability('
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/projects/:projectId/change-orders/summary', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.get('/projects/:projectId/change-orders/summary', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getChangeOrderSummary(r.tenantId!, p(req, 'projectId'))

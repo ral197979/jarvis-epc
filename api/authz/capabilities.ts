@@ -52,6 +52,16 @@ export const ACTION_CAPABILITIES = [
   // project.approve would hand that to every project manager — a broadening the
   // owner explicitly rejected. Granted to `owner` alone; see ACTION_GRANTS.
   'project.delete',
+  // ADR-014 D20 (Phase 3B). Membership is AUTHORIZATION-BEARING state: granting
+  // it hands a principal record scope over a project, and revoking it takes
+  // that scope away on the next request. That is a different authority from
+  // `project.write` (which edits project business data) and from
+  // `project.approve` (which commits lifecycle decisions), so it carries its
+  // own capability rather than borrowing either. Granted to owner and
+  // project_manager only; see ACTION_GRANTS, and note that for a non-owner it
+  // is additionally record-scoped — holding it does not mean holding it over
+  // every project.
+  'project.members.manage',
   'construction.write',
   'construction.approve',   // daily-log approval
   'engineering.write',
@@ -205,6 +215,10 @@ const ACTION_GRANTS: Record<UserRole, readonly ActionCapability[]> = {
   // PMs, so it fails closed pending an owner decision.
   project_manager: [
     'project.write', 'project.approve',
+    // ADR-014 D20: a project manager administers membership of the projects
+    // they are already scoped to. The record-scope half of that rule lives in
+    // the membership routes, not here — this grant is only the functional half.
+    'project.members.manage',
     'construction.write', 'construction.approve',
     'engineering.write',
     'quality.write', 'quality.verify',

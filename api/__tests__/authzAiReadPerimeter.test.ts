@@ -373,10 +373,14 @@ describe('the temporary cross-domain capability is server-only and Owner-only', 
 
 // ─── 6. Prior gates intact ────────────────────────────────────────────────────
 describe('prior read perimeters are untouched', () => {
-  it('keeps all 127 high-sensitivity reads on their own capability', () => {
+  it('keeps all 126 high-sensitivity reads on their own capability', () => {
     const kept = HIGH_SENSITIVITY_READS.filter(r => byKey.get(key(r))?.capability === r.capability).length
     expect(kept).toBe(HIGH_SENSITIVITY_READS.length)
-    expect(HIGH_SENSITIVITY_READS.length).toBe(127)
+    // ADR-014 Phase 3B moved `projects.ts GET /` out of this gate and into
+    // RECLASSIFIED_NOT_HIGH_SENSITIVITY_READS: it became a record-scoped
+    // collection whose commercial columns are stripped per reader, so the
+    // Owner-only guard this gate required no longer describes it. 127 → 126.
+    expect(HIGH_SENSITIVITY_READS.length).toBe(126)
   })
 
   it('keeps all 108 project-delivery reads on their own capability', () => {

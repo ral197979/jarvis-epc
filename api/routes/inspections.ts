@@ -19,6 +19,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
@@ -111,7 +112,7 @@ router.patch('/inspection-templates/:id', requireCapability('quality.write') as 
 
 // ─── Inspections ────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/inspections', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/inspections', requireCapability('quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, type, discipline, limit = '100', offset = '0' } = req.query

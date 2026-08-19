@@ -66,9 +66,30 @@ function app() {
   return a
 }
 
+/**
+ * ADR-014 Phase 3B: the drawings, inspections and punch-list collections are
+ * now record-scoped, so a caller needs project MEMBERSHIP as well as the domain
+ * capability. This file exists to prove the CAPABILITY gate, so the fixture
+ * grants membership and lets the capability dimension stay the variable — the
+ * membership dimension has its own suites. The id is a real uuid because scope
+ * resolves against a uuid column and a malformed id is denied outright.
+ */
+const PROJECT = '30000000-0000-4000-8000-0000000000p1'.replace('p1', '01')
+
 beforeEach(() => {
   for (const fn of Object.values(h)) fn.mockReset()
-  h.query.mockImplementation(principalQuery(() => current))
+  h.query.mockImplementation(principalQuery(() => current, (...args: unknown[]) => {
+    const sql = args.find(a => typeof a === 'string' && /SELECT/i.test(a)) as string | undefined
+    // The record-scope lookup: the caller is a member of the fixture project.
+    if (sql && /SELECT (id|p\.id) FROM projects/i.test(sql)) {
+      // Faithful: only the fixture project is a member project, so a different
+      // project id resolves to no rows exactly as the database would.
+      const ids = (args[args.length - 1] as unknown[])?.[0] as string[] | undefined
+      const hit = Array.isArray(ids) && ids.includes(PROJECT)
+      return { rows: hit ? [{ id: PROJECT }] : [], rowCount: hit ? 1 : 0 }
+    }
+    return { rows: [], rowCount: 0 }
+  }))
   h.listMembers.mockResolvedValue([])
   h.getTeamSummary.mockResolvedValue({})
   h.tagCoverage.mockResolvedValue({})
@@ -85,12 +106,12 @@ const domainQueries = () => h.query.mock.calls.filter(args =>
  */
 const FAMILIES = [
   { family: 'team',          path: '/api/v1/team/members',                    allowed: 'project_manager', denied: 'engineer',    service: () => h.listMembers },
-  { family: 'engineering',   path: '/api/v1/projects/p1/drawings',            allowed: 'engineer',        denied: 'field_ops',   service: null },
+  { family: 'engineering',   path: `/api/v1/projects/${PROJECT}/drawings`,            allowed: 'engineer',        denied: 'field_ops',   service: null },
   { family: 'documents',     path: '/api/v1/files/documents',                 allowed: 'viewer',          denied: 'admin',       service: null },
-  { family: 'construction',  path: '/api/v1/projects/p1/daily-logs',          allowed: 'field_ops',       denied: 'procurement', service: null },
-  { family: 'quality',       path: '/api/v1/projects/p1/punch-lists',         allowed: 'engineer',        denied: 'procurement', service: null },
+  { family: 'construction',  path: `/api/v1/projects/${PROJECT}/daily-logs`,          allowed: 'field_ops',       denied: 'procurement', service: null },
+  { family: 'quality',       path: `/api/v1/projects/${PROJECT}/punch-lists`,         allowed: 'engineer',        denied: 'procurement', service: null },
   { family: 'procurement',   path: '/api/v1/vendors',                         allowed: 'procurement',     denied: 'engineer',    service: null },
-  { family: 'commissioning', path: '/api/v1/projects/p1/systems',             allowed: 'project_manager', denied: 'engineer',    service: null },
+  { family: 'commissioning', path: `/api/v1/projects/${PROJECT}/systems`,             allowed: 'project_manager', denied: 'engineer',    service: null },
 ] as const
 
 // ─── §39 — a denied read never touches the data ───────────────────────────────
@@ -132,7 +153,7 @@ describe('a denial discloses nothing about what exists', () => {
 
   it('does not echo the required capability or the caller role in the denial', async () => {
     current = principal({ role: 'procurement' })
-    const res = await request(app()).get('/api/v1/projects/p1/punch-lists')
+    const res = await request(app()).get(`/api/v1/projects/${PROJECT}/punch-lists`)
     expect(res.status).toBe(403)
     expect(JSON.stringify(res.body)).not.toMatch(/quality\.view|procurement|capability/i)
   })
@@ -141,7 +162,7 @@ describe('a denial discloses nothing about what exists', () => {
     // Domain-wide authorization must resolve before the record lookup, so a
     // caller cannot distinguish "no such drawing" from "not your domain".
     current = principal({ role: 'procurement' })
-    const present = await request(app()).get('/api/v1/projects/p1/drawings')
+    const present = await request(app()).get(`/api/v1/projects/${PROJECT}/drawings`)
     const absent  = await request(app()).get('/api/v1/projects/does-not-exist/drawings')
     expect(present.status).toBe(403)
     expect(absent.status).toBe(403)
@@ -161,7 +182,7 @@ describe('a stale token cannot read a delivery domain', () => {
 
   it('denies commissioning systems when the token says owner and the database says viewer', async () => {
     current = principal({ role: 'viewer', jwtRole: 'owner' })
-    const res = await request(app()).get('/api/v1/projects/p1/systems')
+    const res = await request(app()).get(`/api/v1/projects/${PROJECT}/systems`)
     expect(res.status).toBe(403)
     expect(domainQueries()).toEqual([])
   })
@@ -190,14 +211,27 @@ describe('tenant isolation survives the delivery guards', () => {
 
   it('keeps a delivery query bound to the caller tenant', async () => {
     current = principal({ role: 'engineer', tenantId: 'tenant-a', jwtTenantId: 'tenant-a' })
-    await request(app()).get('/api/v1/projects/tenant-b-project/drawings')
+    await request(app()).get(`/api/v1/projects/${PROJECT}/drawings`)
     const [tenantArg] = domainQueries()[0] as unknown[]
     expect(tenantArg, 'the query must run in the caller tenant, whatever the URL asks for').toBe('tenant-a')
   })
 
+  it('refuses a project outside the caller scope before any domain query runs', async () => {
+    // ADR-014 Phase 3B strengthened this: naming another team's project in the
+    // URL no longer merely runs a tenant-bound query that returns nothing — the
+    // record-scope guard refuses first, so no domain query happens at all.
+    const FOREIGN = '30000000-0000-4000-8000-0000000000ff'
+    current = principal({ role: 'engineer', tenantId: 'tenant-a', jwtTenantId: 'tenant-a' })
+    const res = await request(app()).get(`/api/v1/projects/${FOREIGN}/drawings`)
+    expect(res.status).toBe(404)
+    const drawingReads = domainQueries().filter(args =>
+      args.some(a => typeof a === 'string' && /FROM\s+drawings/i.test(a)))
+    expect(drawingReads, 'no drawing was read for an out-of-scope project').toEqual([])
+  })
+
   it('resolves the current user once per request, not once per guard', async () => {
     current = principal({ role: 'project_manager' })
-    await request(app()).get('/api/v1/projects/p1/systems')
+    await request(app()).get(`/api/v1/projects/${PROJECT}/systems`)
     const lookups = h.query.mock.calls.filter(args =>
       args.some(a => typeof a === 'string' && /FROM\s+users\s+WHERE\s+id/i.test(a)))
     expect(lookups.length, 'the current-role lookup must not repeat per guard').toBe(1)

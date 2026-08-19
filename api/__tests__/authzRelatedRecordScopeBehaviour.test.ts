@@ -114,9 +114,11 @@ beforeEach(() => {
     // than reimplementing the rule, so dropping the responsible-user predicate
     // from `recordScope.ts` widens what this returns and fails the isolation
     // assertions behaviourally.
-    if (/SELECT id FROM projects/i.test(sql)) {
+    if (/SELECT (id|p\.id) FROM projects/i.test(sql)) {
       const ids = (params[0] ?? []) as string[]
-      const boundedByMembership = /project_manager = \$2/i.test(sql)
+      // ADR-014 Phase 3B: membership, not the project columns. Detected from
+      // the query itself so removing the predicate widens what this returns.
+      const boundedByMembership = /FROM project_members m/i.test(sql)
       const visible = boundedByMembership ? [PROJ_IN] : [PROJ_IN, PROJ_OUT]
       return { rows: ids.filter(i => visible.includes(i)).map(id => ({ id })) }
     }

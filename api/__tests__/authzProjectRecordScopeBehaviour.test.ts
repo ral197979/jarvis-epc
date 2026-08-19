@@ -11,8 +11,11 @@
  * relationship and no capability is refused. Neither implies the other, and
  * `project_manager` as a ROLE grants access to no project it is not attached to.
  *
- * Fixture (Phase 3A §14) — scope is the canonical responsible-user assignment
- * on the project row, so `projects.project_manager` is what puts a user in scope:
+ * Fixture (Phase 3A §14, carried into Phase 3B) — scope is now an ACTIVE ROW in
+ * `project_members`. The three project columns are still written and still
+ * displayed, but ADR-014 Phase 3B made membership the authorization source, so
+ * the fixture models memberships and the project columns come along for the
+ * ride exactly as the real create/assignment workflows keep them in step:
  *
  *   Tenant A   OWNER_A, USER_A, USER_B
  *              PROJECT_A  → USER_A in scope, USER_B out
@@ -58,6 +61,28 @@ interface ProjectRow {
 }
 
 let PROJECTS: ProjectRow[]
+
+/**
+ * `project_members`, modelled. Each entry is one (project, user, source) with
+ * its own lifecycle, which is what lets a test revoke ONE reason and prove the
+ * others still stand.
+ */
+interface MemberRow { projectId: string; userId: string; source: string; active: boolean }
+let MEMBERS: MemberRow[]
+
+const isActiveMember = (projectId: string, userId: string): boolean =>
+  MEMBERS.some(m => m.projectId === projectId && m.userId === userId && m.active)
+
+/** Open a membership, the way the create/assignment workflows do. */
+const addMember = (projectId: string, userId: string, source = 'manual'): void => {
+  MEMBERS.push({ projectId, userId, source, active: true })
+}
+/** Close ONE source, leaving any others this user holds untouched. */
+const revokeSource = (projectId: string, userId: string, source: string): void => {
+  for (const m of MEMBERS) {
+    if (m.projectId === projectId && m.userId === userId && m.source === source) m.active = false
+  }
+}
 
 const baseProject = (id: string, tenant: string, pm: string | null): ProjectRow => ({
   id, tenant_id: tenant, project_manager: pm, lead_engineer: null, created_by: null,
@@ -120,15 +145,27 @@ const tenantOf = (args: unknown[]): string | null =>
   typeof args[0] === 'string' && !/\b(SELECT|INSERT|UPDATE|DELETE)\b/i.test(args[0]) ? args[0] : null
 
 /** Which project ids the handler actually asked the scope query about. */
-const scopeQueries = () => mockQuery.mock.calls.filter(c => /SELECT id FROM projects/i.test(sqlOf(c)))
-/** Whether the expensive payload query ran at all. */
-const payloadQueries = () => mockQuery.mock.calls.filter(c => /FROM projects p/i.test(sqlOf(c)))
+const scopeQueries = () => mockQuery.mock.calls.filter(c => /SELECT (id|p\.id) FROM projects/i.test(sqlOf(c)))
+/**
+ * Whether the EXPENSIVE payload query ran at all.
+ *
+ * Matched on the display joins rather than on `FROM projects p`: since
+ * ADR-014 Phase 3B the lightweight scope query selects from `projects p` too,
+ * so the table alone no longer distinguishes them.
+ */
+const payloadQueries = () => mockQuery.mock.calls.filter(c => /LEFT JOIN users pm/i.test(sqlOf(c)))
 
 beforeEach(() => {
   PROJECTS = [
     baseProject(PROJECT_A, TENANT_A, USER_A),
     baseProject(PROJECT_B, TENANT_A, USER_B),
     baseProject(PROJECT_C, TENANT_B, USER_C),
+  ]
+  // The memberships migration 086 would have backfilled from those columns.
+  MEMBERS = [
+    { projectId: PROJECT_A, userId: USER_A, source: 'project_manager', active: true },
+    { projectId: PROJECT_B, userId: USER_B, source: 'project_manager', active: true },
+    { projectId: PROJECT_C, userId: USER_C, source: 'project_manager', active: true },
   ]
   mockQuery.mockReset()
   mockQuery.mockImplementation(async (...args: unknown[]) => {
@@ -145,25 +182,22 @@ beforeEach(() => {
     // 2. Record scope.
     //
     // The fixture HONOURS the SQL it is given rather than reimplementing the
-    // rule. If the production query stops asking for the tenant predicate or
-    // the responsible-user predicate, this returns the extra rows a real
-    // database would return — so deleting either predicate from
-    // `recordScope.ts` is visible here as a behavioural failure, not merely as
-    // a source-inspection failure.
-    if (/SELECT id FROM projects/i.test(sql)) {
+    // rule. It applies the tenant filter only if the query asks for a tenant,
+    // and the MEMBERSHIP filter only if the query actually contains the
+    // `project_members` EXISTS clause — so deleting either predicate from
+    // `recordScope.ts` returns the extra rows a real database would return, and
+    // fails here behaviourally rather than only by source inspection.
+    if (/SELECT (id|p\.id) FROM projects/i.test(sql)) {
       const boundedByTenant = /tenant_id = current_setting/i.test(sql)
       const boundedByIds    = /id = ANY\(\$1::uuid\[\]\)/i.test(sql)
-      // `filterAccessibleProjectIds` passes (ids, uid); `resolveProjectScope`
-      // asks for the whole set and passes (uid) alone.
       const ids = boundedByIds ? (params[0] ?? []) as string[] : null
       const uid = (boundedByIds ? params[1] : params[0]) as string | undefined
-      const boundedByMembership = /project_manager = \$\d/i.test(sql)
+      const boundedByMembership = /FROM project_members m/i.test(sql)
 
       const rows = PROJECTS
         .filter(p => !boundedByTenant || p.tenant_id === tenant)
         .filter(p => ids === null || ids.includes(p.id))
-        .filter(p => !boundedByMembership || uid === undefined
-          || p.project_manager === uid || p.lead_engineer === uid || p.created_by === uid)
+        .filter(p => !boundedByMembership || uid === undefined || isActiveMember(p.id, uid))
         .map(p => ({ id: p.id }))
       return { rows }
     }
@@ -285,20 +319,18 @@ describe('functional capability and record scope are independent', () => {
 })
 
 // ─── 4. Every relationship column is load-bearing ─────────────────────────────
-describe('each responsible-user column puts a principal in scope', () => {
-  it('lead_engineer', async () => {
-    PROJECTS[1]!.lead_engineer = USER_A
+describe('each membership SOURCE puts a principal in scope', () => {
+  // ADR-014 Phase 3B: the three system sources mirror the project columns the
+  // create and assignment workflows write, and `manual` is the source the
+  // membership API grants. Any ONE of them is sufficient — which is the whole
+  // point of modelling provenance rather than a boolean.
+  it.each(['project_manager', 'lead_engineer', 'created_by', 'manual'])('%s', async source => {
+    addMember(PROJECT_B, USER_A, source)
     setCaller({ id: USER_A, tenantId: TENANT_A, role: 'engineer' })
     expect((await get(PROJECT_B)).status).toBe(200)
   })
 
-  it('created_by — so creating a project is not a read dead-end', async () => {
-    PROJECTS[1]!.created_by = USER_A
-    setCaller({ id: USER_A, tenantId: TENANT_A, role: 'project_manager' })
-    expect((await get(PROJECT_B)).status).toBe(200)
-  })
-
-  it('and an unattached project stays refused', async () => {
+  it('and a project the caller holds no source for stays refused', async () => {
     setCaller({ id: USER_A, tenantId: TENANT_A, role: 'project_manager' })
     expect((await get(PROJECT_B)).status).toBe(404)
   })
@@ -306,21 +338,36 @@ describe('each responsible-user column puts a principal in scope', () => {
 
 // ─── 5. Live authority: revocation and deactivation (§16, §17) ────────────────
 describe('scope is live database state, never the token', () => {
-  it('revoking the relationship takes effect on the next request, same JWT', async () => {
+  it('revoking the membership takes effect on the next request, same JWT', async () => {
     setCaller({ id: USER_A, tenantId: TENANT_A, role: 'project_manager' })
     expect((await get(PROJECT_A)).status, 'in scope').toBe(200)
 
     // Revoke in the database. The caller keeps the identical token.
-    PROJECTS[0]!.project_manager = USER_B
+    revokeSource(PROJECT_A, USER_A, 'project_manager')
 
     expect((await get(PROJECT_A)).status, 'out of scope immediately').toBe(404)
   })
 
-  it('granting the relationship also takes effect immediately', async () => {
+  it('granting membership also takes effect immediately', async () => {
     setCaller({ id: USER_A, tenantId: TENANT_A, role: 'project_manager' })
     expect((await get(PROJECT_B)).status).toBe(404)
-    PROJECTS[1]!.lead_engineer = USER_A
+    addMember(PROJECT_B, USER_A, 'manual')
     expect((await get(PROJECT_B)).status).toBe(200)
+  })
+
+  it('revoking ONE source leaves access resting on another — §19, §23', async () => {
+    // The load-bearing provenance proof. USER_A is on PROJECT_A as its project
+    // manager AND by a manual grant. Reassigning the manager must not revoke
+    // the manual membership, and vice versa.
+    addMember(PROJECT_A, USER_A, 'manual')
+    setCaller({ id: USER_A, tenantId: TENANT_A, role: 'project_manager' })
+    expect((await get(PROJECT_A)).status).toBe(200)
+
+    revokeSource(PROJECT_A, USER_A, 'project_manager')
+    expect((await get(PROJECT_A)).status, 'the manual grant still stands').toBe(200)
+
+    revokeSource(PROJECT_A, USER_A, 'manual')
+    expect((await get(PROJECT_A)).status, 'only now is access gone').toBe(404)
   })
 
   it('a deactivated principal is refused before scope is even considered', async () => {

@@ -24,6 +24,7 @@ import {
 } from '../authz/highSensitivityMutations'
 import { HIGH_SENSITIVITY_READS } from '../authz/highSensitivityReads'
 import { PROJECT_DELIVERY_MUTATIONS, ESCALATED_DELIVERY_MUTATIONS } from '../authz/projectDeliveryMutations'
+import { MIXED_PAYLOAD_DELIVERY_READS, DEFERRED_DELIVERY_READS } from '../authz/projectDeliveryReads'
 import { ENFORCED_TRANSITIONS } from '../authz/transitions'
 import { AI_CROSS_DOMAIN_READS } from '../authz/aiCrossDomainReads'
 import {
@@ -92,19 +93,30 @@ describe('§12 domains are inherited from the Phase 2B-1 read perimeter, not inv
   }
 
   /**
-   * `projects.ts router` is the one router in the Phase 2B-1 registry that
-   * legitimately serves more than one read domain: `GET /` is project_registry,
-   * `GET /:id/summary` is commercial, and Phase 2B-2 recorded `GET /:id` as
-   * MIXED_PAYLOAD_PHASE3. Its mutations are project-domain operations on the
-   * project record, so single-domain inheritance cannot decide them and the
-   * exemption is stated here rather than hidden by a lenient assertion.
+   * `projects.ts router` serves more than one KIND of read, which is why its
+   * mutations cannot inherit a single domain.
+   *
+   * Phase 2B-1 justified the exemption by counting high-sensitivity read
+   * domains: `GET /` was project_registry and `GET /:id/summary` is commercial.
+   * ADR-014 Phase 3B moved `GET /` out of that registry — it became a
+   * record-scoped collection — so the high-sensitivity count is now one. The
+   * exemption is unchanged and still correct: the router additionally serves
+   * `GET /:id` (MIXED_PAYLOAD_PHASE3, project + commercial), the record-scoped
+   * collection, and the membership roster, and its mutations span project
+   * lifecycle, hard deletion, AI governance and membership administration. The
+   * assertion is therefore restated against what still makes it true rather
+   * than deleted.
    */
   const MULTI_DOMAIN_ROUTERS = new Set(['projects.ts|router'])
 
-  it('never lets a router be exempted without actually serving several read domains', () => {
+  it('never lets a router be exempted without actually serving several read kinds', () => {
     for (const k of MULTI_DOMAIN_ROUTERS) {
-      expect(readDomainsByRouter.get(k)?.size ?? 0,
-        `${k} is exempted from domain inheritance but serves one read domain`).toBeGreaterThan(1)
+      const highSensitivity = readDomainsByRouter.get(k)?.size ?? 0
+      const mixedPayload =
+        MIXED_PAYLOAD_DELIVERY_READS.filter(r => `${r.file}|router` === k).length +
+        DEFERRED_DELIVERY_READS.filter(r => `${r.file}|router` === k && r.category === 'MIXED_PAYLOAD_PHASE3').length
+      expect(highSensitivity + mixedPayload,
+        `${k} is exempted from domain inheritance but serves one read kind`).toBeGreaterThan(1)
     }
   })
 

@@ -23,12 +23,13 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth   as any)
 router.use(requireTenant() as any)
 
-router.get('/projects/:projectId/drawings', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/drawings', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { discipline, set_name, limit = '200', offset = '0' } = req.query

@@ -36,9 +36,17 @@ const PHASE_3A_ENDPOINTS = [
 
 // ─── 1. The Phase-3A endpoint set (§43) ───────────────────────────────────────
 describe('the Phase 3A endpoint set is exactly the two former deferrals', () => {
-  it('classifies exactly those two as record-scoped', () => {
-    const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').map(e => e.key).sort()
-    expect(scoped).toEqual([...PHASE_3A_ENDPOINTS].sort())
+  it('still classifies both former deferrals as record-scoped', () => {
+    // ADR-014 Phase 3B extended record scope to the project collection, the
+    // membership routes and seven domain-child collections, so the scoped set
+    // is no longer exactly these two. The Phase 3A invariant that survives is
+    // that neither of them regressed — asserted as a SUBSET, with the exact
+    // Phase 3B set pinned by the Phase 3B ratchet.
+    const scoped = new Set(endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').map(e => e.key))
+    for (const key of PHASE_3A_ENDPOINTS) {
+      expect(scoped.has(key), `${key} must remain record-scoped`).toBe(true)
+    }
+    expect(scoped.size, 'Phase 3B widened the scoped set').toBeGreaterThan(PHASE_3A_ENDPOINTS.length)
   })
 
   it('leaves nothing pending and nothing unclassified', () => {
@@ -223,10 +231,17 @@ describe('the canonical project-scope source is the one the resolver uses', () =
     expect(teamMembers![1], 'team_members must have no user_id').not.toMatch(/^\s*user_id\s/m)
   })
 
-  it('uses exactly the recorded columns in the resolver', () => {
-    for (const col of CANONICAL_PROJECT_SCOPE.columns) {
-      expect(resolver, `${col} must be part of the scope predicate`).toMatch(new RegExp(`${col} = \\$2`))
+  it('no longer authorizes from the legacy responsible-user columns', () => {
+    // ADR-014 Phase 3B §21 — ONE runtime authorization truth. The three project
+    // columns are still business data and are still written and displayed, but
+    // the resolver must not consult them; `project_members` is the source.
+    for (const col of ['project_manager', 'lead_engineer', 'created_by']) {
+      expect(resolver, `${col} must not appear in a scope predicate`)
+        .not.toMatch(new RegExp(`${col}\\s*=\\s*\\$`))
     }
+    expect(resolver, 'membership is the scope source').toMatch(/FROM project_members m/)
+    expect(resolver, 'and only ACTIVE membership counts')
+      .toMatch(/active_from <= NOW\(\)[\s\S]{0,80}active_to IS NULL OR m\.active_to > NOW\(\)/)
   })
 
   it('keeps the owner tenant-bounded on both branches', () => {
@@ -240,10 +255,12 @@ describe('the canonical project-scope source is the one the resolver uses', () =
     // The resolver must never touch the request. `projectIds` appears as a
     // PARAMETER name, which is fine — what matters is where the values come
     // from, and the resolver is handed ids by the route, never by the client.
-    for (const forbidden of ['req.body', 'req.query', 'req.params', 'req.headers']) {
+    for (const forbidden of ['req.body', 'req.query', 'req.headers']) {
       expect(resolver, `record scope must not read ${forbidden}`).not.toContain(forbidden)
     }
-    expect(resolver, 'the resolver takes no express request at all').not.toMatch(/\breq\b\s*:/)
+    // `requireProjectScope` is an express guard and legitimately reads the route
+    // PARAMETER, which is server-controlled routing, not caller-supplied scope.
+    // What must never appear is body/query/header-derived scope, asserted above.
 
     // And the route layer must not hand caller-supplied ids to it either: the
     // project id comes from the path, and the related ids from the database.
@@ -366,7 +383,9 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
   it('does not claim record scope for the rest of the API', () => {
     const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').length
     const plain  = endpoints.filter(e => e.klass === 'CAPABILITY').length
-    expect(scoped, 'Phase 3A scoped exactly two endpoints').toBe(2)
+    // Phase 3B scoped 15 of ~747. Adoption is real but partial, and saying so
+    // is the point — a later slice must not be able to imply full coverage.
+    expect(scoped).toBe(15)
     expect(plain, 'the rest remain capability-only, which is the honest state').toBeGreaterThan(700)
   })
 })

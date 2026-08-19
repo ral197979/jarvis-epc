@@ -82,7 +82,6 @@ export const HIGH_SENSITIVITY_READS: readonly HighSensitivityRead[] = [
   { file: 'predict.ts', router: 'predictRouter', method: 'GET', path: '/predict/projects/:id', domain: 'portfolio', capability: 'portfolio.view' },
 
   // ── project_registry ────────────────────────────────────────────
-  { file: 'projects.ts', router: 'router', method: 'GET', path: '/', domain: 'project_registry', capability: 'project.list.all', note: 'MIXED: the row is `projects.*`, which carries budget/committed_cost/actual_cost/forecast_cost. project.list.all and cost.view are both Owner-only, so the guard is no wider than either domain.' },
 
   // ── commercial ──────────────────────────────────────────────────
   { file: 'budgets.ts', router: 'router', method: 'GET', path: '/budgets/:id/items', domain: 'commercial', capability: 'cost.view' },
@@ -221,6 +220,10 @@ export interface ReclassifiedRead {
  * omission and a deliberate exclusion must not look the same.
  */
 export const RECLASSIFIED_NOT_HIGH_SENSITIVITY_READS: readonly ReclassifiedRead[] = [
+  {
+    file: 'projects.ts', method: 'GET', path: '/',
+    reason: 'ADR-014 Phase 3B converted this from a tenant-wide portfolio read into a RECORD-SCOPED collection, so the premise of its Phase 2B entry no longer holds. It was registered here because the row carries budget/committed_cost/actual_cost/forecast_cost and the only guard narrow enough for that payload was the Owner-only project.list.all. Two Phase-3 controls replace that single blunt guard: the membership predicate restricts the ROWS to projects the caller is an active member of, and projectForReader strips the five commercial columns from any caller without cost.view, so the payload a non-Owner receives no longer contains the data project.list.all was protecting. project.list.all is NOT redefined or deleted — it still means "the whole tenant portfolio" and is what suppresses the membership predicate for an Owner. Protection is asserted by the Phase 3B ratchet (route guard, membership predicate on BOTH the data and count queries, and cost-field projection), not merely moved out of this gate.',
+  },
   {
     file: 'optimization.ts', method: 'GET', path: '/proposals',
     reason: 'Resource-optimisation proposals from the Phase 7 optimisation engine — not the CRM/business-development pipeline the name suggests. Deferred to Phase 2B-2.',

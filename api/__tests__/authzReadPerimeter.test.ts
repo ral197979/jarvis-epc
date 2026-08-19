@@ -214,11 +214,6 @@ describe('mixed-payload rule', () => {
    */
   const MIXED: ReadonlyArray<{ key: string; guard: string; contains: readonly string[] }> = [
     {
-      key: 'projects.ts router.GET /',
-      guard: 'project.list.all',
-      contains: ['project.list.all', 'cost.view'],
-    },
-    {
       key: 'projects.ts router.GET /:id/summary',
       guard: 'cost.view',
       contains: ['project.view', 'cost.view', 'audit.view'],
