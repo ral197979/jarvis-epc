@@ -33,18 +33,29 @@ agentsRouter.get('/objectives', requireCapability('ai.govern') as never, (_req: 
 })
 
 // POST /api/v1/agents/plan — dry-run plan without executing
+// ADR-014 Phase 3B §40/§41 — audit-actor forgery closed.
+//
+// `orchestrate()` records `requestedBy` as the actor on every task it enqueues,
+// and both routes read it from the REQUEST BODY. Any caller holding ai.govern
+// could therefore attribute an agent plan or execution to a different user.
+// Phase 3A closed the identical defect on agentRisk; this is its sibling.
+//
+// The actor is now the authenticated subject. `requestedBy` is no longer
+// required, because the server ignores it — demanding a field that has no
+// effect would misdescribe the contract — and a body that still sends one is
+// accepted with the value discarded.
 agentsRouter.post('/plan', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { objective, scope, scopeId, context, requestedBy } = req.body
-    if (!objective || !scope || !scopeId || !requestedBy) {
-      return res.status(400).json({ error: 'objective, scope, scopeId, requestedBy required' })
+    const { objective, scope, scopeId, context } = req.body
+    if (!objective || !scope || !scopeId) {
+      return res.status(400).json({ error: 'objective, scope, scopeId required' })
     }
 
     const result = await orchestrate({
       tenantId: r.tenantId!, objective, scope, scopeId,
       context: context ?? {},
-      requestedBy,
+      requestedBy: r.auth?.sub ?? 'system',
       options: { dryRun: true },
     })
     res.json(result)
@@ -57,15 +68,15 @@ agentsRouter.post('/plan', requireCapability('ai.govern') as never, async (req: 
 agentsRouter.post('/execute', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { objective, scope, scopeId, context, requestedBy } = req.body
-    if (!objective || !scope || !scopeId || !requestedBy) {
-      return res.status(400).json({ error: 'objective, scope, scopeId, requestedBy required' })
+    const { objective, scope, scopeId, context } = req.body
+    if (!objective || !scope || !scopeId) {
+      return res.status(400).json({ error: 'objective, scope, scopeId required' })
     }
 
     const result = await orchestrate({
       tenantId: r.tenantId!, objective, scope, scopeId,
       context: context ?? {},
-      requestedBy,
+      requestedBy: r.auth?.sub ?? 'system',
     })
     res.status(202).json(result)
   } catch (err: unknown) {
