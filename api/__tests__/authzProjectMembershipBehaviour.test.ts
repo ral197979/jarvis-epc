@@ -62,6 +62,15 @@ let WRITES: string[]
 const activeFor = (projectId: string, userId: string) =>
   MEMBERS.filter(m => m.projectId === projectId && m.userId === userId && m.active)
 
+/**
+ * The rows a query would see, honouring whether it actually asked for the
+ * ACTIVE WINDOW. A resolver that drops `active_to IS NULL OR active_to > NOW()`
+ * would see revoked memberships too, exactly as a real database would — so the
+ * revocation tests below fail behaviourally rather than only structurally.
+ */
+const rowsVisibleTo = (projectId: string, userId: string, boundedByWindow: boolean) =>
+  MEMBERS.filter(m => m.projectId === projectId && m.userId === userId && (!boundedByWindow || m.active))
+
 interface Caller { id: string; tenantId: string; role: UserRole }
 let caller: Caller
 const setCaller = (c: Caller) => { caller = c; (globalThis as Record<string, unknown>)['__p3b'] = c }
@@ -151,13 +160,15 @@ beforeEach(() => {
       const boundedByTenant     = /tenant_id = current_setting/i.test(sql)
       const boundedByIds        = /id = ANY\(\$1::uuid\[\]\)/i.test(sql)
       const boundedByMembership = /FROM project_members m/i.test(sql)
+      const boundedByWindow = /active_to IS NULL OR m\.active_to > NOW\(\)/i.test(sql)
       const ids = boundedByIds ? (params[0] ?? []) as string[] : null
       const uid = (boundedByIds ? params[1] : params[0]) as string | undefined
       return {
         rows: PROJECTS
           .filter(p => !boundedByTenant || p.tenant_id === tenant)
           .filter(p => ids === null || ids.includes(p.id))
-          .filter(p => !boundedByMembership || (uid !== undefined && activeFor(p.id, uid).length > 0))
+          .filter(p => !boundedByMembership
+            || (uid !== undefined && rowsVisibleTo(p.id, uid, boundedByWindow).length > 0))
           .map(p => ({ id: p.id })),
       }
     }
@@ -183,18 +194,20 @@ beforeEach(() => {
     // project collection: data + count
     if (/LEFT JOIN users pm/i.test(sql)) {
       const scoped = /FROM project_members m/i.test(sql)
+      const win = /active_to IS NULL OR m\.active_to > NOW\(\)/i.test(sql)
       const uid = params[0] as string | undefined
       return {
         rows: PROJECTS.filter(p => p.tenant_id === tenant)
-          .filter(p => !scoped || (uid !== undefined && activeFor(p.id, uid).length > 0))
+          .filter(p => !scoped || (uid !== undefined && rowsVisibleTo(p.id, uid, win).length > 0))
           .map(p => ({ ...p, pm_name: 'PM' })),
       }
     }
     if (/COUNT\(\*\)::text AS count FROM projects/i.test(sql)) {
       const scoped = /FROM project_members m/i.test(sql)
+      const win = /active_to IS NULL OR m\.active_to > NOW\(\)/i.test(sql)
       const uid = params[0] as string | undefined
       const n = PROJECTS.filter(p => p.tenant_id === tenant)
-        .filter(p => !scoped || (uid !== undefined && activeFor(p.id, uid).length > 0)).length
+        .filter(p => !scoped || (uid !== undefined && rowsVisibleTo(p.id, uid, win).length > 0)).length
       return { rows: [{ count: String(n) }] }
     }
     // project detail payload
