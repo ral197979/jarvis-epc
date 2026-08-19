@@ -12,6 +12,7 @@ import path from 'node:path'
 import { classifiedCensus, ALL_ROUTE_CLASSES } from './helpers/endpointCensus'
 import { SERVER_ROLE_CAPS, USER_ROLES, isServerCapability, type UserRole } from '../authz/capabilities'
 import { SYSTEM_SOURCES, MANUAL_SOURCE, isSystemSource } from '../services/projects/projectMembershipService'
+import { COLLECTION_ADOPTION, phase3Counters } from '../authz/recordScopePolicies'
 
 const src = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), 'utf8')
 const holders = (c: string): UserRole[] =>
@@ -335,5 +336,41 @@ describe('the agents audit actor comes from the session', () => {
 
   it('no longer destructures an actor out of the body', () => {
     expect(agents).not.toMatch(/const \{ objective, scope, scopeId, context, requestedBy \} = req\.body/)
+  })
+})
+
+// ─── 11. Adoption counters are machine-derived (§42, §43) ─────────────────────
+describe('Phase-3 adoption is counted, not narrated', () => {
+  const counters = phase3Counters()
+
+  it('explains every recorded surface', () => {
+    expect(counters.unexplained, 'a surface with no substantive reason').toBe(0)
+    for (const a of COLLECTION_ADOPTION) {
+      expect(a.reason.length, `${a.surface} needs a reason`).toBeGreaterThan(30)
+    }
+  })
+
+  it('has no surface deferred for want of a scope model', () => {
+    // DEFERRED_PHASE3_SCOPE_MODEL would downgrade the slice to PARTIAL (§68).
+    const noModel = COLLECTION_ADOPTION.filter(a => a.status === 'DEFERRED_PHASE3_SCOPE_MODEL')
+    expect(noModel.map(a => a.surface), 'every candidate had a derivable project parent').toEqual([])
+  })
+
+  it('reports the deferrals it does have, rather than hiding them', () => {
+    const deferred = COLLECTION_ADOPTION.filter(a => a.status !== 'SCOPED')
+    expect(deferred.length).toBe(counters.deferred)
+    expect(deferred.every(a => a.kind === 'DOMAIN_CHILD_DETAIL'),
+      'the only deferrals are detail routes, deferred by scope discipline').toBe(true)
+  })
+
+  it('matches the scoped surfaces to the census', () => {
+    // Non-vacuity: the registry must not claim a surface the census disagrees
+    // with. Every SCOPED project/membership surface is a record-scoped endpoint.
+    const scopedKeys = new Set(endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').map(e => e.key))
+    const claimed = COLLECTION_ADOPTION
+      .filter(a => a.status === 'SCOPED' && a.surface.startsWith('projects.ts '))
+      .map(a => a.surface.replace('projects.ts ', 'projects.ts router.'))
+    for (const k of claimed) expect(scopedKeys, `${k} claimed SCOPED`).toContain(k)
+    expect(claimed.length).toBe(5)
   })
 })

@@ -266,3 +266,89 @@ export function recordScopeAdoption(relatedSources: readonly string[]): RecordSc
     unexplained: resourceCandidates.filter(r => policyFor(r) === null && !deferredSet.has(r)),
   }
 }
+
+// ─── Phase 3B collection adoption (§42, §43) ─────────────────────────────────
+
+/**
+ * How far record scope has actually been adopted, per surface.
+ *
+ * Recorded so the Phase-3 counters are machine-derived rather than narrated,
+ * and so a DEFERRED surface is visibly deferred rather than quietly missing.
+ * `DEFERRED_PHASE3_SCOPE_MODEL` means the surface has no derivable project
+ * parent — it must fail closed for that type, never fall back to tenant-wide.
+ */
+export type AdoptionStatus =
+  | 'SCOPED'                        // record scope enforced
+  | 'DEFERRED_PHASE3_SCOPE_MODEL'   // no derivable project parent yet
+  | 'DEFERRED_NEXT_SLICE'           // derivable, simply not in this slice
+
+export interface CollectionAdoption {
+  surface:     string
+  kind:        'PROJECT_DETAIL' | 'PROJECT_COLLECTION' | 'PROJECT_MEMBERSHIP'
+             | 'DOMAIN_CHILD_COLLECTION' | 'DOMAIN_CHILD_DETAIL' | 'SELF_SCOPED' | 'CROSS_MODULE'
+  capability:  string
+  status:      AdoptionStatus
+  reason:      string
+}
+
+export const COLLECTION_ADOPTION: readonly CollectionAdoption[] = [
+  { surface: 'projects.ts GET /:id', kind: 'PROJECT_DETAIL', capability: 'project.view', status: 'SCOPED',
+    reason: 'ADR-014 Phase 3A, migrated to the membership model by Phase 3B.' },
+  { surface: 'projects.ts GET /', kind: 'PROJECT_COLLECTION', capability: 'project.view', status: 'SCOPED',
+    reason: 'Membership-filtered in SQL, with the identical predicate on the COUNT so aggregates describe the authorized set. project.list.all selects the tenant-wide variant.' },
+  { surface: 'projects.ts GET /:id/members', kind: 'PROJECT_MEMBERSHIP', capability: 'project.view', status: 'SCOPED',
+    reason: 'Roster is project business data: visible to members, 404 to a same-tenant non-member.' },
+  { surface: 'projects.ts POST /:id/members', kind: 'PROJECT_MEMBERSHIP', capability: 'project.members.manage', status: 'SCOPED',
+    reason: 'Capability plus record scope; the scope half is what closes self-bootstrap.' },
+  { surface: 'projects.ts DELETE /:id/members/:userId', kind: 'PROJECT_MEMBERSHIP', capability: 'project.members.manage', status: 'SCOPED',
+    reason: 'Same two-dimension rule as the grant. Closes the manual source only.' },
+  { surface: 'related.ts GET /related/:source/:id', kind: 'CROSS_MODULE', capability: 'per-resource (policy registry)', status: 'SCOPED',
+    reason: 'ADR-014 Phase 3A: source authorized first, every target filtered independently.' },
+
+  { surface: 'drawings.ts GET /projects/:projectId/drawings', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'engineering.view', status: 'SCOPED', reason: 'requireProjectScope on the path project.' },
+  { surface: 'inspections.ts GET /projects/:projectId/inspections', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'quality.view', status: 'SCOPED', reason: 'requireProjectScope on the path project.' },
+  { surface: 'ncr.ts GET /projects/:projectId/ncrs', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'quality.view', status: 'SCOPED', reason: 'requireProjectScope on the path project.' },
+  { surface: 'ncr.ts GET /projects/:projectId/ncr-summary', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'quality.view', status: 'SCOPED', reason: 'Aggregate over the same rows; scoped identically so the summary cannot exceed the list.' },
+  { surface: 'punchLists.ts GET /projects/:projectId/punch-lists', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'quality.view', status: 'SCOPED', reason: 'requireProjectScope on the path project.' },
+  { surface: 'changeOrders.ts GET /projects/:projectId/change-orders', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'cost.view', status: 'SCOPED', reason: 'requireProjectScope; cost.view keeps it owner-only regardless of membership.' },
+  { surface: 'changeOrders.ts GET /projects/:projectId/change-orders/summary', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'cost.view', status: 'SCOPED', reason: 'Aggregate over the same rows, scoped identically.' },
+  { surface: 'procurement.ts rfisRouter GET /', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'construction.view', status: 'SCOPED',
+    reason: 'Project is an optional FILTER here, so the membership predicate is applied in-query as the mandatory outer condition instead of as a path guard.' },
+  { surface: 'procurement.ts submittalsRouter GET /', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'construction.view', status: 'SCOPED',
+    reason: 'Same query-filtered contract as the RFI collection.' },
+
+  { surface: 'drawings.ts GET /drawings/:id', kind: 'DOMAIN_CHILD_DETAIL', capability: 'engineering.view', status: 'DEFERRED_NEXT_SLICE',
+    reason: 'ADR-014 Phase 3B §35 — detail routes are inventoried, not retrofitted. Their project parent is derivable from the row, so this is a mechanical next slice, not a model gap.' },
+  { surface: 'inspections.ts GET /inspections/:id', kind: 'DOMAIN_CHILD_DETAIL', capability: 'quality.view', status: 'DEFERRED_NEXT_SLICE',
+    reason: 'Same as drawings detail: derivable parent, deferred by scope discipline.' },
+  { surface: 'punchLists.ts GET /punch-lists/:id/items', kind: 'DOMAIN_CHILD_DETAIL', capability: 'quality.view', status: 'DEFERRED_NEXT_SLICE',
+    reason: 'Parent punch list carries project_id; deferred with the other detail routes.' },
+
+  { surface: 'actions.ts (Personal Inbox)', kind: 'SELF_SCOPED', capability: 'personal.view / personal.admin', status: 'SCOPED',
+    reason: 'ADR-014 Phase 2C-4A. Ownership, not project membership — deliberately NOT converted, because inheriting project scope would widen a closed personal surface.' },
+]
+
+export interface Phase3Counters {
+  candidates: number
+  protected_: number
+  deferred: number
+  unexplained: number
+  byKind: Record<string, { scoped: number; deferred: number }>
+}
+
+/** Machine-derived, so the completion report cannot overstate adoption. */
+export function phase3Counters(): Phase3Counters {
+  const byKind: Record<string, { scoped: number; deferred: number }> = {}
+  for (const a of COLLECTION_ADOPTION) {
+    byKind[a.kind] ??= { scoped: 0, deferred: 0 }
+    if (a.status === 'SCOPED') byKind[a.kind]!.scoped++
+    else byKind[a.kind]!.deferred++
+  }
+  return {
+    candidates:  COLLECTION_ADOPTION.length,
+    protected_:  COLLECTION_ADOPTION.filter(a => a.status === 'SCOPED').length,
+    deferred:    COLLECTION_ADOPTION.filter(a => a.status !== 'SCOPED').length,
+    unexplained: COLLECTION_ADOPTION.filter(a => a.reason.length < 30).length,
+    byKind,
+  }
+}
