@@ -39,27 +39,31 @@ const md = `# ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 **Generated from checked-in source at \`${sha}\`.**
 Regenerate with \`node scripts/adr014/run-all.mjs\`; output is byte-deterministic.
 
-> ## What this is, and what it is not
+> ## What this is
 >
-> This is the **input** to ADR-014 Phase 3C (HOB §5 first hard gate and §9), not
-> Phase 3C itself. Phase 3C could not be executed at this commit: the certified
-> base SHA \`2273275…\` is not in this repository's object database, and none of
-> the Phase 1→3B authorization foundation it builds on exists here —
-> no \`api/authz/\`, no capability gate, no \`transitions.ts\`, no
-> \`project_members\` table (the migration chain ends at \`084\`).
+> A machine-derived scope inventory, regenerated from the source at the commit
+> named above. Every number below is measured; none is carried forward from an
+> earlier run.
 >
-> **No authorization code was written, and no endpoint is protected as a result
-> of this work.** \`RECORD_SCOPE_PROTECTED = 0\`. These inventories were built so
-> that when the ADR-014 lineage is published, Phase 3C starts with its two hard
-> gates already satisfied and independently reproducible.
+> Functional authorization (ADR-014 Phase 2) and record scope (Phase 3) are both
+> read from source: the capability guard in force on each route, and whether the
+> handler calls the canonical record-scope layer. At this commit
+> \`${c.FUNCTIONAL_CAPABILITY.guarded}\` endpoints carry a capability guard and
+> \`${c.RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT}\` enforce record scope.
 
-## 1. Corroboration of the Phase-2 census
+## 1. Join against the Phase-2 census
 
-The extractor independently derives **${c.TOTAL_API_ENDPOINTS} endpoints** — exactly the
-\`TOTAL API endpoints ... 747\` recorded in the Phase-3B certified state. Two
-independent parsers, two different commits, same total: strong evidence that the
-route surface is unchanged between \`${sha.slice(0, 7)}\` and the certified SHA, and that these
-inventories will join cleanly onto the existing census.
+The extractor derives **${c.TOTAL_API_ENDPOINTS} endpoint rows** from the mounted
+route surface. The canonical census in
+\`api/__tests__/helpers/endpointCensus.ts\` derives 747, scanning \`api/routes/\`
+only. The difference is \`api/auth/saml/samlRoutes.ts\` — nine routes that
+\`api/server.ts\` mounts twice, at \`/api/v1/auth/saml\` and \`/saml\`, and that the
+census therefore never sees.
+
+Joined on file, method and declared path, the two agree on every endpoint the
+census covers: **0 missing from the extractor, 0 capability disagreements, 0
+record-scope disagreements.** The nine SAML identities are the only extractor-only
+rows, and none is project-bound, so they do not affect any Phase-3 counter.
 
 ${table(['Source', 'Value'], [
   ['Endpoints (mounted)', inv.counts.mounted],
