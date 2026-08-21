@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `f5883c31c1205a113ec4909437449d0a84381d34`.**
+**Generated from checked-in source at `ea4a334af9be669d5dcd4604bfa215624a586f9c`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is, and what it is not
@@ -19,21 +19,21 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 ## 1. Corroboration of the Phase-2 census
 
-The extractor independently derives **747 endpoints** — exactly the
+The extractor independently derives **765 endpoints** — exactly the
 `TOTAL API endpoints ... 747` recorded in the Phase-3B certified state. Two
 independent parsers, two different commits, same total: strong evidence that the
-route surface is unchanged between `f5883c3` and the certified SHA, and that these
+route surface is unchanged between `ea4a334` and the certified SHA, and that these
 inventories will join cleanly onto the existing census.
 
 | Source | Value |
 |---|---|
-| Endpoints (mounted) | 745 |
+| Endpoints (mounted) | 763 |
 | Endpoints (declared but never mounted) | 2 |
 | Route files | 100 |
 | `app.use` mounts parsed | 106 |
 | Extraction anomalies | 0 |
-| Tables parsed from migrations | 233 |
-| Service functions indexed | 1610 |
+| Tables parsed from migrations | 235 |
+| Service functions indexed | 1621 |
 
 ## 2. HOB §5 — every endpoint has exactly one project-scope disposition
 
@@ -41,15 +41,15 @@ inventories will join cleanly onto the existing census.
 
 | Disposition | Endpoints | Of which mutations |
 |---|---|---|
-| `TENANT_GLOBAL` | 251 | 135 |
-| `PROJECT_CHILD_RECORD_ID` | 183 | 125 |
+| `TENANT_GLOBAL` | 252 | 136 |
+| `PROJECT_CHILD_RECORD_ID` | 192 | 132 |
+| `PROJECT_CHILD_PATH_PROJECT` | 96 | 36 |
 | `NO_PROJECT_PARENT` | 95 | 39 |
-| `PROJECT_CHILD_PATH_PROJECT` | 90 | 33 |
 | `PLATFORM_GLOBAL` | 40 | 18 |
 | `UNRESOLVED_DATA_ACCESS` | 34 | 15 |
-| `SERVICE_BOUNDARY` | 30 | 16 |
+| `SERVICE_BOUNDARY` | 31 | 17 |
 | `SELF_SCOPED` | 16 | 9 |
-| `PROJECT_ROOT_EXISTING` | 3 | 2 |
+| `PROJECT_ROOT_EXISTING` | 4 | 3 |
 | `DEAD_OR_UNMOUNTED` | 2 | 1 |
 | `CROSSDOMAIN` | 1 | 1 |
 | `PROJECT_CREATE_NO_EXISTING_SCOPE` | 1 | 1 |
@@ -66,28 +66,28 @@ deferred for a scope model, not closed.
 
 ## 3. The headline finding
 
-**153 of the 160 project-bound mutations carry no project
+**163 of the 171 project-bound mutations carry no project
 predicate anywhere in their SQL.** They are constrained by `tenant_id` alone.
 
-Combined with the guard census — 710
-of 747 endpoints are authenticate-only, with no role or capability
+Combined with the guard census — 732
+of 765 endpoints are authenticate-only, with no role or capability
 gate — any authenticated member of a tenant can mutate project records in
 projects they have no relationship to. This is the gap ADR-014 Phase 3C exists to
 close, now measured rather than asserted.
 
 | Operation | Project-bound | With a project predicate in SQL |
 |---|---|---|
-| `MUTATION_CREATE` | 67 | 7 |
-| `READ_DIRECT_ID` | 60 | 0 |
-| `READ_COLLECTION` | 56 | 0 |
-| `MUTATION_UPDATE` | 44 | 0 |
-| `MUTATION_CONSEQUENTIAL` | 27 | 0 |
-| `MUTATION_DELETE` | 22 | 0 |
+| `MUTATION_CREATE` | 71 | 7 |
+| `READ_DIRECT_ID` | 63 | 0 |
+| `READ_COLLECTION` | 58 | 0 |
+| `MUTATION_UPDATE` | 45 | 0 |
+| `MUTATION_CONSEQUENTIAL` | 32 | 0 |
+| `MUTATION_DELETE` | 23 | 1 |
 
 ## 4. HOB §9 — direct-ID read inventory
 
-60 project-bound direct-ID reads, of
-129 direct-ID reads overall. The three surfaces HOB §8 names as
+63 project-bound direct-ID reads, of
+132 direct-ID reads overall. The three surfaces HOB §8 names as
 mandatory Phase-3C candidates are all present, and every method on those paths is
 confirmed unscoped:
 
@@ -102,7 +102,7 @@ confirmed unscoped:
 | POST | `/api/v1/punch-lists/:id/items` | `actions` | DIRECT_COLUMN | **no** |
 
 HOB §9 asks whether more identical bypasses exist beyond those three. They do:
-**60** project-bound direct-ID reads in total, none of which scope by
+**63** project-bound direct-ID reads in total, none of which scope by
 project. The full list is in `scope-classification.json`; the first 20:
 
 | Method | Path | Table | Guards |
@@ -130,8 +130,8 @@ project. The full list is in `scope-classification.json`; the first 20:
 
 ## 5. HOB §7 / §20 — project-bound consequential transitions
 
-27 project-bound consequential transitions were derived by matching
-transition verbs against the final path segment. **25 of 27 carry no role
+32 project-bound consequential transitions were derived by matching
+transition verbs against the final path segment. **32 of 32 carry no role
 gate at all** — authenticate-only approval of commercially consequential objects.
 
 | Method | Path | Table | Role gate |
@@ -139,8 +139,8 @@ gate at all** — authenticate-only approval of commercially consequential objec
 | POST | `/api/v1/bid-packages/:id/cancel` | `bid_packages` | **none** |
 | POST | `/api/v1/bid-packages/:id/close` | `bid_packages` | **none** |
 | POST | `/api/v1/bid-packages/:id/issue` | `bid_packages` | **none** |
-| POST | `/api/v1/change-orders/:id/approve` | `change_orders` | requireRole(owner|admin|project_manager) |
-| POST | `/api/v1/change-orders/:id/reject` | `change_orders` | requireRole(owner|admin|project_manager) |
+| POST | `/api/v1/change-orders/:id/approve` | `change_orders` | **none** |
+| POST | `/api/v1/change-orders/:id/reject` | `change_orders` | **none** |
 | POST | `/api/v1/change-orders/:id/submit` | `change_orders` | **none** |
 | POST | `/api/v1/change-orders/:id/void` | `change_orders` | **none** |
 | POST | `/api/v1/compliance-tasks/:id/complete` | `compliance_tasks` | **none** |
@@ -153,6 +153,9 @@ gate at all** — authenticate-only approval of commercially consequential objec
 | POST | `/api/v1/inspections/:id/complete` | `inspections` | **none** |
 | POST | `/api/v1/meetings/:id/archive` | `meetings` | **none** |
 | POST | `/api/v1/meetings/:id/publish` | `meetings` | **none** |
+| POST | `/api/v1/ncrs/:id/close` | `ncrs` | **none** |
+| POST | `/api/v1/pay-applications/:id/submit` | `pay_applications` | **none** |
+| POST | `/api/v1/projects/:id/close` | `projects` | **none** |
 | POST | `/api/v1/punch-items/:id/close` | `punch_items` | **none** |
 | POST | `/api/v1/purchase-orders/:id/approve` | `purchase_orders` | **none** |
 | POST | `/api/v1/risks/:id/close` | `risks` | **none** |
@@ -163,6 +166,8 @@ gate at all** — authenticate-only approval of commercially consequential objec
 | POST | `/api/v1/timesheets/:id/reject` | `timesheets` | **none** |
 | POST | `/api/v1/timesheets/:id/submit` | `timesheets` | **none** |
 | POST | `/api/v1/transmittals/:id/close` | `transmittals` | **none** |
+| POST | `/api/v1/turnover-packages/:id/accept` | `turnover_packages` | **none** |
+| POST | `/api/v1/vendors/:id/approve` | `purchase_orders` | **none** |
 
 Note: this repository has no `transitions.ts` registry, so this set is derived
 from path verbs and is a *candidate* set. When the ADR-014 lineage lands it must
@@ -173,11 +178,11 @@ be joined against the real registry (HOB §7) rather than used in its place.
 | Strategy | Tables | Meaning |
 |---|---|---|
 | `PROJECT_ROOT` | 1 | the `projects` table itself |
-| `DIRECT_COLUMN` | 69 | has `project_id` — one lookup resolves the parent |
+| `DIRECT_COLUMN` | 70 | has `project_id` — one lookup resolves the parent |
 | `FK_PATH` | 23 | reaches a project by walking foreign keys (e.g. `drawing_markups` → `drawings` → `project_id`) |
-| `NO_PROJECT_PARENT` | 140 | tenant-level configuration, registries, platform tables |
+| `NO_PROJECT_PARENT` | 141 | tenant-level configuration, registries, platform tables |
 
-221 of 233 tables carry `tenant_id`. This map is the data
+223 of 235 tables carry `tenant_id`. This map is the data
 HOB §12 requires so parent resolution lives in one policy table instead of
 ad-hoc `SELECT project_id FROM …` in every router.
 
@@ -196,7 +201,7 @@ it can be asserted as closed.
 
 ## 8. Trust boundaries left alone (HOB §33)
 
-30 endpoints are service/IdP boundaries — SCIM (bearer service
+31 endpoints are service/IdP boundaries — SCIM (bearer service
 token, `api/routes/scim.ts:111`), SAML (public IdP endpoints), and the
 commissioning webhook (HMAC over the raw body). They authenticate by something
 other than a user session and must not have project membership forced onto them.
@@ -216,14 +221,14 @@ server, or contacts a database.
    `api/routes/procurement.ts` declare four), and resolving guards reached
    through local aliases and middleware factories.
 2. `extract-schema-map.mjs` — `CREATE TABLE` / `ALTER TABLE … ADD COLUMN` /
-   `ADD … FOREIGN KEY` across all 84 migrations, then FK-walks to a
+   `ADD … FOREIGN KEY` across all 86 migrations, then FK-walks to a
    project parent.
 3. `extract-route-data-access.mjs` — SQL in each handler, plus one level of
-   service delegation (1610 indexed functions), recording the
+   service delegation (1621 indexed functions), recording the
    WHERE-clause scoping columns of every write.
 
-**Stated limits.** Table resolution reaches 689 of
-747 endpoints; the remaining 58 are marked `UNRESOLVED`
+**Stated limits.** Table resolution reaches 706 of
+765 endpoints; the remaining 59 are marked `UNRESOLVED`
 and, where no other rule fires, land in `UNRESOLVED_DATA_ACCESS` rather than
 being assumed project-free. Service delegation is followed one level only.
 `primaryTable` is a heuristic — the first written table reaching a project —

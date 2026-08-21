@@ -37,37 +37,113 @@ const anomalies = []
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-/** Strip line + block comments so commented-out routes are not counted. */
-function stripComments (src) {
-  let out = '', i = 0, n = src.length
+/**
+ * Length-preserving source scan. Returns two views, each EXACTLY as long as the
+ * input, so an index found in one addresses the same character in the other:
+ *
+ *   noComments  comment bodies blanked; string/template/regex CONTENT intact.
+ *               Route path literals, guard tokens and `requireRole` lists are
+ *               read from this view.
+ *   skeleton    comments blanked AND every literal's CONTENT blanked, leaving
+ *               only code structure. Paren matching runs here.
+ *
+ * Why two views: the previous single-view scanner matched parens over source in
+ * which a literal could still contain a quote. A `'` inside a template literal
+ * — `current_setting('app.current_tenant_id',true)` in scim.ts — desynchronised
+ * the scan, `matchParen` ran off the end of the file, and the enclosing route
+ * was dropped with no anomaly. That silently removed PATCH /Users/:id from the
+ * inventory. Blanking literal CONTENT (keeping the delimiters, and keeping
+ * every offset) makes that whole defect class impossible.
+ */
+function scanSource (src) {
+  const n  = src.length
+  const nc = new Array(n)
+  const sk = new Array(n)
+  const blank = ch => (ch === '\n' ? '\n' : ' ')
+  const keepBoth   = i => { nc[i] = src[i]; sk[i] = src[i] }
+  const blankBoth  = i => { nc[i] = blank(src[i]); sk[i] = nc[i] }
+  const keepNcOnly = i => { nc[i] = src[i]; sk[i] = blank(src[i]) }
+
+  // Last significant code character, to tell a regex literal from a division.
+  let prev = ''
+  let i = 0
   while (i < n) {
     const c = src[i], d = src[i + 1]
-    if (c === '/' && d === '/') { while (i < n && src[i] !== '\n') { out += ' '; i++ } continue }
+
+    if (c === '/' && d === '/') {
+      while (i < n && src[i] !== '\n') { blankBoth(i); i++ }
+      continue
+    }
     if (c === '/' && d === '*') {
-      out += '  '; i += 2
-      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) { out += src[i] === '\n' ? '\n' : ' '; i++ }
-      out += '  '; i += 2; continue
+      blankBoth(i); blankBoth(i + 1); i += 2
+      while (i < n && !(src[i] === '*' && src[i + 1] === '/')) { blankBoth(i); i++ }
+      if (i < n) { blankBoth(i); blankBoth(i + 1); i += 2 }
+      continue
     }
-    if (c === "'" || c === '"' || c === '`') {
-      const q = c; out += c; i++
-      while (i < n && src[i] !== q) { if (src[i] === '\\') { out += src[i]; i++ } if (i < n) { out += src[i]; i++ } }
-      out += src[i] ?? ''; i++; continue
+    if (c === "'" || c === '"') {
+      keepBoth(i); i++
+      while (i < n && src[i] !== c) {
+        if (src[i] === '\\') { keepNcOnly(i); i++; if (i < n) { keepNcOnly(i); i++ } continue }
+        keepNcOnly(i); i++
+      }
+      if (i < n) { keepBoth(i); i++ }
+      prev = 'x'
+      continue
     }
-    out += c; i++
+    if (c === '`') {
+      // Blank the whole template, interpolations included. Any parens inside a
+      // `${...}` are balanced, so removing them wholesale leaves the enclosing
+      // paren match correct.
+      keepBoth(i); i++
+      let depth = 0
+      while (i < n) {
+        if (src[i] === '\\') { keepNcOnly(i); i++; if (i < n) { keepNcOnly(i); i++ } continue }
+        if (src[i] === '$' && src[i + 1] === '{') { depth++; keepNcOnly(i); i++; keepNcOnly(i); i++; continue }
+        if (depth > 0 && src[i] === '}') { depth--; keepNcOnly(i); i++; continue }
+        if (depth === 0 && src[i] === '`') break
+        keepNcOnly(i); i++
+      }
+      if (i < n) { keepBoth(i); i++ }
+      prev = 'x'
+      continue
+    }
+    if (c === '/' && /[(,=:[!&|?{};+\-*%~^<>]/.test(prev)) {
+      // Regex literal. Content blanked in the skeleton; a `(` inside a character
+      // class must not reach the paren matcher.
+      keepBoth(i); i++
+      let inClass = false
+      while (i < n) {
+        if (src[i] === '\\') { keepNcOnly(i); i++; if (i < n) { keepNcOnly(i); i++ } continue }
+        if (src[i] === '[') inClass = true
+        else if (src[i] === ']') inClass = false
+        else if (src[i] === '/' && !inClass) break
+        else if (src[i] === '\n') break
+        keepNcOnly(i); i++
+      }
+      if (i < n && src[i] === '/') { keepBoth(i); i++ }
+      while (i < n && /[a-z]/.test(src[i])) { keepBoth(i); i++ }   // flags
+      prev = 'x'
+      continue
+    }
+    keepBoth(i)
+    if (!/\s/.test(c)) prev = c
+    i++
   }
-  return out
+  return { noComments: nc.join(''), skeleton: sk.join('') }
 }
 
-/** Given index of an opening '(', return index just past its matching ')'. */
+/** Comments blanked, literals intact. Kept as a named helper for readability. */
+function stripComments (src) { return scanSource(src).noComments }
+
+/**
+ * Given the index of an opening '(', return the index just past its matching
+ * ')'. `src` MUST be a skeleton view from `scanSource` — literal content is
+ * already blanked there, so this needs no quote handling of its own.
+ */
 function matchParen (src, open) {
   let depth = 0, i = open, n = src.length
   while (i < n) {
     const c = src[i]
-    if (c === "'" || c === '"' || c === '`') {
-      const q = c; i++
-      while (i < n && src[i] !== q) { if (src[i] === '\\') i++; i++ }
-      i++; continue
-    }
     if (c === '(') depth++
     else if (c === ')') { depth--; if (depth === 0) return i + 1 }
     i++
@@ -99,14 +175,14 @@ function directGuardsIn (fragment) {
  * Missing these reports a guarded route as unguarded, which is a false finding
  * in the exact direction that matters, so they are resolved rather than ignored.
  */
-function buildAliasMap (src) {
+function buildAliasMap (src, skel) {
   const defs = new Map()   // name -> definition text
   for (const m of src.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*([^\n;]+)/g)) {
     defs.set(m[1], m[2])
   }
   for (const m of src.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)) {
     const open = src.indexOf('(', m.index)
-    const afterParams = matchParen(src, open)
+    const afterParams = matchParen(skel, open)
     const bodyOpen = src.indexOf('{', afterParams)
     if (bodyOpen < 0) continue
     let depth = 0, i = bodyOpen
@@ -132,6 +208,35 @@ function buildAliasMap (src) {
   return alias
 }
 
+/**
+ * Capability requirements declared in a fragment. ADR-014 Phase 2 expresses the
+ * FUNCTIONAL half of authorization through these, and the original extractor
+ * did not look for them at all — which is why its pre-Phase-2 run reported 710
+ * endpoints as "authenticate only". Detecting them here is what lets the
+ * inventory be joined to the canonical endpoint census.
+ */
+function capabilitiesIn (fragment) {
+  const found = new Set()
+  for (const m of fragment.matchAll(/\brequire(?:All|Any)?Capabilit(?:y|ies)\s*\(([^)]*)\)/g)) {
+    for (const lit of m[1].matchAll(/['"`]([^'"`]+)['"`]/g)) found.add(lit[1])
+  }
+  return [...found].sort()
+}
+
+/**
+ * The canonical record-scope entry points, mirrored from
+ * `api/__tests__/helpers/endpointCensus.ts`. A handler calling one of these has
+ * had its object scope decided by `api/authz/recordScope.ts`. Kept as a literal
+ * list so the extractor never has to import product code.
+ */
+const RECORD_SCOPE_CALLS = [
+  'canAccessProject(', 'projectScopeSql(', 'requireProjectScope(',
+  'authorizeSource(', 'filterAuthorizedTargets(', 'filterAccessibleProjectIds(',
+  'filterByParentProject(',
+]
+const recordScopeCallsIn = fragment =>
+  RECORD_SCOPE_CALLS.filter(c => fragment.includes(c)).map(c => c.slice(0, -1)).sort()
+
 /** Direct guards ∪ guards reached through local aliases referenced in the fragment. */
 function guardsWith (fragment, alias) {
   const found = new Set(directGuardsIn(fragment))
@@ -145,9 +250,11 @@ function guardsWith (fragment, alias) {
 
 // ── 1. server.ts: imports + mounts ───────────────────────────────────────────
 
-const serverRaw = readFileSync(SERVER_TS, 'utf8')
-const serverSrc = stripComments(serverRaw)
-const serverAlias = buildAliasMap(serverSrc)
+const serverRaw  = readFileSync(SERVER_TS, 'utf8')
+const serverScan = scanSource(serverRaw)
+const serverSrc  = serverScan.noComments
+const serverSkel = serverScan.skeleton
+const serverAlias = buildAliasMap(serverSrc, serverSkel)
 
 /** local identifier -> { spec, kind: 'default'|'named', exportName } */
 const importMap = new Map()
@@ -172,8 +279,11 @@ for (const m of serverSrc.matchAll(/import\s+([^;]+?)\s+from\s+['"]([^'"]+)['"]/
 const mounts = []
 for (const m of serverSrc.matchAll(/\bapp\.use\s*\(/g)) {
   const open = m.index + m[0].length - 1
-  const close = matchParen(serverSrc, open)
-  if (close < 0) continue
+  const close = matchParen(serverSkel, open)
+  if (close < 0) {
+    anomalies.push({ file: 'api/server.ts', line: lineOf(serverRaw, m.index), reason: 'unbalanced app.use(...) — mount not parsed' })
+    continue
+  }
   const args = serverSrc.slice(open + 1, close - 1)
   const routerIds = [...args.matchAll(/\b([A-Za-z_$][\w$]*Router)\b/g)].map(x => x[1])
   if (!routerIds.length) continue
@@ -206,9 +316,11 @@ function moduleToFile (spec) {
 const fileCache = new Map()
 function parseRouteFile (file) {
   if (fileCache.has(file)) return fileCache.get(file)
-  const raw = readFileSync(file, 'utf8')
-  const src = stripComments(raw)
-  const alias = buildAliasMap(src)
+  const raw  = readFileSync(file, 'utf8')
+  const scan = scanSource(raw)
+  const src  = scan.noComments
+  const skel = scan.skeleton
+  const alias = buildAliasMap(src, skel)
 
   // router variables: `const x = Router()` / `export const x = Router()`
   const routerVars = new Set()
@@ -234,19 +346,39 @@ function parseRouteFile (file) {
   // router-level guards, per router var, including path-scoped `.use('/p', mw)`
   const routerGuards = new Map()   // var -> Set(guard)
   const scopedGuards = []          // {var, path, guards}
+  // Intra-file sub-router mounts: `iotRouter.use('/', authRouter)`. Without
+  // these, every route declared on a router that server.ts does not import
+  // directly is invisible — which silently dropped all eight authenticated
+  // iot.ts endpoints from the inventory (ADR-014 Phase 3C).
+  const subMounts = []             // {parent, path, child, guards}
+  const routerCaps = new Map()     // var -> Set(capability)
   for (const v of routerVars) {
     routerGuards.set(v, new Set())
+    routerCaps.set(v, new Set())
     const useRe = new RegExp(`\\b${v}\\.use\\s*\\(`, 'g')
     let m
     while ((m = useRe.exec(src))) {
       const open = m.index + m[0].length - 1
-      const close = matchParen(src, open)
-      if (close < 0) continue
+      const close = matchParen(skel, open)
+      if (close < 0) {
+        anomalies.push({ file: file.replace(ROOT + '/', ''), line: lineOf(raw, m.index), reason: `unbalanced ${v}.use(...) — router-level guards not parsed` })
+        continue
+      }
       const args = src.slice(open + 1, close - 1)
       const pathLit = args.match(/^\s*['"`]([^'"`]*)['"`]/)
       const g = guardsWith(args, alias)
-      if (pathLit) scopedGuards.push({ var: v, path: pathLit[1], guards: g })
-      else for (const x of g) routerGuards.get(v).add(x)
+      const childRef = [...args.matchAll(/\b([A-Za-z_$][\w$]*)\b/g)]
+        .map(x => x[1]).find(name => name !== v && routerVars.has(name))
+      if (childRef) {
+        subMounts.push({ parent: v, path: pathLit ? pathLit[1] : '', child: childRef, guards: g })
+        continue
+      }
+      const caps = capabilitiesIn(args)
+      if (pathLit) scopedGuards.push({ var: v, path: pathLit[1], guards: g, caps })
+      else {
+        for (const x of g) routerGuards.get(v).add(x)
+        for (const c of caps) routerCaps.get(v).add(c)
+      }
     }
   }
 
@@ -258,8 +390,11 @@ function parseRouteFile (file) {
       let m
       while ((m = re.exec(src))) {
         const open = m.index + m[0].length - 1
-        const close = matchParen(src, open)
-        if (close < 0) continue
+        const close = matchParen(skel, open)
+        if (close < 0) {
+          anomalies.push({ file: file.replace(ROOT + '/', ''), line: lineOf(raw, m.index), reason: 'unbalanced route declaration — route NOT counted', method })
+          continue
+        }
         const args = src.slice(open + 1, close - 1)
         const pathLit = args.match(/^\s*['"`]([^'"`]*)['"`]/)
         if (!pathLit) {
@@ -275,6 +410,9 @@ function parseRouteFile (file) {
         const scoped = scopedGuards
           .filter(s => s.var === v && routePath.startsWith(s.path))
           .flatMap(s => s.guards)
+        const scopedCaps = scopedGuards
+          .filter(s => s.var === v && routePath.startsWith(s.path))
+          .flatMap(s => s.caps ?? [])
         routes.push({
           method: method.toUpperCase(),
           routerVar: v,
@@ -283,6 +421,12 @@ function parseRouteFile (file) {
           routerGuards: [...routerGuards.get(v)].sort(),
           inlineGuards,
           scopedGuards: [...new Set(scoped)].sort(),
+          // The functional half (Phase 2) and the object half (Phase 3),
+          // both derived from source rather than declared.
+          capabilities: [...new Set([
+            ...routerCaps.get(v), ...scopedCaps, ...capabilitiesIn(inline),
+          ])].sort(),
+          recordScopeCalls: recordScopeCallsIn(args),
           // body reads inside the handler body (for §16/§17 body-project audit)
           bodyProjectRefs: [...new Set(
             [...args.matchAll(/\breq\.body(?:\s*\.\s*|\s*\[\s*['"`])(project_?[Ii]d|projectId|parent_project_id)\b/g)].map(x => x[1]),
@@ -291,12 +435,43 @@ function parseRouteFile (file) {
       }
     }
   }
-  const parsed = { file, raw, routes, exportedRouters, defaultVar, routerVars: [...routerVars] }
+  const parsed = {
+    file, raw, routes, exportedRouters, defaultVar,
+    routerVars: [...routerVars],
+    subMounts,
+    routerGuardsByVar: Object.fromEntries([...routerGuards].map(([k, v2]) => [k, [...v2].sort()])),
+  }
   fileCache.set(file, parsed)
   return parsed
 }
 
 // ── 3. join mounts × routes ──────────────────────────────────────────────────
+
+/**
+ * Every route reachable from one router variable, following intra-file
+ * `parent.use('/p', child)` mounts. Router-relative paths are joined, and the
+ * parent's router-level guards plus the sub-mount's own middleware are carried
+ * down, so a sub-router route reports the guards actually in force on it.
+ */
+function collectRoutes (parsed, rootVar) {
+  const out = []
+  const seen = new Set()
+  const walk = (v, prefix, inherited) => {
+    const mark = `${v}|${prefix}`
+    if (seen.has(mark)) return
+    seen.add(mark)
+    for (const r of parsed.routes.filter(x => x.routerVar === v)) {
+      out.push({ ...r, routePath: joinPath(prefix, r.routePath), inheritedGuards: inherited })
+    }
+    for (const sm of parsed.subMounts.filter(x => x.parent === v)) {
+      walk(sm.child, joinPath(prefix, sm.path), [
+        ...new Set([...inherited, ...sm.guards, ...(parsed.routerGuardsByVar[v] ?? [])]),
+      ])
+    }
+  }
+  walk(rootVar, '', [])
+  return out
+}
 
 function joinPath (prefix, routePath) {
   const a = (prefix || '').replace(/\/+$/, '')
@@ -323,7 +498,7 @@ for (const mnt of mounts) {
     if (parsed.routerVars.length === 1) boundVar = parsed.routerVars[0]
     else { anomalies.push({ routerId: mnt.routerId, module: mnt.module, reason: 'mount could not be bound to a single router variable', candidates: parsed.routerVars }); continue }
   }
-  const routes = parsed.routes.filter(r => r.routerVar === boundVar)
+  const routes = collectRoutes(parsed, boundVar)
   for (const r of routes) {
     const fullPath = joinPath(mnt.prefix, r.routePath)
     endpoints.push({
@@ -335,7 +510,9 @@ for (const mnt of mounts) {
       line: r.line,
       serverLine: mnt.serverLine,
       pathParams: [...fullPath.matchAll(/:([A-Za-z_][\w]*)/g)].map(x => x[1]),
-      guards: [...new Set([...mnt.mountGuards, ...r.routerGuards, ...r.scopedGuards, ...r.inlineGuards])].sort(),
+      guards: [...new Set([...mnt.mountGuards, ...r.routerGuards, ...r.scopedGuards, ...r.inlineGuards, ...(r.inheritedGuards ?? [])])].sort(),
+      capabilities: [...new Set([...(r.capabilities ?? []), ...capabilitiesIn(mnt.mountGuardsRaw ?? '')])].sort(),
+      recordScopeCalls: r.recordScopeCalls ?? [],
       bodyProjectRefs: r.bodyProjectRefs,
       mounted: true,
     })
@@ -346,7 +523,10 @@ for (const mnt of mounts) {
 for (const f of readdirSync(ROUTES_DIR).filter(x => x.endsWith('.ts'))) {
   const abs = join(ROUTES_DIR, f)
   if (mountedModules.has(abs)) continue
-  const { routes } = parseRouteFile(abs)
+  const parsedU = parseRouteFile(abs)
+  const childVars = new Set(parsedU.subMounts.map(x => x.child))
+  const roots = parsedU.routerVars.filter(v => !childVars.has(v))
+  const routes = roots.flatMap(v => collectRoutes(parsedU, v))
   for (const r of routes) {
     endpoints.push({
       method: r.method,
@@ -357,7 +537,9 @@ for (const f of readdirSync(ROUTES_DIR).filter(x => x.endsWith('.ts'))) {
       line: r.line,
       serverLine: null,
       pathParams: [...r.routePath.matchAll(/:([A-Za-z_][\w]*)/g)].map(x => x[1]),
-      guards: [...new Set([...r.routerGuards, ...r.scopedGuards, ...r.inlineGuards])].sort(),
+      guards: [...new Set([...r.routerGuards, ...r.scopedGuards, ...r.inlineGuards, ...(r.inheritedGuards ?? [])])].sort(),
+      capabilities: r.capabilities ?? [],
+      recordScopeCalls: r.recordScopeCalls ?? [],
       bodyProjectRefs: r.bodyProjectRefs,
       mounted: false,
     })

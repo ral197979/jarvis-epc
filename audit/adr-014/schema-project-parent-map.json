@@ -1,13 +1,13 @@
 {
   "generatedFrom": "api/db/migrations/*.sql",
   "counts": {
-    "tables": 233,
-    "migrationFiles": 84,
-    "directProjectColumn": 69,
+    "tables": 235,
+    "migrationFiles": 86,
+    "directProjectColumn": 70,
     "fkPathToProject": 23,
-    "noProjectParent": 140,
+    "noProjectParent": 141,
     "projectRoot": 1,
-    "withTenantColumn": 221
+    "withTenantColumn": 223
   },
   "tables": [
     {
@@ -1648,6 +1648,18 @@
       ]
     },
     {
+      "table": "notification_deliveries",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "085_notification_deliveries.sql"
+      ]
+    },
+    {
       "table": "notification_delivery_attempts",
       "idColumn": "id",
       "tenantColumn": "tenant_id",
@@ -1697,9 +1709,10 @@
       "projectParent": {
         "strategy": "NO_PROJECT_PARENT"
       },
-      "columns": 12,
+      "columns": 13,
       "sources": [
-        "064_notifications.sql"
+        "064_notifications.sql",
+        "085_notification_deliveries.sql"
       ]
     },
     {
@@ -2017,6 +2030,20 @@
       "columns": 12,
       "sources": [
         "079_project_gates.sql"
+      ]
+    },
+    {
+      "table": "project_members",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 10,
+      "sources": [
+        "086_project_members.sql"
       ]
     },
     {

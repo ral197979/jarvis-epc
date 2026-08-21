@@ -12,10 +12,12 @@
  * via an ordered, explicit rule list. Each verdict carries the rule that fired,
  * so a disposition can be argued with rather than taken on faith.
  *
- * IMPORTANT — this repository has NO ADR-014 authorization layer at this commit
- * (no api/authz, no capability gates, no project_members). Statuses are
- * therefore CANDIDATE_*, never PROTECTED_PHASE3*. Nothing here claims coverage
- * that does not exist.
+ * ENFORCEMENT IS MEASURED, NOT ASSUMED. An earlier revision of this file
+ * hard-coded "no ADR-014 authorization layer at this commit", which was true of
+ * the pre-Phase-2 baseline it was written against and false of every commit
+ * since. It now reads the capability guard and the canonical record-scope call
+ * that `extract-endpoint-inventory.mjs` derives from source, so an endpoint is
+ * reported PROTECTED only when the source actually enforces it.
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
@@ -178,6 +180,12 @@ for (const e of inv.endpoints) {
     projectBound,
     // functional authority actually in force at this commit
     functionalAuthority: e.guards.length ? e.guards : ['(none)'],
+    // ADR-014 Phase 2 (functional) and Phase 3 (object) enforcement, both read
+    // from source by the inventory extractor rather than assumed.
+    capabilities: e.capabilities ?? [],
+    hasCapability: (e.capabilities ?? []).length > 0,
+    recordScopeCalls: e.recordScopeCalls ?? [],
+    enforcesRecordScope: (e.recordScopeCalls ?? []).length > 0,
     // primaryTable is a HEURISTIC (first written table that reaches a project);
     // writeTables/readTables carry the full resolved set so the heuristic can be
     // checked rather than trusted.
@@ -190,7 +198,9 @@ for (const e of inv.endpoints) {
     sqlScopesByTenant: scopesByTenant,
     bodyProjectRefs: e.bodyProjectRefs,
     tableResolution: ep.resolvedVia,
-    status: projectBound ? 'CANDIDATE_PHASE3C' : `OUT_OF_PHASE3C_${disposition}`,
+    status: !projectBound
+      ? `OUT_OF_PHASE3C_${disposition}`
+      : (e.recordScopeCalls ?? []).length ? 'PROTECTED_PHASE3' : 'CANDIDATE_PHASE3C',
   })
 }
 
@@ -228,9 +238,22 @@ const counters = {
   },
   SELF_SCOPED: registry.filter(r => r.disposition === 'SELF_SCOPED').length,
   DEFERRED_SCOPE_MODEL_UNRESOLVED: registry.filter(r => r.disposition === 'UNRESOLVED_DATA_ACCESS').length,
-  RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT: 0,
-  RECORD_SCOPE_PROTECTED_NOTE:
-    'zero — this commit has no ADR-014 authorization layer (no api/authz, no capability gate, no project_members table)',
+  // ── measured enforcement (never hard-coded) ───────────────────────────────
+  FUNCTIONAL_CAPABILITY: {
+    guarded:   registry.filter(r => r.hasCapability).length,
+    unguarded: registry.filter(r => !r.hasCapability).length,
+  },
+  RECORD_SCOPE: {
+    candidates: pb.length,
+    protected:  pb.filter(r => r.enforcesRecordScope).length,
+    deferred:   pb.filter(r => !r.enforcesRecordScope).length,
+    unexplained: registry.filter(r => r.disposition === 'UNEXPLAINED').length,
+  },
+  RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT: registry.filter(r => r.enforcesRecordScope).length,
+  PROJECT_BOUND_PROTECTED_BY_OPERATION:
+    by(pb.filter(r => r.enforcesRecordScope), r => r.operationType),
+  PROJECT_BOUND_DEFERRED_BY_OPERATION:
+    by(pb.filter(r => !r.enforcesRecordScope), r => r.operationType),
 }
 
 writeFileSync(join(A, 'scope-classification.json'),
