@@ -63,23 +63,25 @@
     },
     "RECORD_SCOPE": {
       "candidates": 292,
-      "protected": 12,
-      "deferred": 280,
+      "protected": 36,
+      "deferred": 256,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 15,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 39,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "READ_DIRECT_ID": 3,
-      "MUTATION_CREATE": 1,
-      "MUTATION_DELETE": 1,
+      "MUTATION_DELETE": 5,
+      "READ_DIRECT_ID": 9,
+      "MUTATION_UPDATE": 5,
+      "MUTATION_CREATE": 8,
+      "MUTATION_CONSEQUENTIAL": 2,
       "READ_COLLECTION": 7
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
-      "READ_DIRECT_ID": 60,
-      "MUTATION_UPDATE": 45,
-      "MUTATION_CREATE": 70,
-      "MUTATION_DELETE": 22,
-      "MUTATION_CONSEQUENTIAL": 32,
+      "READ_DIRECT_ID": 54,
+      "MUTATION_UPDATE": 40,
+      "MUTATION_CREATE": 63,
+      "MUTATION_DELETE": 18,
+      "MUTATION_CONSEQUENTIAL": 30,
       "READ_COLLECTION": 51
     }
   },
@@ -7829,8 +7831,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawings",
       "writeTables": [
         "drawings"
@@ -7848,7 +7852,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -7867,8 +7871,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawings",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -7882,7 +7888,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -7901,8 +7907,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawings",
       "writeTables": [
         "drawings"
@@ -7920,7 +7928,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -7939,8 +7947,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawing_markups",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -7959,7 +7969,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -7978,8 +7988,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawing_markups",
       "writeTables": [
         "drawing_markups"
@@ -8000,7 +8012,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -8019,8 +8031,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawing_revisions",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -8039,7 +8053,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -8058,8 +8072,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawing_revisions",
       "writeTables": [
         "drawing_revisions",
@@ -8083,7 +8099,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -12461,8 +12477,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "inspections",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -12476,7 +12494,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -12495,8 +12513,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "inspections",
       "writeTables": [
         "inspections"
@@ -12514,7 +12534,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -12533,8 +12553,10 @@
         "quality.verify"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "inspections",
       "writeTables": [
         "inspections"
@@ -12552,7 +12574,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -13824,8 +13846,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawing_markups",
       "writeTables": [
         "drawing_markups"
@@ -13848,7 +13872,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -13867,8 +13891,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawing_markups",
       "writeTables": [
         "drawing_markups"
@@ -13891,7 +13917,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -18124,8 +18150,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "drawings",
       "writeTables": [
         "drawings"
@@ -18141,7 +18169,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -18581,8 +18609,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "inspections",
       "writeTables": [
         "actions",
@@ -18599,7 +18629,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -19084,8 +19114,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_lists",
       "writeTables": [
         "punch_lists"
@@ -19101,7 +19133,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -20568,8 +20600,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_items",
       "writeTables": [
         "punch_items"
@@ -20587,7 +20621,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -20606,8 +20640,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_items",
       "writeTables": [
         "punch_items"
@@ -20625,7 +20661,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -20644,8 +20680,10 @@
         "quality.verify"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_items",
       "writeTables": [
         "punch_items"
@@ -20663,7 +20701,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -20682,8 +20720,10 @@
         "quality.verify"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_items",
       "writeTables": [
         "punch_items"
@@ -20701,7 +20741,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
@@ -20720,8 +20760,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_lists",
       "writeTables": [
         "punch_lists"
@@ -20739,7 +20781,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -20758,8 +20800,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_lists",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -20773,7 +20817,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -20792,8 +20836,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_lists",
       "writeTables": [
         "punch_lists"
@@ -20811,7 +20857,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -20830,8 +20876,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "punch_items",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -20845,7 +20893,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -20864,8 +20912,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "actions",
       "writeTables": [
         "actions",
@@ -20882,7 +20932,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",

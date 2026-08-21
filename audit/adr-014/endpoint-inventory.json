@@ -4743,7 +4743,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4765,7 +4767,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4787,7 +4791,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4809,7 +4815,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4831,7 +4839,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4853,7 +4863,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4875,7 +4887,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7577,7 +7591,9 @@
       "capabilities": [
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7599,7 +7615,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7621,7 +7639,9 @@
       "capabilities": [
         "quality.verify"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8368,7 +8388,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8390,7 +8412,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -10979,7 +11003,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -11271,7 +11297,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -11585,7 +11613,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12527,7 +12557,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12549,7 +12581,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12571,7 +12605,9 @@
       "capabilities": [
         "quality.verify"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12593,7 +12629,9 @@
       "capabilities": [
         "quality.verify"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12615,7 +12653,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12637,7 +12677,9 @@
       "capabilities": [
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12659,7 +12701,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12681,7 +12725,9 @@
       "capabilities": [
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -12703,7 +12749,9 @@
       "capabilities": [
         "quality.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
