@@ -1,0 +1,3136 @@
+{
+  "generatedFrom": "api/db/migrations/*.sql",
+  "counts": {
+    "tables": 233,
+    "migrationFiles": 84,
+    "directProjectColumn": 69,
+    "fkPathToProject": 23,
+    "noProjectParent": 140,
+    "projectRoot": 1,
+    "withTenantColumn": 221
+  },
+  "tables": [
+    {
+      "table": "action_analytics_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 20,
+      "sources": [
+        "033_action_analytics.sql"
+      ]
+    },
+    {
+      "table": "action_escalations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 7,
+      "sources": [
+        "029_actions_sla.sql"
+      ]
+    },
+    {
+      "table": "action_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 13,
+      "sources": [
+        "034_action_events.sql"
+      ]
+    },
+    {
+      "table": "action_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "action_relations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "source_action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 10,
+      "sources": [
+        "030_action_relations.sql"
+      ]
+    },
+    {
+      "table": "action_resolution_samples",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 18,
+      "sources": [
+        "039_predictive_sla.sql"
+      ]
+    },
+    {
+      "table": "action_sla_state",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 14,
+      "sources": [
+        "031_sla_profiles.sql"
+      ]
+    },
+    {
+      "table": "actions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 21,
+      "sources": [
+        "029_actions_sla.sql",
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "agent_actions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 17,
+      "sources": [
+        "017_agent_actions.sql"
+      ]
+    },
+    {
+      "table": "agent_approvals",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_decision_traces",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_execution_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_executions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_handoffs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_memory_entries",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 14,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_memory_links",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 6,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_task_steps",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "agent_tasks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 24,
+      "sources": [
+        "045_agent_system.sql"
+      ]
+    },
+    {
+      "table": "ai_approval_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "041_ai_governance.sql"
+      ]
+    },
+    {
+      "table": "ai_recommendation_queue",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 21,
+      "sources": [
+        "041_ai_governance.sql"
+      ]
+    },
+    {
+      "table": "ai_usage_records",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "air_gap_licenses",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "api_keys",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "approval_delegations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "029_actions_sla.sql"
+      ]
+    },
+    {
+      "table": "asset_scan_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "038_ops_commands.sql"
+      ]
+    },
+    {
+      "table": "audit_integrity_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "044_enterprise.sql"
+      ]
+    },
+    {
+      "table": "audit_log",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "001_tenants_and_users.sql"
+      ]
+    },
+    {
+      "table": "automation_adapters",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "automation_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "background_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "009_scheduler.sql"
+      ]
+    },
+    {
+      "table": "benchmark_cohorts",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "bid_packages",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "059_subcontracts.sql"
+      ]
+    },
+    {
+      "table": "bid_submissions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "bid_package_id",
+            "table": "bid_packages",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 10,
+      "sources": [
+        "059_subcontracts.sql"
+      ]
+    },
+    {
+      "table": "billing_credits",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "006_commissioning_packs.sql"
+      ]
+    },
+    {
+      "table": "bim_element_links",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "bim_elements",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 22,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "bim_issues",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "007_pm_modules.sql",
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "bim_models",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "budget_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "budget_id",
+            "table": "budgets",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 11,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "budgets",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 10,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "calc_sessions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 11,
+      "sources": [
+        "005_calc_sessions.sql"
+      ]
+    },
+    {
+      "table": "change_order_tasks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "change_order_id",
+            "table": "change_orders",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 6,
+      "sources": [
+        "058_change_orders.sql"
+      ]
+    },
+    {
+      "table": "change_orders",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 26,
+      "sources": [
+        "007_pm_modules.sql",
+        "058_change_orders.sql",
+        "083_reconcile_change_orders.sql"
+      ]
+    },
+    {
+      "table": "chat_messages",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "session_id",
+            "table": "chat_sessions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 13,
+      "sources": [
+        "023_chat_sessions.sql"
+      ]
+    },
+    {
+      "table": "chat_sessions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 12,
+      "sources": [
+        "023_chat_sessions.sql"
+      ]
+    },
+    {
+      "table": "commissioning_autosign_rules",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "016_autosign_rules.sql"
+      ]
+    },
+    {
+      "table": "commissioning_baselines",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 12,
+      "sources": [
+        "019_commissioning_baselines.sql"
+      ]
+    },
+    {
+      "table": "commissioning_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "026_epc_core.sql"
+      ]
+    },
+    {
+      "table": "commissioning_observations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "baseline_id",
+            "table": "commissioning_baselines",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 9,
+      "sources": [
+        "019_commissioning_baselines.sql"
+      ]
+    },
+    {
+      "table": "commissioning_packs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 18,
+      "sources": [
+        "006_commissioning_packs.sql",
+        "027_cx_pack_test_pack_fk.sql"
+      ]
+    },
+    {
+      "table": "compliance_exports",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 17,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "compliance_tasks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "011_compliance_tasks.sql"
+      ]
+    },
+    {
+      "table": "contracts",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 17,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "coordination_recommendations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 20,
+      "sources": [
+        "077_coordination_recommendations.sql"
+      ]
+    },
+    {
+      "table": "corrective_actions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 14,
+      "sources": [
+        "078_ncr_capa.sql"
+      ]
+    },
+    {
+      "table": "cost_entries",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "061_cost_entries.sql"
+      ]
+    },
+    {
+      "table": "cost_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "crm_leads",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "cx_inbound_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "081_cx_status_mirror.sql"
+      ]
+    },
+    {
+      "table": "cx_status_mirror",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 19,
+      "sources": [
+        "081_cx_status_mirror.sql"
+      ]
+    },
+    {
+      "table": "daily_logs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 23,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "data_deletion_requests",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "074_scim_tokens.sql"
+      ]
+    },
+    {
+      "table": "deficiencies",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 20,
+      "sources": [
+        "026_epc_core.sql",
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "demo_tenants",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "deployment_health_checks",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "document_folders",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 11,
+      "sources": [
+        "003_files.sql"
+      ]
+    },
+    {
+      "table": "document_versions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "document_id",
+            "table": "documents",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 19,
+      "sources": [
+        "003_files.sql"
+      ]
+    },
+    {
+      "table": "documents",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "003_files.sql"
+      ]
+    },
+    {
+      "table": "drawing_markups",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "drawing_id",
+            "table": "drawings",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 13,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "drawing_revisions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "drawing_id",
+            "table": "drawings",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 9,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "drawings",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "007_pm_modules.sql"
+      ]
+    },
+    {
+      "table": "edge_audit_buffers",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "edge_command_queue",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "edge_nodes",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "edge_sync_sessions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "estimate_lines",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "estimates",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 18,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "evidence_assets",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 25,
+      "sources": [
+        "037_evidence_assets.sql"
+      ]
+    },
+    {
+      "table": "evidence_links",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "037_evidence_assets.sql"
+      ]
+    },
+    {
+      "table": "evidence_processing_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "037_evidence_assets.sql"
+      ]
+    },
+    {
+      "table": "evm_actuals",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 9,
+      "sources": [
+        "053_evm.sql"
+      ]
+    },
+    {
+      "table": "evm_baselines",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 11,
+      "sources": [
+        "053_evm.sql"
+      ]
+    },
+    {
+      "table": "evm_progress",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 8,
+      "sources": [
+        "053_evm.sql"
+      ]
+    },
+    {
+      "table": "evm_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 5,
+      "sources": [
+        "053_evm.sql"
+      ]
+    },
+    {
+      "table": "evm_wbs_entries",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 12,
+      "sources": [
+        "053_evm.sql"
+      ]
+    },
+    {
+      "table": "export_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 19,
+      "sources": [
+        "044_enterprise.sql"
+      ]
+    },
+    {
+      "table": "external_agent_executions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "external_agents",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "federated_contributions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "federated_model_versions",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "federated_patterns",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "federated_privacy_audits",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "field_sync_operations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "013_field_sync.sql"
+      ]
+    },
+    {
+      "table": "forecast_accuracy_history",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "047_adaptive_intelligence.sql"
+      ]
+    },
+    {
+      "table": "generation_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "006_commissioning_packs.sql"
+      ]
+    },
+    {
+      "table": "governance_policies",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 17,
+      "sources": [
+        "043_policy_engine.sql"
+      ]
+    },
+    {
+      "table": "ifc_parse_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "inspection_templates",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "008_tier1_modules.sql"
+      ]
+    },
+    {
+      "table": "inspections",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 24,
+      "sources": [
+        "008_tier1_modules.sql"
+      ]
+    },
+    {
+      "table": "integration_connectors",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 14,
+      "sources": [
+        "044_enterprise.sql"
+      ]
+    },
+    {
+      "table": "integration_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "044_enterprise.sql"
+      ]
+    },
+    {
+      "table": "integrations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 17,
+      "sources": [
+        "004_integrations.sql"
+      ]
+    },
+    {
+      "table": "kg_entities",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "kg_relationships",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "knowledge_chunks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "source_id",
+            "table": "knowledge_sources",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 14,
+      "sources": [
+        "022_knowledge_base.sql",
+        "025_vector_embeddings.sql",
+        "071_pgvector.sql"
+      ]
+    },
+    {
+      "table": "knowledge_fixes",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 18,
+      "sources": [
+        "021_knowledge_fixes.sql",
+        "024_fix_extraction_provenance.sql"
+      ]
+    },
+    {
+      "table": "knowledge_sources",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 21,
+      "sources": [
+        "022_knowledge_base.sql"
+      ]
+    },
+    {
+      "table": "kpi_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 5,
+      "sources": [
+        "010_kpi_snapshots.sql"
+      ]
+    },
+    {
+      "table": "learning_feedback",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "047_adaptive_intelligence.sql"
+      ]
+    },
+    {
+      "table": "marketplace_playbooks",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "mcp_disabled_tools",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 6,
+      "sources": [
+        "015_mcp_marketplace.sql"
+      ]
+    },
+    {
+      "table": "meeting_agenda_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "meeting_id",
+            "table": "meetings",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 11,
+      "sources": [
+        "060_meetings.sql"
+      ]
+    },
+    {
+      "table": "meetings",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 19,
+      "sources": [
+        "060_meetings.sql"
+      ]
+    },
+    {
+      "table": "mobile_devices",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "036_mobile_offline.sql"
+      ]
+    },
+    {
+      "table": "monte_carlo_inputs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "monte_carlo_iterations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 5,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "monte_carlo_runs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "monte_carlo_sensitivity",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "ncrs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 19,
+      "sources": [
+        "078_ncr_capa.sql"
+      ]
+    },
+    {
+      "table": "notification_dead_letters",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "job_id",
+            "table": "notification_jobs",
+            "column": null
+          },
+          {
+            "via": "action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 11,
+      "sources": [
+        "032_notification_jobs.sql"
+      ]
+    },
+    {
+      "table": "notification_delivery_attempts",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "job_id",
+            "table": "notification_jobs",
+            "column": null
+          },
+          {
+            "via": "action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 10,
+      "sources": [
+        "032_notification_jobs.sql"
+      ]
+    },
+    {
+      "table": "notification_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "action_id",
+            "table": "actions",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 20,
+      "sources": [
+        "032_notification_jobs.sql"
+      ]
+    },
+    {
+      "table": "notifications",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "064_notifications.sql"
+      ]
+    },
+    {
+      "table": "nova_connections",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "084_nova_integration.sql"
+      ]
+    },
+    {
+      "table": "nova_inbound_commands",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "084_nova_integration.sql"
+      ]
+    },
+    {
+      "table": "nova_outbox",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 14,
+      "sources": [
+        "084_nova_integration.sql"
+      ]
+    },
+    {
+      "table": "nova_project_links",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "084_nova_integration.sql"
+      ]
+    },
+    {
+      "table": "offline_conflicts",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "036_mobile_offline.sql"
+      ]
+    },
+    {
+      "table": "offline_mutations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 17,
+      "sources": [
+        "036_mobile_offline.sql"
+      ]
+    },
+    {
+      "table": "operational_anomalies",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 14,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "operational_forecasts",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "operational_runbooks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "040_runbook_engine.sql"
+      ]
+    },
+    {
+      "table": "operational_twins",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "ops_commands",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 17,
+      "sources": [
+        "038_ops_commands.sql"
+      ]
+    },
+    {
+      "table": "ops_incidents",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 14,
+      "sources": [
+        "038_ops_commands.sql"
+      ]
+    },
+    {
+      "table": "optimization_feedback",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "047_adaptive_intelligence.sql"
+      ]
+    },
+    {
+      "table": "pay_application_lines",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "pay_application_id",
+            "table": "pay_applications",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 6,
+      "sources": [
+        "076_pay_applications.sql"
+      ]
+    },
+    {
+      "table": "pay_applications",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "076_pay_applications.sql"
+      ]
+    },
+    {
+      "table": "playbook_outcomes",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "playbook_reviews",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 6,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "playbook_versions",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "plugin_audit_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "plugin_permissions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "plugin_versions",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "plugins",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "policy_audit_log",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "043_policy_engine.sql"
+      ]
+    },
+    {
+      "table": "project_assignments",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 10,
+      "sources": [
+        "063_team.sql"
+      ]
+    },
+    {
+      "table": "project_gates",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 12,
+      "sources": [
+        "079_project_gates.sql"
+      ]
+    },
+    {
+      "table": "projects",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
+      },
+      "columns": 23,
+      "sources": [
+        "002_epc_core.sql",
+        "018_project_agent_mode.sql"
+      ]
+    },
+    {
+      "table": "proposal_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 7,
+      "sources": [
+        "062_proposals.sql"
+      ]
+    },
+    {
+      "table": "proposals",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "062_proposals.sql"
+      ]
+    },
+    {
+      "table": "punch_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 23,
+      "sources": [
+        "008_tier1_modules.sql",
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "punch_lists",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 9,
+      "sources": [
+        "008_tier1_modules.sql"
+      ]
+    },
+    {
+      "table": "purchase_orders",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 21,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "readiness_scores",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "035_readiness_engine.sql"
+      ]
+    },
+    {
+      "table": "readiness_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "035_readiness_engine.sql"
+      ]
+    },
+    {
+      "table": "readiness_thresholds",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 5,
+      "sources": [
+        "035_readiness_engine.sql"
+      ]
+    },
+    {
+      "table": "realtime_event_log",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "038_ops_commands.sql"
+      ]
+    },
+    {
+      "table": "recommendation_outcomes",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "047_adaptive_intelligence.sql"
+      ]
+    },
+    {
+      "table": "refresh_tokens",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "001_tenants_and_users.sql"
+      ]
+    },
+    {
+      "table": "rfis",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 19,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "risks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 28,
+      "sources": [
+        "002_epc_core.sql",
+        "066_risk_register.sql",
+        "067_risks_schema_fix.sql"
+      ]
+    },
+    {
+      "table": "runbook_executions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 18,
+      "sources": [
+        "040_runbook_engine.sql"
+      ]
+    },
+    {
+      "table": "runbook_step_results",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "040_runbook_engine.sql"
+      ]
+    },
+    {
+      "table": "runbook_steps",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "040_runbook_engine.sql"
+      ]
+    },
+    {
+      "table": "runbook_versions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "040_runbook_engine.sql"
+      ]
+    },
+    {
+      "table": "safety_incidents",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "077_safety.sql"
+      ]
+    },
+    {
+      "table": "safety_observations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 13,
+      "sources": [
+        "077_safety.sql"
+      ]
+    },
+    {
+      "table": "saml_sessions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "073_saml_sso.sql"
+      ]
+    },
+    {
+      "table": "scenario_simulations",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "schedule_dependencies",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "predecessor_id",
+            "table": "schedule_tasks",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 6,
+      "sources": [
+        "014_schedule_cpm.sql"
+      ]
+    },
+    {
+      "table": "schedule_import_id_map",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 7,
+      "sources": [
+        "054_schedule_import.sql"
+      ]
+    },
+    {
+      "table": "schedule_import_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "054_schedule_import.sql"
+      ]
+    },
+    {
+      "table": "schedule_tasks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 15,
+      "sources": [
+        "014_schedule_cpm.sql",
+        "053_evm.sql"
+      ]
+    },
+    {
+      "table": "scheduled_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "009_scheduler.sql"
+      ]
+    },
+    {
+      "table": "scim_audit",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "074_scim_tokens.sql"
+      ]
+    },
+    {
+      "table": "scim_tokens",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "074_scim_tokens.sql"
+      ]
+    },
+    {
+      "table": "sensor_alerts",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "sensor_id",
+            "table": "sensors",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 9,
+      "sources": [
+        "055_iot_sensors.sql"
+      ]
+    },
+    {
+      "table": "sensor_ingest_tokens",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "055_iot_sensors.sql",
+        "056_rls_backfill_and_token_expiry.sql"
+      ]
+    },
+    {
+      "table": "sensor_readings",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "sensor_id",
+            "table": "sensors",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 7,
+      "sources": [
+        "055_iot_sensors.sql"
+      ]
+    },
+    {
+      "table": "sensors",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 17,
+      "sources": [
+        "055_iot_sensors.sql"
+      ]
+    },
+    {
+      "table": "simulation_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "042_simulation_engine.sql"
+      ]
+    },
+    {
+      "table": "simulation_results",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "042_simulation_engine.sql"
+      ]
+    },
+    {
+      "table": "simulation_sessions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 18,
+      "sources": [
+        "042_simulation_engine.sql"
+      ]
+    },
+    {
+      "table": "sla_breach_predictions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "039_predictive_sla.sql"
+      ]
+    },
+    {
+      "table": "sla_profile_rules",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "031_sla_profiles.sql"
+      ]
+    },
+    {
+      "table": "sla_profiles",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 14,
+      "sources": [
+        "031_sla_profiles.sql"
+      ]
+    },
+    {
+      "table": "sla_rules",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "029_actions_sla.sql"
+      ]
+    },
+    {
+      "table": "source_uploads",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 10,
+      "sources": [
+        "006_commissioning_packs.sql"
+      ]
+    },
+    {
+      "table": "sov_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 10,
+      "sources": [
+        "076_pay_applications.sql"
+      ]
+    },
+    {
+      "table": "sp_certificates",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "073_saml_sso.sql"
+      ]
+    },
+    {
+      "table": "staffing_risk_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "039_predictive_sla.sql"
+      ]
+    },
+    {
+      "table": "subcontract_invoices",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "subcontract_id",
+            "table": "subcontracts",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 13,
+      "sources": [
+        "059_subcontracts.sql"
+      ]
+    },
+    {
+      "table": "subcontracts",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 16,
+      "sources": [
+        "059_subcontracts.sql"
+      ]
+    },
+    {
+      "table": "submittals",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 18,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "subsystems",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 12,
+      "sources": [
+        "026_epc_core.sql"
+      ]
+    },
+    {
+      "table": "support_tickets",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "sync_jobs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 14,
+      "sources": [
+        "004_integrations.sql"
+      ]
+    },
+    {
+      "table": "sync_sessions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "036_mobile_offline.sql"
+      ]
+    },
+    {
+      "table": "systems",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 11,
+      "sources": [
+        "026_epc_core.sql"
+      ]
+    },
+    {
+      "table": "tags",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 17,
+      "sources": [
+        "026_epc_core.sql"
+      ]
+    },
+    {
+      "table": "takeoff_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "050_bim_estimating.sql"
+      ]
+    },
+    {
+      "table": "team_members",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "063_team.sql"
+      ]
+    },
+    {
+      "table": "tenant_feature_flags",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "tenant_lifecycle_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "tenant_onboarding_tasks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "tenant_playbook_installs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "tenant_plugin_installs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "tenant_sso_configs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 24,
+      "sources": [
+        "073_saml_sso.sql"
+      ]
+    },
+    {
+      "table": "tenant_subscriptions",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 17,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "tenant_usage",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "048_enterprise_platform.sql"
+      ]
+    },
+    {
+      "table": "tenants",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 11,
+      "sources": [
+        "001_tenants_and_users.sql",
+        "012_audit_retention.sql"
+      ]
+    },
+    {
+      "table": "test_packs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 17,
+      "sources": [
+        "026_epc_core.sql"
+      ]
+    },
+    {
+      "table": "test_results",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 18,
+      "sources": [
+        "026_epc_core.sql"
+      ]
+    },
+    {
+      "table": "timesheets",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 14,
+      "sources": [
+        "065_timesheets.sql"
+      ]
+    },
+    {
+      "table": "transmittal_counters",
+      "idColumn": "tenant_id, project_id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 3,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "transmittal_events",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "transmittal_items",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 10,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "transmittals",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 25,
+      "sources": [
+        "051_geo_links_montecarlo_transmittals.sql"
+      ]
+    },
+    {
+      "table": "turnover_packages",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 14,
+      "sources": [
+        "080_turnover_packages.sql"
+      ]
+    },
+    {
+      "table": "twin_event_links",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "twin_relationships",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "twin_state_snapshots",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "046_digital_twin.sql"
+      ]
+    },
+    {
+      "table": "upload_tokens",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "document_id",
+            "table": "documents",
+            "column": "project_id"
+          }
+        ]
+      },
+      "columns": 10,
+      "sources": [
+        "003_files.sql"
+      ]
+    },
+    {
+      "table": "users",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "001_tenants_and_users.sql"
+      ]
+    },
+    {
+      "table": "vendors",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 20,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "webhook_deliveries",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 13,
+      "sources": [
+        "004_integrations.sql"
+      ]
+    },
+    {
+      "table": "webhooks",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 15,
+      "sources": [
+        "004_integrations.sql"
+      ]
+    },
+    {
+      "table": "wirs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 20,
+      "sources": [
+        "002_epc_core.sql"
+      ]
+    },
+    {
+      "table": "worker_leases",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 8,
+      "sources": [
+        "044_enterprise.sql"
+      ]
+    },
+    {
+      "table": "workflow_runs",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 12,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "workflow_versions",
+      "idColumn": "id",
+      "tenantColumn": null,
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 9,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    },
+    {
+      "table": "workflows",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "columns": 16,
+      "sources": [
+        "049_ecosystem_platform.sql"
+      ]
+    }
+  ]
+}
