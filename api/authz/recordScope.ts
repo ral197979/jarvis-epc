@@ -55,6 +55,7 @@ import type { RequestHandler } from 'express'
 import { tenantQuery } from '../db/pool'
 import { resolveCurrentUser, type CurrentUser, type AuthorizedRequest } from './currentUser'
 import { roleHasCapability } from './capabilities'
+import { policyFor, type ProjectDerivation } from './recordScopePolicies'
 
 /**
  * What a principal may reach.
@@ -227,6 +228,93 @@ export function requireProjectScope(param = 'projectId'): RequestHandler {
       res.status(404).json({ error: 'not_found', message: 'Project not found.' })
       return
     }
+    next()
+  }
+}
+
+/**
+ * Resolve ONE record's parent project id, or `null` when it has none.
+ *
+ * The SQL is composed from `recordScopePolicies.ts` alone — table and column
+ * names come from the registry, the record id is always bound as a parameter —
+ * so there is no path by which a request value reaches the statement text.
+ *
+ * Deliberately narrow: it selects the parent key and nothing else. ADR-014
+ * Phase 3C §20 requires the scope decision to be made before the payload is
+ * loaded, so this must not be tempted into fetching the row the handler wants.
+ */
+export async function resolveParentProjectId(
+  principal: CurrentUser,
+  derivation: ProjectDerivation,
+  recordId: string,
+): Promise<string | null> {
+  if (!isProjectId(recordId)) return null
+
+  const sql = derivation.kind === 'DIRECT_COLUMN'
+    ? `SELECT r.${derivation.projectColumn} AS project_id
+         FROM ${derivation.table} r
+        WHERE r.${derivation.idColumn} = $1
+          AND r.${derivation.tenantColumn} = current_setting('app.current_tenant_id', true)::uuid`
+    : `SELECT p.${derivation.parentProjectColumn} AS project_id
+         FROM ${derivation.table} r
+         JOIN ${derivation.parentTable} p ON p.${derivation.parentIdColumn} = r.${derivation.via}
+        WHERE r.${derivation.idColumn} = $1
+          AND r.${derivation.tenantColumn} = current_setting('app.current_tenant_id', true)::uuid`
+
+  try {
+    const res = await tenantQuery<{ project_id: string | null }>(principal.tenantId, sql, [recordId])
+    return res.rows[0]?.project_id ?? null
+  } catch {
+    // A failed lookup is not an implicit grant, exactly as in
+    // `filterAccessibleProjectIds`.
+    return null
+  }
+}
+
+/**
+ * Express guard for a route whose path carries only the RECORD id.
+ *
+ * ADR-014 Phase 3C. This is the guard that closes the bypass Phase 3B left
+ * open: holding the domain capability and knowing a record's UUID was, by
+ * itself, enough to read or change it, because nothing ever asked which project
+ * the record belonged to.
+ *
+ * Ordering mirrors `requireProjectScope`, and for the same reasons:
+ *
+ *   401  no live principal
+ *   403  the route's own capability guard already refused (this never runs)
+ *   404  record absent, unparented, or in a project the caller cannot reach
+ *
+ * The three 404 cases are deliberately indistinguishable. A caller who may not
+ * reach a record learns only that it is not there, so the endpoint cannot be
+ * used to confirm that a given UUID exists.
+ *
+ * A record whose parent is NULL is refused rather than allowed. An unparented
+ * row has no project to inherit authority from, and defaulting it to tenant-wide
+ * is precisely the widening Phase 3 exists to remove.
+ *
+ * Because this is middleware it runs BEFORE the handler, so a refusal happens
+ * before any payload query, any write, and any side effect (§20, §34).
+ */
+export function requireRecordScope(resource: string, param = 'id'): RequestHandler {
+  return async (req, res, next): Promise<void> => {
+    const policy = policyFor(resource)
+    const notFound = (): void => { res.status(404).json({ error: 'not_found' }) }
+
+    // An unregistered resource fails closed. There is no permissive default:
+    // adding a direct-ID route without a policy denies rather than inherits
+    // tenant-wide reach.
+    if (!policy?.derivation) { notFound(); return }
+
+    const principal = await resolveCurrentUser(req as AuthorizedRequest)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+    const recordId = (req.params as Record<string, string | undefined>)[param]
+    if (!recordId) { notFound(); return }
+
+    const projectId = await resolveParentProjectId(principal, policy.derivation, recordId)
+    if (!projectId || !await canAccessProject(principal, projectId)) { notFound(); return }
+
     next()
   }
 }

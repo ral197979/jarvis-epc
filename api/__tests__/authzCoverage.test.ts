@@ -102,6 +102,13 @@ describe('endpoint-level coverage model', () => {
 })
 
 // ─── Transition ratchet ───────────────────────────────────────────────────────
+/**
+ * The classes that carry a route-level capability guard. `CAPABILITY_RECORD_SCOPE`
+ * is `CAPABILITY` plus record scope (ADR-014 Phase 3C), so any check asking
+ * "is the functional guard present?" must accept both.
+ */
+const CAPABILITY_GUARDED = new Set(['CAPABILITY', 'CAPABILITY_RECORD_SCOPE'])
+
 describe('consequential transition ratchet', () => {
   const byKey = new Map(endpoints.map(e => [e.key, e]))
 
@@ -127,7 +134,11 @@ describe('consequential transition ratchet', () => {
       const k = endpointKey(t.file, t.router, t.method, t.path)
       const e = byKey.get(k)
       if (!e) { problems.push(`${k}: no such endpoint in source`); continue }
-      if (e.klass !== 'CAPABILITY') { problems.push(`${k}: registered as a transition but has no capability guard`); continue }
+      // Both classes carry a route-level capability guard; they differ only in
+      // whether record scope is ALSO enforced. Treating CAPABILITY as the only
+      // acceptable class would mean adding record scope to a transition — which
+      // is strictly more protection — read as having lost its guard.
+      if (!CAPABILITY_GUARDED.has(e.klass)) { problems.push(`${k}: registered as a transition but has no capability guard`); continue }
       // Guard must be the capability the registry declares — a swap is an error.
       if (e.capability !== t.capability) {
         problems.push(`${k}: registry says ${t.capability}, route says ${e.capability}`)
@@ -154,7 +165,7 @@ describe('consequential transition ratchet', () => {
       !registered.has(e.key) &&
       !reclassified.has(`${e.file}${e.path}`) &&
       !exceptions.has(e.key) &&
-      e.klass !== 'CAPABILITY',
+      !CAPABILITY_GUARDED.has(e.klass),
     ).map(e => e.key)
 
     expect(unaccounted,

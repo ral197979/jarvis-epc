@@ -304,7 +304,11 @@ describe('the Phase-2 classification stays closed and adoption is not overclaime
 
   it('reports record-scope adoption as partial, because it is', () => {
     const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').length
-    expect(scoped, 'Phase 3B scoped 15 endpoints').toBe(15)
+    // Phase 3B scoped 15. Phase 3C added the direct-ID guard and applied it to
+    // the drawings, inspections and punch-list routers, taking it to 39 of 747.
+    // Adoption is real and still partial, and the assertion says so out loud so
+    // that a later slice cannot quietly imply full coverage.
+    expect(scoped, 'Phase 3C scoped 39 endpoints').toBe(39)
     expect(endpoints.length, 'out of ~747').toBeGreaterThan(700)
     expect(scoped / endpoints.length, 'adoption is nowhere near complete').toBeLessThan(0.1)
   })

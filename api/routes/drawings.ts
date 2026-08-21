@@ -23,7 +23,7 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth   as any)
@@ -56,7 +56,7 @@ router.get('/projects/:projectId/drawings', requireCapability('engineering.view'
   }
 })
 
-router.post('/projects/:projectId/drawings', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/drawings', requireCapability('engineering.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const b = req.body ?? {}
@@ -80,7 +80,7 @@ router.post('/projects/:projectId/drawings', requireCapability('engineering.writ
   }
 })
 
-router.get('/drawings/:id', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/drawings/:id', requireCapability('engineering.view') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -93,7 +93,7 @@ router.get('/drawings/:id', requireCapability('engineering.view') as never, asyn
   }
 })
 
-router.patch('/drawings/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.patch('/drawings/:id', requireCapability('engineering.write') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['sheet_number','title','discipline','current_rev','set_name',
                    'issue_date','document_id','scale','page_count','metadata']
@@ -113,7 +113,7 @@ router.patch('/drawings/:id', requireCapability('engineering.write') as never, a
   }
 })
 
-router.delete('/drawings/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.delete('/drawings/:id', requireCapability('engineering.write') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,
@@ -126,7 +126,7 @@ router.delete('/drawings/:id', requireCapability('engineering.write') as never, 
 })
 
 // ─── Revisions ───────────────────────────────────────────────────────────────
-router.get('/drawings/:id/revisions', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/drawings/:id/revisions', requireCapability('engineering.view') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -139,7 +139,7 @@ router.get('/drawings/:id/revisions', requireCapability('engineering.view') as n
   }
 })
 
-router.post('/drawings/:id/revisions', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/drawings/:id/revisions', requireCapability('engineering.write') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.rev || !b.issued_date) return res.status(400).json({ error: 'rev and issued_date required' })
@@ -163,7 +163,7 @@ router.post('/drawings/:id/revisions', requireCapability('engineering.write') as
 })
 
 // ─── Markups ─────────────────────────────────────────────────────────────────
-router.get('/drawings/:id/markups', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/drawings/:id/markups', requireCapability('engineering.view') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { rev, resolved } = req.query
   const params: unknown[] = [req.params.id, r.tenantId!]
@@ -182,7 +182,7 @@ router.get('/drawings/:id/markups', requireCapability('engineering.view') as nev
   }
 })
 
-router.post('/drawings/:id/markups', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/drawings/:id/markups', requireCapability('engineering.write') as never, requireRecordScope('drawing') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.rev) return res.status(400).json({ error: 'rev required' })
@@ -200,7 +200,7 @@ router.post('/drawings/:id/markups', requireCapability('engineering.write') as n
   }
 })
 
-router.patch('/markups/:markupId', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.patch('/markups/:markupId', requireCapability('engineering.write') as never, requireRecordScope('drawingmarkup', 'markupId') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title','annotations','page','resolved']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -224,7 +224,7 @@ router.patch('/markups/:markupId', requireCapability('engineering.write') as nev
   }
 })
 
-router.delete('/markups/:markupId', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.delete('/markups/:markupId', requireCapability('engineering.write') as never, requireRecordScope('drawingmarkup', 'markupId') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,

@@ -27,7 +27,7 @@ vi.mock('../db/pool', () => ({
 }))
 vi.mock('../services/actionService', () => ({ createAction: vi.fn() }))
 
-import { principal, principalQuery, ALL_ROLES, type TestPrincipal } from './helpers/testPrincipal'
+import { principal, principalQuery, recordScopeQuery, ALL_ROLES, type TestPrincipal } from './helpers/testPrincipal'
 
 let current: TestPrincipal
 
@@ -95,15 +95,19 @@ function mutated(): boolean {
 
 beforeEach(() => {
   mockQuery.mockReset()
-  mockQuery.mockImplementation(principalQuery(() => current, async () => ({ rows: [{ id: 'x' }], rowCount: 1 })))
+  // ADR-014 Phase 3C added record scope to the punch/inspection routes these
+  // proofs drive. The caller is put IN scope so the refusal under test is still
+  // the one that fires — a 404 from the scope guard would prove nothing here.
+  mockQuery.mockImplementation(principalQuery(() => current,
+    recordScopeQuery({ delegate: async () => ({ rows: [{ id: 'x' }], rowCount: 1 }) })))
 })
 
 // ─── §26 / §34 — the generic escape is closed, and writes nothing ────────────
 describe('§26 generic-route escape is closed', () => {
   const cases: { name: string; method: 'patch' | 'post'; url: string; body: unknown; writer: Parameters<typeof principal>[0]['role'] }[] = [
-    { name: 'punch item close',        method: 'patch', url: '/api/v1/punch-items/pi-1',        body: { status: 'closed' },    writer: 'engineer' },
-    { name: 'punch item verify',       method: 'patch', url: '/api/v1/punch-items/pi-1',        body: { status: 'verified' },  writer: 'engineer' },
-    { name: 'inspection completion',   method: 'patch', url: '/api/v1/inspections/in-1',        body: { status: 'completed' }, writer: 'engineer' },
+    { name: 'punch item close',        method: 'patch', url: '/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1',        body: { status: 'closed' },    writer: 'engineer' },
+    { name: 'punch item verify',       method: 'patch', url: '/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1',        body: { status: 'verified' },  writer: 'engineer' },
+    { name: 'inspection completion',   method: 'patch', url: '/api/v1/inspections/40000000-0000-4000-8000-0000000000b1',        body: { status: 'completed' }, writer: 'engineer' },
     { name: 'purchase order approval', method: 'patch', url: '/api/v1/purchase-orders/po-1',    body: { status: 'approved' },  writer: 'procurement' },
     { name: 'risk closure',            method: 'patch', url: '/api/v1/risks/r-1',               body: { status: 'closed' },    writer: 'engineer' },
     { name: 'daily log approval',      method: 'patch', url: '/api/v1/daily-logs/dl-1',         body: { status: 'approved' },  writer: 'field_ops' },
@@ -126,7 +130,7 @@ describe('§26 generic-route escape is closed', () => {
 
   it('refuses inspection completion evidence even without a status', async () => {
     setCurrent(principal({ role: 'engineer' }))
-    const res = await request(makeApp()).patch('/api/v1/inspections/in-1')
+    const res = await request(makeApp()).patch('/api/v1/inspections/40000000-0000-4000-8000-0000000000b1')
       .send({ signatures: [{ by: 'someone', at: '2026-08-15' }], completed_date: '2026-08-15' })
     expect(res.status).toBe(422)
     expect(['signatures', 'completed_date']).toContain(res.body.field)
@@ -140,9 +144,9 @@ describe('§26 generic-route escape is closed', () => {
     setCurrent(principal({ role: 'engineer' }))
     const app = makeApp()
     for (const [url, body] of [
-      ['/api/v1/punch-lists/pl-1/items', { title: 'x', status: 'closed' }],
-      ['/api/v1/projects/p-1/inspections', { title: 'x', status: 'completed' }],
-      ['/api/v1/projects/p-1/daily-logs', { log_date: '2026-08-15', status: 'approved' }],
+      ['/api/v1/punch-lists/40000000-0000-4000-8000-0000000000c1/items', { title: 'x', status: 'closed' }],
+      ['/api/v1/projects/30000000-0000-4000-8000-0000000000a1/inspections', { title: 'x', status: 'completed' }],
+      ['/api/v1/projects/30000000-0000-4000-8000-0000000000a1/daily-logs', { log_date: '2026-08-15', status: 'approved' }],
     ] as [string, object][]) {
       mockQuery.mockClear()
       const res = await request(app).post(url).send(body)
@@ -154,7 +158,7 @@ describe('§26 generic-route escape is closed', () => {
   it('still admits ordinary edits on the same routes', async () => {
     // The repair must not have turned the generic routes off.
     setCurrent(principal({ role: 'engineer' }))
-    const res = await request(makeApp()).patch('/api/v1/punch-items/pi-1')
+    const res = await request(makeApp()).patch('/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1')
       .send({ status: 'in_progress', title: 'Cracked weld at grid E4' })
     expect(res.status).toBe(200)
     expect(businessQueries().some(s => /UPDATE punch_items/i.test(s))).toBe(true)
@@ -165,14 +169,14 @@ describe('§26 generic-route escape is closed', () => {
 describe('§15 Owner must also use the canonical transition', () => {
   it('refuses Owner the generic transition-state write', async () => {
     setCurrent(principal({ role: 'owner' }))
-    const res = await request(makeApp()).patch('/api/v1/punch-items/pi-1').send({ status: 'closed' })
+    const res = await request(makeApp()).patch('/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1').send({ status: 'closed' })
     expect(res.status).toBe(422)
     expect(mutated()).toBe(false)
   })
 
   it('admits Owner on the canonical route', async () => {
     setCurrent(principal({ role: 'owner' }))
-    const res = await request(makeApp()).post('/api/v1/punch-items/pi-1/close').send({})
+    const res = await request(makeApp()).post('/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1/close').send({})
     expect(res.status).toBe(200)
     expect(businessQueries().some(s => /UPDATE punch_items[\s\S]*status='closed'/i.test(s))).toBe(true)
   })
@@ -188,7 +192,7 @@ describe('§15 Owner must also use the canonical transition', () => {
     for (const role of ALL_ROLES) {
       mockQuery.mockClear()
       setCurrent(principal({ role }))
-      const res = await request(makeApp()).patch('/api/v1/punch-items/pi-1').send({ status: 'closed' })
+      const res = await request(makeApp()).patch('/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1').send({ status: 'closed' })
       const holdsWrite = ['owner', 'project_manager', 'engineer', 'field_ops'].includes(role)
       expect(res.status, `${role} must be refused the generic transition write`).toBe(holdsWrite ? 422 : 403)
       expect(mutated(), `${role} mutated through the generic route`).toBe(false)
@@ -199,9 +203,9 @@ describe('§15 Owner must also use the canonical transition', () => {
 // ─── §27–§32 / §35 — capability enforcement on the canonical routes ──────────
 describe('§27–§32 canonical transition authorization', () => {
   const canonical: { name: string; url: string; method: 'post' | 'patch'; body?: object; allowed: string[]; denied: string[] }[] = [
-    { name: 'punch close',        url: '/api/v1/punch-items/pi-1/close',            method: 'post',
+    { name: 'punch close',        url: '/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1/close',            method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'procurement', 'viewer', 'admin'] },
-    { name: 'inspection complete', url: '/api/v1/inspections/in-1/complete',        method: 'post',
+    { name: 'inspection complete', url: '/api/v1/inspections/40000000-0000-4000-8000-0000000000b1/complete',        method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
     { name: 'NCR close',          url: '/api/v1/ncrs/n-1/close',                    method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
@@ -217,9 +221,9 @@ describe('§27–§32 canonical transition authorization', () => {
       allowed: ['owner'], denied: ['procurement', 'project_manager', 'engineer', 'viewer', 'admin'] },
     { name: 'turnover accept',    url: '/api/v1/turnover-packages/t-1/accept',      method: 'post',
       allowed: ['owner'], denied: ['project_manager', 'engineer', 'field_ops', 'viewer', 'admin'] },
-    { name: 'lifecycle gate',     url: '/api/v1/projects/p-1/gates/fid',            method: 'post', body: { action: 'approve' },
+    { name: 'lifecycle gate',     url: '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/gates/fid',            method: 'post', body: { action: 'approve' },
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
-    { name: 'phase advance',      url: '/api/v1/projects/p-1/advance',              method: 'post',
+    { name: 'phase advance',      url: '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/advance',              method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
   ]
 

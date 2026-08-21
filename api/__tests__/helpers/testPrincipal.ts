@@ -116,6 +116,54 @@ export function principalQuery(
 }
 
 /**
+ * Answers the two queries the ADR-014 Phase-3C record-scope layer issues, so a
+ * fixture written before record scope existed can still reach the behaviour it
+ * is actually testing.
+ *
+ * `requireRecordScope` resolves a record's parent project and then asks whether
+ * the principal may reach it. A fixture that models neither gets a truthful 404
+ * — correct enforcement, but it means a test aimed at some later refusal never
+ * arrives there. Installing this delegate puts the caller IN scope, which is
+ * the precondition those tests always implicitly assumed.
+ *
+ * Set `inScope: () => false` to model the opposite and prove the guard refuses.
+ *
+ * Record ids must be UUIDs: a malformed id cannot name a row, and the resolver
+ * fails closed on one rather than passing it to a `uuid` column.
+ */
+export function recordScopeQuery(opts: {
+  /** The project every resolved record belongs to. */
+  projectId?: string
+  /** Whether the principal may reach that project. Defaults to yes. */
+  inScope?: () => boolean
+  /** Everything that is not a record-scope query. */
+  delegate?: (...args: unknown[]) => unknown
+} = {}) {
+  const projectId = opts.projectId ?? '30000000-0000-4000-8000-0000000000a1'
+  const inScope   = opts.inScope ?? (() => true)
+
+  return async (...args: unknown[]): Promise<unknown> => {
+    const sql = args.find((a): a is string => typeof a === 'string' && /\bSELECT\b/i.test(a)) ?? ''
+
+    // `resolveParentProjectId` — record id in, parent project key out.
+    if (/AS\s+project_id/i.test(sql)) {
+      return { rows: [{ project_id: projectId }], rowCount: 1 }
+    }
+    // `filterAccessibleProjectIds` — the reachable subset of the ids passed in.
+    if (/FROM\s+projects\s+p?\b/i.test(sql) && /ANY\(\$\d+::uuid\[\]\)/i.test(sql)) {
+      // `tenantQuery(tenantId, sql, params)` — params is itself an array, and
+      // its FIRST element is the candidate id list (`[candidates, userId]`).
+      const params = args.find(a => Array.isArray(a)) as unknown[] | undefined
+      const ids = (params?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+      const reachable = inScope() ? ids.map(id => ({ id })) : []
+      return { rows: reachable, rowCount: reachable.length }
+    }
+    if (opts.delegate) return opts.delegate(...args)
+    return { rows: [], rowCount: 0 }
+  }
+}
+
+/**
  * Stands in for `requireAuth`: attaches the verified token claims. The role it
  * attaches is the *token's* role, which authorization deliberately ignores in
  * favour of the database lookup — so a stale claim stays visible to tests.

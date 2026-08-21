@@ -19,7 +19,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
@@ -152,7 +152,7 @@ router.get('/projects/:projectId/inspections', requireCapability('quality.view')
   }
 })
 
-router.post('/projects/:projectId/inspections', requireCapability('quality.write') as never, guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/inspections', requireCapability('quality.write') as never, requireProjectScope() as never, guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const projectId = req.params.projectId as string
   const b = req.body ?? {}
@@ -216,7 +216,7 @@ router.post('/projects/:projectId/inspections', requireCapability('quality.write
   }
 })
 
-router.get('/inspections/:id', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
+router.get('/inspections/:id', requireCapability('quality.view') as never, requireRecordScope('inspection') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(
@@ -236,7 +236,7 @@ router.get('/inspections/:id', requireCapability('quality.view') as never, async
   }
 })
 
-router.patch('/inspections/:id', requireCapability('quality.write') as never, guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
+router.patch('/inspections/:id', requireCapability('quality.write') as never, requireRecordScope('inspection') as never, guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'type', 'location', 'discipline', 'status', 'scheduled_date', 'completed_date', 'inspector_id', 'results', 'notes', 'photos', 'signatures']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -263,7 +263,7 @@ router.patch('/inspections/:id', requireCapability('quality.write') as never, gu
   }
 })
 
-router.post('/inspections/:id/complete', requireCapability('quality.verify') as never, async (req: Request, res: Response) => {
+router.post('/inspections/:id/complete', requireCapability('quality.verify') as never, requireRecordScope('inspection') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
 

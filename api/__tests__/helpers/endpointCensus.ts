@@ -73,6 +73,11 @@ const RECORD_SCOPE_CALLS = [
   // so the rule is expressed once as middleware rather than as fifty copies of
   // the membership SQL.
   'requireProjectScope(',
+  // ADR-014 Phase 3C: the guard form for a route whose path carries only the
+  // RECORD id. It resolves the record's parent project through the policy
+  // registry and then applies the same membership rule, so a route using it is
+  // record-scoped by exactly the same authority as the others here.
+  'requireRecordScope(',
   'authorizeSource(',
   'filterAuthorizedTargets(',
   'filterAccessibleProjectIds(',

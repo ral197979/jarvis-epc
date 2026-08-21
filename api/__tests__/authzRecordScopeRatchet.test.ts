@@ -383,10 +383,12 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
   it('does not claim record scope for the rest of the API', () => {
     const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').length
     const plain  = endpoints.filter(e => e.klass === 'CAPABILITY').length
-    // Phase 3B scoped 15 of ~747. Adoption is real but partial, and saying so
-    // is the point — a later slice must not be able to imply full coverage.
-    expect(scoped).toBe(15)
-    expect(plain, 'the rest remain capability-only, which is the honest state').toBeGreaterThan(700)
+    // Phase 3B scoped 15 of ~747; Phase 3C took it to 39 by closing the
+    // direct-ID surface of three routers. Adoption is real but partial, and
+    // saying so is the point — a later slice must not imply full coverage.
+    expect(scoped).toBe(39)
+    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(691)
+    expect(plain, 'capability-only is still the overwhelming majority').toBeGreaterThan(scoped * 10)
   })
 })
 

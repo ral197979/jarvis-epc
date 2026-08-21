@@ -231,6 +231,7 @@ function capabilitiesIn (fragment) {
  */
 const RECORD_SCOPE_CALLS = [
   'canAccessProject(', 'projectScopeSql(', 'requireProjectScope(',
+  'requireRecordScope(',
   'authorizeSource(', 'filterAuthorizedTargets(', 'filterAccessibleProjectIds(',
   'filterByParentProject(',
 ]

@@ -31,6 +31,12 @@ vi.mock('../db/pool', () => ({
   tenantQuery:       (tenantId: string, sql: string, params: unknown[]) =>
     /SELECT (id|p\.id) FROM projects/i.test(String(sql))
       ? Promise.resolve({ rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
+      // ADR-014 Phase 3C: `requireRecordScope` resolves a record's parent
+      // project before the handler runs. Answered here for the same reason the
+      // project lookup above is — an authorization query must not consume the
+      // `mockResolvedValueOnce` entries scripted for the handler's own queries.
+      : /AS\s+project_id/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
       : mockQuery(tenantId, sql, params),
   tenantTransaction: async <T>(_tenantId: string, fn: (q: any) => Promise<T>) => fn(mockQuery),
   query:             (sql: string, params: unknown[]) =>
@@ -139,13 +145,13 @@ describe('Tier-1 smoke: drawings', () => {
 
   it('GET /drawings/:id/revisions returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/drawings/dwg-1/revisions')
+    const res = await request(app).get('/api/v1/drawings/40000000-0000-4000-8000-0000000000d1/revisions')
     expect([200, 404]).toContain(res.status)
   })
 
   it('GET /drawings/:id/markups returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/drawings/dwg-1/markups')
+    const res = await request(app).get('/api/v1/drawings/40000000-0000-4000-8000-0000000000d1/markups')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -207,7 +213,7 @@ describe('Tier-1 smoke: inspections', () => {
 
   it('GET /inspections/:id returns detail or 404', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/inspections/insp-1')
+    const res = await request(app).get('/api/v1/inspections/40000000-0000-4000-8000-0000000000b1')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -222,7 +228,7 @@ describe('Tier-1 smoke: punchLists', () => {
 
   it('GET /punch-lists/:id/items returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/punch-lists/pl-1/items')
+    const res = await request(app).get('/api/v1/punch-lists/40000000-0000-4000-8000-0000000000c1/items')
     expect([200, 404]).toContain(res.status)
   })
 })

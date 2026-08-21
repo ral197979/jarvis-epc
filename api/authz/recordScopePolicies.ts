@@ -92,6 +92,32 @@ export type ScopeStrategy =
   /** The record belongs to one user; scope is that user (or a tenant-admin capability). */
   | 'SELF'
 
+/**
+ * How a DIRECT-ID route gets from `:id` to the parent project it must authorize
+ * against (ADR-014 Phase 3C §17, §36).
+ *
+ * Phase 3A and 3B only ever had to scope a route whose PATH already named the
+ * project. A direct-ID route names only the record, so the parent has to be
+ * resolved before the decision can be made — and resolving it is exactly the
+ * step whose absence let a caller reach any record in the tenant by knowing its
+ * UUID.
+ *
+ * Every identifier here comes from this registry, never from the request, so
+ * the resolver can compose SQL from them without an injection surface. The
+ * shapes mirror the two strategies the schema actually uses; the Phase-3C
+ * ratchet asserts each entry against the machine-derived
+ * `audit/adr-014/schema-project-parent-map.json`, so a declaration that
+ * disagrees with the migrations fails rather than silently resolving nothing.
+ */
+export type ProjectDerivation =
+  /** The record carries `project_id` itself. */
+  | { kind: 'DIRECT_COLUMN'; table: string; idColumn: string; tenantColumn: string; projectColumn: string }
+  /** The record reaches a project through exactly one foreign key. */
+  | {
+      kind: 'FK_PATH'; table: string; idColumn: string; tenantColumn: string
+      via: string; parentTable: string; parentIdColumn: string; parentProjectColumn: string
+    }
+
 export interface RecordScopePolicy {
   /** The `/related` source/target discriminator, or the route resource name. */
   resource:   string
@@ -105,6 +131,20 @@ export interface RecordScopePolicy {
   tenantRule: string
   /** Why this capability, derived from the route that already serves the domain. */
   reason:     string
+  /**
+   * Record-id → parent-project resolution, for routes whose path carries only
+   * the record. Absent for SELF-scoped resources and for the project root,
+   * which have no parent to resolve.
+   */
+  derivation?: ProjectDerivation
+  /** The capability an ordinary write to this resource requires. */
+  writeCapabilities?: readonly ServerCapability[]
+  /**
+   * The capability a CONSEQUENTIAL transition requires (§25). Recorded
+   * separately so adding record scope can never be mistaken for permission to
+   * lower an approval authority to an ordinary write.
+   */
+  approveCapabilities?: readonly ServerCapability[]
 }
 
 /**
@@ -179,6 +219,9 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     scopeKey: 'punch_items.project_id',
     tenantRule: 'punch_items.tenant_id = app.current_tenant_id',
     reason: 'punchLists.ts serves its reads under quality.view.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'punch_items', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['quality.write'],
+    approveCapabilities: ['quality.verify'],
   },
   {
     resource: 'drawing',
@@ -188,6 +231,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     scopeKey: 'drawings.project_id',
     tenantRule: 'drawings.tenant_id = app.current_tenant_id',
     reason: 'drawings.ts serves its reads under engineering.view.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'drawings', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['engineering.write'],
   },
   {
     resource: 'inspection',
@@ -197,6 +242,9 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     scopeKey: 'inspections.project_id',
     tenantRule: 'inspections.tenant_id = app.current_tenant_id',
     reason: 'inspections.ts serves its reads under quality.view.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'inspections', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['quality.write'],
+    approveCapabilities: ['quality.verify'],
   },
   {
     resource: 'action',
@@ -206,6 +254,52 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     scopeKey: 'actions.assigned_to_user_id = live principal, or personal.admin',
     tenantRule: 'actions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 2C-4A established that an action is a PERSONAL record: personal.view opens the route and ownership decides the record, with personal.admin as the tenant-wide authority. Phase 3A reuses that rule verbatim rather than re-deriving it, and deliberately does NOT use PARENT_PROJECT — an action carries a project_id, but its owner is the person it is assigned to, and inheriting project scope would widen a closed Personal Inbox surface.',
+  },
+
+  // ── ADR-014 Phase 3C: resources reachable only by their own record id ──────
+  //
+  // Each of these is served today by a route that names the record and not its
+  // project, so before Phase 3C the parent was never consulted. Capabilities
+  // are taken from the route that already serves the resource — Phase 3C
+  // decides WHERE an existing authority applies, never who holds it.
+  {
+    resource: 'punchlist',
+    table: 'punch_lists',
+    capabilities: ['quality.view'],
+    strategy: 'PARENT_PROJECT',
+    scopeKey: 'punch_lists.project_id',
+    tenantRule: 'punch_lists.tenant_id = app.current_tenant_id',
+    reason: 'punchLists.ts serves the list and its items under quality.view; the punch list is the parent record its items hang from.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'punch_lists', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['quality.write'],
+  },
+  {
+    resource: 'drawingrevision',
+    table: 'drawing_revisions',
+    capabilities: ['engineering.view'],
+    strategy: 'PARENT_PROJECT',
+    scopeKey: 'drawing_revisions.drawing_id → drawings.project_id',
+    tenantRule: 'drawing_revisions.tenant_id = app.current_tenant_id',
+    reason: 'drawings.ts serves revisions under the same engineering authority as the drawing they revise.',
+    derivation: {
+      kind: 'FK_PATH', table: 'drawing_revisions', idColumn: 'id', tenantColumn: 'tenant_id',
+      via: 'drawing_id', parentTable: 'drawings', parentIdColumn: 'id', parentProjectColumn: 'project_id',
+    },
+    writeCapabilities: ['engineering.write'],
+  },
+  {
+    resource: 'drawingmarkup',
+    table: 'drawing_markups',
+    capabilities: ['engineering.view'],
+    strategy: 'PARENT_PROJECT',
+    scopeKey: 'drawing_markups.drawing_id → drawings.project_id',
+    tenantRule: 'drawing_markups.tenant_id = app.current_tenant_id',
+    reason: 'A markup is an annotation on a drawing and inherits that drawing’s project; PATCH/DELETE /markups/:markupId name only the markup.',
+    derivation: {
+      kind: 'FK_PATH', table: 'drawing_markups', idColumn: 'id', tenantColumn: 'tenant_id',
+      via: 'drawing_id', parentTable: 'drawings', parentIdColumn: 'id', parentProjectColumn: 'project_id',
+    },
+    writeCapabilities: ['engineering.write'],
   },
 ]
 
