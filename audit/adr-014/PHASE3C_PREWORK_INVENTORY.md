@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `59985e5c457fd82104ffa2c13d802787a4283b44`.**
+**Generated from checked-in source at `3eee4e5cd7f5542ddd57551fd457c1ff0acf1d89`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
@@ -13,7 +13,7 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 > read from source: the capability guard in force on each route, and whether the
 > handler calls the canonical record-scope layer. At this commit
 > `729` endpoints carry a capability guard and
-> `236` enforce record scope.
+> `308` enforce record scope.
 
 ## 1. Join against the Phase-2 census
 
@@ -45,13 +45,14 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 
 | Disposition | Endpoints | Of which mutations |
 |---|---|---|
-| `TENANT_GLOBAL` | 250 | 134 |
-| `PROJECT_CHILD_RECORD_ID` | 189 | 129 |
-| `PROJECT_CHILD_PATH_PROJECT` | 96 | 36 |
-| `NO_PROJECT_PARENT` | 88 | 32 |
+| `TENANT_GLOBAL` | 253 | 137 |
+| `PROJECT_CHILD_RECORD_ID` | 187 | 127 |
+| `PROJECT_CHILD_PATH_PROJECT` | 104 | 39 |
+| `PROJECT_CHILD_TENANT_COLLECTION` | 45 | 0 |
 | `PLATFORM_GLOBAL` | 40 | 18 |
-| `UNRESOLVED_DATA_ACCESS` | 33 | 14 |
+| `NO_PROJECT_PARENT` | 36 | 29 |
 | `SERVICE_BOUNDARY` | 31 | 17 |
+| `UNRESOLVED_DATA_ACCESS` | 31 | 13 |
 | `SELF_SCOPED` | 16 | 9 |
 | `PROJECT_CHILD_BODY_PROJECT` | 13 | 13 |
 | `PROJECT_ROOT_EXISTING` | 4 | 3 |
@@ -64,14 +65,14 @@ Dispositions are assigned by an ordered rule list in
 `scripts/adr014/classify-scope.mjs`; each registry entry records the rule that
 fired in `dispositionReason`, so a verdict can be argued with.
 
-`UNRESOLVED_DATA_ACCESS` (33) is deliberately **not**
+`UNRESOLVED_DATA_ACCESS` (31) is deliberately **not**
 folded into `NO_PROJECT_PARENT`: for these routes no table could be resolved, so
 their project relationship is *unknown*, not *absent*. Per HOB §64 they are
 deferred for a scope model, not closed.
 
 ## 3. The headline finding
 
-**173 of the 181 project-bound mutations carry no project
+**174 of the 182 project-bound mutations carry no project
 predicate anywhere in their SQL.** They are constrained by `tenant_id` alone.
 
 Combined with the guard census — 732
@@ -82,11 +83,11 @@ close, now measured rather than asserted.
 
 | Operation | Project-bound | With a project predicate in SQL |
 |---|---|---|
-| `MUTATION_CREATE` | 81 | 7 |
+| `READ_COLLECTION` | 108 | 0 |
+| `MUTATION_CREATE` | 84 | 7 |
 | `READ_DIRECT_ID` | 63 | 0 |
-| `READ_COLLECTION` | 58 | 0 |
-| `MUTATION_UPDATE` | 45 | 0 |
-| `MUTATION_CONSEQUENTIAL` | 32 | 0 |
+| `MUTATION_UPDATE` | 44 | 0 |
+| `MUTATION_CONSEQUENTIAL` | 31 | 0 |
 | `MUTATION_DELETE` | 23 | 1 |
 
 ## 4. HOB §9 — direct-ID read inventory
@@ -135,8 +136,8 @@ project. The full list is in `scope-classification.json`; the first 20:
 
 ## 5. HOB §7 / §20 — project-bound consequential transitions
 
-32 project-bound consequential transitions were derived by matching
-transition verbs against the final path segment. **32 of 32 carry no role
+31 project-bound consequential transitions were derived by matching
+transition verbs against the final path segment. **31 of 31 carry no role
 gate at all** — authenticate-only approval of commercially consequential objects.
 
 | Method | Path | Table | Role gate |
@@ -172,7 +173,6 @@ gate at all** — authenticate-only approval of commercially consequential objec
 | POST | `/api/v1/timesheets/:id/submit` | `timesheets` | **none** |
 | POST | `/api/v1/transmittals/:id/close` | `transmittals` | **none** |
 | POST | `/api/v1/turnover-packages/:id/accept` | `turnover_packages` | **none** |
-| POST | `/api/v1/vendors/:id/approve` | `purchase_orders` | **none** |
 
 Note: this repository has no `transitions.ts` registry, so this set is derived
 from path verbs and is a *candidate* set. When the ADR-014 lineage lands it must
