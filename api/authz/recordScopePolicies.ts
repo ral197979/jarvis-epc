@@ -118,6 +118,67 @@ export type ProjectDerivation =
       via: string; parentTable: string; parentIdColumn: string; parentProjectColumn: string
     }
 
+/**
+ * What a NULL project parent MEANS for this resource (ADR-014 Phase 3E-R §3).
+ *
+ * Phase 3D and 3E applied one rule to every resource: a record whose
+ * `project_id` is NULL is refused. That is safe, and for a table whose column
+ * is `NOT NULL` it is also free — the branch is unreachable. For a table whose
+ * column is nullable it was neither: the ingest and create paths of several
+ * resources produce project-less rows deliberately, and refusing them made
+ * those rows unreachable by EVERY principal, the tenant Owner included,
+ * because the resolver returned before the tenant-wide branch could run.
+ *
+ * The fix is not to relax the rule but to make the resource state which rule
+ * applies to it. There is no default: a policy with no `projectSemantics` does
+ * not compile, so a resource cannot acquire a NULL-parent meaning by accident.
+ *
+ * `PROJECT_REQUIRED`
+ *     every legitimate record belongs to a project. A NULL parent is invalid
+ *     or legacy and stays refused. For the 44 resources whose column is
+ *     `NOT NULL` this is the schema's own guarantee, not a policy choice.
+ * `TENANT_GLOBAL`
+ *     the resource belongs to the tenant, never to a project.
+ * `DUAL_PROJECT_OR_TENANT`
+ *     both states are legitimate and the ROW decides: a project id means
+ *     project scope, NULL means tenant scope.
+ * `SELF_SCOPED`
+ *     project membership is not the governing rule for this resource; some
+ *     other principal rule is (see `strategy: 'SELF'`).
+ *
+ * Membership is never weakened by any of these: the NULL branch is reached
+ * only when the record HAS no project, so there is no project to be a member
+ * of. The choice a nullable resource actually faces is between "tenant plus
+ * the route's existing capability" and "nobody, ever" — not between a loose
+ * rule and a strict one.
+ */
+export type ProjectSemantics =
+  | 'PROJECT_REQUIRED'
+  | 'TENANT_GLOBAL'
+  | 'DUAL_PROJECT_OR_TENANT'
+  | 'SELF_SCOPED'
+
+/**
+ * Whether the project parent can move after the record exists (§15, §35).
+ *
+ * This is the escape hatch the dual model would otherwise open: if a caller
+ * could set `project_id = NULL` on a project-scoped record under ordinary
+ * write authority, they could promote it out of its project and then read it
+ * back through the tenant-global branch. Every writer in the repository was
+ * audited for this; none of them writes `project_id` on an UPDATE, and every
+ * column allow-list excludes it — so the honest value for all resources today
+ * is `IMMUTABLE`, and the ratchet holds it there.
+ *
+ * The transfer-capable values exist so that adding such a workflow is a
+ * deliberate, reviewable change to this registry rather than a side effect of
+ * widening an allow-list.
+ */
+export type ProjectParentMutation =
+  | 'IMMUTABLE'                        // set on create, never changed
+  | 'PROMOTION_TO_GLOBAL_SUPPORTED'    // project → tenant-global is a real workflow
+  | 'ASSIGN_TO_PROJECT_SUPPORTED'      // tenant-global → project is a real workflow
+  | 'BIDIRECTIONAL_TRANSFER_SUPPORTED' // both directions are real workflows
+
 export interface RecordScopePolicy {
   /** The `/related` source/target discriminator, or the route resource name. */
   resource:   string
@@ -126,6 +187,26 @@ export interface RecordScopePolicy {
   /** EVERY functional capability the caller must hold. Conjunction. */
   capabilities: readonly ServerCapability[]
   strategy:   ScopeStrategy
+  /**
+   * What a NULL project parent means here. REQUIRED — there is no default,
+   * so a new resource must decide rather than inherit (§3).
+   */
+  projectSemantics: ProjectSemantics
+  /**
+   * Whether the project parent can move after create. REQUIRED, for the same
+   * reason: silence must not read as permission (§15).
+   */
+  projectParentMutation: ProjectParentMutation
+  /**
+   * The repository evidence that a project-less row is legitimate here (§8).
+   *
+   * Required by the Phase-3E-R ratchet for every resource whose semantics are
+   * NOT `PROJECT_REQUIRED`, and forbidden for those that are. The asymmetry is
+   * deliberate: `PROJECT_REQUIRED` restates a `NOT NULL` constraint the schema
+   * already enforces and needs no argument, whereas a claim that NULL is a real
+   * product state is exactly the claim that has to be defensible.
+   */
+  projectSemanticsEvidence?: string
   /** How the record's scope key is obtained. */
   scopeKey:   string
   tenantRule: string
@@ -162,6 +243,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'projects',
     capabilities: ['project.view'],
     strategy: 'TENANT_OWNER_OR_PROJECT_ASSIGNMENT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'projects.id via project_manager | lead_engineer | created_by',
     tenantRule: 'projects.tenant_id = app.current_tenant_id, applied to the owner too',
     reason: 'project.view is the capability every project-context read already uses (cf. lifecycle.ts GET /projects/:projectId/lifecycle). Deliberately NOT cost.view: that is owner-only and would close the project record to every delivery role. The commercial columns the row also carries are handled by field projection, not by raising the route capability.',
@@ -174,6 +257,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'rfis',
     capabilities: ['construction.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'rfis.project_id',
     tenantRule: 'rfis.tenant_id = app.current_tenant_id',
     reason: 'rfisRouter (procurement.ts) serves GET / under construction.view.',
@@ -185,6 +270,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'submittals',
     capabilities: ['construction.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'submittals.project_id',
     tenantRule: 'submittals.tenant_id = app.current_tenant_id',
     reason: 'submittalsRouter (procurement.ts) serves GET / under construction.view.',
@@ -197,6 +284,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'change_orders',
     capabilities: ['cost.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'change_orders.project_id',
     tenantRule: 'change_orders.tenant_id = app.current_tenant_id',
     reason: 'changeOrders.ts serves its reads under cost.view. This is the discriminating target: a caller may read an RFI under construction.view and still not see the change order it produced, because cost.view is owner-only.',
@@ -209,6 +298,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'ncrs',
     capabilities: ['quality.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'ncrs.project_id',
     tenantRule: 'ncrs.tenant_id = app.current_tenant_id',
     reason: 'ncr.ts serves its reads under quality.view.',
@@ -221,6 +312,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'corrective_actions',
     capabilities: ['quality.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'corrective_actions.project_id',
     tenantRule: 'corrective_actions.tenant_id = app.current_tenant_id',
     reason: 'Corrective/preventive actions are served by ncr.ts alongside the NCR they close out; same quality.view authority.',
@@ -233,6 +326,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'punch_items',
     capabilities: ['quality.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'punch_items.project_id',
     tenantRule: 'punch_items.tenant_id = app.current_tenant_id',
     reason: 'punchLists.ts serves its reads under quality.view.',
@@ -245,6 +340,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'drawings',
     capabilities: ['engineering.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'drawings.project_id',
     tenantRule: 'drawings.tenant_id = app.current_tenant_id',
     reason: 'drawings.ts serves its reads under engineering.view.',
@@ -256,6 +353,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'inspections',
     capabilities: ['quality.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'inspections.project_id',
     tenantRule: 'inspections.tenant_id = app.current_tenant_id',
     reason: 'inspections.ts serves its reads under quality.view.',
@@ -268,6 +367,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'actions',
     capabilities: ['personal.view'],
     strategy: 'SELF',
+    projectSemantics: 'SELF_SCOPED',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'SELF, not project: ADR-014 Phase 2C-4A established an action as a PERSONAL record whose owner is its assignee, enforced by requireActionAccess. Project membership is not the governing rule, so the NULL-parent question does not arise for this resource.',
     scopeKey: 'actions.assigned_to_user_id = live principal, or personal.admin',
     tenantRule: 'actions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 2C-4A established that an action is a PERSONAL record: personal.view opens the route and ownership decides the record, with personal.admin as the tenant-wide authority. Phase 3A reuses that rule verbatim rather than re-deriving it, and deliberately does NOT use PARENT_PROJECT — an action carries a project_id, but its owner is the person it is assigned to, and inheriting project scope would widen a closed Personal Inbox surface.',
@@ -284,6 +387,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'punch_lists',
     capabilities: ['quality.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'punch_lists.project_id',
     tenantRule: 'punch_lists.tenant_id = app.current_tenant_id',
     reason: 'punchLists.ts serves the list and its items under quality.view; the punch list is the parent record its items hang from.',
@@ -295,6 +400,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'drawing_revisions',
     capabilities: ['engineering.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'drawing_revisions.drawing_id → drawings.project_id',
     tenantRule: 'drawing_revisions.tenant_id = app.current_tenant_id',
     reason: 'drawings.ts serves revisions under the same engineering authority as the drawing they revise.',
@@ -309,6 +416,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'drawing_markups',
     capabilities: ['engineering.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'drawing_markups.drawing_id → drawings.project_id',
     tenantRule: 'drawing_markups.tenant_id = app.current_tenant_id',
     reason: 'A markup is an annotation on a drawing and inherits that drawing’s project; PATCH/DELETE /markups/:markupId name only the markup.',
@@ -332,6 +441,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'agent_actions',
     capabilities: ['ai.govern'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'agentActions.ts types `project_id: string | null` on ActionRow and writes `input.projectId ?? null`: the table is an AI-governance audit trail, and an agent decision that is not about a project has none. Its authority is unchanged — crossdomain.read to read, ai.govern to review (§22) — so the tenant-global branch admits exactly the holders the route already admitted.',
     scopeKey: 'agent_actions.project_id',
     tenantRule: 'agent_actions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -343,6 +456,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'bid_packages',
     capabilities: ['procurement.approve', 'procurement.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'bid_packages.project_id',
     tenantRule: 'bid_packages.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 4 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -355,6 +470,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'bid_submissions',
     capabilities: ['procurement.approve'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'bid_submissions.bid_package_id → bid_packages.project_id',
     tenantRule: 'bid_submissions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -369,6 +486,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'bim_issues',
     capabilities: ['engineering.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'bim_issues.project_id',
     tenantRule: 'bim_issues.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -380,6 +499,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'bim_models',
     capabilities: ['engineering.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'bim_models.project_id',
     tenantRule: 'bim_models.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 4 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -391,6 +512,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'budget_items',
     capabilities: ['cost.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'budget_items.budget_id → budgets.project_id',
     tenantRule: 'budget_items.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -405,6 +528,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'budgets',
     capabilities: ['cost.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'budgets.project_id',
     tenantRule: 'budgets.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -416,6 +541,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'calc_sessions',
     capabilities: ['engineering.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'The product route POST /projects/:projectId/calc-sessions takes its project from the path, but the mounted MCP bridge (mcp.ts:436, `session_create`) persists an agent session with `projectId ?? null`. A project-less calc session is therefore reachable through a mounted route, not only through orphaning.',
     scopeKey: 'calc_sessions.project_id',
     tenantRule: 'calc_sessions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -427,6 +556,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'chat_sessions',
     capabilities: ['assistant.admin', 'assistant.use'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 023 declares the column `ON DELETE SET NULL` and askBuilder.ts:338 writes whatever `a.projectId` holds, which is absent for a general ask. Record scope is used here only by DELETE /ask/sessions/:id under assistant.admin; the READ route is guarded separately by `user_id = $2` and does not use this guard, so the SELF rule on reads is untouched.',
     scopeKey: 'chat_sessions.project_id',
     tenantRule: 'chat_sessions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -438,6 +571,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'commissioning_autosign_rules',
     capabilities: ['commissioning.approve'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 016 declares the same explicit three-level `scope CHECK (scope IN (\'global\',\'client\',\'project\'))` with nullable `client_id`/`project_id`. A global autosign rule is a designed state, not an orphan.',
     scopeKey: 'commissioning_autosign_rules.project_id',
     tenantRule: 'commissioning_autosign_rules.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -449,6 +586,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'commissioning_baselines',
     capabilities: ['commissioning.approve'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 019 declares `scope VARCHAR(16) NOT NULL CHECK (scope IN (\'global\',\'client\',\'project\'))` beside `client_id` and `project_id`, and its own constraint comment states that \'a global rule with NULL client_id/project_id has exactly one row\'. The schema names the global state explicitly.',
     scopeKey: 'commissioning_baselines.project_id',
     tenantRule: 'commissioning_baselines.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -460,6 +601,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'commissioning_items',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'commissioning_items.project_id',
     tenantRule: 'commissioning_items.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -471,6 +614,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'commissioning_packs',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 006 declares the column `ON DELETE SET NULL`, and all three create routes — /uploads/text-ingest, /generate-draft, /packs/manual — guard with requireBodyProjectScope and validate only title and systemType, passing `projectId ?? null`.',
     scopeKey: 'commissioning_packs.project_id',
     tenantRule: 'commissioning_packs.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -482,6 +629,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'compliance_tasks',
     capabilities: ['safety.approve', 'safety.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'POST /compliance-tasks validates only title and due_date and passes `b[\'project_id\'] ?? null`. The list route selects `FROM compliance_tasks WHERE tenant_id = …` and returns project-less rows alongside project rows, so the collection contract already treats the resource as tenant-level.',
     scopeKey: 'compliance_tasks.project_id',
     tenantRule: 'compliance_tasks.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 4 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -494,6 +645,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'coordination_recommendations',
     capabilities: ['ai.govern'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'coordination_recommendations.project_id',
     tenantRule: 'coordination_recommendations.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -505,6 +658,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'cost_entries',
     capabilities: ['cost.approve', 'cost.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'cost_entries.project_id',
     tenantRule: 'cost_entries.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 4 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -517,6 +672,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'daily_logs',
     capabilities: ['construction.approve', 'construction.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'daily_logs.project_id',
     tenantRule: 'daily_logs.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 4 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -529,6 +686,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'deficiencies',
     capabilities: ['quality.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'deficiencies.project_id',
     tenantRule: 'deficiencies.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -540,6 +699,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'document_versions',
     capabilities: ['docs.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'Inherits the semantics of its FK parent: document_versions has no project column of its own and resolves through documents.project_id, so a version of a tenant-global document is itself tenant-global. Classifying it PROJECT_REQUIRED would make every `_global` document\'s versions unreachable while the document itself was readable.',
     scopeKey: 'document_versions.document_id → documents.project_id',
     tenantRule: 'document_versions.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -554,6 +717,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'documents',
     capabilities: ['docs.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 003 declares `project_id UUID REFERENCES projects(id) ON DELETE SET NULL`, and files.ts:129 builds the storage key as `${tenantId}/${projectId ?? \'_global\'}/…` — a literal `_global` bucket for project-less documents. POST /files/request-upload and POST /files/folders both guard with requireBodyProjectScope, which Phase 3D documents as treating the field as OPTIONAL on purpose, naming \'a tenant-level folder\' as the example.',
     scopeKey: 'documents.project_id',
     tenantRule: 'documents.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -565,6 +732,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'estimates',
     capabilities: ['cost.approve', 'engineering.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'POST /estimates validates only `name`; estimatingService.ts:264 passes `input.project_id ?? null`. The collection route is GET /estimates?project_id=… — project is a filter over a tenant-level set, not the set\'s boundary.',
     scopeKey: 'estimates.project_id',
     tenantRule: 'estimates.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -577,6 +748,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'evm_baselines',
     capabilities: ['cost.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'evm_baselines.project_id',
     tenantRule: 'evm_baselines.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -588,6 +761,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'knowledge_chunks',
     capabilities: ['assistant.use'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'Inherits knowledge_sources through source_id. A chunk of a tenant-global source is tenant-global; refusing it would leave the corpus readable at source level and unreadable at chunk level.',
     scopeKey: 'knowledge_chunks.source_id → knowledge_sources.project_id',
     tenantRule: 'knowledge_chunks.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3E. `GET /ask/chunks/:id` names a chunk and returns its text alongside its source title and storage path, so the chunk is the record whose scope decides the read. assistant.use is the capability ask.ts already declares router-wide; Phase 3E decides where that existing authority applies, never who holds it. The FK hop matches schema-project-parent-map.json, which derives it from migration 022.',
@@ -601,6 +778,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'knowledge_fixes',
     capabilities: ['assistant.admin', 'engineering.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 021 declares the column nullable, and fixExtractor.ts:379 omits `project_id` from its INSERT column list altogether — every extracted fix is project-less. fixLibrary.ts:99 supplies one when a fix is raised against a project, so both states occur.',
     scopeKey: 'knowledge_fixes.project_id',
     tenantRule: 'knowledge_fixes.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 3 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -612,6 +793,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'knowledge_sources',
     capabilities: ['assistant.use'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'migration 022 places `project_id` under the comment \'Classification tags used for retrieval filtering\', beside `tags` and `asset_system` — a retrieval discriminator, not an ownership boundary. knowledgeBulkIngest.ts:182 omits the column from its INSERT entirely, so every bulk-ingested source is project-less by construction.',
     scopeKey: 'knowledge_sources.project_id',
     tenantRule: 'knowledge_sources.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 4 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -623,6 +808,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'meetings',
     capabilities: ['docs.publish', 'project.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'meetings.project_id',
     tenantRule: 'meetings.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 7 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -635,6 +822,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'monte_carlo_runs',
     capabilities: ['cost.view'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'POST /monte-carlo/runs guards with requireBodyProjectScope and the service passes `input.projectId ?? null`. Phase 3D\'s own note on that guard names \'a portfolio simulation\' as its example of a legitimately project-less record.',
     scopeKey: 'monte_carlo_runs.project_id',
     tenantRule: 'monte_carlo_runs.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3E. monteCarlo.ts binds this table from four routes and declares cost.view on every read; Phase 3E decides where that existing authority applies, never who holds it. Derivation matches schema-project-parent-map.json.',
@@ -646,6 +837,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'pay_applications',
     capabilities: ['cost.approve', 'cost.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'pay_applications.project_id',
     tenantRule: 'pay_applications.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 3 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -658,6 +851,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'project_assignments',
     capabilities: ['team.approve'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'project_assignments.project_id',
     tenantRule: 'project_assignments.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -669,6 +864,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'purchase_orders',
     capabilities: ['procurement.approve', 'procurement.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'purchase_orders.project_id',
     tenantRule: 'purchase_orders.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -681,6 +878,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'risks',
     capabilities: ['risk.approve', 'risk.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'risks.project_id',
     tenantRule: 'risks.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -693,6 +892,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'safety_incidents',
     capabilities: ['safety.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'safety_incidents.project_id',
     tenantRule: 'safety_incidents.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -704,6 +905,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'safety_observations',
     capabilities: ['safety.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'safety_observations.project_id',
     tenantRule: 'safety_observations.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -715,6 +918,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'schedule_dependencies',
     capabilities: ['schedule.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'schedule_dependencies.predecessor_id → schedule_tasks.project_id',
     tenantRule: 'schedule_dependencies.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -729,6 +934,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'schedule_tasks',
     capabilities: ['schedule.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'schedule_tasks.project_id',
     tenantRule: 'schedule_tasks.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -740,6 +947,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'sensor_alerts',
     capabilities: ['construction.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'sensor_alerts.sensor_id → sensors.project_id',
     tenantRule: 'sensor_alerts.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -754,6 +963,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'sensors',
     capabilities: ['construction.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'sensors.project_id',
     tenantRule: 'sensors.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -765,6 +976,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'subcontract_invoices',
     capabilities: ['procurement.approve', 'procurement.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'subcontract_invoices.subcontract_id → subcontracts.project_id',
     tenantRule: 'subcontract_invoices.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 3 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -779,6 +992,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'subcontracts',
     capabilities: ['procurement.approve', 'procurement.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'subcontracts.project_id',
     tenantRule: 'subcontracts.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -790,6 +1005,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'subsystems',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'subsystems.project_id',
     tenantRule: 'subsystems.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -801,6 +1018,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'systems',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'systems.project_id',
     tenantRule: 'systems.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 3 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -812,6 +1031,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'tags',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'tags.project_id',
     tenantRule: 'tags.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -823,6 +1044,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'test_packs',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'test_packs.project_id',
     tenantRule: 'test_packs.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -834,6 +1057,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'test_results',
     capabilities: ['commissioning.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'test_results.project_id',
     tenantRule: 'test_results.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 1 route binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -845,6 +1070,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'timesheets',
     capabilities: ['team.approve', 'team.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'timesheets.project_id',
     tenantRule: 'timesheets.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 3 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -856,6 +1083,10 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'transmittals',
     capabilities: ['docs.publish', 'docs.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'POST /transmittals validates subject, purpose, from_party, to_party, to_contacts[] and items[] — not project. transmittalService.ts:82 passes `input.project_id ?? null`, and listTransmittals selects `FROM transmittals t WHERE tenant_id=$1` with project only as an optional filter.',
     scopeKey: 'transmittals.project_id',
     tenantRule: 'transmittals.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 3 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
@@ -868,6 +1099,8 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     table: 'turnover_packages',
     capabilities: ['commissioning.approve', 'docs.write'],
     strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
     scopeKey: 'turnover_packages.project_id',
     tenantRule: 'turnover_packages.tenant_id = app.current_tenant_id',
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',

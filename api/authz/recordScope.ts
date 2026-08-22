@@ -55,7 +55,7 @@ import type { RequestHandler } from 'express'
 import { tenantQuery } from '../db/pool'
 import { resolveCurrentUser, type CurrentUser, type AuthorizedRequest } from './currentUser'
 import { roleHasCapability } from './capabilities'
-import { policyFor, type ProjectDerivation } from './recordScopePolicies'
+import { policyFor, type ProjectDerivation, type ProjectSemantics } from './recordScopePolicies'
 
 /**
  * What a principal may reach.
@@ -233,7 +233,29 @@ export function requireProjectScope(param = 'projectId'): RequestHandler {
 }
 
 /**
- * Resolve ONE record's parent project id, or `null` when it has none.
+ * Where ONE record sits, as far as project scope is concerned.
+ *
+ * ADR-014 Phase 3E-R. The previous shape — `Promise<string | null>` — could
+ * not tell these two apart:
+ *
+ *   the record does not exist (or is in another tenant)   → null
+ *   the record exists and deliberately has no project     → null
+ *
+ * Both were refused, which was safe for a `NOT NULL` column and wrong for a
+ * nullable one: it made every project-less row unreachable by EVERY principal,
+ * the tenant Owner included, because the null check ran before the tenant-wide
+ * branch could. Separating the two is the whole of this slice; what each one
+ * MEANS is then decided by the resource's `projectSemantics`, never here.
+ */
+export type RecordScopeResolution =
+  | { kind: 'PROJECT'; projectId: string }
+  /** The row exists in this tenant and its project parent is NULL. */
+  | { kind: 'TENANT_GLOBAL' }
+  /** No such row in this tenant — absent, or another tenant's. */
+  | { kind: 'NOT_FOUND' }
+
+/**
+ * Resolve ONE record's project position.
  *
  * The SQL is composed from `recordScopePolicies.ts` alone — table and column
  * names come from the registry, the record id is always bound as a parameter —
@@ -242,13 +264,18 @@ export function requireProjectScope(param = 'projectId'): RequestHandler {
  * Deliberately narrow: it selects the parent key and nothing else. ADR-014
  * Phase 3C §20 requires the scope decision to be made before the payload is
  * loaded, so this must not be tempted into fetching the row the handler wants.
+ *
+ * The tenant predicate is on the statement, so a record belonging to another
+ * tenant is `NOT_FOUND` and never reaches the `TENANT_GLOBAL` branch. That is
+ * what keeps "tenant-global" tenant-BOUNDED rather than application-global
+ * (§24), and it is decided here, before any payload query (§28).
  */
-export async function resolveParentProjectId(
+export async function resolveRecordScope(
   principal: CurrentUser,
   derivation: ProjectDerivation,
   recordId: string,
-): Promise<string | null> {
-  if (!isProjectId(recordId)) return null
+): Promise<RecordScopeResolution> {
+  if (!isProjectId(recordId)) return { kind: 'NOT_FOUND' }
 
   const sql = derivation.kind === 'DIRECT_COLUMN'
     ? `SELECT r.${derivation.projectColumn} AS project_id
@@ -263,12 +290,33 @@ export async function resolveParentProjectId(
 
   try {
     const res = await tenantQuery<{ project_id: string | null }>(principal.tenantId, sql, [recordId])
-    return res.rows[0]?.project_id ?? null
+    // `rows.length`, not `rows[0]?.project_id` — the whole point is that a row
+    // WITH a null column is a different answer from no row at all.
+    if (res.rows.length === 0) return { kind: 'NOT_FOUND' }
+    const projectId = res.rows[0]?.project_id ?? null
+    return projectId ? { kind: 'PROJECT', projectId } : { kind: 'TENANT_GLOBAL' }
   } catch {
     // A failed lookup is not an implicit grant, exactly as in
-    // `filterAccessibleProjectIds`.
-    return null
+    // `filterAccessibleProjectIds`. Note it must not become TENANT_GLOBAL
+    // either: an error is not evidence that a record has no project.
+    return { kind: 'NOT_FOUND' }
   }
+}
+
+/**
+ * The parent project id, or `null` when the record has none or is not there.
+ *
+ * Retained as the narrow form for callers that only need the id and treat both
+ * absences alike. `requireRecordScope` deliberately does NOT use it — it needs
+ * the distinction `resolveRecordScope` draws.
+ */
+export async function resolveParentProjectId(
+  principal: CurrentUser,
+  derivation: ProjectDerivation,
+  recordId: string,
+): Promise<string | null> {
+  const r = await resolveRecordScope(principal, derivation, recordId)
+  return r.kind === 'PROJECT' ? r.projectId : null
 }
 
 /**
@@ -289,12 +337,38 @@ export async function resolveParentProjectId(
  * reach a record learns only that it is not there, so the endpoint cannot be
  * used to confirm that a given UUID exists.
  *
- * A record whose parent is NULL is refused rather than allowed. An unparented
- * row has no project to inherit authority from, and defaulting it to tenant-wide
- * is precisely the widening Phase 3 exists to remove.
+ * What a NULL parent means is decided by the RESOURCE, not here (Phase 3E-R
+ * §3). Phase 3C/3D/3E refused every unparented row, which is right for a
+ * `NOT NULL` column — the branch is unreachable — and was wrong for the
+ * fifteen resources whose ingest and create paths produce project-less rows on
+ * purpose: it made those rows unreachable by every principal, the Owner
+ * included. So the row's position is resolved first, and the policy's
+ * `projectSemantics` says what that position is worth:
+ *
+ *   PROJECT               → the caller must be able to reach that project
+ *   TENANT_GLOBAL row     → admitted only where the resource says NULL is
+ *                           legitimate; still tenant-bounded, and still behind
+ *                           the route's own capability guard
+ *   NOT_FOUND             → refused
+ *
+ * This never weakens membership. The tenant-global branch is reached only when
+ * the record HAS no project, so there is no membership that could have been
+ * required; the alternative was not a stricter rule but an unsatisfiable one.
+ * A record that DOES name a project still needs live membership of it.
+ *
+ * Ordering mirrors `requireProjectScope`, and for the same reasons:
+ *
+ *   401  no live principal
+ *   403  the route's own capability guard already refused (this never runs)
+ *   404  record absent, in another tenant, unparented where that is not
+ *        legitimate, or in a project the caller cannot reach
+ *
+ * Those 404 cases stay deliberately indistinguishable. A caller who may not
+ * reach a record learns only that it is not there, so the endpoint cannot be
+ * used to confirm that a given UUID exists.
  *
  * Because this is middleware it runs BEFORE the handler, so a refusal happens
- * before any payload query, any write, and any side effect (§20, §34).
+ * before any payload query, any write, and any side effect (§20, §34, §38).
  */
 export function requireRecordScope(resource: string, param = 'id'): RequestHandler {
   return async (req, res, next): Promise<void> => {
@@ -312,12 +386,28 @@ export function requireRecordScope(resource: string, param = 'id'): RequestHandl
     const recordId = (req.params as Record<string, string | undefined>)[param]
     if (!recordId) { notFound(); return }
 
-    const projectId = await resolveParentProjectId(principal, policy.derivation, recordId)
-    if (!projectId || !await canAccessProject(principal, projectId)) { notFound(); return }
+    const found = await resolveRecordScope(principal, policy.derivation, recordId)
 
+    if (found.kind === 'NOT_FOUND') { notFound(); return }
+
+    if (found.kind === 'TENANT_GLOBAL') {
+      // Only a resource that has DECLARED project-less rows legitimate may take
+      // this branch. PROJECT_REQUIRED keeps the Phase-3D/3E refusal, and
+      // SELF_SCOPED refuses too — its records are governed by an ownership rule
+      // that this guard is not the place to evaluate.
+      if (!allowsTenantGlobal(policy.projectSemantics)) { notFound(); return }
+      next()
+      return
+    }
+
+    if (!await canAccessProject(principal, found.projectId)) { notFound(); return }
     next()
   }
 }
+
+/** Whether a resource's declared semantics admit a project-less row. */
+const allowsTenantGlobal = (s: ProjectSemantics): boolean =>
+  s === 'TENANT_GLOBAL' || s === 'DUAL_PROJECT_OR_TENANT'
 
 /**
  * Express guard for a mutation that selects its parent project from the BODY
