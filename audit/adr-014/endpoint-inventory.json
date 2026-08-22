@@ -2954,7 +2954,9 @@
       "recordScopeCalls": [
         "requireRecordScope"
       ],
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -3924,8 +3926,12 @@
       "capabilities": [
         "commissioning.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -4053,8 +4059,12 @@
       "capabilities": [
         "commissioning.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -4093,8 +4103,12 @@
       "capabilities": [
         "commissioning.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -7159,7 +7173,9 @@
       "recordScopeCalls": [
         "requireRecordScope"
       ],
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -7568,8 +7584,12 @@
       "capabilities": [
         "docs.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "mounted": true
     },
     {
@@ -7610,8 +7630,12 @@
       "capabilities": [
         "docs.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -8634,7 +8658,9 @@
         "personal.write"
       ],
       "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -8808,7 +8834,9 @@
       "recordScopeCalls": [
         "requireRecordScope"
       ],
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -8961,7 +8989,7 @@
       "mountPrefix": "/api/v1/monte-carlo",
       "routePath": "/runs",
       "file": "api/routes/monteCarlo.ts",
-      "line": 57,
+      "line": 58,
       "serverLine": 616,
       "pathParams": [],
       "guards": [
@@ -8981,7 +9009,7 @@
       "mountPrefix": "/api/v1/monte-carlo",
       "routePath": "/runs",
       "file": "api/routes/monteCarlo.ts",
-      "line": 34,
+      "line": 35,
       "serverLine": 616,
       "pathParams": [],
       "guards": [
@@ -8991,8 +9019,12 @@
       "capabilities": [
         "cost.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {
@@ -9001,7 +9033,7 @@
       "mountPrefix": "/api/v1/monte-carlo",
       "routePath": "/runs/:id",
       "file": "api/routes/monteCarlo.ts",
-      "line": 68,
+      "line": 69,
       "serverLine": 616,
       "pathParams": [
         "id"
@@ -9023,7 +9055,7 @@
       "mountPrefix": "/api/v1/monte-carlo",
       "routePath": "/runs/:id/distribution",
       "file": "api/routes/monteCarlo.ts",
-      "line": 79,
+      "line": 80,
       "serverLine": 616,
       "pathParams": [
         "id"
@@ -9303,7 +9335,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/blockers",
       "file": "api/routes/ops.ts",
-      "line": 144,
+      "line": 145,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9323,7 +9355,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/escalate",
       "file": "api/routes/ops.ts",
-      "line": 210,
+      "line": 211,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9343,7 +9375,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/escalations",
       "file": "api/routes/ops.ts",
-      "line": 119,
+      "line": 120,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9363,7 +9395,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/freeze",
       "file": "api/routes/ops.ts",
-      "line": 246,
+      "line": 247,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9383,7 +9415,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/incident",
       "file": "api/routes/ops.ts",
-      "line": 308,
+      "line": 309,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9393,8 +9425,12 @@
       "capabilities": [
         "platform.automation"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "mounted": true
     },
     {
@@ -9403,7 +9439,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/live-feed",
       "file": "api/routes/ops.ts",
-      "line": 80,
+      "line": 81,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9423,7 +9459,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/overview",
       "file": "api/routes/ops.ts",
-      "line": 30,
+      "line": 31,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9443,7 +9479,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/readiness",
       "file": "api/routes/ops.ts",
-      "line": 95,
+      "line": 96,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9464,7 +9500,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/reassign",
       "file": "api/routes/ops.ts",
-      "line": 169,
+      "line": 170,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9484,7 +9520,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/recommendations",
       "file": "api/routes/ops.ts",
-      "line": 333,
+      "line": 334,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9504,7 +9540,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/unfreeze",
       "file": "api/routes/ops.ts",
-      "line": 280,
+      "line": 281,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9842,7 +9878,7 @@
       "mountPrefix": "/api/v1/policies",
       "routePath": "/",
       "file": "api/routes/policies.ts",
-      "line": 21,
+      "line": 22,
       "serverLine": 597,
       "pathParams": [],
       "guards": [
@@ -9861,7 +9897,7 @@
       "mountPrefix": "/api/v1/policies",
       "routePath": "/",
       "file": "api/routes/policies.ts",
-      "line": 35,
+      "line": 36,
       "serverLine": 597,
       "pathParams": [],
       "guards": [
@@ -9880,7 +9916,7 @@
       "mountPrefix": "/api/v1/policies",
       "routePath": "/:id",
       "file": "api/routes/policies.ts",
-      "line": 49,
+      "line": 50,
       "serverLine": 597,
       "pathParams": [
         "id"
@@ -9901,7 +9937,7 @@
       "mountPrefix": "/api/v1/policies",
       "routePath": "/audit",
       "file": "api/routes/policies.ts",
-      "line": 72,
+      "line": 73,
       "serverLine": 597,
       "pathParams": [],
       "guards": [
@@ -9920,7 +9956,7 @@
       "mountPrefix": "/api/v1/policies",
       "routePath": "/evaluate",
       "file": "api/routes/policies.ts",
-      "line": 58,
+      "line": 59,
       "serverLine": 597,
       "pathParams": [],
       "guards": [
@@ -9929,8 +9965,12 @@
       "capabilities": [
         "platform.admin"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "mounted": true
     },
     {
@@ -14348,7 +14388,7 @@
       "mountPrefix": "/api/v1/simulation",
       "routePath": "/",
       "file": "api/routes/simulation.ts",
-      "line": 57,
+      "line": 58,
       "serverLine": 596,
       "pathParams": [],
       "guards": [
@@ -14367,7 +14407,7 @@
       "mountPrefix": "/api/v1/simulation",
       "routePath": "/:id/results",
       "file": "api/routes/simulation.ts",
-      "line": 49,
+      "line": 50,
       "serverLine": 596,
       "pathParams": [
         "id"
@@ -14388,7 +14428,7 @@
       "mountPrefix": "/api/v1/simulation",
       "routePath": "/replay",
       "file": "api/routes/simulation.ts",
-      "line": 22,
+      "line": 23,
       "serverLine": 596,
       "pathParams": [],
       "guards": [
@@ -14397,8 +14437,12 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "mounted": true
     },
     {
@@ -14407,7 +14451,7 @@
       "mountPrefix": "/api/v1/simulation",
       "routePath": "/what-if",
       "file": "api/routes/simulation.ts",
-      "line": 35,
+      "line": 36,
       "serverLine": 596,
       "pathParams": [],
       "guards": [
@@ -14880,8 +14924,12 @@
       "capabilities": [
         "team.approve"
       ],
-      "recordScopeCalls": [],
-      "bodyProjectRefs": [],
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "mounted": true
     },
     {

@@ -20,6 +20,7 @@ import {
 } from '../services/simulation/monteCarloService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireBodyProjectScope } from '../authz/recordScope'
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -31,7 +32,7 @@ const p   = (req: Request, key: string) =>
   qs((req.params as Record<string, string | string[]>)[key]) ?? ''
 
 // POST /monte-carlo/runs
-router.post('/runs', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+router.post('/runs', requireCapability('cost.write') as never, requireBodyProjectScope('project_id') as never, async (req: Request, res: Response) => {
   const b = req.body as Record<string, unknown>
   if (!b['name'] || !Array.isArray(b['tasks']) || !(b['tasks'] as unknown[]).length) {
     res.status(400).json({ error: 'name and tasks[] required' }); return

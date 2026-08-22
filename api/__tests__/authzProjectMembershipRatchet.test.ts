@@ -308,7 +308,7 @@ describe('the Phase-2 classification stays closed and adoption is not overclaime
     // the drawings, inspections and punch-list routers, taking it to 39 of 747.
     // Adoption is real and still partial, and the assertion says so out loud so
     // that a later slice cannot quietly imply full coverage.
-    expect(scoped, 'Phase 3D scoped 180 endpoints').toBe(180)
+    expect(scoped, 'Phase 3D scoped 190 endpoints').toBe(190)
     expect(endpoints.length, 'out of ~747').toBeGreaterThan(700)
     // Phase 3B asserted adoption was under 10%, which measured how little had
     // been done rather than guarding a property — it necessarily fails as the

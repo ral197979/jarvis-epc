@@ -320,6 +320,43 @@ export function requireRecordScope(resource: string, param = 'id'): RequestHandl
 }
 
 /**
+ * Express guard for a mutation that selects its parent project from the BODY
+ * (ADR-014 Phase 3D §16).
+ *
+ * `requireProjectScope` reads the path and `requireRecordScope` reads an
+ * existing record; neither applies when the caller names the target project in
+ * the payload. Those routes were reaching the database with a caller-supplied
+ * project id and no check that the caller can reach it — a holder of
+ * `team.approve` could assign a person to any project in the tenant.
+ *
+ * The field is treated as OPTIONAL on purpose. Several of these records may
+ * legitimately be created with no project (a tenant-level folder, a portfolio
+ * simulation), and that is the existing contract; omitting the field creates an
+ * unparented record exactly as before. What is NOT allowed is naming a project
+ * the caller cannot reach. Supplying a malformed or unreachable id is refused.
+ *
+ * The value is read only from the body field named here. A caller-supplied
+ * tenant, role or membership claim is never consulted.
+ */
+export function requireBodyProjectScope(...fields: string[]): RequestHandler {
+  const names = fields.length ? fields : ['project_id', 'projectId']
+  return async (req, res, next): Promise<void> => {
+    const body = (req.body ?? {}) as Record<string, unknown>
+    const raw = names.map(f => body[f]).find(v => v !== undefined && v !== null && v !== '')
+    if (raw === undefined) { next(); return }          // no parent named — unchanged contract
+
+    const principal = await resolveCurrentUser(req as AuthorizedRequest)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+    if (typeof raw !== 'string' || !await canAccessProject(principal, raw)) {
+      res.status(404).json({ error: 'not_found', message: 'Project not found.' })
+      return
+    }
+    next()
+  }
+}
+
+/**
  * Parent-project scope for records that hang off a project.
  *
  * A record with a NULL `project_id` has no parent to inherit from and is

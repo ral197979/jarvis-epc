@@ -255,8 +255,31 @@ describe('the canonical project-scope source is the one the resolver uses', () =
     // The resolver must never touch the request. `projectIds` appears as a
     // PARAMETER name, which is fine — what matters is where the values come
     // from, and the resolver is handed ids by the route, never by the client.
-    for (const forbidden of ['req.body', 'req.query', 'req.headers']) {
+    for (const forbidden of ['req.query', 'req.headers']) {
       expect(resolver, `record scope must not read ${forbidden}`).not.toContain(forbidden)
+    }
+
+    // `req.body` is permitted in exactly one place. ADR-014 Phase 3D §16 covers
+    // mutations whose TARGET project is named in the payload — a folder created
+    // under a project, a person assigned to one. Neither the path nor an
+    // existing record can supply that id, so the body is the only place it
+    // exists.
+    //
+    // Reading it is not the same as trusting it, and that is the property under
+    // test: whatever the body names is handed to `canAccessProject`, which
+    // re-derives membership from the database. The body selects a target; it
+    // never carries authority. Any OTHER use of req.body in this module — a
+    // tenant, a role, a memberOf claim, an early return — would be caller-
+    // supplied authorization and must not appear.
+    const bodyReaders = resolver.split('export function').filter(f => f.includes('req.body'))
+    expect(bodyReaders.length, 'only one function may read the body for scope').toBe(1)
+    expect(bodyReaders[0], 'that function is the body-selected project guard')
+      .toMatch(/requireBodyProjectScope/)
+    expect(bodyReaders[0], 'and what it reads is verified, not believed')
+      .toMatch(/canAccessProject\(/)
+    for (const claim of ['memberOf', 'authorized', 'allowedProjects', 'scope']) {
+      expect(bodyReaders[0], `a caller-supplied ${claim} is never authorization evidence`)
+        .not.toMatch(new RegExp(`body\\[?['"\`]?${claim}`))
     }
     // `requireProjectScope` is an express guard and legitimately reads the route
     // PARAMETER, which is server-controlled routing, not caller-supplied scope.
@@ -386,8 +409,8 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // Phase 3B scoped 15 of ~747; Phase 3C took it to 39 by closing the
     // direct-ID surface of three routers. Adoption is real but partial, and
     // saying so is the point — a later slice must not imply full coverage.
-    expect(scoped).toBe(180)
-    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(550)
+    expect(scoped).toBe(190)
+    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(540)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only

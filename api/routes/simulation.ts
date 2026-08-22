@@ -12,6 +12,7 @@ import { tenantQuery } from '../db/pool'
 import { log } from '../lib/logger'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireBodyProjectScope } from '../authz/recordScope'
 export const simulationRouter = Router()
 const auth = requireAuth as never
 type SimReq = Request & AuthenticatedRequest & TenantRequest
@@ -19,7 +20,7 @@ type SimReq = Request & AuthenticatedRequest & TenantRequest
 simulationRouter.use(auth)
 
 // ─── Replay historical events ─────────────────────────────────────────────────
-simulationRouter.post('/replay', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
+simulationRouter.post('/replay', requireCapability('crossdomain.write') as never, requireBodyProjectScope('project_id') as never, async (req: Request, res: Response) => {
   const r = req as SimReq
   const { replay_from, replay_to, project_id, limit = 500 } = req.body
   const sessionId = await createSimulationSession(r.tenantId!, r.auth!.sub, {

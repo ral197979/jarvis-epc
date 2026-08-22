@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `be53d5537f67f5a3c4b7e14e68a4bcda89a4c3b3`.**
+**Generated from checked-in source at `5094eef3e4b8c4cb1e17c72b3be468addebaa23b`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
@@ -13,7 +13,7 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 > read from source: the capability guard in force on each route, and whether the
 > handler calls the canonical record-scope layer. At this commit
 > `729` endpoints carry a capability guard and
-> `180` enforce record scope.
+> `190` enforce record scope.
 
 ## 1. Join against the Phase-2 census
 
@@ -45,14 +45,15 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 
 | Disposition | Endpoints | Of which mutations |
 |---|---|---|
-| `TENANT_GLOBAL` | 252 | 136 |
-| `PROJECT_CHILD_RECORD_ID` | 192 | 132 |
+| `TENANT_GLOBAL` | 250 | 134 |
+| `PROJECT_CHILD_RECORD_ID` | 189 | 129 |
 | `PROJECT_CHILD_PATH_PROJECT` | 96 | 36 |
-| `NO_PROJECT_PARENT` | 95 | 39 |
+| `NO_PROJECT_PARENT` | 88 | 32 |
 | `PLATFORM_GLOBAL` | 40 | 18 |
-| `UNRESOLVED_DATA_ACCESS` | 34 | 15 |
+| `UNRESOLVED_DATA_ACCESS` | 33 | 14 |
 | `SERVICE_BOUNDARY` | 31 | 17 |
 | `SELF_SCOPED` | 16 | 9 |
+| `PROJECT_CHILD_BODY_PROJECT` | 13 | 13 |
 | `PROJECT_ROOT_EXISTING` | 4 | 3 |
 | `DEAD_OR_UNMOUNTED` | 2 | 1 |
 | `CROSSDOMAIN` | 1 | 1 |
@@ -63,14 +64,14 @@ Dispositions are assigned by an ordered rule list in
 `scripts/adr014/classify-scope.mjs`; each registry entry records the rule that
 fired in `dispositionReason`, so a verdict can be argued with.
 
-`UNRESOLVED_DATA_ACCESS` (34) is deliberately **not**
+`UNRESOLVED_DATA_ACCESS` (33) is deliberately **not**
 folded into `NO_PROJECT_PARENT`: for these routes no table could be resolved, so
 their project relationship is *unknown*, not *absent*. Per HOB §64 they are
 deferred for a scope model, not closed.
 
 ## 3. The headline finding
 
-**163 of the 171 project-bound mutations carry no project
+**173 of the 181 project-bound mutations carry no project
 predicate anywhere in their SQL.** They are constrained by `tenant_id` alone.
 
 Combined with the guard census — 732
@@ -81,7 +82,7 @@ close, now measured rather than asserted.
 
 | Operation | Project-bound | With a project predicate in SQL |
 |---|---|---|
-| `MUTATION_CREATE` | 71 | 7 |
+| `MUTATION_CREATE` | 81 | 7 |
 | `READ_DIRECT_ID` | 63 | 0 |
 | `READ_COLLECTION` | 58 | 0 |
 | `MUTATION_UPDATE` | 45 | 0 |
@@ -192,9 +193,24 @@ ad-hoc `SELECT project_id FROM …` in every router.
 
 ## 7. HOB §16 / §17 — body project-id and mass assignment
 
-0 route(s) read a project id from the request body.
+14 route(s) read a project id from the request body.
 
-_None found._
+| Method | Path | Body fields | Disposition |
+|---|---|---|---|
+| POST | `/api/v1/bim-models/:modelId/ava-estimate` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/commissioning/generate-draft` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/commissioning/packs/manual` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/commissioning/uploads/text-ingest` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/evm/baselines/:baselineId/wbs` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/files/folders` | `project_id` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/files/request-upload` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/me/agent/ask` | `projectId` | SELF_SCOPED |
+| POST | `/api/v1/meetings/:id/actions` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/monte-carlo/runs` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/ops/incident` | `project_id` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/policies/evaluate` | `project_id` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/simulation/replay` | `project_id` | PROJECT_CHILD_BODY_PROJECT |
+| POST | `/api/v1/team/assignments` | `projectId` | PROJECT_CHILD_BODY_PROJECT |
 
 On record moves (HOB §17/§49): the update handlers examined use explicit
 allow-lists that exclude the project parent — `api/routes/drawings.ts:96` lists

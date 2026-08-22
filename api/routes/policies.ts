@@ -10,6 +10,7 @@ import { TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { createPolicy, updatePolicy, evaluatePolicy } from '../services/policy/policyEngine'
 import { requireCapability } from '../authz/requireCapability'
+import { requireBodyProjectScope } from '../authz/recordScope'
 
 export const policiesRouter = Router()
 const auth = requireAuth as never
@@ -55,7 +56,7 @@ policiesRouter.patch('/:id', requireCapability('platform.admin') as never, async
 })
 
 // ─── Evaluate policy (dry test) ───────────────────────────────────────────────
-policiesRouter.post('/evaluate', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
+policiesRouter.post('/evaluate', requireCapability('platform.admin') as never, requireBodyProjectScope('project_id') as never, async (req: Request, res: Response) => {
   const r = req as PolicyReq
   const { policy_type, payload, project_id, module, role } = req.body
   if (!policy_type || !payload) {

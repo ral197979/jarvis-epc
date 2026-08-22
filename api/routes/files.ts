@@ -28,7 +28,7 @@ import { getStorage } from '../files/storage'
 import { slog } from '../../src/modules/observability/index'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -73,7 +73,7 @@ function _isIfcFile(filename: unknown): boolean {
 // ─── POST /request-upload ─────────────────────────────────────────────────────
 // Creates a document + version record, returns a presigned upload URL.
 
-router.post('/request-upload', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
+router.post('/request-upload', requireCapability('docs.write') as never, requireBodyProjectScope('projectId') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -431,7 +431,7 @@ router.get('/folders', requireTenant() as never, requireCapability('docs.view') 
 
 // ─── POST /folders ────────────────────────────────────────────────────────────
 
-router.post('/folders', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
+router.post('/folders', requireCapability('docs.write') as never, requireBodyProjectScope('project_id') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -35,7 +35,7 @@ import { requireAuth, AuthenticatedRequest }     from '../auth'
 import { requireTenant, TenantRequest }          from '../middleware/tenant'
 import { slog }                                  from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -69,7 +69,7 @@ async function _creditBalance(tenantId: string): Promise<number> {
 // Accepts a plain-text document (spec section, notes) and stores it as a
 // SourceUpload record. Returns the upload ID for use in generate-draft.
 
-router.post('/uploads/text-ingest', requireCapability('commissioning.write') as never, async (req: Req, res: Response) => {
+router.post('/uploads/text-ingest', requireCapability('commissioning.write') as never, requireBodyProjectScope('projectId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -157,7 +157,7 @@ router.post('/credits', requireCapability('platform.admin') as never, async (req
 // Queues a GENERATE_DRAFT job. Debit happens inside the worker after validation.
 // Returns immediately with jobId; client polls /jobs or /packs.
 
-router.post('/generate-draft', requireCapability('commissioning.write') as never, async (req: Req, res: Response) => {
+router.post('/generate-draft', requireCapability('commissioning.write') as never, requireBodyProjectScope('projectId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -203,7 +203,7 @@ router.post('/generate-draft', requireCapability('commissioning.write') as never
 // Persist a rules-engine generated CxPack without going through the AI worker.
 // Stores the full CxPack as payload_json so CxWorkflowView can re-hydrate it.
 
-router.post('/packs/manual', requireCapability('commissioning.write') as never, async (req: Req, res: Response) => {
+router.post('/packs/manual', requireCapability('commissioning.write') as never, requireBodyProjectScope('projectId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

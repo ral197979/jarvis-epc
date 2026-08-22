@@ -22,6 +22,7 @@ import { pollEvents } from '../realtime/wsGateway'
 import { publishActionEvent } from '../services/actions/actionEventPublisher'
 import { broadcastEvent } from '../realtime/eventBroadcaster'
 import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
+import { requireBodyProjectScope } from '../authz/recordScope'
 
 export const opsRouter = Router()
 
@@ -305,7 +306,7 @@ opsRouter.post('/unfreeze', requireCapability('platform.automation') as never, a
 
 // ─── POST /ops/incident ───────────────────────────────────────────────────────
 
-opsRouter.post('/incident', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
+opsRouter.post('/incident', requireCapability('platform.automation') as never, requireBodyProjectScope('project_id') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const reportedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { title, description, severity, project_id, related_action_ids } = req.body as {

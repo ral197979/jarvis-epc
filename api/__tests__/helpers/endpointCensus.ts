@@ -78,6 +78,10 @@ const RECORD_SCOPE_CALLS = [
   // registry and then applies the same membership rule, so a route using it is
   // record-scoped by exactly the same authority as the others here.
   'requireRecordScope(',
+  // ADR-014 Phase 3D: the body-selected form — the caller names the target
+  // project in the payload, so neither the path nor an existing record can
+  // supply it.
+  'requireBodyProjectScope(',
   'authorizeSource(',
   'filterAuthorizedTargets(',
   'filterAccessibleProjectIds(',

@@ -174,9 +174,14 @@ beforeEach(() => {
         /active_from\s*<=\s*NOW\(\)/i.test(sql) &&
         /active_to\s+IS\s+NULL\s+OR\s+m\.active_to\s*>\s*NOW\(\)/i.test(sql)
 
+      // The tenant predicate is read OFF the statement too. Enforcing it in the
+      // fixture would hide its removal from the product — an owner branch that
+      // dropped it would still look tenant-bounded here.
+      const honoursTenant = /tenant_id = current_setting\('app\.current_tenant_id', true\)::uuid/i.test(sql)
       const reachable = ids.filter(id => {
         const project = TABLES['projects']!.find(x => x['id'] === id)
-        if (!project || project['tenant_id'] !== caller.tenantId) return false
+        if (!project) return false
+        if (honoursTenant && project['tenant_id'] !== caller.tenantId) return false
         if (tenantWide) return true
         return MEMBERS.some(m =>
           m.projectId === id && m.userId === caller.id && (honoursWindow ? m.active : true))

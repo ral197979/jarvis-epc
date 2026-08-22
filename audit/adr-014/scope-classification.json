@@ -4,11 +4,12 @@
     "TOTAL_API_ENDPOINTS": 765,
     "DISPOSITIONS": {
       "SERVICE_BOUNDARY": 31,
-      "TENANT_GLOBAL": 252,
-      "NO_PROJECT_PARENT": 95,
-      "PROJECT_CHILD_RECORD_ID": 192,
-      "UNRESOLVED_DATA_ACCESS": 34,
+      "TENANT_GLOBAL": 250,
+      "NO_PROJECT_PARENT": 88,
+      "PROJECT_CHILD_RECORD_ID": 189,
+      "UNRESOLVED_DATA_ACCESS": 33,
       "SELF_SCOPED": 16,
+      "PROJECT_CHILD_BODY_PROJECT": 13,
       "PROJECT_CHILD_PATH_PROJECT": 96,
       "CROSSDOMAIN": 1,
       "PLATFORM_GLOBAL": 40,
@@ -18,25 +19,26 @@
       "PUBLIC_UNAUTHENTICATED": 1
     },
     "UNEXPLAINED": 0,
-    "PROJECT_BOUND_TOTAL": 292,
+    "PROJECT_BOUND_TOTAL": 302,
     "PROJECT_BOUND_BY_OPERATION": {
       "READ_DIRECT_ID": 63,
       "MUTATION_UPDATE": 45,
-      "MUTATION_CREATE": 71,
+      "MUTATION_CREATE": 81,
       "MUTATION_DELETE": 23,
       "MUTATION_CONSEQUENTIAL": 32,
       "READ_COLLECTION": 58
     },
     "MUTATIONS": {
       "total": 408,
-      "projectBound": 171,
+      "projectBound": 181,
       "byDisposition": {
         "SERVICE_BOUNDARY": 17,
-        "TENANT_GLOBAL": 136,
-        "NO_PROJECT_PARENT": 39,
-        "PROJECT_CHILD_RECORD_ID": 132,
+        "TENANT_GLOBAL": 134,
+        "NO_PROJECT_PARENT": 32,
+        "PROJECT_CHILD_RECORD_ID": 129,
         "SELF_SCOPED": 9,
-        "UNRESOLVED_DATA_ACCESS": 15,
+        "UNRESOLVED_DATA_ACCESS": 14,
+        "PROJECT_CHILD_BODY_PROJECT": 13,
         "CROSSDOMAIN": 1,
         "PLATFORM_GLOBAL": 18,
         "PROJECT_CREATE_NO_EXISTING_SCOPE": 1,
@@ -45,7 +47,7 @@
         "DEAD_OR_UNMOUNTED": 1
       },
       "consequentialProjectBound": 32,
-      "projectBoundWithNoProjectPredicateInSql": 163
+      "projectBoundWithNoProjectPredicateInSql": 173
     },
     "DIRECT_ID_READS": {
       "total": 132,
@@ -56,20 +58,20 @@
       "projectBound": 58
     },
     "SELF_SCOPED": 16,
-    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 34,
+    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 33,
     "FUNCTIONAL_CAPABILITY": {
       "guarded": 729,
       "unguarded": 36
     },
     "RECORD_SCOPE": {
-      "candidates": 292,
-      "protected": 177,
+      "candidates": 302,
+      "protected": 187,
       "deferred": 115,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 180,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 190,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "MUTATION_CREATE": 65,
+      "MUTATION_CREATE": 75,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
       "MUTATION_UPDATE": 43,
@@ -4814,8 +4816,8 @@
       "file": "api/routes/estimating.ts",
       "line": 285,
       "operationType": "MUTATION_CREATE",
-      "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4842,7 +4844,9 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "SERVICE",
       "status": "PROTECTED_PHASE3"
     },
@@ -6429,9 +6433,9 @@
       "file": "api/routes/commissioning.ts",
       "line": 160,
       "operationType": "MUTATION_CREATE",
-      "disposition": "TENANT_GLOBAL",
-      "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -6440,8 +6444,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "generation_jobs",
       "writeTables": [
         "generation_jobs"
@@ -6453,9 +6459,11 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "HANDLER_SQL",
-      "status": "OUT_OF_PHASE3C_TENANT_GLOBAL"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -6637,9 +6645,9 @@
       "file": "api/routes/commissioning.ts",
       "line": 206,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -6648,8 +6656,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_packs",
       "writeTables": [
         "commissioning_packs"
@@ -6663,9 +6673,11 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "HANDLER_SQL",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -6707,9 +6719,9 @@
       "file": "api/routes/commissioning.ts",
       "line": 72,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -6718,8 +6730,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "source_uploads",
       "writeTables": [
         "source_uploads"
@@ -6733,9 +6747,11 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "HANDLER_SQL",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -11663,8 +11679,8 @@
       "file": "api/routes/evm.ts",
       "line": 64,
       "operationType": "MUTATION_CREATE",
-      "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -11691,7 +11707,9 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "SERVICE",
       "status": "PROTECTED_PHASE3"
     },
@@ -12354,9 +12372,9 @@
       "file": "api/routes/files.ts",
       "line": 434,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -12365,8 +12383,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "document_folders",
       "writeTables": [
         "document_folders"
@@ -12380,9 +12400,11 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "tableResolution": "HANDLER_SQL",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -12429,9 +12451,9 @@
       "file": "api/routes/files.ts",
       "line": 76,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -12440,8 +12462,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "document_versions",
       "writeTables": [
         "document_versions",
@@ -12461,9 +12485,11 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "HANDLER_SQL",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PUT",
@@ -14190,7 +14216,9 @@
       "projectParent": null,
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "UNRESOLVED",
       "status": "OUT_OF_PHASE3C_SELF_SCOPED"
     },
@@ -14438,8 +14466,8 @@
       "file": "api/routes/meetings.ts",
       "line": 156,
       "operationType": "MUTATION_CREATE",
-      "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14466,7 +14494,9 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "SERVICE",
       "status": "PROTECTED_PHASE3"
     },
@@ -14726,7 +14756,7 @@
       "method": "GET",
       "path": "/api/v1/monte-carlo/runs",
       "file": "api/routes/monteCarlo.ts",
-      "line": 57,
+      "line": 58,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -14760,11 +14790,11 @@
       "method": "POST",
       "path": "/api/v1/monte-carlo/runs",
       "file": "api/routes/monteCarlo.ts",
-      "line": 34,
+      "line": 35,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -14773,8 +14803,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "monte_carlo_runs",
       "writeTables": [
         "monte_carlo_inputs",
@@ -14791,15 +14823,17 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "SERVICE",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/monte-carlo/runs/:id",
       "file": "api/routes/monteCarlo.ts",
-      "line": 68,
+      "line": 69,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14833,7 +14867,7 @@
       "method": "GET",
       "path": "/api/v1/monte-carlo/runs/:id/distribution",
       "file": "api/routes/monteCarlo.ts",
-      "line": 79,
+      "line": 80,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -15277,7 +15311,7 @@
       "method": "GET",
       "path": "/api/v1/ops/blockers",
       "file": "api/routes/ops.ts",
-      "line": 144,
+      "line": 145,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15316,7 +15350,7 @@
       "method": "POST",
       "path": "/api/v1/ops/escalate",
       "file": "api/routes/ops.ts",
-      "line": 210,
+      "line": 211,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15355,7 +15389,7 @@
       "method": "GET",
       "path": "/api/v1/ops/escalations",
       "file": "api/routes/ops.ts",
-      "line": 119,
+      "line": 120,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15389,7 +15423,7 @@
       "method": "POST",
       "path": "/api/v1/ops/freeze",
       "file": "api/routes/ops.ts",
-      "line": 246,
+      "line": 247,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15433,11 +15467,11 @@
       "method": "POST",
       "path": "/api/v1/ops/incident",
       "file": "api/routes/ops.ts",
-      "line": 308,
+      "line": 309,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -15446,8 +15480,10 @@
         "platform.automation"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ops_incidents",
       "writeTables": [
         "ops_incidents"
@@ -15461,15 +15497,17 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "tableResolution": "HANDLER_SQL",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/ops/live-feed",
       "file": "api/routes/ops.ts",
-      "line": 80,
+      "line": 81,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -15499,7 +15537,7 @@
       "method": "GET",
       "path": "/api/v1/ops/overview",
       "file": "api/routes/ops.ts",
-      "line": 30,
+      "line": 31,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15538,7 +15576,7 @@
       "method": "GET",
       "path": "/api/v1/ops/readiness",
       "file": "api/routes/ops.ts",
-      "line": 95,
+      "line": 96,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15578,7 +15616,7 @@
       "method": "POST",
       "path": "/api/v1/ops/reassign",
       "file": "api/routes/ops.ts",
-      "line": 169,
+      "line": 170,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15617,7 +15655,7 @@
       "method": "GET",
       "path": "/api/v1/ops/recommendations",
       "file": "api/routes/ops.ts",
-      "line": 333,
+      "line": 334,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15656,7 +15694,7 @@
       "method": "POST",
       "path": "/api/v1/ops/unfreeze",
       "file": "api/routes/ops.ts",
-      "line": 280,
+      "line": 281,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -16212,7 +16250,7 @@
       "method": "GET",
       "path": "/api/v1/policies",
       "file": "api/routes/policies.ts",
-      "line": 21,
+      "line": 22,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -16243,7 +16281,7 @@
       "method": "POST",
       "path": "/api/v1/policies",
       "file": "api/routes/policies.ts",
-      "line": 35,
+      "line": 36,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -16276,7 +16314,7 @@
       "method": "PATCH",
       "path": "/api/v1/policies/:id",
       "file": "api/routes/policies.ts",
-      "line": 49,
+      "line": 50,
       "operationType": "MUTATION_UPDATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -16312,7 +16350,7 @@
       "method": "GET",
       "path": "/api/v1/policies/audit",
       "file": "api/routes/policies.ts",
-      "line": 72,
+      "line": 73,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -16343,11 +16381,11 @@
       "method": "POST",
       "path": "/api/v1/policies/evaluate",
       "file": "api/routes/policies.ts",
-      "line": 58,
+      "line": 59,
       "operationType": "MUTATION_CREATE",
-      "disposition": "UNRESOLVED_DATA_ACCESS",
-      "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth"
       ],
@@ -16355,8 +16393,10 @@
         "platform.admin"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": null,
       "writeTables": [],
       "writeScopeColumns": [],
@@ -16364,9 +16404,11 @@
       "projectParent": null,
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "tableResolution": "UNRESOLVED",
-      "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -23414,7 +23456,7 @@
       "method": "GET",
       "path": "/api/v1/simulation",
       "file": "api/routes/simulation.ts",
-      "line": 57,
+      "line": 58,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -23445,7 +23487,7 @@
       "method": "GET",
       "path": "/api/v1/simulation/:id/results",
       "file": "api/routes/simulation.ts",
-      "line": 49,
+      "line": 50,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -23474,11 +23516,11 @@
       "method": "POST",
       "path": "/api/v1/simulation/replay",
       "file": "api/routes/simulation.ts",
-      "line": 22,
+      "line": 23,
       "operationType": "MUTATION_CREATE",
-      "disposition": "TENANT_GLOBAL",
-      "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth"
       ],
@@ -23486,8 +23528,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "simulation_events",
       "writeTables": [
         "simulation_events",
@@ -23503,15 +23547,17 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": true,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "project_id"
+      ],
       "tableResolution": "SERVICE",
-      "status": "OUT_OF_PHASE3C_TENANT_GLOBAL"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/simulation/what-if",
       "file": "api/routes/simulation.ts",
-      "line": 35,
+      "line": 36,
       "operationType": "MUTATION_CREATE",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -24282,9 +24328,9 @@
       "file": "api/routes/team.ts",
       "line": 87,
       "operationType": "MUTATION_CREATE",
-      "disposition": "NO_PROJECT_PARENT",
-      "dispositionReason": "tables resolved, and none of them reaches a project",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_BODY_PROJECT",
+      "dispositionReason": "project selected by a project id in the request body (HOB §16)",
+      "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -24293,8 +24339,10 @@
         "team.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireBodyProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "project_assignments",
       "writeTables": [
         "project_assignments"
@@ -24308,9 +24356,11 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
-      "bodyProjectRefs": [],
+      "bodyProjectRefs": [
+        "projectId"
+      ],
       "tableResolution": "SERVICE",
-      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",

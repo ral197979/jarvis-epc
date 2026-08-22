@@ -132,8 +132,6 @@ function scanSource (src) {
   return { noComments: nc.join(''), skeleton: sk.join('') }
 }
 
-/** Comments blanked, literals intact. Kept as a named helper for readability. */
-function stripComments (src) { return scanSource(src).noComments }
 
 /**
  * Given the index of an opening '(', return the index just past its matching
@@ -231,7 +229,7 @@ function capabilitiesIn (fragment) {
  */
 const RECORD_SCOPE_CALLS = [
   'canAccessProject(', 'projectScopeSql(', 'requireProjectScope(',
-  'requireRecordScope(',
+  'requireRecordScope(', 'requireBodyProjectScope(',
   'authorizeSource(', 'filterAuthorizedTargets(', 'filterAccessibleProjectIds(',
   'filterByParentProject(',
 ]
@@ -429,9 +427,18 @@ function parseRouteFile (file) {
           ])].sort(),
           recordScopeCalls: recordScopeCallsIn(args),
           // body reads inside the handler body (for §16/§17 body-project audit)
-          bodyProjectRefs: [...new Set(
-            [...args.matchAll(/\breq\.body(?:\s*\.\s*|\s*\[\s*['"`])(project_?[Ii]d|projectId|parent_project_id)\b/g)].map(x => x[1]),
-          )].sort(),
+          // A handler may read the parent from the body directly, or destructure
+          // it — `const { projectId } = req.body`. Matching only the direct form
+          // reported zero body-selected project mutations repo-wide, which was
+          // false: POST /team/assignments takes projectId that way and writes
+          // project_assignments.
+          bodyProjectRefs: [...new Set([
+            ...[...args.matchAll(/\breq\.body(?:\s*\.\s*|\s*\[\s*['"`])(project_?[Ii]d|projectId|parent_project_id)\b/g)].map(x => x[1]),
+            ...[...args.matchAll(/const\s*\{([^}]*)\}\s*=\s*(?:req\.body|body)\b/g)]
+              .flatMap(x => [...x[1].matchAll(/\b(project_?[Ii]d|projectId|parent_project_id)\b/g)].map(y => y[1])),
+            ...[...args.matchAll(/\b(project_?[Ii]d|projectId|parent_project_id)\s*:\s*(?:b|body|input|payload)\b/g)].map(x => x[1]),
+            ...[...args.matchAll(/\b(project_?[Ii]d|projectId|parent_project_id)\s*:\s*(?:b|body|input|payload)\s*\[/g)].map(x => x[1]),
+          ])].sort(),
         })
       }
     }
