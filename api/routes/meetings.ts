@@ -70,7 +70,7 @@ meetingsRouter.get('/projects/:projectId/meetings', requireCapability('project.v
   } catch (e) { res.status(500).json({ error: 'Failed to list meetings' }) }
 })
 
-meetingsRouter.get('/meetings/:id', requireCapability('project.view') as never, async (req: Request, res: Response) => {
+meetingsRouter.get('/meetings/:id', requireCapability('project.view') as never, requireRecordScope('meetings') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meeting = await getMeeting(r.tenantId!, p(req, 'id'))
@@ -108,7 +108,7 @@ meetingsRouter.post('/meetings/:id/archive', requireCapability('docs.publish') a
 
 // ─── Agenda items ─────────────────────────────────────────────────────────────
 
-meetingsRouter.get('/meetings/:id/agenda', requireCapability('project.view') as never, async (req: Request, res: Response) => {
+meetingsRouter.get('/meetings/:id/agenda', requireCapability('project.view') as never, requireRecordScope('meetings') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const items = await listAgendaItems(r.tenantId!, p(req, 'id'))
@@ -145,7 +145,7 @@ meetingsRouter.delete('/meetings/:id/agenda/:itemId', requireCapability('project
 
 // ─── Action items ─────────────────────────────────────────────────────────────
 
-meetingsRouter.get('/meetings/:id/actions', requireCapability('project.view') as never, async (req: Request, res: Response) => {
+meetingsRouter.get('/meetings/:id/actions', requireCapability('project.view') as never, requireRecordScope('meetings') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actions = await listMeetingActions(r.tenantId!, p(req, 'id'))

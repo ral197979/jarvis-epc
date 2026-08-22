@@ -306,9 +306,14 @@ describe('the Phase-2 classification stays closed and adoption is not overclaime
     const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').length
     // Phase 3B scoped 15. Phase 3C added the direct-ID guard and applied it to
     // the drawings, inspections and punch-list routers, taking it to 39 of 747.
+    // Phase 3D took it to 190 by closing the project-bound mutation surface.
+    // Phase 3E adds 46: the 44 derivable project-bound direct-ID reads, plus
+    // two sibling reads on the same records (the Monte-Carlo distribution and
+    // the readiness history) that would otherwise have been left open beside a
+    // route this slice closed.
     // Adoption is real and still partial, and the assertion says so out loud so
     // that a later slice cannot quietly imply full coverage.
-    expect(scoped, 'Phase 3D scoped 190 endpoints').toBe(190)
+    expect(scoped, 'Phase 3E scoped 236 endpoints').toBe(236)
     expect(endpoints.length, 'out of ~747').toBeGreaterThan(700)
     // Phase 3B asserted adoption was under 10%, which measured how little had
     // been done rather than guarding a property — it necessarily fails as the
@@ -358,10 +363,24 @@ describe('Phase-3 adoption is counted, not narrated', () => {
     }
   })
 
-  it('has no surface deferred for want of a scope model', () => {
-    // DEFERRED_PHASE3_SCOPE_MODEL would downgrade the slice to PARTIAL (§68).
+  it('defers exactly the two surfaces whose project parent is not derivable', () => {
+    // Through Phase 3D this list was empty, and the assertion said so. Phase 3E
+    // adds two: both are keyed on `operational_twins`, whose `entity_id` is a
+    // bare text column with no foreign key to anything, spanning fourteen
+    // entity types. A guard cannot be written until a per-entity-type scope
+    // policy exists, so they are deferred for a MODEL reason and the slice is
+    // PARTIAL rather than COMPLETE (§61).
+    //
+    // Pinned by name so a THIRD model deferral cannot appear silently: adding
+    // one is a decision that must be argued, not a side effect of a later slice.
     const noModel = COLLECTION_ADOPTION.filter(a => a.status === 'DEFERRED_PHASE3_SCOPE_MODEL')
-    expect(noModel.map(a => a.surface), 'every candidate had a derivable project parent').toEqual([])
+    expect(noModel.map(a => a.surface).sort()).toEqual([
+      'portfolio.ts GET /readiness/:scopeType/:scopeId',
+      'scenarios.ts GET /projection/:twinId',
+    ])
+    for (const a of noModel) {
+      expect(a.reason, `${a.surface} must say what is missing`).toMatch(/operational_twins/)
+    }
   })
 
   it('reports the deferrals it does have, rather than hiding them', () => {

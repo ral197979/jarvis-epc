@@ -9,6 +9,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { getAllProjectHealth, getProjectHealth } from '../services/predict/predictService'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -31,7 +32,7 @@ predictRouter.get('/predict/portfolio', requireCapability('portfolio.view') as n
   }
 })
 
-predictRouter.get('/predict/projects/:id', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
+predictRouter.get('/predict/projects/:id', requireCapability('portfolio.view') as never, requireProjectScope('id') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const health = await getProjectHealth(r.tenantId!, p(req, 'id'))

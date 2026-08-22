@@ -584,6 +584,19 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     writeCapabilities: ['cost.write'],
   },
   {
+    resource: 'knowledge_chunks',
+    table: 'knowledge_chunks',
+    capabilities: ['assistant.use'],
+    strategy: 'PARENT_PROJECT',
+    scopeKey: 'knowledge_chunks.source_id → knowledge_sources.project_id',
+    tenantRule: 'knowledge_chunks.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3E. `GET /ask/chunks/:id` names a chunk and returns its text alongside its source title and storage path, so the chunk is the record whose scope decides the read. assistant.use is the capability ask.ts already declares router-wide; Phase 3E decides where that existing authority applies, never who holds it. The FK hop matches schema-project-parent-map.json, which derives it from migration 022.',
+    derivation: {
+      kind: 'FK_PATH', table: 'knowledge_chunks', idColumn: 'id', tenantColumn: 'tenant_id',
+      via: 'source_id', parentTable: 'knowledge_sources', parentIdColumn: 'id', parentProjectColumn: 'project_id',
+    },
+  },
+  {
     resource: 'knowledge_fixes',
     table: 'knowledge_fixes',
     capabilities: ['assistant.admin', 'engineering.write'],
@@ -616,6 +629,17 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     derivation: { kind: 'DIRECT_COLUMN', table: 'meetings', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
     writeCapabilities: ['project.write'],
     approveCapabilities: ['docs.publish'],
+  },
+  {
+    resource: 'monte_carlo_runs',
+    table: 'monte_carlo_runs',
+    capabilities: ['cost.view'],
+    strategy: 'PARENT_PROJECT',
+    scopeKey: 'monte_carlo_runs.project_id',
+    tenantRule: 'monte_carlo_runs.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3E. monteCarlo.ts binds this table from four routes and declares cost.view on every read; Phase 3E decides where that existing authority applies, never who holds it. Derivation matches schema-project-parent-map.json.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'monte_carlo_runs', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['cost.write'],
   },
   {
     resource: 'pay_applications',
@@ -961,16 +985,223 @@ export const COLLECTION_ADOPTION: readonly CollectionAdoption[] = [
   { surface: 'procurement.ts submittalsRouter GET /', kind: 'DOMAIN_CHILD_COLLECTION', capability: 'construction.view', status: 'SCOPED',
     reason: 'Same query-filtered contract as the RFI collection.' },
 
-  { surface: 'drawings.ts GET /drawings/:id', kind: 'DOMAIN_CHILD_DETAIL', capability: 'engineering.view', status: 'DEFERRED_NEXT_SLICE',
-    reason: 'ADR-014 Phase 3B §35 — detail routes are inventoried, not retrofitted. Their project parent is derivable from the row, so this is a mechanical next slice, not a model gap.' },
-  { surface: 'inspections.ts GET /inspections/:id', kind: 'DOMAIN_CHILD_DETAIL', capability: 'quality.view', status: 'DEFERRED_NEXT_SLICE',
-    reason: 'Same as drawings detail: derivable parent, deferred by scope discipline.' },
-  { surface: 'punchLists.ts GET /punch-lists/:id/items', kind: 'DOMAIN_CHILD_DETAIL', capability: 'quality.view', status: 'DEFERRED_NEXT_SLICE',
-    reason: 'Parent punch list carries project_id; deferred with the other detail routes.' },
+  // Phase 3B deferred these three; Phase 3C closed them. The status is updated
+  // here rather than left reading DEFERRED, because a registry that understates
+  // adoption is as untruthful as one that overstates it.
+  { surface: 'drawings.ts GET /drawings/:id', kind: 'DOMAIN_CHILD_DETAIL', capability: 'engineering.view', status: 'SCOPED',
+    reason: 'ADR-014 Phase 3C: requireRecordScope(drawing) resolves drawings.project_id before the payload query.' },
+  { surface: 'inspections.ts GET /inspections/:id', kind: 'DOMAIN_CHILD_DETAIL', capability: 'quality.view', status: 'SCOPED',
+    reason: 'ADR-014 Phase 3C: requireRecordScope(inspection) on the same derivable parent.' },
+  { surface: 'punchLists.ts GET /punch-lists/:id/items', kind: 'DOMAIN_CHILD_DETAIL', capability: 'quality.view', status: 'SCOPED',
+    reason: 'ADR-014 Phase 3C: requireRecordScope(punchlist) on the parent list, which carries project_id.' },
+
+  // ADR-014 Phase 3E — the direct-ID read surface. Per-endpoint dispositions
+  // live in DIRECT_ID_ADOPTION below; these are the two that stay open, and
+  // they stay open for a MODEL reason rather than a scheduling one.
+  { surface: 'portfolio.ts GET /readiness/:scopeType/:scopeId', kind: 'DOMAIN_CHILD_DETAIL', capability: 'portfolio.view', status: 'DEFERRED_PHASE3_SCOPE_MODEL',
+    reason: 'Keyed on operational_twins(entity_type, entity_id), a polymorphic pair the caller chooses, over a table with no foreign key to projects. Needs a per-entity-type scope policy before a guard can be correct.' },
+  { surface: 'scenarios.ts GET /projection/:twinId', kind: 'DOMAIN_CHILD_DETAIL', capability: 'crossdomain.read', status: 'DEFERRED_PHASE3_SCOPE_MODEL',
+    reason: 'Same operational_twins model gap, reached by twin id instead of by entity pair. Must be closed with the portfolio forecast.' },
 
   { surface: 'actions.ts (Personal Inbox)', kind: 'SELF_SCOPED', capability: 'personal.view / personal.admin', status: 'SCOPED',
     reason: 'ADR-014 Phase 2C-4A. Ownership, not project membership — deliberately NOT converted, because inheriting project scope would widen a closed personal surface.' },
 ]
+
+// ─── Phase 3E direct-ID read adoption (ADR-014 Phase 3E §8, §9, §36) ─────────
+
+/**
+ * Why a direct-ID read is, or is not, record-scoped by Phase 3E.
+ *
+ * `PROTECT_PHASE3E`   the read now carries the canonical record-scope guard.
+ * `SELF_SCOPED`       the surface already authorizes by OWNERSHIP, which is
+ *                     strictly narrower than project membership. Converting it
+ *                     would WIDEN a closed personal surface, so it is refused
+ *                     on purpose (§29).
+ * `NON_PROJECT_RESOURCE`
+ *                     the record the caller names has no project parent in the
+ *                     schema. The extractor's `primaryTable` heuristic named a
+ *                     project-bound table reached further down the query; the
+ *                     id in the path does not address it (§15, §30).
+ * `DEFERRED_PHASE3_SCOPE_MODEL`
+ *                     the record's project parent is not derivable from the
+ *                     schema — it needs a policy decision, not a guard (§61).
+ */
+export type DirectIdDisposition =
+  | 'PROTECT_PHASE3E'
+  | 'SELF_SCOPED'
+  | 'NON_PROJECT_RESOURCE'
+  | 'DEFERRED_PHASE3_SCOPE_MODEL'
+
+export interface DirectIdAdoption {
+  /** `METHOD /path`, as the machine inventory keys it. */
+  endpoint:    string
+  /** The router variable the declaration hangs off — the §16 anchor. */
+  router:      string
+  /** The table the caller's id actually addresses, proved from the handler SQL. */
+  recordTable: string
+  /** The record-scope resource, or '' where none applies. */
+  resource:    string
+  disposition: DirectIdDisposition
+  reason:      string
+}
+
+/**
+ * Every project-bound direct-ID read the machine inventory found, with exactly
+ * one disposition each. `DIRECT_ID_READ_UNEXPLAINED` must stay 0: a route with
+ * no entry is a gap, not a pass.
+ *
+ * `recordTable` is stated separately from the extractor's `primaryTable`
+ * because the two disagree on twelve routes. A sub-collection route such as
+ * `GET /ncrs/:id/capas` reads `corrective_actions`, but the id in the path
+ * addresses the parent `ncrs` row — scoping the child table would resolve the
+ * parent of a record the caller never named, and refuse everyone. Each
+ * `recordTable` below was read off the handler's own FROM/WHERE (§15).
+ */
+export const DIRECT_ID_ADOPTION: readonly DirectIdAdoption[] = [
+  // ── SELF-scoped: ownership already decides, and it is narrower (§29) ───────
+  { endpoint: 'GET /api/v1/actions/:id', router: 'actionsRouter', recordTable: 'actions', resource: 'action', disposition: 'SELF_SCOPED',
+    reason: 'requireActionAccess admits only assigned_to_user_id = live principal, or personal.admin, and answers 404 before the handler runs. Project membership would let any member of the action’s project read another user’s queue.' },
+  { endpoint: 'GET /api/v1/actions/:id/relationships', router: 'actionsRouter', recordTable: 'actions', resource: 'action', disposition: 'SELF_SCOPED',
+    reason: 'Authorized against the parent action by requireActionAccess, not against the relation row. Same SELF rule as the action detail.' },
+  { endpoint: 'GET /api/v1/actions/:id/timeline', router: 'actionsRouter', recordTable: 'actions', resource: 'action', disposition: 'SELF_SCOPED',
+    reason: 'Authorized against the parent action by requireActionAccess. The extractor named action_events, which the timeline reads; the id addresses the action.' },
+  { endpoint: 'GET /api/v1/ask/sessions/:id', router: 'router', recordTable: 'chat_sessions', resource: 'chat_sessions', disposition: 'SELF_SCOPED',
+    reason: 'The session query carries AND user_id = $2, so a caller reaches only their own chat sessions. The extractor named chat_messages, which the same handler lists for the session it just failed or succeeded to own.' },
+
+  // ── Non-project records: the id addresses tenant master data (§15, §30) ────
+  { endpoint: 'GET /api/v1/vendors/:id', router: 'vendorsRouter', recordTable: 'vendors', resource: '', disposition: 'NON_PROJECT_RESOURCE',
+    reason: 'vendors is NO_PROJECT_PARENT in schema-project-parent-map.json — a tenant vendor register, not a project child. Phase 3D made the same correction for the vendor mutations.' },
+  { endpoint: 'GET /api/v1/team/members/:id', router: 'teamRouter', recordTable: 'team_members', resource: '', disposition: 'NON_PROJECT_RESOURCE',
+    reason: 'getMember reads FROM team_members m WHERE m.id = $2. team_members is NO_PROJECT_PARENT: it is the HR/workforce roster recordScope.ts already rejected as an authorization source. The extractor named project_assignments, which the same statement LEFT JOINs only to count allocations.' },
+  { endpoint: 'GET /api/v1/team/members/:id/assignments', router: 'teamRouter', recordTable: 'team_members', resource: '', disposition: 'NON_PROJECT_RESOURCE',
+    reason: 'The id addresses a team_members row, which has no project parent. The ASSIGNMENTS it lists are project-bound, but filtering them is collection scope, not record scope — deferred with the other 51 collections (§31).' },
+  { endpoint: 'GET /api/v1/team/members/:memberId/timesheets', router: 'timesheetsRouter', recordTable: 'team_members', resource: '', disposition: 'NON_PROJECT_RESOURCE',
+    reason: 'Same shape: :memberId addresses a team_members row. listTimesheets filters by member, and the timesheets it returns are a project-bound COLLECTION, deferred to the collection slice (§31).' },
+
+  // ── No derivable parent: needs a scope model, not a guard (§61) ────────────
+  { endpoint: 'GET /api/v1/portfolio/readiness/:scopeType/:scopeId', router: 'router', recordTable: 'operational_twins', resource: '', disposition: 'DEFERRED_PHASE3_SCOPE_MODEL',
+    reason: 'The caller chooses :scopeType, and _forecastReadiness looks the pair up as operational_twins(entity_type, entity_id). operational_twins is NO_PROJECT_PARENT: entity_id is a bare text column with no foreign key, spanning fourteen twin_entity_type values including vendor, site, region and workforce, several of which have no project at all. Resolving a parent needs a per-entity-type policy — a data-model decision, not a mechanical derivation.' },
+  { endpoint: 'GET /api/v1/scenarios/projection/:twinId', router: 'router', recordTable: 'operational_twins', resource: '', disposition: 'DEFERRED_PHASE3_SCOPE_MODEL',
+    reason: 'projectTwinTimeline keys on operational_twins.id, and that table reaches no project by any foreign key (migration 046). Same model gap as the portfolio forecast above; both must be closed together.' },
+
+  // ── Closed by Phase 3E: capability + live project record scope ────────────
+  { endpoint: 'GET /api/v1/agent-actions/:id', router: 'router', recordTable: 'agent_actions', resource: 'agent_actions', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/ask/chunks/:id', router: 'router', recordTable: 'knowledge_chunks', resource: 'knowledge_chunks', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/bid-packages/:id', router: 'subcontractsRouter', recordTable: 'bid_packages', resource: 'bid_packages', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/bid-packages/:id/submissions', router: 'subcontractsRouter', recordTable: 'bid_packages', resource: 'bid_packages', disposition: 'PROTECT_PHASE3E',
+    reason: 'listBidSubmissions filters bid_submissions by the bid package in the path; the id addresses bid_packages. The sibling POST already scopes on bid_packages.' },
+  { endpoint: 'GET /api/v1/bim-models/:id', router: 'router', recordTable: 'bim_models', resource: 'bim_models', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/bim-models/:id/viewer-token', router: 'router', recordTable: 'bim_models', resource: 'bim_models', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/budgets/:id/items', router: 'router', recordTable: 'budgets', resource: 'budgets', disposition: 'PROTECT_PHASE3E',
+    reason: 'The handler reads budget_items WHERE budget_id=$1; the id addresses budgets. The sibling POST already scopes on budgets.' },
+  { endpoint: 'GET /api/v1/calc-sessions/:id', router: 'router', recordTable: 'calc_sessions', resource: 'calc_sessions', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/change-orders/:id', router: 'changeOrdersRouter', recordTable: 'change_orders', resource: 'changeorder', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/change-orders/:id/tasks', router: 'changeOrdersRouter', recordTable: 'change_orders', resource: 'changeorder', disposition: 'PROTECT_PHASE3E',
+    reason: 'change_order_tasks are listed for the change order in the path; the id addresses change_orders. The sibling POST already scopes on changeorder.' },
+  { endpoint: 'GET /api/v1/commissioning/baselines/:id', router: 'router', recordTable: 'commissioning_baselines', resource: 'commissioning_baselines', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/commissioning/packs/:id', router: 'router', recordTable: 'commissioning_packs', resource: 'commissioning_packs', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/commissioning/packs/:id/download/:format', router: 'router', recordTable: 'commissioning_packs', resource: 'commissioning_packs', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/compliance-tasks/:id', router: 'router', recordTable: 'compliance_tasks', resource: 'compliance_tasks', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/cost-entries/:id', router: 'costEntryRouter', recordTable: 'cost_entries', resource: 'cost_entries', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/daily-logs/:id', router: 'router', recordTable: 'daily_logs', resource: 'daily_logs', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/estimates/:id', router: 'router', recordTable: 'estimates', resource: 'estimates', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/evm/baselines/:baselineId/wbs', router: 'evmRouter', recordTable: 'evm_baselines', resource: 'evm_baselines', disposition: 'PROTECT_PHASE3E',
+    reason: 'listWbsEntries filters evm_wbs_entries by baseline; :baselineId addresses evm_baselines, so the guard names that param explicitly.' },
+  { endpoint: 'GET /api/v1/files/documents/:id', router: 'router', recordTable: 'documents', resource: 'documents', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/files/presign/:versionId', router: 'router', recordTable: 'document_versions', resource: 'document_versions', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/knowledge-fixes/:id', router: 'router', recordTable: 'knowledge_fixes', resource: 'knowledge_fixes', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/knowledge/sources/:id', router: 'router', recordTable: 'knowledge_sources', resource: 'knowledge_sources', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/knowledge/sources/:id/chunks', router: 'router', recordTable: 'knowledge_sources', resource: 'knowledge_sources', disposition: 'PROTECT_PHASE3E',
+    reason: 'The chunk list is filtered by source_id; the id addresses knowledge_sources, not the chunks it returns.' },
+  { endpoint: 'GET /api/v1/meetings/:id', router: 'meetingsRouter', recordTable: 'meetings', resource: 'meetings', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/meetings/:id/actions', router: 'meetingsRouter', recordTable: 'meetings', resource: 'meetings', disposition: 'PROTECT_PHASE3E',
+    reason: 'action_items are listed for the meeting in the path; the id addresses meetings.' },
+  { endpoint: 'GET /api/v1/meetings/:id/agenda', router: 'meetingsRouter', recordTable: 'meetings', resource: 'meetings', disposition: 'PROTECT_PHASE3E',
+    reason: 'meeting_agenda_items are listed for the meeting in the path; the id addresses meetings.' },
+  { endpoint: 'GET /api/v1/monte-carlo/runs/:id', router: 'router', recordTable: 'monte_carlo_runs', resource: 'monte_carlo_runs', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/ncrs/:id/capas', router: 'router', recordTable: 'ncrs', resource: 'ncr', disposition: 'PROTECT_PHASE3E',
+    reason: 'listCorrectiveActions reads corrective_actions WHERE ncr_id=$2; the id addresses ncrs. Scoping the child table would resolve the parent of a record the caller never named.' },
+  { endpoint: 'GET /api/v1/pay-applications/:id', router: 'router', recordTable: 'pay_applications', resource: 'pay_applications', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/predict/projects/:id', router: 'predictRouter', recordTable: 'projects', resource: 'project', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id in the path IS the project, so scope is requireProjectScope(\'id\') rather than a parent lookup.' },
+  { endpoint: 'GET /api/v1/projects/:id/summary', router: 'router', recordTable: 'projects', resource: 'project', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id in the path IS the project, so scope is requireProjectScope(\'id\') rather than a parent lookup.' },
+  { endpoint: 'GET /api/v1/purchase-orders/:id', router: 'purchaseOrdersRouter', recordTable: 'purchase_orders', resource: 'purchase_orders', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/readiness/project/:id', router: 'readinessRouter', recordTable: 'projects', resource: 'project', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id in the path IS the project, so scope is requireProjectScope(\'id\') rather than a parent lookup.' },
+  { endpoint: 'GET /api/v1/readiness/subsystem/:id', router: 'readinessRouter', recordTable: 'subsystems', resource: 'subsystems', disposition: 'PROTECT_PHASE3E',
+    reason: 'The handler passes :id to computeReadiness as a subsystem; the extractor reached action_relations through _fetchEntityMetrics, one service level down. The id addresses subsystems.' },
+  { endpoint: 'GET /api/v1/readiness/system/:id', router: 'readinessRouter', recordTable: 'systems', resource: 'systems', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/rfis/:id/copilot', router: 'router', recordTable: 'rfis', resource: 'rfi', disposition: 'PROTECT_PHASE3E',
+    reason: 'buildRfiCopilot opens with SELECT … FROM rfis WHERE tenant_id=$1 AND id=$2; the extractor reached action_relations through the blocking-count subquery. The id addresses rfis.' },
+  { endpoint: 'GET /api/v1/risks/:id', router: 'riskRegisterRouter', recordTable: 'risks', resource: 'risks', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/sensors/:id', router: 'authRouter', recordTable: 'sensors', resource: 'sensors', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/sensors/:id/readings', router: 'authRouter', recordTable: 'sensors', resource: 'sensors', disposition: 'PROTECT_PHASE3E',
+    reason: 'sensor_readings are listed for the sensor in the path; the id addresses sensors.' },
+  { endpoint: 'GET /api/v1/subcontracts/:id', router: 'subcontractsRouter', recordTable: 'subcontracts', resource: 'subcontracts', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/subcontracts/:id/invoices', router: 'subcontractsRouter', recordTable: 'subcontracts', resource: 'subcontracts', disposition: 'PROTECT_PHASE3E',
+    reason: 'listInvoices reads subcontract_invoices WHERE subcontract_id=$2; the id addresses subcontracts. Note the capability here is cost.view, not the procurement.view of the parent detail route — Phase 3E adds record scope beside whichever authority the route already declares, and does not level them.' },
+  { endpoint: 'GET /api/v1/submittals/:id/review', router: 'router', recordTable: 'submittals', resource: 'submittal', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/test-packs/:packId', router: 'testPacksRouter', recordTable: 'test_packs', resource: 'test_packs', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+  { endpoint: 'GET /api/v1/transmittals/:id', router: 'router', recordTable: 'transmittals', resource: 'transmittals', disposition: 'PROTECT_PHASE3E',
+    reason: 'The id addresses this table directly, and the guard reuses the resource its own sibling mutations already declare.' },
+]
+
+export interface DirectIdCounters {
+  candidates:  number
+  protected_:  number
+  selfScoped:  number
+  nonProject:  number
+  deferred:    number
+  unexplained: number
+}
+
+/**
+ * Machine-derived, so the completion report cannot overstate the closure.
+ *
+ * `unexplained` counts entries whose reason is too short to be an argument.
+ * It is the same discipline `phase3Counters` applies: a disposition without a
+ * defensible reason is a gap wearing a label.
+ */
+export function directIdCounters(): DirectIdCounters {
+  const by = (d: DirectIdDisposition) => DIRECT_ID_ADOPTION.filter(a => a.disposition === d).length
+  return {
+    candidates:  DIRECT_ID_ADOPTION.length,
+    protected_:  by('PROTECT_PHASE3E'),
+    selfScoped:  by('SELF_SCOPED'),
+    nonProject:  by('NON_PROJECT_RESOURCE'),
+    deferred:    by('DEFERRED_PHASE3_SCOPE_MODEL'),
+    unexplained: DIRECT_ID_ADOPTION.filter(a => a.reason.length < 60).length,
+  }
+}
 
 export interface Phase3Counters {
   candidates: number

@@ -92,7 +92,7 @@ router.post('/projects/:projectId/calc-sessions', requireCapability('engineering
 })
 
 // ─── Fetch single session (includes pid_svg) ──────────────────────────────────
-router.get('/calc-sessions/:id', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/calc-sessions/:id', requireCapability('engineering.view') as never, requireRecordScope('calc_sessions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   try {
     const result = await tenantQuery(r.tenantId,

@@ -85,7 +85,7 @@ subcontractsRouter.get('/projects/:projectId/bid-packages/summary', requireCapab
   } catch (e) { res.status(500).json({ error: 'Failed to get summary' }) }
 })
 
-subcontractsRouter.get('/bid-packages/:id', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/bid-packages/:id', requireCapability('procurement.view') as never, requireRecordScope('bid_packages') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const pkg = await getBidPackage(r.tenantId!, p(req, 'id'))
@@ -123,7 +123,7 @@ subcontractsRouter.post('/bid-packages/:id/cancel', requireCapability('procureme
 
 // ─── Bid submissions ──────────────────────────────────────────────────────────
 
-subcontractsRouter.get('/bid-packages/:id/submissions', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/bid-packages/:id/submissions', requireCapability('procurement.view') as never, requireRecordScope('bid_packages') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const submissions = await listBidSubmissions(r.tenantId!, p(req, 'id'))
@@ -172,7 +172,7 @@ subcontractsRouter.get('/projects/:projectId/subcontracts', requireCapability('p
   } catch (e) { res.status(500).json({ error: 'Failed to list subcontracts' }) }
 })
 
-subcontractsRouter.get('/subcontracts/:id', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/subcontracts/:id', requireCapability('procurement.view') as never, requireRecordScope('subcontracts') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sc = await getSubcontract(r.tenantId!, p(req, 'id'))
@@ -206,7 +206,7 @@ subcontractsRouter.post('/subcontracts/:id/invoices', requireCapability('procure
   } catch (e) { res.status(500).json({ error: 'Failed to create invoice' }) }
 })
 
-subcontractsRouter.get('/subcontracts/:id/invoices', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/subcontracts/:id/invoices', requireCapability('cost.view') as never, requireRecordScope('subcontracts') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const invoices = await listInvoices(r.tenantId!, p(req, 'id'))

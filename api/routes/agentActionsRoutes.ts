@@ -97,7 +97,7 @@ router.get('/', requireCapability('crossdomain.read') as never, async (req: Req,
 
 // ─── GET one ──────────────────────────────────────────────────────────────────
 
-router.get('/:id', requireCapability('crossdomain.read') as never, async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('crossdomain.read') as never, requireRecordScope('agent_actions') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

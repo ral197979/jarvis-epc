@@ -81,7 +81,7 @@ router.get('/', requireCapability('docs.view') as never, async (req: Request, re
 })
 
 // GET /transmittals/:id
-router.get('/:id', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
+router.get('/:id', requireCapability('docs.view') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   try {
     const result = await getTransmittal(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Transmittal not found' }); return }

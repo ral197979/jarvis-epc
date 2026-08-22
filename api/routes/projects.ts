@@ -21,7 +21,7 @@ import { slog } from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { resolveCurrentUser } from '../authz/currentUser'
-import { canAccessProject, projectScopeSql, requireRecordScope } from '../authz/recordScope'
+import { canAccessProject, projectScopeSql, requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import { roleHasCapability } from '../authz/capabilities'
 import {
   syncMembershipsForNewProject, syncSystemSource, openMembership, closeMembership,
@@ -508,7 +508,7 @@ router.delete('/:id', requireCapability('project.delete') as never, requireRecor
 
 // ─── GET /api/v1/projects/:id/summary ────────────────────────────────────────
 
-router.get('/:id/summary', requireCapability('cost.view') as never, async (req: Req, res: Response) => {
+router.get('/:id/summary', requireCapability('cost.view') as never, requireProjectScope('id') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }

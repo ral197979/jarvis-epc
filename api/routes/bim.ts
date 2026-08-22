@@ -66,7 +66,7 @@ router.post('/projects/:projectId/bim-models', requireCapability('engineering.wr
   }
 })
 
-router.get('/bim-models/:id', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/bim-models/:id', requireCapability('engineering.view') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -115,7 +115,7 @@ router.delete('/bim-models/:id', requireCapability('engineering.write') as never
 // ─── APS Viewer token ────────────────────────────────────────────────────────
 // Returns a short-lived APS 2-legged token + URN for the embedded Forge viewer.
 // The viewer runs entirely in the browser; this endpoint only provides auth.
-router.get('/bim-models/:id/viewer-token', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/bim-models/:id/viewer-token', requireCapability('engineering.view') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const modelRes = await tenantQuery(r.tenantId!,

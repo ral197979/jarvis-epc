@@ -75,7 +75,7 @@ evmRouter.post('/evm/baselines/:baselineId/wbs', requireCapability('cost.write')
   }
 })
 
-evmRouter.get('/evm/baselines/:baselineId/wbs', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+evmRouter.get('/evm/baselines/:baselineId/wbs', requireCapability('cost.view') as never, requireRecordScope('evm_baselines', 'baselineId') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const wbs = await listWbsEntries(r.tenantId!, p(req, 'baselineId'))

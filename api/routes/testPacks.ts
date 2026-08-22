@@ -87,7 +87,7 @@ testPacksRouter.post('/test-packs', requireCapability('commissioning.write') as 
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-testPacksRouter.get('/test-packs/:packId', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
+testPacksRouter.get('/test-packs/:packId', requireCapability('commissioning.view') as never, requireRecordScope('test_packs', 'packId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const item = await getTestPack({ tenantId: r.tenantId! }, String(req.params['packId']))

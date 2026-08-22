@@ -240,7 +240,7 @@ router.get('/estimates', requireCapability('cost.view') as never, async (req: Re
 })
 
 // GET /estimates/:id
-router.get('/estimates/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/estimates/:id', requireCapability('cost.view') as never, requireRecordScope('estimates') as never, async (req: Request, res: Response) => {
   try {
     const result = await getEstimate(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Estimate not found' }); return }

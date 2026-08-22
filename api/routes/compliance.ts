@@ -80,7 +80,7 @@ router.get('/', requireCapability('safety.view') as never, async (req: Req, res:
 
 // ─── GET one ──────────────────────────────────────────────────────────────────
 
-router.get('/:id', requireCapability('safety.view') as never, async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('safety.view') as never, requireRecordScope('compliance_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

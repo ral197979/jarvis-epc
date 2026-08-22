@@ -68,7 +68,7 @@ router.get('/', requireCapability('commissioning.view') as never, async (req: Re
   res.json({ data: rows.rows, pagination: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-router.get('/:id', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('commissioning.view') as never, requireRecordScope('commissioning_baselines') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

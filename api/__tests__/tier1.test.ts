@@ -128,9 +128,14 @@ describe('Tier-1 smoke: dailyLogs', () => {
     expect(mockQuery).toHaveBeenCalled()
   })
 
+  // ADR-014 Phase 3E: the detail route now carries `requireRecordScope`, which
+  // refuses a malformed record id WITHOUT issuing SQL (§45 fail closed). The id
+  // is a real uuid here so the request still reaches the handler and this stays
+  // a shape smoke test — a non-uuid would leave the scripted response unread and
+  // shift it onto the next test in the file.
   it('GET /daily-logs/:id passes through tenant query', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub()], rowCount: 1 })
-    const res = await request(app).get('/api/v1/daily-logs/row-1')
+    const res = await request(app).get('/api/v1/daily-logs/a0000000-0000-4000-8000-0000000000d1')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -241,9 +246,10 @@ describe('Tier-1 smoke: calculations', () => {
     expect([200, 204]).toContain(res.status)
   })
 
+  // Real uuid for the same reason as the daily-log detail above (Phase 3E §45).
   it('GET /calc-sessions/:id returns detail or 404', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/calc-sessions/cs-1')
+    const res = await request(app).get('/api/v1/calc-sessions/a0000000-0000-4000-8000-0000000000c5')
     expect([200, 404]).toContain(res.status)
   })
 })

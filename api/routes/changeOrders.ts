@@ -90,7 +90,7 @@ changeOrdersRouter.get('/projects/:projectId/change-orders/summary', requireCapa
 
 // ─── Get detail ───────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/change-orders/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.get('/change-orders/:id', requireCapability('cost.view') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await getChangeOrder(r.tenantId!, p(req, 'id'))
@@ -169,7 +169,7 @@ changeOrdersRouter.post('/change-orders/:id/void', requireCapability('cost.appro
 
 // ─── Linked tasks ─────────────────────────────────────────────────────────────
 
-changeOrdersRouter.get('/change-orders/:id/tasks', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.get('/change-orders/:id/tasks', requireCapability('cost.view') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const tasks = await listLinkedTasks(r.tenantId!, p(req, 'id'))

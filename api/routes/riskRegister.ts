@@ -62,7 +62,7 @@ riskRegisterRouter.get('/projects/:projectId/risks', requireCapability('risk.vie
   } catch (e) { res.status(500).json({ error: 'Failed to list risks' }) }
 })
 
-riskRegisterRouter.get('/risks/:id', requireCapability('risk.view') as never, async (req: Request, res: Response) => {
+riskRegisterRouter.get('/risks/:id', requireCapability('risk.view') as never, requireRecordScope('risks') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await getRisk(r.tenantId!, p(req, 'id'))

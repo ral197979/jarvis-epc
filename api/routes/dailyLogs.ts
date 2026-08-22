@@ -100,7 +100,7 @@ router.post('/projects/:projectId/daily-logs', requireCapability('construction.w
   }
 })
 
-router.get('/daily-logs/:id', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
+router.get('/daily-logs/:id', requireCapability('construction.view') as never, requireRecordScope('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

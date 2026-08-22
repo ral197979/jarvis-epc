@@ -69,7 +69,7 @@ router.post('/ncrs/:id/close', requireCapability('quality.verify') as never, req
   } catch (err) { res.status(500).json({ error: 'Failed to close NCR', detail: (err as Error).message }) }
 })
 
-router.get('/ncrs/:id/capas', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
+router.get('/ncrs/:id/capas', requireCapability('quality.view') as never, requireRecordScope('ncr') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try { res.json({ data: await listCorrectiveActions(r.tenantId!, String(req.params.id)) }) }
   catch (err) { res.status(500).json({ error: 'Failed to list corrective actions', detail: (err as Error).message }) }

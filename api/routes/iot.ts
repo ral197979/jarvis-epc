@@ -141,7 +141,7 @@ authRouter.get('/projects/:projectId/sensors', requireCapability('construction.v
   } catch (e) { res.status(500).json({ error: 'Failed to list sensors' }) }
 })
 
-authRouter.get('/sensors/:id', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
+authRouter.get('/sensors/:id', requireCapability('construction.view') as never, requireRecordScope('sensors') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensor = await getSensor(r.tenantId!, p(req, 'id'))
@@ -159,7 +159,7 @@ authRouter.patch('/sensors/:id/thresholds', requireCapability('construction.writ
   } catch (e) { res.status(500).json({ error: 'Failed to update thresholds' }) }
 })
 
-authRouter.get('/sensors/:id/readings', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
+authRouter.get('/sensors/:id/readings', requireCapability('construction.view') as never, requireRecordScope('sensors') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const readings = await getReadings(r.tenantId!, p(req, 'id'), {

@@ -407,10 +407,12 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').length
     const plain  = endpoints.filter(e => e.klass === 'CAPABILITY').length
     // Phase 3B scoped 15 of ~747; Phase 3C took it to 39 by closing the
-    // direct-ID surface of three routers. Adoption is real but partial, and
-    // saying so is the point — a later slice must not imply full coverage.
-    expect(scoped).toBe(190)
-    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(540)
+    // direct-ID surface of three routers; Phase 3D took it to 190 across the
+    // mutation surface; Phase 3E takes it to 236 across the direct-ID reads.
+    // Adoption is real but partial, and saying so is the point — a later slice
+    // must not imply full coverage. The 51 project-bound collections remain.
+    expect(scoped).toBe(236)
+    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(494)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only

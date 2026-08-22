@@ -196,7 +196,7 @@ purchaseOrdersRouter.get('/', requireCapability('procurement.view') as never, as
   res.json({ data: data.rows, meta: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-purchaseOrdersRouter.get('/:id', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
+purchaseOrdersRouter.get('/:id', requireCapability('procurement.view') as never, requireRecordScope('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

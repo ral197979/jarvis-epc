@@ -139,7 +139,7 @@ router.post('/', requireCapability('engineering.write') as never, async (req: Re
 
 // ─── Read ────────────────────────────────────────────────────────────────────
 
-router.get('/:id', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('engineering.view') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const fix = await getFix(tenantId, String(req.params['id']))

@@ -208,7 +208,7 @@ router.delete('/sessions/:id', requireCapability('assistant.admin') as never, re
 
 // ─── GET /ask/chunks/:id — citation hover/modal ────────────────────────────────
 
-router.get('/chunks/:id', async (req: Req, res: Response) => {
+router.get('/chunks/:id', requireRecordScope('knowledge_chunks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const r = await tenantQuery(tenantId, `

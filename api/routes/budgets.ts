@@ -84,7 +84,7 @@ router.patch('/budgets/:id', requireCapability('cost.write') as never, requireRe
 })
 
 // ─── Budget Items ────────────────────────────────────────────────────────────
-router.get('/budgets/:id/items', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/budgets/:id/items', requireCapability('cost.view') as never, requireRecordScope('budgets') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

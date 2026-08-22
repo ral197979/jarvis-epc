@@ -77,7 +77,7 @@ costEntryRouter.get('/projects/:projectId/cost-entries/summary', requireCapabili
 
 // ─── Single entry ─────────────────────────────────────────────────────────────
 
-costEntryRouter.get('/cost-entries/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+costEntryRouter.get('/cost-entries/:id', requireCapability('cost.view') as never, requireRecordScope('cost_entries') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await getCostEntry(r.tenantId!, p(req, 'id'))

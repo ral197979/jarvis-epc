@@ -275,7 +275,7 @@ router.post('/confirm/:versionId', requireCapability('docs.write') as never, req
 
 // ─── GET /presign/:versionId — presigned download URL ────────────────────────
 
-router.get('/presign/:versionId', requireTenant() as never, requireCapability('docs.view') as never, async (req: Req, res: Response) => {
+router.get('/presign/:versionId', requireTenant() as never, requireCapability('docs.view') as never, requireRecordScope('document_versions', 'versionId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -347,7 +347,7 @@ router.get('/documents', requireTenant() as never, requireCapability('docs.view'
 
 // ─── GET /documents/:id ───────────────────────────────────────────────────────
 
-router.get('/documents/:id', requireTenant() as never, requireCapability('docs.view') as never, async (req: Req, res: Response) => {
+router.get('/documents/:id', requireTenant() as never, requireCapability('docs.view') as never, requireRecordScope('documents') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

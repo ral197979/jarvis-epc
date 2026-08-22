@@ -88,7 +88,7 @@ router.post('/projects/:projectId/pay-applications', requireCapability('cost.wri
   } catch (err) { res.status(500).json({ error: 'Failed to create pay application', detail: (err as Error).message }) }
 })
 
-router.get('/pay-applications/:id', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/pay-applications/:id', requireCapability('cost.view') as never, requireRecordScope('pay_applications') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const view = await getPayApplicationView(r.tenantId!, String(req.params.id))

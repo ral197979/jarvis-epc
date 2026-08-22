@@ -255,7 +255,7 @@ router.post('/sources', requireCorpusAdmin, async (req: Req, res: Response) => {
 
 // ─── Detail ───────────────────────────────────────────────────────────────────
 
-router.get('/sources/:id', async (req: Req, res: Response) => {
+router.get('/sources/:id', requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -270,7 +270,7 @@ router.get('/sources/:id', async (req: Req, res: Response) => {
 
 // ─── Chunks for a source (paginated) ──────────────────────────────────────────
 
-router.get('/sources/:id/chunks', async (req: Req, res: Response) => {
+router.get('/sources/:id/chunks', requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -86,20 +86,28 @@ function makeApp() {
   return app
 }
 
+const PROJECT_1        = '30000000-0000-4000-8000-00000000000a'
+const SUBMITTAL_1      = '50000000-0000-4000-8000-00000000000a'
+const ABSENT_SUBMITTAL = '50000000-0000-4000-8000-0000000000ff'
+
 describe('Submittal review route', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('GET /submittals/:id/review returns checks, precedent, reviewers, risk', async () => {
     mockQuery.mockImplementation(async (_t: string, sql: string) => {
+      // ADR-014 Phase 3E: parent-project resolution and the membership test run
+      // before the handler; both answered from the same submittal→project fact.
+      if (/AS\s+project_id/i.test(sql)) return { rows: [{ project_id: PROJECT_1 }], rowCount: 1 }
+      if (/FROM\s+projects\s+p?\b/i.test(sql)) return { rows: [{ id: PROJECT_1 }], rowCount: 1 }
       if (/FROM submittals WHERE tenant_id=\$1 AND id=\$2/.test(sql)) {
-        return { rows: [{ id: 'sub1', project_id: 'p1', submittal_number: 'M-2', title: 'Chilled water pump', type: 'Product Data', discipline: 'Mechanical', spec_section: '23 21 23', status: 'under_review', submitted_by: 'u', reviewed_by: null, due_date: '2026-06-01' }], rowCount: 1 }
+        return { rows: [{ id: SUBMITTAL_1, project_id: PROJECT_1, submittal_number: 'M-2', title: 'Chilled water pump', type: 'Product Data', discipline: 'Mechanical', spec_section: '23 21 23', status: 'under_review', submitted_by: 'u', reviewed_by: null, due_date: '2026-06-01' }], rowCount: 1 }
       }
       if (/AND id<>\$3 LIMIT/.test(sql)) return { rows: [{ id: 'sub2', submittal_number: 'M-1', title: 'Chilled water pump data', type: 'Product Data', spec_section: '23 21 23', status: 'revise_resubmit' }] }
       if (/reviewed_by AS user_id/.test(sql)) return { rows: [{ user_id: 'rev-3', reviewed: 7 }] }
       if (/AS returned FROM submittals/.test(sql)) return { rows: [{ returned: 1 }] }
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/submittals/sub1/review')
+    const res = await request(makeApp()).get(`/api/v1/submittals/${SUBMITTAL_1}/review`)
     expect(res.status).toBe(200)
     expect(res.body.data.checks.length).toBeGreaterThan(0)
     expect(res.body.data.similar[0].number).toBe('M-1')
@@ -109,7 +117,21 @@ describe('Submittal review route', () => {
 
   it('404s for an unknown submittal', async () => {
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 })
-    const res = await request(makeApp()).get('/api/v1/submittals/nope/review')
+    const res = await request(makeApp()).get(`/api/v1/submittals/${ABSENT_SUBMITTAL}/review`)
     expect(res.status).toBe(404)
+  })
+
+  // ADR-014 Phase 3E §18: construction.view opens the route; the submittal's
+  // project decides the record. Membership absent here, so the answer is 404
+  // and the review payload is never built.
+  it('404s for a same-tenant submittal in a project the caller cannot reach', async () => {
+    mockQuery.mockImplementation(async (_t: string, sql: string) => {
+      if (/AS\s+project_id/i.test(sql)) return { rows: [{ project_id: PROJECT_1 }], rowCount: 1 }
+      if (/FROM\s+projects\s+p?\b/i.test(sql)) return { rows: [], rowCount: 0 }   // no membership
+      return { rows: [], rowCount: 0 }
+    })
+    const res = await request(makeApp()).get(`/api/v1/submittals/${SUBMITTAL_1}/review`)
+    expect(res.status).toBe(404)
+    expect(mockQuery.mock.calls.some(c => /FROM submittals WHERE tenant_id/.test(String(c[1])))).toBe(false)
   })
 })
