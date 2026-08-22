@@ -42,7 +42,7 @@ const SUBMITTABLE_FROM = new Set(['draft', 'rejected'])
 
 // ─── Schedule of Values ───────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/sov-items', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/sov-items', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     res.json({ data: await listSovItems(r.tenantId!, String(req.params.projectId)) })
@@ -69,7 +69,7 @@ router.post('/projects/:projectId/sov-items', requireCapability('cost.write') as
 
 // ─── Pay applications ─────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/pay-applications', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/pay-applications', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     res.json({ data: await listPayApplications(r.tenantId!, String(req.params.projectId)) })

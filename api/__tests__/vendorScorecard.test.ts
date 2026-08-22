@@ -1,6 +1,10 @@
 /**
  * Vendor Scorecard — analysis + route tests (v4.59.0)
  */
+// ADR-014 Phase 3F: the collection routes below now carry `requireProjectScope`,
+// which refuses a malformed project id WITHOUT issuing SQL (fail closed). These
+// ids are real uuids so the request still reaches the handler and this stays a
+// response-shape smoke test; `nope` became a uuid that simply does not exist.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ADR-014 Phase 2B-2: Vendor scorecards require `procurement.view` —
@@ -10,8 +14,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'procurement', is_active: true }))
 
 const mockQuery = vi.fn()
+/**
+ * ADR-014 Phase 3F — `requireProjectScope` asks whether the caller can reach
+ * the project named in the path before the handler runs. Answered here rather
+ * than through the scripted mock, for the same reason the current-user lookup
+ * already is: an authorization query must not consume a `mockResolvedValueOnce`
+ * entry written for the handler's own queries. Whether the guard REFUSES is
+ * proved in the Phase-3F behavioural suite, not in this shape smoke test.
+ */
+const _projectScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo the ids the resolver asked about, so the fixture's own project is
+    // the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
+  tenantQuery: (t: string, sql: string, p: unknown[]) => _projectScopeAnswer(sql, p) ?? mockQuery(t, sql, p),
   query:       (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -90,7 +114,7 @@ describe('Vendor scorecard route', () => {
       if (/FROM subcontract_invoices/.test(sql)) return { rows: [{ subcontract_id: 'sc1', gross_amount: 100_000, status: 'approved' }] }
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/projects/p1/vendor-scorecard')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/vendor-scorecard')
     expect(res.status).toBe(200)
     expect(res.body.data.vendors[0].vendor).toBe('ACME')
     expect(res.body.data.vendors[0].committedValue).toBe(500_000)
@@ -98,7 +122,7 @@ describe('Vendor scorecard route', () => {
 
   it('404s for an unknown project', async () => {
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 })
-    const res = await request(makeApp()).get('/api/v1/projects/nope/vendor-scorecard')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-0000000000ff/vendor-scorecard')
     expect(res.status).toBe(404)
   })
 })

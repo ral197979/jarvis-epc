@@ -22,7 +22,7 @@ router.use(requireAuth as any)
 router.use(requireTenant() as any)
 
 // ─── List sessions for a project ──────────────────────────────────────────────
-router.get('/projects/:projectId/calc-sessions', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/calc-sessions', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { projectId } = req.params
   const { tool_name, limit = '20', offset = '0' } = req.query

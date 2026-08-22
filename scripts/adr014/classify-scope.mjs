@@ -84,7 +84,14 @@ const RULES = [
     ep.method === 'POST' && ep.path === '/api/v1/projects',
     'creates the project itself — no pre-existing project to be a member of (HOB §13)'],
 
-  ['PROJECT_CHILD_PATH_PROJECT', ep => /\/projects\/:(projectId|id)\//.test(ep.path),
+  // ADR-014 Phase 3F: `:projectId` anywhere in the path, not only under a
+  // `/projects/` prefix. api/routes/schedule.ts mounts its collections at
+  // `/schedule/:projectId/tasks`, and the old prefix-anchored regex missed all
+  // four of them — they name a project in the path exactly as the /projects/*
+  // routes do, and carry the same scope requirement.
+  ['PROJECT_CHILD_PATH_PROJECT', ep =>
+    /\/projects\/:(projectId|id)\//.test(ep.path) ||
+    ep.pathParams.some(p => /^projectId$/i.test(p)),
     'project identified directly by a path parameter'],
 
   ['SELF_SCOPED', ep =>
@@ -103,6 +110,26 @@ const RULES = [
 
   ['CROSSDOMAIN', ep => /\/related|\/cross-domain|\/correlations/.test(ep.path),
     'cross-domain synthesised record — provenance unresolved (HOB §32)'],
+
+  // ADR-014 Phase 3F §4/§55. A collection with NO project path parameter can
+  // still return project-bound rows — `GET /files/documents`, `GET /risks`,
+  // `GET /transmittals`. Before this rule they fell past PROJECT_CHILD_RECORD_ID
+  // (which needs a record-id param) and past TENANT_GLOBAL (which needs NO table
+  // to reach a project) into the NO_PROJECT_PARENT catch-all, whose stated
+  // reason — "none of them reaches a project" — was simply false for them.
+  //
+  // Project-boundness is read from `primaryReadTable`: the outer query's FROM,
+  // not every table the route touches. A vendor registry that JOINs `projects`
+  // for a display name is not a project collection.
+  //
+  // Reads only. A mutation with no path or body project is Phase 3D's settled
+  // surface, and widening this rule to writes would silently move counters that
+  // slice already certified.
+  ['PROJECT_CHILD_TENANT_COLLECTION', ep =>
+    !MUTATION.has(ep.method) &&
+    recordIdParams(ep).length === 0 &&
+    !!ep.primaryReadTable && hasProjectParent(ep.primaryReadTable),
+    'tenant-level collection whose returned rows reach a project (Phase 3F §4)'],
 
   ['TENANT_GLOBAL', ep =>
     (ep.writeTables.length || ep.reads.length) &&
@@ -167,6 +194,7 @@ for (const e of inv.endpoints) {
   const projectBound = [
     'PROJECT_ROOT_EXISTING', 'PROJECT_CHILD_PATH_PROJECT',
     'PROJECT_CHILD_RECORD_ID', 'PROJECT_CHILD_BODY_PROJECT',
+    'PROJECT_CHILD_TENANT_COLLECTION',
   ].includes(disposition)
 
   registry.push({

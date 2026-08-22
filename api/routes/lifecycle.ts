@@ -21,7 +21,7 @@ router.use(requireTenant() as never)
 
 const ACTIONS = new Set(['approve', 'waive', 'reset'])
 
-router.get('/projects/:projectId/lifecycle', requireCapability('project.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/lifecycle', requireCapability('project.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const lc = await getProjectLifecycle(r.tenantId!, String(req.params.projectId), new Date())

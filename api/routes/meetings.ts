@@ -58,7 +58,7 @@ meetingsRouter.post('/projects/:projectId/meetings', requireCapability('project.
   } catch (e) { res.status(500).json({ error: 'Failed to create meeting' }) }
 })
 
-meetingsRouter.get('/projects/:projectId/meetings', requireCapability('project.view') as never, async (req: Request, res: Response) => {
+meetingsRouter.get('/projects/:projectId/meetings', requireCapability('project.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const meetings = await listMeetings(r.tenantId!, p(req, 'projectId'), {

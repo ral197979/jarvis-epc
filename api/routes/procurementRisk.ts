@@ -10,12 +10,13 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildProcurementRisk } from '../services/procurement/procurementRiskService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/projects/:projectId/procurement-risk', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/procurement-risk', requireCapability('procurement.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildProcurementRisk(r.tenantId!, String(req.params.projectId), new Date())

@@ -49,7 +49,7 @@ evmRouter.post('/projects/:projectId/evm/baselines', requireCapability('cost.wri
   }
 })
 
-evmRouter.get('/projects/:projectId/evm/baselines', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/baselines', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const baselines = await listBaselines(r.tenantId!, p(req, 'projectId'))
@@ -101,7 +101,7 @@ evmRouter.post('/projects/:projectId/evm/actuals', requireCapability('cost.write
   }
 })
 
-evmRouter.get('/projects/:projectId/evm/actuals', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/actuals', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actuals = await listActuals(r.tenantId!, p(req, 'projectId'))
@@ -129,7 +129,7 @@ evmRouter.post('/projects/:projectId/evm/progress', requireCapability('cost.writ
 
 // ─── Metrics + S-curve ────────────────────────────────────────────────────────
 
-evmRouter.get('/projects/:projectId/evm/metrics', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/metrics', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const statusDate = qs(req.query['status_date'] as string | undefined)
@@ -153,7 +153,7 @@ evmRouter.post('/projects/:projectId/evm/snapshot', requireCapability('cost.writ
   }
 })
 
-evmRouter.get('/projects/:projectId/evm/scurve', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/scurve', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const data = await getScurveData(r.tenantId!, p(req, 'projectId'))

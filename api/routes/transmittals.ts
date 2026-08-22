@@ -25,7 +25,8 @@ import {
 } from '../services/transmittals/transmittalService'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -41,7 +42,19 @@ const p   = (req: Request, key: string) =>
 // GET /transmittals/overdue — must precede /:id
 router.get('/overdue', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
-    const rows = await getOverdueTransmittals(tid(req))
+    // ADR-014 Phase 3F. `transmittals` is DUAL_PROJECT_OR_TENANT: a transmittal
+    // with no project is a tenant-level record and stays visible to any
+    // docs.view holder; one that names a project needs live membership of it.
+    // The placeholder is symbolic because the service numbers it against its
+    // own parameter list — the service composes SQL, the route decides
+    // authorization.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'transmittals', 'project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'transmittals'),
+    }
+    const rows = await getOverdueTransmittals(tid(req), scope)
     res.json({ data: rows })
   } catch (e) {
     res.status(500).json({ error: 'Failed to get overdue transmittals' })
@@ -68,12 +81,24 @@ router.post('/', requireCapability('docs.write') as never, async (req: Request, 
 // GET /transmittals
 router.get('/', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
+    // ADR-014 Phase 3F. `transmittals` is DUAL_PROJECT_OR_TENANT: a transmittal
+    // with no project is a tenant-level record and stays visible to any
+    // docs.view holder; one that names a project needs live membership of it.
+    // The placeholder is symbolic because the service numbers it against its
+    // own parameter list — the service composes SQL, the route decides
+    // authorization.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'transmittals', 'project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'transmittals'),
+    }
     const rows = await listTransmittals(tid(req), {
       project_id: qs(req.query['project_id'] as string | string[]),
       status:     qs(req.query['status'] as string | string[]),
       purpose:    qs(req.query['purpose'] as string | string[]),
       overdue:    req.query['overdue'] === 'true',
-    })
+    }, scope)
     res.json({ data: rows })
   } catch (e) {
     res.status(500).json({ error: 'Failed to list transmittals' })

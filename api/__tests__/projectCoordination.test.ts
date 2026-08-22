@@ -5,6 +5,10 @@
  * coverage is plain unit tests with no DB. A small route smoke test mirrors the
  * tier1 mock-pool pattern.
  */
+// ADR-014 Phase 3F: the collection routes below now carry `requireProjectScope`,
+// which refuses a malformed project id WITHOUT issuing SQL (fail closed). These
+// ids are real uuids so the request still reaches the handler and this stays a
+// response-shape smoke test; `nope` became a uuid that simply does not exist.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ADR-014 Phase 2B-3: Coordination synthesis reads change orders including
@@ -16,8 +20,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 't1', role: 'owner', is_active: true }))
 
 const mockQuery = vi.fn()
+/**
+ * ADR-014 Phase 3F — `requireProjectScope` asks whether the caller can reach
+ * the project named in the path before the handler runs. Answered here rather
+ * than through the scripted mock, for the same reason the current-user lookup
+ * already is: an authorization query must not consume a `mockResolvedValueOnce`
+ * entry written for the handler's own queries. Whether the guard REFUSES is
+ * proved in the Phase-3F behavioural suite, not in this shape smoke test.
+ */
+const _projectScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo the ids the resolver asked about, so the fixture's own project is
+    // the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
+  tenantQuery: (tenantId: string, sql: string, params: unknown[]) => _projectScopeAnswer(sql, params) ?? mockQuery(tenantId, sql, params),
   query:       (sql: string, params: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -180,7 +204,7 @@ describe('Coordination route smoke', () => {
       .mockResolvedValueOnce({ rows: [] }) // schedule clashes
       .mockResolvedValueOnce({ rows: [] }) // bim
       .mockResolvedValueOnce({ rows: [] }) // change orders
-    const res = await request(makeApp()).get('/api/v1/copilot/projects/p1/coordination')
+    const res = await request(makeApp()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-000000000001/coordination')
     expect(res.status).toBe(200)
     expect(res.body.data.issues.length).toBeGreaterThan(0)
     expect(res.body.data.summary.byCategory).toBeTruthy()
@@ -188,7 +212,7 @@ describe('Coordination route smoke', () => {
 
   it('404s for an unknown project', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(makeApp()).get('/api/v1/copilot/projects/nope/coordination')
+    const res = await request(makeApp()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000ff/coordination')
     expect(res.status).toBe(404)
   })
 

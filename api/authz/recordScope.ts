@@ -129,6 +129,97 @@ export function projectScopeSql(principal: CurrentUser, userParam: string): stri
 }
 
 /**
+ * The active-membership test correlated on a CHILD row's project column.
+ *
+ * `activeMembershipExists` correlates on `p` — the `projects` row — which needs
+ * the query to join `projects`. A collection of records that MAY have no
+ * project cannot use an inner join (it would drop exactly the tenant-global
+ * rows Phase 3E-R restored) and should not need an outer one just to be
+ * authorized. Correlating directly on the child's own `project_id` avoids the
+ * join entirely and keeps one definition of "active member".
+ */
+const activeMembershipOn = (projectColumn: string, userParam: string): string => `
+          EXISTS (
+                SELECT 1 FROM project_members m
+                 WHERE m.project_id = ${projectColumn}
+                   AND m.user_id    = ${userParam}
+                   AND m.tenant_id  = current_setting('app.current_tenant_id', true)::uuid
+                   AND m.active_from <= NOW()
+                   AND (m.active_to IS NULL OR m.active_to > NOW()))`
+
+/**
+ * The mandatory authorization predicate for a COLLECTION of project-bound rows
+ * (ADR-014 Phase 3F §7, §8, §39).
+ *
+ * What the predicate says is decided by the resource's own
+ * `projectSemantics`, never by a table-name list kept here — the same registry
+ * that decides a single record's fate decides its collection's:
+ *
+ *   PROJECT_REQUIRED        every row must belong to a reachable project
+ *   DUAL_PROJECT_OR_TENANT  a row with no project is tenant-global and visible;
+ *                           a row WITH one needs membership of it
+ *   TENANT_GLOBAL           no project predicate applies
+ *   SELF_SCOPED             this helper is the wrong tool — ownership decides,
+ *                           and returning a project predicate would WIDEN a
+ *                           closed personal surface
+ *
+ * Returns `''` for a tenant-wide principal, whose scope is already the tenant
+ * predicate the caller's query carries — an Owner is tenant-wide, never global.
+ *
+ * An unregistered resource returns `AND FALSE`: a collection whose policy
+ * cannot be found returns nothing rather than everything.
+ *
+ * The predicate is meant to be ANDed OUTSIDE the caller's own filters and
+ * BEFORE `LIMIT`/`OFFSET`, so a project filter can only narrow the authorized
+ * set and paging describes the authorized set (§9, §14). `projectColumn` must
+ * be a qualified column from the query's own FROM — never caller input.
+ */
+export function collectionScopeSql(
+  principal: CurrentUser,
+  resource: string,
+  projectColumn: string,
+  userParam: string,
+): string {
+  if (reachesWholeTenant(principal)) return ''
+
+  const policy = policyFor(resource)
+  if (!policy) return 'AND FALSE'
+
+  switch (policy.projectSemantics) {
+    case 'TENANT_GLOBAL':
+      return ''
+    case 'SELF_SCOPED':
+      // Deliberately not a project predicate. A SELF collection filtered by
+      // project membership would show a peer's records to anyone sharing a
+      // project with them (§28).
+      return 'AND FALSE'
+    case 'DUAL_PROJECT_OR_TENANT':
+      return `AND (${projectColumn} IS NULL OR ${activeMembershipOn(projectColumn, userParam)})`
+    case 'PROJECT_REQUIRED':
+    default:
+      return `AND ${activeMembershipOn(projectColumn, userParam)}`
+  }
+}
+
+/**
+ * Whether `collectionScopeSql` will bind a principal id for this caller.
+ *
+ * The predicate is empty for a tenant-wide principal, so the caller must not
+ * append the parameter in that case — the two have to move together or the
+ * placeholder numbering drifts.
+ */
+export function collectionScopeParams(
+  principal: CurrentUser,
+  resource: string,
+): unknown[] {
+  // Probe with a sentinel placeholder and bind only if the predicate actually
+  // uses it. The empty predicate binds nothing, and so does `AND FALSE` — a
+  // resource that fails closed must not shift every later placeholder by one.
+  const probe = collectionScopeSql(principal, resource, 'x.project_id', '$999')
+  return probe.includes('$999') ? [principal.id] : []
+}
+
+/**
  * The accessible subset of `projectIds`, in ONE database round-trip regardless
  * of how many ids are supplied.
  *

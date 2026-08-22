@@ -69,7 +69,7 @@ subcontractsRouter.post('/projects/:projectId/bid-packages', requireCapability('
   } catch (e) { res.status(500).json({ error: 'Failed to create bid package' }) }
 })
 
-subcontractsRouter.get('/projects/:projectId/bid-packages', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/projects/:projectId/bid-packages', requireCapability('procurement.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const packages = await listBidPackages(r.tenantId!, p(req, 'projectId'), q(req, 'status') as never)
@@ -77,7 +77,7 @@ subcontractsRouter.get('/projects/:projectId/bid-packages', requireCapability('p
   } catch (e) { res.status(500).json({ error: 'Failed to list bid packages' }) }
 })
 
-subcontractsRouter.get('/projects/:projectId/bid-packages/summary', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/projects/:projectId/bid-packages/summary', requireCapability('procurement.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getSubcontractSummary(r.tenantId!, p(req, 'projectId'))
@@ -164,7 +164,7 @@ subcontractsRouter.post('/projects/:projectId/subcontracts', requireCapability('
   } catch (e) { res.status(500).json({ error: 'Failed to create subcontract' }) }
 })
 
-subcontractsRouter.get('/projects/:projectId/subcontracts', requireCapability('procurement.view') as never, async (req: Request, res: Response) => {
+subcontractsRouter.get('/projects/:projectId/subcontracts', requireCapability('procurement.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const subcontracts = await listSubcontracts(r.tenantId!, p(req, 'projectId'), q(req, 'status') as never)

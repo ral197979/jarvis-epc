@@ -22,7 +22,8 @@ import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -55,6 +56,18 @@ router.get('/', requireCapability('safety.view') as never, async (req: Req, res:
   if (assigned_to) { conds.push(`assigned_to = $${i++}`); vals.push(assigned_to) }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `compliance_tasks` is DUAL_PROJECT_OR_TENANT: a
+  // tenant-level obligation has no project and stays visible to any safety.view
+  // holder, a project task needs live membership of its project. The SAME
+  // predicate goes on the row query and the COUNT — a scoped page with a
+  // tenant-wide total would report 3 rows out of 27 and leak the occupancy of
+  // projects the caller cannot see (§15).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = collectionScopeSql(principal, 'compliance_tasks', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'compliance_tasks')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT id, project_id, title, description, category, due_date,
@@ -62,13 +75,15 @@ router.get('/', requireCapability('safety.view') as never, async (req: Req, res:
              assigned_to, created_by, metadata, created_at, updated_at
       FROM compliance_tasks
       WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scope}
       ORDER BY due_date ASC, created_at DESC
-      LIMIT $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM compliance_tasks
       WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scope}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)

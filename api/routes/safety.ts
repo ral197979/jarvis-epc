@@ -29,7 +29,7 @@ const INC_STATUS = new Set(['reported', 'investigating', 'corrective', 'closed']
 
 // ─── Observations ─────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/safety/observations', requireCapability('safety.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/safety/observations', requireCapability('safety.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try { res.json({ data: await listObservations(r.tenantId!, String(req.params.projectId)) }) }
   catch (err) { res.status(500).json({ error: 'Failed to list observations', detail: (err as Error).message }) }
@@ -58,7 +58,7 @@ router.patch('/safety/observations/:id', requireCapability('safety.write') as ne
 
 // ─── Incidents ────────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/safety/incidents', requireCapability('safety.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/safety/incidents', requireCapability('safety.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try { res.json({ data: await listIncidents(r.tenantId!, String(req.params.projectId)) }) }
   catch (err) { res.status(500).json({ error: 'Failed to list incidents', detail: (err as Error).message }) }
@@ -87,7 +87,7 @@ router.patch('/safety/incidents/:id', requireCapability('safety.write') as never
 
 // ─── Predictive intelligence ──────────────────────────────────────────────────
 
-router.get('/projects/:projectId/safety/intelligence', requireCapability('safety.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/safety/intelligence', requireCapability('safety.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildSafetyIntelligence(r.tenantId!, String(req.params.projectId), new Date())

@@ -30,7 +30,7 @@ router.use(requireTenant() as any)
 
 const FORMATS = new Set(['ifc','glb','gltf','nwd','rvt'])
 
-router.get('/projects/:projectId/bim-models', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/bim-models', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -135,7 +135,7 @@ router.get('/bim-models/:id/viewer-token', requireCapability('engineering.view')
 })
 
 // ─── BIM Issues ──────────────────────────────────────────────────────────────
-router.get('/projects/:projectId/bim-issues', requireCapability('engineering.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/bim-issues', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { status, severity, model_id } = req.query
   const params: unknown[] = [r.tenantId!, req.params.projectId]

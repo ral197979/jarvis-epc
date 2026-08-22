@@ -232,6 +232,10 @@ const RECORD_SCOPE_CALLS = [
   'requireRecordScope(', 'requireBodyProjectScope(',
   'authorizeSource(', 'filterAuthorizedTargets(', 'filterAccessibleProjectIds(',
   'filterByParentProject(',
+  // ADR-014 Phase 3F: the collection predicate. `collectionScopeParams` alone
+  // is NOT scope — it only decides whether to bind the principal id — so only
+  // the predicate builder counts as enforcement.
+  'collectionScopeSql(',
 ]
 const recordScopeCallsIn = fragment =>
   RECORD_SCOPE_CALLS.filter(c => fragment.includes(c)).map(c => c.slice(0, -1)).sort()

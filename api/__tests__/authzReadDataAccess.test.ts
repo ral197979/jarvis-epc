@@ -27,7 +27,7 @@ vi.mock('../db/pool', () => ({
   tenantTransaction: vi.fn(),
 }))
 
-import { principal, principalQuery, authMiddlewareFor, tenantMiddlewareFor, type TestPrincipal } from './helpers/testPrincipal'
+import { principal, principalQuery, recordScopeQuery, authMiddlewareFor, tenantMiddlewareFor, type TestPrincipal } from './helpers/testPrincipal'
 
 let current: TestPrincipal
 
@@ -77,7 +77,12 @@ function app() {
 
 beforeEach(() => {
   for (const fn of Object.values(h)) fn.mockReset()
-  h.query.mockImplementation(principalQuery(() => current))
+  // ADR-014 Phase 3F: the project-path collections these families exercise now
+  // carry `requireProjectScope`, so the fixture must place the caller IN scope
+  // to reach the behaviour under test. Whether that guard REFUSES is proved in
+  // the Phase-3F behavioural suite; what this file tests is the functional
+  // dimension — that a capability-less caller never reaches the data at all.
+  h.query.mockImplementation(principalQuery(() => current, recordScopeQuery()))
   h.listAnomalies.mockResolvedValue([])
   h.summarizeAnomalies.mockReturnValue({})
   h.costSnapshot.mockResolvedValue({})
@@ -92,7 +97,7 @@ function domainQueries() {
 
 const FAMILIES = [
   { family: 'portfolio', path: '/api/v1/portfolio/anomalies',           service: () => h.listAnomalies },
-  { family: 'cost',      path: '/api/v1/projects/p1/cost-control',      service: () => h.costSnapshot  },
+  { family: 'cost',      path: '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/cost-control',      service: () => h.costSnapshot  },
   { family: 'crm',       path: '/api/v1/proposals',                     service: () => h.listProposals },
   { family: 'audit',     path: '/api/v1/audit',                         service: null                  },
   { family: 'platform',  path: '/api/v1/integrations',                  service: null                  },
@@ -137,7 +142,7 @@ describe('a denial discloses nothing about what exists', () => {
 
   it('does not echo the required capability or the caller role in the denial', async () => {
     current = principal({ role: 'project_manager' })
-    const res = await request(app()).get('/api/v1/projects/p1/cost-control')
+    const res = await request(app()).get('/api/v1/projects/30000000-0000-4000-8000-0000000000a1/cost-control')
     expect(res.status).toBe(403)
     expect(JSON.stringify(res.body)).not.toMatch(/cost\.view|project_manager|capability/i)
   })
@@ -147,7 +152,7 @@ describe('a denial discloses nothing about what exists', () => {
 describe('a stale token cannot read a high-sensitivity domain', () => {
   it('denies cost data when the token says owner and the database says viewer', async () => {
     current = principal({ role: 'viewer', jwtRole: 'owner' })
-    const res = await request(app()).get('/api/v1/projects/p1/cost-control')
+    const res = await request(app()).get('/api/v1/projects/30000000-0000-4000-8000-0000000000a1/cost-control')
     expect(res.status).toBe(403)
     expect(h.costSnapshot).not.toHaveBeenCalled()
   })
@@ -169,13 +174,24 @@ describe('a stale token cannot read a high-sensitivity domain', () => {
 
 // ─── §36 — capability authorization does not weaken tenant isolation ──────────
 describe('tenant isolation survives the new read guards', () => {
-  it('scopes an authorized cross-tenant read to the caller tenant, not the requested one', async () => {
+  it('refuses an authorized cross-tenant read before it reaches the data', async () => {
     // Tenant A owner, holding cost.view, asking for a project that lives in
-    // tenant B: the capability opens the domain, the tenant context still
-    // decides the rows, and the route keeps whatever existence-hiding it had.
+    // tenant B. Until ADR-014 Phase 3F the capability opened the domain and the
+    // tenant context decided the rows, so the service ran and was handed the
+    // caller's tenant. The project-path collections now carry
+    // `requireProjectScope`, which is a STRICTER contract: a project the caller
+    // cannot reach is refused outright, and the domain service never runs.
+    //
+    // `recordScopeQuery` reports reachability only for the ids the resolver
+    // asked about, and the resolver refuses a non-uuid id without asking, so a
+    // foreign-tenant project id cannot reach the handler at all.
     current = principal({ role: 'owner', tenantId: 'tenant-a', jwtTenantId: 'tenant-a' })
-    await request(app()).get('/api/v1/projects/tenant-b-project/cost-control')
-    expect(h.costSnapshot).toHaveBeenCalledWith('tenant-a', 'tenant-b-project')
+    // Model the project as unreachable — `recordScopeQuery` otherwise reports
+    // every id the resolver asks about as in scope.
+    h.query.mockImplementation(principalQuery(() => current, recordScopeQuery({ inScope: () => false })))
+    const res = await request(app()).get('/api/v1/projects/40000000-0000-4000-8000-00000000000b/cost-control')
+    expect(res.status, 'a project outside the caller scope is not found').toBe(404)
+    expect(h.costSnapshot, 'the cost service must not run for a refused project').not.toHaveBeenCalled()
   })
 
   it('resolves the current user once per request, not once per guard', async () => {

@@ -55,7 +55,7 @@ function _handleErr(err: unknown, res: Response, where: string): void {
 
 // ─── SYSTEMS ──────────────────────────────────────────────────────────────────
 
-systemsRouter.get('/projects/:projectId/systems', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
+systemsRouter.get('/projects/:projectId/systems', requireCapability('commissioning.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const items = await listSystems({ tenantId: r.tenantId!, projectId: String(req.params['projectId']) })
@@ -137,7 +137,7 @@ systemsRouter.patch('/subsystems/:subsystemId', requireCapability('commissioning
 
 // ─── TAGS ─────────────────────────────────────────────────────────────────────
 
-systemsRouter.get('/projects/:projectId/tags', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
+systemsRouter.get('/projects/:projectId/tags', requireCapability('commissioning.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const items = await listTagsForProject({ tenantId: r.tenantId!, projectId: String(req.params['projectId']) })
@@ -194,7 +194,7 @@ systemsRouter.patch('/tags/:tagId', requireCapability('commissioning.write') as 
 })
 
 // ─── F05: tag/pack coverage ───────────────────────────────────────────────────
-systemsRouter.get('/projects/:projectId/coverage', requireCapability('commissioning.view') as never, async (req: Request, res: Response) => {
+systemsRouter.get('/projects/:projectId/coverage', requireCapability('commissioning.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as Req
   try {
     const limit  = Math.min(Math.max(parseInt(String(req.query['limit']  ?? '100'), 10) || 100, 1), 500)

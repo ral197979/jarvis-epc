@@ -311,9 +311,13 @@ describe('the Phase-2 classification stays closed and adoption is not overclaime
     // two sibling reads on the same records (the Monte-Carlo distribution and
     // the readiness history) that would otherwise have been left open beside a
     // route this slice closed.
+    // Phase 3F adds 72: the 56 project-path collections, thirteen tenant-wide
+    // collections whose rows reach a project, and the three
+    // `/schedule/:projectId/*` mutations that the classifier's old
+    // `/projects/:projectId/`-anchored regex had hidden from Phase 3D.
     // Adoption is real and still partial, and the assertion says so out loud so
     // that a later slice cannot quietly imply full coverage.
-    expect(scoped, 'Phase 3E scoped 236 endpoints').toBe(236)
+    expect(scoped, 'Phase 3F scoped 308 endpoints').toBe(308)
     expect(endpoints.length, 'out of ~747').toBeGreaterThan(700)
     // Phase 3B asserted adoption was under 10%, which measured how little had
     // been done rather than guarding a property — it necessarily fails as the

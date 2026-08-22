@@ -4,6 +4,10 @@
  * Uses a seeded RNG so the simulation is fully deterministic and asserts exact
  * structural invariants (P50 ≤ P90, criticality, recovery saves days).
  */
+// ADR-014 Phase 3F: the collection routes below now carry `requireProjectScope`,
+// which refuses a malformed project id WITHOUT issuing SQL (fail closed). These
+// ids are real uuids so the request still reaches the handler and this stays a
+// response-shape smoke test; `nope` became a uuid that simply does not exist.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ADR-014 Phase 2B-2: The schedule forecast requires `schedule.view`. Phase
@@ -13,8 +17,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'engineer', is_active: true }))
 
 const mockQuery = vi.fn()
+/**
+ * ADR-014 Phase 3F — `requireProjectScope` asks whether the caller can reach
+ * the project named in the path before the handler runs. Answered here rather
+ * than through the scripted mock, for the same reason the current-user lookup
+ * already is: an authorization query must not consume a `mockResolvedValueOnce`
+ * entry written for the handler's own queries. Whether the guard REFUSES is
+ * proved in the Phase-3F behavioural suite, not in this shape smoke test.
+ */
+const _projectScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo the ids the resolver asked about, so the fixture's own project is
+    // the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
+  tenantQuery: (t: string, sql: string, p: unknown[]) => _projectScopeAnswer(sql, p) ?? mockQuery(t, sql, p),
   query:       (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -119,7 +143,7 @@ describe('Schedule forecast route', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'p1' }], rowCount: 1 })  // project
       .mockResolvedValueOnce({ rows: TASKS.map(t => ({ id: t.id, name: t.name, duration_days: t.duration_days })) }) // tasks
       .mockResolvedValueOnce({ rows: DEPS.map(d => ({ ...d })) })   // deps
-    const res = await request(makeApp()).get('/api/v1/schedule/p1/forecast?iterations=200&target=40')
+    const res = await request(makeApp()).get('/api/v1/schedule/30000000-0000-4000-8000-000000000001/forecast?iterations=200&target=40')
     expect(res.status).toBe(200)
     expect(res.body.data.deterministicFinish).toBe(35)
     expect(res.body.data.recovery.length).toBeGreaterThan(0)
@@ -130,13 +154,13 @@ describe('Schedule forecast route', () => {
       .mockResolvedValueOnce({ rows: [{ id: 'p1' }], rowCount: 1 }) // project
       .mockResolvedValueOnce({ rows: [] }) // tasks
       .mockResolvedValueOnce({ rows: [] }) // deps
-    const res = await request(makeApp()).get('/api/v1/schedule/p1/forecast')
+    const res = await request(makeApp()).get('/api/v1/schedule/30000000-0000-4000-8000-000000000001/forecast')
     expect(res.status).toBe(422)
   })
 
   it('404 for an unknown project', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(makeApp()).get('/api/v1/schedule/nope/forecast')
+    const res = await request(makeApp()).get('/api/v1/schedule/30000000-0000-4000-8000-0000000000ff/forecast')
     expect(res.status).toBe(404)
   })
 })

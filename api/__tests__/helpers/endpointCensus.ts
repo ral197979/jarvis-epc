@@ -68,6 +68,11 @@ const RECORD_SCOPE_CALLS = [
   // query so COUNT, LIMIT and OFFSET describe the authorized set — so this is
   // the record-scope call a scoped collection makes.
   'projectScopeSql(',
+  // ADR-014 Phase 3F: the registry-driven collection predicate. Same rule as
+  // `projectScopeSql`, but it reads the resource's `projectSemantics` so a
+  // DUAL_PROJECT_OR_TENANT collection keeps its tenant-global rows instead of
+  // losing them to a membership test they can never satisfy.
+  'collectionScopeSql(',
   // ADR-014 Phase 3B: the guard form, for a route whose PATH names the project
   // it operates on. Roughly fifty project-child collections share that shape,
   // so the rule is expressed once as middleware rather than as fifty copies of

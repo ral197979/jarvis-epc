@@ -35,7 +35,8 @@ import { requireAuth, AuthenticatedRequest }     from '../auth'
 import { requireTenant, TenantRequest }          from '../middleware/tenant'
 import { slog }                                  from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
+import { requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -246,6 +247,18 @@ router.get('/packs', requireCapability('commissioning.view') as never, async (re
 
   const where = conditions.length ? `AND ${conditions.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `commissioning_packs` is DUAL_PROJECT_OR_TENANT: all
+  // three create routes pass `projectId ?? null` behind requireBodyProjectScope,
+  // so a project-less pack is an intended state and stays visible; a pack that
+  // names a project needs membership. Same predicate on the COUNT (§15), and
+  // ANDed outside `?project_id=` so that filter can only narrow (§30).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql      = collectionScopeSql(principal, 'commissioning_packs', 'cp.project_id', `$${p}`)
+  const countScopeSql = collectionScopeSql(principal, 'commissioning_packs', 'project_id', `$${p}`)
+  const scopeVals     = collectionScopeParams(principal, 'commissioning_packs')
+  const q = p + scopeVals.length
+
   const [dataRes, countRes] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT cp.*,
@@ -256,13 +269,15 @@ router.get('/packs', requireCapability('commissioning.view') as never, async (re
       LEFT JOIN projects pr ON pr.id = cp.project_id
       WHERE cp.tenant_id = current_setting('app.current_tenant_id', true)::uuid
       ${where}
+      ${scopeSql}
       ORDER BY cp.created_at DESC
-      LIMIT $${p} OFFSET $${p + 1}
-    `, [...values, limit, offset]),
+      LIMIT $${q} OFFSET $${q + 1}
+    `, [...values, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::TEXT AS count FROM commissioning_packs
       WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid ${where}
-    `, values),
+      ${countScopeSql}
+    `, [...values, ...scopeVals]),
   ])
 
   const total = parseInt(countRes.rows[0]?.count ?? '0', 10)

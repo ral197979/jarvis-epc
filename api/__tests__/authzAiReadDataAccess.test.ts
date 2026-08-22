@@ -47,7 +47,7 @@ vi.mock('../db/pool', () => ({
   tenantTransaction: vi.fn(),
 }))
 
-import { principal, principalQuery, authMiddlewareFor, tenantMiddlewareFor, type TestPrincipal } from './helpers/testPrincipal'
+import { principal, principalQuery, recordScopeQuery, authMiddlewareFor, tenantMiddlewareFor, type TestPrincipal } from './helpers/testPrincipal'
 
 let current: TestPrincipal
 
@@ -115,7 +115,12 @@ function app() {
 
 beforeEach(() => {
   for (const fn of Object.values(h)) fn.mockReset()
-  h.query.mockImplementation(principalQuery(() => current))
+  // ADR-014 Phase 3F: the project-path collections these families exercise now
+  // carry `requireProjectScope`, so the fixture must place the caller IN scope
+  // to reach the behaviour under test. Whether that guard REFUSES is proved in
+  // the Phase-3F behavioural suite; what this file tests is the functional
+  // dimension — that a capability-less caller never reaches the data at all.
+  h.query.mockImplementation(principalQuery(() => current, recordScopeQuery()))
   h.buildProjectFocus.mockResolvedValue({})
   h.buildProjectCoordination.mockResolvedValue({})
   h.buildProjectReport.mockResolvedValue({})
@@ -138,9 +143,9 @@ const domainQueries = () => h.query.mock.calls.filter(args =>
  * exists to prevent.
  */
 const FAMILIES = [
-  { family: 'copilot / domain synthesis', path: '/api/v1/copilot/projects/p1/focus',
+  { family: 'copilot / domain synthesis', path: '/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/focus',
     allowed: 'owner', denied: 'project_manager', service: () => h.buildProjectFocus },
-  { family: 'cross-domain narrative',     path: '/api/v1/copilot/projects/p1/narrative-report',
+  { family: 'cross-domain narrative',     path: '/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/narrative-report',
     allowed: 'owner', denied: 'engineer', service: () => h.buildNarrativeReport },
   { family: 'AI governance',              path: '/api/v1/ai/recommendations',
     allowed: 'admin', denied: 'project_manager', service: () => h.listRecommendations },
@@ -185,7 +190,7 @@ describe('holding assistant.use is not enough to start the work', () => {
     current = principal({ role: 'project_manager' })
     expect(h.buildProjectReport).not.toHaveBeenCalled()
 
-    const res = await request(app()).get('/api/v1/copilot/projects/p1/report')
+    const res = await request(app()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/report')
 
     expect(res.status).toBe(403)
     expect(h.buildProjectReport, 'the report builder ran without cost.view').not.toHaveBeenCalled()
@@ -195,7 +200,7 @@ describe('holding assistant.use is not enough to start the work', () => {
 
   it('denies an engineer the coordination briefing that carries change-order value', async () => {
     current = principal({ role: 'engineer' })
-    const res = await request(app()).get('/api/v1/copilot/projects/p1/coordination')
+    const res = await request(app()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/coordination')
     expect(res.status).toBe(403)
     expect(h.buildProjectCoordination).not.toHaveBeenCalled()
     expect(domainQueries()).toEqual([])
@@ -213,10 +218,10 @@ describe('holding assistant.use is not enough to start the work', () => {
 // ─── §55 — the model is never reached on denial ───────────────────────────────
 describe('no prompt is constructed for a caller who may not see the data', () => {
   it.each([
-    ['project_manager', '/api/v1/copilot/projects/p1/focus'],
-    ['engineer',        '/api/v1/copilot/projects/p1/narrative-report'],
-    ['procurement',     '/api/v1/copilot/projects/p1/coordination'],
-    ['viewer',          '/api/v1/copilot/projects/p1/report'],
+    ['project_manager', '/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/focus'],
+    ['engineer',        '/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/narrative-report'],
+    ['procurement',     '/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/coordination'],
+    ['viewer',          '/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/report'],
     ['admin',           '/api/v1/twins'],
   ])('%s → %s reaches no synthesis layer', async (role, path) => {
     current = principal({ role: role as never })
@@ -247,7 +252,7 @@ describe('an AI denial discloses nothing about what exists', () => {
 
   it('names neither the missing capability nor the caller role', async () => {
     current = principal({ role: 'engineer' })
-    const res = await request(app()).get('/api/v1/copilot/projects/p1/report')
+    const res = await request(app()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/report')
     expect(res.status).toBe(403)
     expect(JSON.stringify(res.body)).not.toMatch(/cost\.view|assistant\.use|engineer|capability/i)
   })
@@ -257,7 +262,7 @@ describe('an AI denial discloses nothing about what exists', () => {
 describe('a stale token cannot invoke AI over data the current role cannot see', () => {
   it('denies the focus briefing when the token says owner and the database says project_manager', async () => {
     current = principal({ role: 'project_manager', jwtRole: 'owner' })
-    const res = await request(app()).get('/api/v1/copilot/projects/p1/focus')
+    const res = await request(app()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/focus')
     expect(res.status).toBe(403)
     expect(h.buildProjectFocus).not.toHaveBeenCalled()
     expect(domainQueries()).toEqual([])
@@ -280,12 +285,26 @@ describe('a stale token cannot invoke AI over data the current role cannot see',
 
 // ─── §57 — tenant isolation is not bypassed by AI orchestration ───────────────
 describe('AI orchestration stays inside the caller tenant', () => {
-  it('synthesises in the caller tenant, not the tenant named in the request', async () => {
+  it('synthesises in the caller tenant, for a project the caller can reach', async () => {
     current = principal({ role: 'owner', tenantId: 'tenant-a', jwtTenantId: 'tenant-a' })
-    await request(app()).get('/api/v1/copilot/projects/tenant-b-project/focus')
+    await request(app()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/focus')
     expect(h.buildProjectFocus).toHaveBeenCalled()
     const [tenantArg] = h.buildProjectFocus.mock.calls[0] as unknown[]
     expect(tenantArg, 'the briefing must be built in the caller tenant').toBe('tenant-a')
+  })
+
+  it('never synthesises for a project the caller cannot reach', async () => {
+    // ADR-014 Phase 3F strengthened the previous contract. It used to be that a
+    // tenant-B project id still reached the synthesis layer and was rebuilt in
+    // tenant A; now `requireProjectScope` refuses first, so no prompt is
+    // constructed at all for a project outside the caller's scope.
+    current = principal({ role: 'owner', tenantId: 'tenant-a', jwtTenantId: 'tenant-a' })
+    // Model the project as unreachable — `recordScopeQuery` otherwise reports
+    // every id the resolver asks about as in scope.
+    h.query.mockImplementation(principalQuery(() => current, recordScopeQuery({ inScope: () => false })))
+    const res = await request(app()).get('/api/v1/copilot/projects/40000000-0000-4000-8000-00000000000b/focus')
+    expect(res.status).toBe(404)
+    expect(h.buildProjectFocus, 'no synthesis for an out-of-scope project').not.toHaveBeenCalled()
   })
 
   it('scopes the twin registry to the caller tenant', async () => {
@@ -297,7 +316,7 @@ describe('AI orchestration stays inside the caller tenant', () => {
 
   it('resolves the current user once per request across a six-capability guard', async () => {
     current = principal({ role: 'owner' })
-    await request(app()).get('/api/v1/copilot/projects/p1/focus')
+    await request(app()).get('/api/v1/copilot/projects/30000000-0000-4000-8000-0000000000a1/focus')
     const lookups = h.query.mock.calls.filter(args =>
       args.some(a => typeof a === 'string' && /FROM\s+users\s+WHERE\s+id/i.test(a)))
     expect(lookups.length).toBe(1)

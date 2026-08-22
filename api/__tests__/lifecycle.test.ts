@@ -4,6 +4,10 @@
  * `buildLifecycle` is pure and deterministic, so most coverage is plain unit
  * tests. A small route smoke test mirrors the mock-pool pattern.
  */
+// ADR-014 Phase 3F: the collection routes below now carry `requireProjectScope`,
+// which refuses a malformed project id WITHOUT issuing SQL (fail closed). These
+// ids are real uuids so the request still reaches the handler and this stays a
+// response-shape smoke test; `nope` became a uuid that simply does not exist.
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ADR-014 Phase 2B-2: The lifecycle map is a `project.view` read, but the
@@ -188,7 +192,7 @@ describe('Lifecycle route smoke', () => {
 
   it('GET returns 404 for an unknown project', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] })
-    const res = await request(makeApp()).get('/api/v1/projects/nope/lifecycle')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-0000000000ff/lifecycle')
     expect(res.status).toBe(404)
   })
 

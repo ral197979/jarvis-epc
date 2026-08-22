@@ -35,6 +35,8 @@ import { assertSafeUrl } from '../lib/ssrfGuard'
 import { slog } from '../../src/modules/observability/index'
 import Anthropic from '@anthropic-ai/sdk'
 import { requireCapability } from '../authz/requireCapability'
+import { collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
 type AuthTenantReq = Request & AuthenticatedRequest & Omit<TenantRequest, 'tenantId'> & { tenantId: string }
@@ -290,6 +292,19 @@ router.get('/sessions', requireCapability('platform.admin') as never, async (req
   const params: unknown[] = [r.tenantId]
   let projectFilter = ''
   if (project_id) { params.push(project_id); projectFilter = `AND project_id = $${params.length}` }
+
+  // ADR-014 Phase 3F. `calc_sessions` is DUAL_PROJECT_OR_TENANT: an MCP agent
+  // session created without a project is tenant-level and stays visible, while
+  // one bound to a project needs live membership. platform.admin is held by the
+  // platform administrator as well as the Owner, and §42 is explicit that
+  // administration confers no implicit business-data reach — so the predicate
+  // is load-bearing here rather than holder-neutral. It is ANDed outside
+  // `?project_id=`, which can therefore only narrow (§30), and before LIMIT.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'calc_sessions', 'project_id', `$${params.length + 1}`)
+  const scopeVals = collectionScopeParams(principal, 'calc_sessions')
+  params.push(...scopeVals)
   params.push(parseInt(limit as string), parseInt(offset as string))
 
   try {
@@ -298,6 +313,7 @@ router.get('/sessions', requireCapability('platform.admin') as never, async (req
               CASE WHEN pid_svg IS NOT NULL THEN true ELSE false END AS has_pid
        FROM calc_sessions
        WHERE tenant_id = $1 AND tool_name LIKE 'agent:%' ${projectFilter}
+       ${scopeSql}
        ORDER BY created_at DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params

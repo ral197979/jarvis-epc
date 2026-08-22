@@ -34,7 +34,7 @@ router.use(requireAuth   as any)
 router.use(requireTenant() as any)
 
 // ─── Budget (one per project) ────────────────────────────────────────────────
-router.get('/projects/:projectId/budget', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/budget', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -154,7 +154,7 @@ router.delete('/budget-items/:itemId', requireCapability('cost.write') as never,
   }
 })
 
-router.get('/projects/:projectId/budget/rollup', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/budget/rollup', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

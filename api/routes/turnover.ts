@@ -21,7 +21,7 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/projects/:projectId/turnover-packages', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/turnover-packages', requireCapability('docs.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try { res.json({ data: await listPackages(r.tenantId!, String(req.params.projectId)) }) }
   catch (err) { res.status(500).json({ error: 'Failed to list turnover packages', detail: (err as Error).message }) }

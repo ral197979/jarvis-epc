@@ -28,7 +28,8 @@ import { getStorage } from '../files/storage'
 import { slog } from '../../src/modules/observability/index'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
+import { requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -331,6 +332,18 @@ router.get('/documents', requireTenant() as never, requireCapability('docs.view'
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `documents` is DUAL_PROJECT_OR_TENANT: a `_global`
+  // document has no project and stays visible to any docs.view holder in the
+  // tenant, while a project document needs live membership of that project.
+  // The predicate is ANDed OUTSIDE the caller's filters and BEFORE LIMIT, so
+  // `?project_id=` can only narrow the authorized set (§9) and paging describes
+  // that set rather than a tenant page with holes cut in it (§14).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = collectionScopeSql(principal, 'documents', 'd.project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'documents')
+  const j = i + scopeVals.length
+
   const data = await tenantQuery(tenantId, `
     SELECT d.*,
            dv.original_name, dv.size_bytes, dv.mime_type, dv.uploaded_at,
@@ -339,8 +352,9 @@ router.get('/documents', requireTenant() as never, requireCapability('docs.view'
     LEFT JOIN document_versions dv ON dv.document_id = d.id AND dv.version = d.current_version
     LEFT JOIN users u ON u.id = dv.uploaded_by
     WHERE d.tenant_id=current_setting('app.current_tenant_id',true)::uuid AND d.status != 'deleted' ${where}
-    ORDER BY d.created_at DESC LIMIT $${i} OFFSET $${i+1}
-  `, [...vals, lm, off])
+    ${scope}
+    ORDER BY d.created_at DESC LIMIT $${j} OFFSET $${j+1}
+  `, [...vals, ...scopeVals, lm, off])
 
   res.json({ data: data.rows })
 })

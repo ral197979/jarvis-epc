@@ -16,7 +16,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import { resolveCurrentUser } from '../authz/currentUser'
-import { projectScopeSql, requireRecordScope } from '../authz/recordScope'
+import { projectScopeSql, requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
 import { requireCapability } from '../authz/requireCapability'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
@@ -175,6 +175,17 @@ purchaseOrdersRouter.get('/', requireCapability('procurement.view') as never, as
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `purchase_orders.project_id` is NOT NULL, so the resource
+  // is PROJECT_REQUIRED and every row needs live membership of its project. The
+  // predicate is ANDed outside the caller's filters, so `?project_id=` narrows
+  // the authorized set and cannot widen it (§30), and it is applied before
+  // LIMIT so the page and the total describe the same set (§14, §15).
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = collectionScopeSql(principal, 'purchase_orders', 'po.project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'purchase_orders')
+  const j = i + scopeVals.length
+
   const [data, count] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT po.*, v.name AS vendor_name, p.code AS project_code, p.name AS project_name,
@@ -184,12 +195,14 @@ purchaseOrdersRouter.get('/', requireCapability('procurement.view') as never, as
       JOIN projects p ON p.id = po.project_id
       LEFT JOIN users ab ON ab.id = po.approved_by
       WHERE po.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-      ORDER BY po.created_at DESC LIMIT $${i} OFFSET $${i+1}
-    `, [...vals, limit, offset]),
+      ${scope}
+      ORDER BY po.created_at DESC LIMIT $${j} OFFSET $${j+1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM purchase_orders po
       WHERE po.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scope}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(count.rows[0]?.count ?? '0', 10)

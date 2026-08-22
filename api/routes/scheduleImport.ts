@@ -64,7 +64,7 @@ scheduleImportRouter.post(
 
 // ─── Job history ──────────────────────────────────────────────────────────────
 
-scheduleImportRouter.get('/projects/:projectId/schedule/imports', requireCapability('schedule.view') as never, async (req: Request, res: Response) => {
+scheduleImportRouter.get('/projects/:projectId/schedule/imports', requireCapability('schedule.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const jobs = await listImportJobs(r.tenantId!, p(req, 'projectId'))

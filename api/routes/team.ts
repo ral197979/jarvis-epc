@@ -17,7 +17,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { createMember, listMembers, getMember, updateMember, createAssignment, listAssignmentsByMember, listAssignmentsByProject, endAssignment, getTeamSummary, type MemberStatus } from '../services/team/teamService'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -94,7 +94,7 @@ teamRouter.post('/team/assignments', requireCapability('team.approve') as never,
   catch (e) { res.status(500).json({ error: 'Failed to create assignment' }) }
 })
 
-teamRouter.get('/projects/:projectId/team', requireCapability('team.view') as never, async (req: Request, res: Response) => {
+teamRouter.get('/projects/:projectId/team', requireCapability('team.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ assignments: await listAssignmentsByProject(r.tenantId!, p(req, 'projectId')) }) }
   catch (e) { res.status(500).json({ error: 'Failed to list project team' }) }

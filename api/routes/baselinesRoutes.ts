@@ -18,7 +18,8 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -42,6 +43,19 @@ router.get('/', requireCapability('commissioning.view') as never, async (req: Re
   if (scope)       { conds.push(`scope = $${i++}`);       vals.push(scope) }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `commissioning_baselines` is DUAL_PROJECT_OR_TENANT, and
+  // uniquely explicit about it: migration 019 declares
+  // `scope CHECK (scope IN ('global','client','project'))` and documents the
+  // global row. So a global or client baseline stays visible to any
+  // commissioning.view holder and a project baseline needs membership. Same
+  // predicate on the COUNT, so the page total describes the visible set (§15).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'commissioning_baselines', 'b.project_id', `$${i}`)
+  const countScopeSql = collectionScopeSql(principal, 'commissioning_baselines', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'commissioning_baselines')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT b.id, b.scope, b.client_id, b.project_id,
@@ -55,13 +69,15 @@ router.get('/', requireCapability('commissioning.view') as never, async (req: Re
              (b.sample_count >= 30) AS is_warm
       FROM   commissioning_baselines b
       WHERE  b.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scopeSql}
       ORDER  BY b.updated_at DESC NULLS LAST
-      LIMIT  $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT  $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM commissioning_baselines
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${countScopeSql}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)

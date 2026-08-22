@@ -30,7 +30,7 @@ router.use(requireTenant() as any)
 
 // ─── Inspection Templates ────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/inspection-templates', requireCapability('quality.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/inspection-templates', requireCapability('quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { category, discipline } = req.query
   const params: unknown[] = [r.tenantId!]

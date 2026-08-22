@@ -24,7 +24,7 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { computeCpm, CpmCycleError, CpmMissingTaskError } from '../services/cpm'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -33,7 +33,7 @@ router.use(requireTenant() as never)
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
 
-router.get('/:projectId/tasks', requireCapability('schedule.view') as never, async (req: Req, res: Response) => {
+router.get('/:projectId/tasks', requireCapability('schedule.view') as never, requireProjectScope() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -49,7 +49,7 @@ router.get('/:projectId/tasks', requireCapability('schedule.view') as never, asy
   res.json({ data: rows.rows })
 })
 
-router.post('/:projectId/tasks', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
+router.post('/:projectId/tasks', requireCapability('schedule.write') as never, requireProjectScope() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -123,7 +123,7 @@ router.delete('/tasks/:id', requireCapability('schedule.write') as never, requir
 
 // ─── Dependencies ────────────────────────────────────────────────────────────
 
-router.get('/:projectId/dependencies', requireCapability('schedule.view') as never, async (req: Req, res: Response) => {
+router.get('/:projectId/dependencies', requireCapability('schedule.view') as never, requireProjectScope() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -139,7 +139,7 @@ router.get('/:projectId/dependencies', requireCapability('schedule.view') as nev
   res.json({ data: rows.rows })
 })
 
-router.post('/:projectId/dependencies', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
+router.post('/:projectId/dependencies', requireCapability('schedule.write') as never, requireProjectScope() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -188,7 +188,7 @@ router.delete('/dependencies/:id', requireCapability('schedule.write') as never,
 
 // ─── CPM compute ──────────────────────────────────────────────────────────────
 
-router.get('/:projectId/cpm', requireCapability('schedule.view') as never, async (req: Req, res: Response) => {
+router.get('/:projectId/cpm', requireCapability('schedule.view') as never, requireProjectScope() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

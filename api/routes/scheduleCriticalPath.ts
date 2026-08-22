@@ -10,12 +10,13 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildCriticalPath, buildWhatIf, type WhatIfChange } from '../services/schedule/scheduleCriticalPathService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/:projectId/critical-path', requireCapability('schedule.view') as never, async (req: Request, res: Response) => {
+router.get('/:projectId/critical-path', requireCapability('schedule.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildCriticalPath(r.tenantId!, String(req.params.projectId))
@@ -24,7 +25,7 @@ router.get('/:projectId/critical-path', requireCapability('schedule.view') as ne
   } catch (err) { res.status(500).json({ error: 'Failed to compute critical path', detail: (err as Error).message }) }
 })
 
-router.post('/:projectId/what-if', requireCapability('schedule.write') as never, async (req: Request, res: Response) => {
+router.post('/:projectId/what-if', requireCapability('schedule.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const changes = (req.body as { changes?: WhatIfChange[] }).changes
   if (!Array.isArray(changes) || changes.length === 0) return res.status(400).json({ error: 'changes array is required' })

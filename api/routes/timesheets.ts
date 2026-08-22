@@ -44,7 +44,7 @@ timesheetsRouter.put('/projects/:projectId/timesheets', requireCapability('team.
   } catch (e) { res.status(500).json({ error: 'Failed to save timesheet' }) }
 })
 
-timesheetsRouter.get('/projects/:projectId/timesheets', requireCapability('team.view') as never, async (req: Request, res: Response) => {
+timesheetsRouter.get('/projects/:projectId/timesheets', requireCapability('team.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const timesheets = await listTimesheets(r.tenantId!, {
@@ -56,7 +56,7 @@ timesheetsRouter.get('/projects/:projectId/timesheets', requireCapability('team.
   } catch (e) { res.status(500).json({ error: 'Failed to list timesheets' }) }
 })
 
-timesheetsRouter.get('/projects/:projectId/timesheets/summary', requireCapability('team.view') as never, async (req: Request, res: Response) => {
+timesheetsRouter.get('/projects/:projectId/timesheets/summary', requireCapability('team.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const weeks = await getWeeklySummary(r.tenantId!, p(req, 'projectId'))

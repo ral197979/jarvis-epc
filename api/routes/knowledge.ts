@@ -19,7 +19,8 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
 import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
@@ -147,6 +148,18 @@ router.get('/sources', async (req: Req, res: Response) => {
   if (asset_system) { conds.push(`asset_system = $${i++}`); vals.push(asset_system) }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `knowledge_sources` is DUAL_PROJECT_OR_TENANT: migration
+  // 022 files `project_id` under "Classification tags used for retrieval
+  // filtering", and the bulk ingest omits it entirely — so the tenant corpus is
+  // project-less by construction and must stay visible, while a project-tagged
+  // source follows membership. Same predicate on the COUNT, so `total`
+  // describes the rows this caller can actually page through (§15).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = collectionScopeSql(principal, 'knowledge_sources', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'knowledge_sources')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT id, title, kind, storage_path, original_filename, byte_size, page_count,
@@ -154,13 +167,15 @@ router.get('/sources', async (req: Req, res: Response) => {
              tags, asset_system, project_id, ingested_at, created_at, updated_at
       FROM   knowledge_sources
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scope}
       ORDER  BY created_at DESC
-      LIMIT  $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT  $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM knowledge_sources
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scope}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)
@@ -402,16 +417,32 @@ router.post('/embed-bulk', requireCorpusAdmin, async (req: Req, res: Response) =
 router.get('/embed-status', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // ADR-014 Phase 3F §16/§17. This is an AGGREGATE over project-bound rows, so
+  // the authorization predicate belongs INSIDE the aggregate query: a tenant-wide
+  // COUNT would report the size of a corpus the caller cannot read, which is the
+  // same disclosure as returning the rows.
+  //
+  // `knowledge_chunks` reaches its project through `source_id`, so the parent is
+  // reached by a single JOIN rather than a lookup per row (§37). The join is
+  // INNER because a chunk always has a source; the DUAL semantics then keep
+  // chunks of project-less (tenant corpus) sources counted.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'knowledge_sources', 's.project_id', '$1')
+  const scopeVals = collectionScopeParams(principal, 'knowledge_sources')
+
   const r = await tenantQuery<{
     total: string; embedded: string; pending: string
   }>(tenantId, `
     SELECT
-      COUNT(*)::text                                   AS total,
-      COUNT(*) FILTER (WHERE embedding IS NOT NULL)::text AS embedded,
-      COUNT(*) FILTER (WHERE embedding IS NULL)::text     AS pending
-    FROM knowledge_chunks
-    WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid
-  `, [])
+      COUNT(*)::text                                     AS total,
+      COUNT(*) FILTER (WHERE c.embedding IS NOT NULL)::text AS embedded,
+      COUNT(*) FILTER (WHERE c.embedding IS NULL)::text     AS pending
+    FROM knowledge_chunks c
+    JOIN knowledge_sources s ON s.id = c.source_id
+    WHERE c.tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    ${scopeSql}
+  `, scopeVals)
   const row = r.rows[0]!
   res.json({
     data: {

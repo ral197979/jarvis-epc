@@ -166,9 +166,17 @@ export async function recordResponse(
 
 // ─── List / Get ───────────────────────────────────────────────────────────────
 
+/**
+ * ADR-014 Phase 3F. `scope` is the collection authorization predicate the ROUTE
+ * builds from the live principal via `collectionScopeSql` — the service never
+ * decides authorization itself, and never sees the principal. `transmittals` is
+ * DUAL_PROJECT_OR_TENANT, so the predicate admits project-less transmittals and
+ * requires membership for the rest. Passing '' is the tenant-wide case.
+ */
 export async function listTransmittals(
   tenantId:  string,
   opts: { project_id?: string; status?: string; purpose?: string; overdue?: boolean } = {},
+  scope: { sql: string; params: unknown[] } = { sql: '', params: [] },
 ) {
   const params: unknown[] = [tenantId]
   const filters: string[] = []
@@ -181,12 +189,14 @@ export async function listTransmittals(
   }
 
   const where = filters.length ? `AND ${filters.join(' AND ')}` : ''
+  const scopeSql = scope.sql.replace(/\$SCOPE_USER/g, `$${params.length + 1}`)
   const res = await tenantQuery(tenantId,
     `SELECT t.*,
             (SELECT count(*) FROM transmittal_items WHERE transmittal_id=t.id)::int AS item_count
      FROM transmittals t WHERE tenant_id=$1 ${where}
+     ${scopeSql}
      ORDER BY created_at DESC`,
-    params)
+    [...params, ...scope.params])
   return res.rows
 }
 
@@ -212,7 +222,11 @@ export async function getTransmittal(tenantId: string, id: string) {
 
 // ─── Overdue check (called by scheduler) ─────────────────────────────────────
 
-export async function getOverdueTransmittals(tenantId: string) {
+export async function getOverdueTransmittals(
+  tenantId: string,
+  scope: { sql: string; params: unknown[] } = { sql: '', params: [] },
+) {
+  const scopeSql = scope.sql.replace(/\$SCOPE_USER/g, '$2')
   const res = await tenantQuery(tenantId,
     `SELECT id, transmittal_number, subject, response_due_date, to_party, to_contacts
      FROM transmittals
@@ -220,7 +234,8 @@ export async function getOverdueTransmittals(tenantId: string) {
        AND response_required = true
        AND response_due_date < CURRENT_DATE
        AND status NOT IN ('closed','voided','actioned')
+       ${scopeSql}
      ORDER BY response_due_date`,
-    [tenantId])
+    [tenantId, ...scope.params])
   return res.rows
 }

@@ -27,7 +27,7 @@ router.post('/projects/:projectId/coordination/scan', requireAllCapabilities('as
   } catch (err) { res.status(500).json({ error: 'Scan failed', detail: (err as Error).message }) }
 })
 
-router.get('/projects/:projectId/coordination/recommendations', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, async (req: Request, res: Response) => {
+router.get('/projects/:projectId/coordination/recommendations', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = typeof req.query['status'] === 'string' ? req.query['status'] : undefined
   try {

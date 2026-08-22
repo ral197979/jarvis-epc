@@ -133,7 +133,7 @@ authRouter.post('/projects/:projectId/sensors', requireCapability('construction.
   } catch (e) { res.status(500).json({ error: 'Failed to register sensor', detail: (e as Error).message }) }
 })
 
-authRouter.get('/projects/:projectId/sensors', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
+authRouter.get('/projects/:projectId/sensors', requireCapability('construction.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensors = await listSensors(r.tenantId!, p(req, 'projectId'))
@@ -171,7 +171,7 @@ authRouter.get('/sensors/:id/readings', requireCapability('construction.view') a
   } catch (e) { res.status(500).json({ error: 'Failed to get readings' }) }
 })
 
-authRouter.get('/projects/:projectId/sensors/alerts', requireCapability('construction.view') as never, async (req: Request, res: Response) => {
+authRouter.get('/projects/:projectId/sensors/alerts', requireCapability('construction.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const alerts = await getOpenAlerts(r.tenantId!, p(req, 'projectId'))

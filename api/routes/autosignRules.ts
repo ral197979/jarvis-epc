@@ -24,7 +24,8 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { arbitrate } from '../services/ciArbiter'
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -60,6 +61,17 @@ router.get('/', requireCapability('commissioning.view') as never, async (req: Re
   }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `commissioning_autosign_rules` is DUAL_PROJECT_OR_TENANT,
+  // declared explicitly by migration 016's
+  // `scope CHECK (scope IN ('global','client','project'))`: a global autosign
+  // rule is a designed state, not an orphan, and must stay visible. A rule that
+  // names a project needs live membership of it. Same predicate on the COUNT.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'commissioning_autosign_rules', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'commissioning_autosign_rules')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT id, scope, client_id, project_id, system_type, criteria_name, criteria_kind,
@@ -68,13 +80,15 @@ router.get('/', requireCapability('commissioning.view') as never, async (req: Re
              created_at, updated_at
       FROM   commissioning_autosign_rules
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scopeSql}
       ORDER  BY system_type, criteria_name, scope
-      LIMIT  $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT  $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM commissioning_autosign_rules
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scopeSql}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)
