@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `5094eef3e4b8c4cb1e17c72b3be468addebaa23b`.**
+**Generated from checked-in source at `a8d6a4fe7019a2435ae620aa5887eb4568f2a0ae`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
@@ -13,7 +13,7 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 > read from source: the capability guard in force on each route, and whether the
 > handler calls the canonical record-scope layer. At this commit
 > `729` endpoints carry a capability guard and
-> `190` enforce record scope.
+> `236` enforce record scope.
 
 ## 1. Join against the Phase-2 census
 

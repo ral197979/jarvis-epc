@@ -65,21 +65,21 @@
     },
     "RECORD_SCOPE": {
       "candidates": 302,
-      "protected": 187,
-      "deferred": 115,
+      "protected": 231,
+      "deferred": 71,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 190,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 236,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
+      "READ_DIRECT_ID": 53,
       "MUTATION_CREATE": 75,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
       "MUTATION_UPDATE": 43,
-      "READ_DIRECT_ID": 9,
       "READ_COLLECTION": 7
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
-      "READ_DIRECT_ID": 54,
+      "READ_DIRECT_ID": 10,
       "MUTATION_UPDATE": 2,
       "MUTATION_CREATE": 6,
       "MUTATION_DELETE": 1,
@@ -2387,8 +2387,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "agent_actions",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -2402,7 +2404,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -3633,8 +3635,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_chunks",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -3653,7 +3657,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -4360,8 +4364,10 @@
         "procurement.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_packages",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -4375,7 +4381,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -4514,8 +4520,10 @@
         "procurement.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_submissions",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -4534,7 +4542,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -4719,8 +4727,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -4734,7 +4744,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -4793,8 +4803,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -4808,7 +4820,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5336,8 +5348,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "budget_items",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5356,7 +5370,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5458,8 +5472,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "calc_sessions",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5473,7 +5489,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -5612,8 +5628,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5627,7 +5645,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -5806,8 +5824,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_order_tasks",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5826,7 +5846,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -6340,8 +6360,10 @@
         "commissioning.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_baselines",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -6355,7 +6377,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -6548,8 +6570,10 @@
         "commissioning.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_packs",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -6563,7 +6587,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -6582,8 +6606,10 @@
         "commissioning.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_packs",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -6597,7 +6623,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -6881,8 +6907,10 @@
         "safety.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "compliance_tasks",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -6896,7 +6924,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -7482,8 +7510,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -7497,7 +7527,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -7709,8 +7739,10 @@
         "construction.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "daily_logs",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -7724,7 +7756,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -11304,8 +11336,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "estimates",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -11319,7 +11353,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -11656,8 +11690,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "evm_wbs_entries",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -11671,7 +11707,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -12246,8 +12282,10 @@
         "docs.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "documents",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -12261,7 +12299,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -12423,8 +12461,10 @@
         "docs.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "document_versions",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -12443,7 +12483,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -13342,8 +13382,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_fixes",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -13357,7 +13399,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -13801,8 +13843,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_sources",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -13816,7 +13860,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -13835,8 +13879,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_chunks",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -13855,7 +13901,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -14369,8 +14415,10 @@
         "project.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meetings",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -14384,7 +14432,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -14443,8 +14491,10 @@
         "project.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "action_items",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -14458,7 +14508,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -14517,8 +14567,10 @@
         "project.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meeting_agenda_items",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -14537,7 +14589,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -14846,8 +14898,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "monte_carlo_runs",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -14861,7 +14915,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -14880,8 +14934,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "monte_carlo_iterations",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -14986,8 +15042,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "corrective_actions",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -15001,7 +15059,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -16106,8 +16164,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "pay_applications",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -16121,7 +16181,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -16788,7 +16848,7 @@
       "method": "GET",
       "path": "/api/v1/predict/portfolio",
       "file": "api/routes/predict.ts",
-      "line": 23,
+      "line": 24,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -16821,7 +16881,7 @@
       "method": "GET",
       "path": "/api/v1/predict/projects/:id",
       "file": "api/routes/predict.ts",
-      "line": 34,
+      "line": 35,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -16834,8 +16894,10 @@
         "portfolio.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -16848,7 +16910,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -17244,8 +17306,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -17258,7 +17322,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -21275,8 +21339,10 @@
         "procurement.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "purchase_orders",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -21290,7 +21356,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -21376,7 +21442,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/overview",
       "file": "api/routes/readiness.ts",
-      "line": 97,
+      "line": 98,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -21410,7 +21476,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/project/:id",
       "file": "api/routes/readiness.ts",
-      "line": 22,
+      "line": 23,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21424,8 +21490,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [
         "readiness_scores"
@@ -21440,13 +21508,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/readiness/project/:id/history",
       "file": "api/routes/readiness.ts",
-      "line": 78,
+      "line": 79,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -21460,8 +21528,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "readiness_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -21479,7 +21549,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/subsystem/:id",
       "file": "api/routes/readiness.ts",
-      "line": 66,
+      "line": 67,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21493,8 +21563,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "action_relations",
       "writeTables": [
         "readiness_scores"
@@ -21515,13 +21587,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/readiness/system/:id",
       "file": "api/routes/readiness.ts",
-      "line": 48,
+      "line": 49,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21535,8 +21607,10 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "systems",
       "writeTables": [
         "readiness_scores"
@@ -21552,7 +21626,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -21665,7 +21739,7 @@
       "method": "GET",
       "path": "/api/v1/rfis/:id/copilot",
       "file": "api/routes/rfiCopilot.ts",
-      "line": 20,
+      "line": 21,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21679,8 +21753,10 @@
         "construction.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "action_relations",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -21699,7 +21775,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -21758,8 +21834,10 @@
         "risk.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "risks",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -21773,7 +21851,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -23236,8 +23314,10 @@
         "construction.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "sensors",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -23251,7 +23331,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -23270,8 +23350,10 @@
         "construction.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "sensor_readings",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -23290,7 +23372,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -23599,8 +23681,10 @@
         "procurement.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontracts",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -23614,7 +23698,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -23633,8 +23717,10 @@
         "cost.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontract_invoices",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -23653,7 +23739,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -23855,7 +23941,7 @@
       "method": "GET",
       "path": "/api/v1/submittals/:id/review",
       "file": "api/routes/submittalReview.ts",
-      "line": 20,
+      "line": 21,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23868,8 +23954,10 @@
         "construction.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "submittals",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -23883,7 +23971,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -24965,8 +25053,10 @@
         "commissioning.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "test_packs",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -24980,7 +25070,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -25309,8 +25399,10 @@
         "docs.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "transmittals",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -25324,7 +25416,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",

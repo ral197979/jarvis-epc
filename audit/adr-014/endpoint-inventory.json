@@ -1411,7 +1411,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -2209,7 +2211,9 @@
       "capabilities": [
         "assistant.use"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -2671,7 +2675,9 @@
       "capabilities": [
         "procurement.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -2765,7 +2771,9 @@
       "capabilities": [
         "procurement.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -2883,7 +2891,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -2929,7 +2939,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3273,7 +3285,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3343,7 +3357,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3437,7 +3453,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3555,7 +3573,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3866,7 +3886,9 @@
       "capabilities": [
         "commissioning.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3992,7 +4014,9 @@
       "capabilities": [
         "commissioning.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4015,7 +4039,9 @@
       "capabilities": [
         "commissioning.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4193,7 +4219,9 @@
       "capabilities": [
         "safety.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4573,7 +4601,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4711,7 +4741,9 @@
       "capabilities": [
         "construction.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -6929,7 +6961,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7148,7 +7182,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7499,7 +7535,9 @@
       "capabilities": [
         "docs.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7610,7 +7648,9 @@
       "capabilities": [
         "docs.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8160,7 +8200,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8414,7 +8456,9 @@
       "capabilities": [
         "assistant.use"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8436,7 +8480,9 @@
       "capabilities": [
         "assistant.use"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8763,7 +8809,9 @@
       "capabilities": [
         "project.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8809,7 +8857,9 @@
       "capabilities": [
         "project.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -8857,7 +8907,9 @@
       "capabilities": [
         "project.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9045,7 +9097,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9067,7 +9121,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9133,7 +9189,9 @@
       "capabilities": [
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9796,7 +9854,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -10208,7 +10268,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/predict/portfolio",
       "file": "api/routes/predict.ts",
-      "line": 23,
+      "line": 24,
       "serverLine": 629,
       "pathParams": [],
       "guards": [
@@ -10228,7 +10288,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/predict/projects/:id",
       "file": "api/routes/predict.ts",
-      "line": 34,
+      "line": 35,
       "serverLine": 629,
       "pathParams": [
         "id"
@@ -10240,7 +10300,9 @@
       "capabilities": [
         "portfolio.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -10497,7 +10559,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13065,7 +13129,9 @@
       "capabilities": [
         "procurement.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13123,7 +13189,7 @@
       "mountPrefix": "/api/v1/readiness",
       "routePath": "/overview",
       "file": "api/routes/readiness.ts",
-      "line": 97,
+      "line": 98,
       "serverLine": 591,
       "pathParams": [],
       "guards": [
@@ -13144,7 +13210,7 @@
       "mountPrefix": "/api/v1/readiness",
       "routePath": "/project/:id",
       "file": "api/routes/readiness.ts",
-      "line": 22,
+      "line": 23,
       "serverLine": 591,
       "pathParams": [
         "id"
@@ -13157,7 +13223,9 @@
         "project.view",
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13167,7 +13235,7 @@
       "mountPrefix": "/api/v1/readiness",
       "routePath": "/project/:id/history",
       "file": "api/routes/readiness.ts",
-      "line": 78,
+      "line": 79,
       "serverLine": 591,
       "pathParams": [
         "id"
@@ -13180,7 +13248,9 @@
         "project.view",
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13190,7 +13260,7 @@
       "mountPrefix": "/api/v1/readiness",
       "routePath": "/subsystem/:id",
       "file": "api/routes/readiness.ts",
-      "line": 66,
+      "line": 67,
       "serverLine": 591,
       "pathParams": [
         "id"
@@ -13203,7 +13273,9 @@
         "commissioning.view",
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13213,7 +13285,7 @@
       "mountPrefix": "/api/v1/readiness",
       "routePath": "/system/:id",
       "file": "api/routes/readiness.ts",
-      "line": 48,
+      "line": 49,
       "serverLine": 591,
       "pathParams": [
         "id"
@@ -13226,7 +13298,9 @@
         "commissioning.view",
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13302,7 +13376,7 @@
       "mountPrefix": "/api/v1/rfis",
       "routePath": "/:id/copilot",
       "file": "api/routes/rfiCopilot.ts",
-      "line": 20,
+      "line": 21,
       "serverLine": 536,
       "pathParams": [
         "id"
@@ -13315,7 +13389,9 @@
         "assistant.use",
         "construction.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13361,7 +13437,9 @@
       "capabilities": [
         "risk.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14268,7 +14346,9 @@
       "capabilities": [
         "construction.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14290,7 +14370,9 @@
       "capabilities": [
         "construction.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14482,7 +14564,9 @@
       "capabilities": [
         "procurement.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14504,7 +14588,9 @@
       "capabilities": [
         "cost.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14628,7 +14714,7 @@
       "mountPrefix": "/api/v1/submittals",
       "routePath": "/:id/review",
       "file": "api/routes/submittalReview.ts",
-      "line": 20,
+      "line": 21,
       "serverLine": 538,
       "pathParams": [
         "id"
@@ -14640,7 +14726,9 @@
       "capabilities": [
         "construction.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15305,7 +15393,9 @@
       "capabilities": [
         "commissioning.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15507,7 +15597,9 @@
       "capabilities": [
         "docs.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },

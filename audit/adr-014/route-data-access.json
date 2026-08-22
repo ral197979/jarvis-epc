@@ -13421,7 +13421,7 @@
       "method": "GET",
       "path": "/api/v1/predict/portfolio",
       "file": "api/routes/predict.ts",
-      "line": 23,
+      "line": 24,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13443,7 +13443,7 @@
       "method": "GET",
       "path": "/api/v1/predict/projects/:id",
       "file": "api/routes/predict.ts",
-      "line": 34,
+      "line": 35,
       "pathParams": [
         "id"
       ],
@@ -17130,7 +17130,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/overview",
       "file": "api/routes/readiness.ts",
-      "line": 97,
+      "line": 98,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -17151,7 +17151,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/project/:id",
       "file": "api/routes/readiness.ts",
-      "line": 22,
+      "line": 23,
       "pathParams": [
         "id"
       ],
@@ -17190,7 +17190,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/project/:id/history",
       "file": "api/routes/readiness.ts",
-      "line": 78,
+      "line": 79,
       "pathParams": [
         "id"
       ],
@@ -17212,7 +17212,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/subsystem/:id",
       "file": "api/routes/readiness.ts",
-      "line": 66,
+      "line": 67,
       "pathParams": [
         "id"
       ],
@@ -17250,7 +17250,7 @@
       "method": "GET",
       "path": "/api/v1/readiness/system/:id",
       "file": "api/routes/readiness.ts",
-      "line": 48,
+      "line": 49,
       "pathParams": [
         "id"
       ],
@@ -17381,7 +17381,7 @@
       "method": "GET",
       "path": "/api/v1/rfis/:id/copilot",
       "file": "api/routes/rfiCopilot.ts",
-      "line": 20,
+      "line": 21,
       "pathParams": [
         "id"
       ],
@@ -19294,7 +19294,7 @@
       "method": "GET",
       "path": "/api/v1/submittals/:id/review",
       "file": "api/routes/submittalReview.ts",
-      "line": 20,
+      "line": 21,
       "pathParams": [
         "id"
       ],
