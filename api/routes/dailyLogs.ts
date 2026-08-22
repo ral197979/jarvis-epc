@@ -18,6 +18,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
@@ -59,7 +60,7 @@ router.get('/projects/:projectId/daily-logs', requireCapability('construction.vi
   }
 })
 
-router.post('/projects/:projectId/daily-logs', requireCapability('construction.write') as never, guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/daily-logs', requireCapability('construction.write') as never, requireProjectScope() as never, guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const projectId = req.params.projectId as string
   const b = req.body ?? {}

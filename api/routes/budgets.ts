@@ -26,6 +26,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -45,7 +46,7 @@ router.get('/projects/:projectId/budget', requireCapability('cost.view') as neve
   }
 })
 
-router.post('/projects/:projectId/budget', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/budget', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   try {

@@ -10,6 +10,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   scanProject, listRecommendations, approveRecommendation, dismissRecommendation,
 } from '../services/coordination/autoCoordinationService'
@@ -19,7 +20,7 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.post('/projects/:projectId/coordination/scan', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/coordination/scan', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     res.json({ data: await scanProject(r.tenantId!, String(req.params.projectId), new Date()) })

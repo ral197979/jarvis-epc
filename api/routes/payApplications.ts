@@ -25,6 +25,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   listSovItems, createSovItem, listPayApplications, createPayApplication,
   getPayApplicationView, upsertPayApplicationLines, setPayApplicationStatus,
@@ -48,7 +49,7 @@ router.get('/projects/:projectId/sov-items', requireCapability('cost.view') as n
   } catch (err) { res.status(500).json({ error: 'Failed to list SOV items', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/sov-items', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/sov-items', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { item_no?: string; description?: string; scheduled_value?: number; cost_code?: string; sort_order?: number }
   if (!b.item_no || !b.description) {
@@ -75,7 +76,7 @@ router.get('/projects/:projectId/pay-applications', requireCapability('cost.view
   } catch (err) { res.status(500).json({ error: 'Failed to list pay applications', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/pay-applications', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/pay-applications', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { retention_pct?: number; period_start?: string; period_end?: string; invoice_date?: string; seed_from_sov?: boolean }
   if (b.retention_pct != null && (b.retention_pct < 0 || b.retention_pct > 100)) {

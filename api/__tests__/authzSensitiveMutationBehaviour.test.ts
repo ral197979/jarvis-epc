@@ -31,7 +31,7 @@ vi.mock('../db/pool', () => ({
 }))
 vi.mock('../services/actionService', () => ({ createAction: vi.fn() }))
 
-import { principal, principalQuery, ALL_ROLES, type TestPrincipal } from './helpers/testPrincipal'
+import { principal, principalQuery, recordScopeQuery, ALL_ROLES, type TestPrincipal } from './helpers/testPrincipal'
 import { roleHasCapability, type UserRole } from '../authz/capabilities'
 
 let current: TestPrincipal
@@ -128,9 +128,9 @@ const mutated = () => businessQueries().some(s => /\b(INSERT|UPDATE|DELETE)\b/i.
 beforeEach(() => {
   unauthenticated = false
   mockQuery.mockReset()
-  mockQuery.mockImplementation(principalQuery(() => current, async () => ({
+  mockQuery.mockImplementation(principalQuery(() => current, recordScopeQuery({ delegate: async () => ({
     rows: [{ id: 'x', status: 'draft', tenant_id: 'tenant-under-test', project_id: 'p-1' }], rowCount: 1,
-  })))
+  }) })))
 })
 
 /**
@@ -142,7 +142,7 @@ const CASES: {
   method: 'post' | 'patch' | 'put' | 'delete'; url: string; body?: object
 }[] = [
   // commercial
-  { family: 'commercial / cost.write',        capability: 'cost.write',        method: 'post',   url: '/api/v1/projects/p-1/budget',                   body: { total: 100 } },
+  { family: 'commercial / cost.write',        capability: 'cost.write',        method: 'post',   url: '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/budget',                   body: { total: 100 } },
   { family: 'commercial / cost.approve',      capability: 'cost.approve',      method: 'post',   url: '/api/v1/cost-entries/ce-1/post' },
   // crm
   { family: 'crm / crm.write',                capability: 'crm.write',         method: 'post',   url: '/api/v1/proposals',                             body: { title: 'Substation upgrade' } },
@@ -297,8 +297,8 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
   it('cost.write may create the SOV, open a draft and edit its lines', async () => {
     setCurrent(principal({ role: 'owner' }))
     for (const [method, url, body] of [
-      ['post',  '/api/v1/projects/p-1/sov-items',        { item_no: '1', description: 'Mobilisation' }],
-      ['post',  '/api/v1/projects/p-1/pay-applications', {}],
+      ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/sov-items',        { item_no: '1', description: 'Mobilisation' }],
+      ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/pay-applications', {}],
       ['patch', '/api/v1/pay-applications/pa-1/lines',   { lines: [{ sov_item_id: 's-1', work_completed: 10 }] }],
     ] as const) {
       mockQuery.mockClear()
@@ -312,9 +312,9 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
     const res = await request(app()).post('/api/v1/pay-applications/pa-1/submit').send({})
     expect(res.status).not.toBe(403)
 
-    mockQuery.mockImplementation(principalQuery(() => current, async () => ({
+    mockQuery.mockImplementation(principalQuery(() => current, recordScopeQuery({ delegate: async () => ({
       rows: [{ status: 'approved' }], rowCount: 1,
-    })))
+    }) })))
     const late = await request(app()).post('/api/v1/pay-applications/pa-1/submit').send({})
     expect(late.status).toBe(409)
   })
@@ -333,8 +333,8 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
   it('every role without cost.write is refused the ordinary half, with no side effect', async () => {
     for (const role of ALL_ROLES.filter(r => !roleHasCapability(r, 'cost.write'))) {
       for (const [method, url] of [
-        ['post',  '/api/v1/projects/p-1/sov-items'],
-        ['post',  '/api/v1/projects/p-1/pay-applications'],
+        ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/sov-items'],
+        ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/pay-applications'],
         ['patch', '/api/v1/pay-applications/pa-1/lines'],
         ['post',  '/api/v1/pay-applications/pa-1/submit'],
       ] as const) {
@@ -387,7 +387,7 @@ describe('§35 an ordinary capability cannot reach an approval state by mass ass
   it('createPayApplication never accepts a caller-supplied status', async () => {
     setCurrent(principal({ role: 'owner' }))
     await request(makeApp())
-      .post('/api/v1/projects/p-1/pay-applications')
+      .post('/api/v1/projects/30000000-0000-4000-8000-0000000000a1/pay-applications')
       .send({ status: 'approved', retention_pct: 5 })
     const inserts = businessQueries().filter(s => /INSERT INTO pay_applications/i.test(s))
     expect(inserts.length).toBeGreaterThan(0)
@@ -401,9 +401,9 @@ describe('§35 an ordinary capability cannot reach an approval state by mass ass
 
   it('the line editor refuses an application that is no longer draft or rejected', async () => {
     setCurrent(principal({ role: 'owner' }))
-    mockQuery.mockImplementation(principalQuery(() => current, async () => ({
+    mockQuery.mockImplementation(principalQuery(() => current, recordScopeQuery({ delegate: async () => ({
       rows: [{ status: 'approved' }], rowCount: 1,
-    })))
+    }) })))
     const res = await request(makeApp())
       .patch('/api/v1/pay-applications/pa-1/lines')
       .send({ lines: [{ sov_item_id: 's-1', work_completed: 999 }] })

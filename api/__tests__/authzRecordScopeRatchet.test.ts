@@ -386,8 +386,8 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // Phase 3B scoped 15 of ~747; Phase 3C took it to 39 by closing the
     // direct-ID surface of three routers. Adoption is real but partial, and
     // saying so is the point — a later slice must not imply full coverage.
-    expect(scoped).toBe(39)
-    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(691)
+    expect(scoped).toBe(69)
+    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(661)
     expect(plain, 'capability-only is still the overwhelming majority').toBeGreaterThan(scoped * 10)
   })
 })

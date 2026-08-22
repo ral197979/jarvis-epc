@@ -13,6 +13,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   upsertTimesheet, listTimesheets, submitTimesheet,
   approveTimesheet, rejectTimesheet, getWeeklySummary,
@@ -33,7 +34,7 @@ export const timesheetsRouter = Router()
 timesheetsRouter.use(requireAuth     as never)
 timesheetsRouter.use(requireTenant() as never)
 
-timesheetsRouter.put('/projects/:projectId/timesheets', requireCapability('team.write') as never, async (req: Request, res: Response) => {
+timesheetsRouter.put('/projects/:projectId/timesheets', requireCapability('team.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { memberId, weekStart } = req.body as Record<string, unknown>
   if (!memberId || !weekStart) { res.status(400).json({ error: 'memberId and weekStart required' }); return }

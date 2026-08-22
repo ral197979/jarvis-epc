@@ -14,6 +14,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   createCostEntry, listCostEntries, getCostEntry, updateCostEntry,
   deleteCostEntry, postCostEntry, voidCostEntry, getCostEntrySummary,
@@ -36,7 +37,7 @@ costEntryRouter.use(requireTenant() as never)
 
 // ─── Per-project ──────────────────────────────────────────────────────────────
 
-costEntryRouter.post('/projects/:projectId/cost-entries', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+costEntryRouter.post('/projects/:projectId/cost-entries', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { description, amount, entryDate } = req.body as Record<string, unknown>
   if (!description || !amount || !entryDate) {

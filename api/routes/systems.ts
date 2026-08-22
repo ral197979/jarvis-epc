@@ -27,6 +27,7 @@ import {
 import { getTagPackCoverage } from '../services/cxExecution'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const systemsRouter = Router()
@@ -62,7 +63,7 @@ systemsRouter.get('/projects/:projectId/systems', requireCapability('commissioni
   } catch (err) { _handleErr(err, res, 'listSystems') }
 })
 
-systemsRouter.post('/projects/:projectId/systems', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+systemsRouter.post('/projects/:projectId/systems', requireCapability('commissioning.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.code || !b.name) {

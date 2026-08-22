@@ -42,7 +42,7 @@ changeOrdersRouter.use(requireTenant() as never)
 
 // ─── Create ───────────────────────────────────────────────────────────────────
 
-changeOrdersRouter.post('/projects/:projectId/change-orders', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/projects/:projectId/change-orders', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title } = req.body as Record<string, unknown>
   if (!title) { res.status(400).json({ error: 'title is required' }); return }

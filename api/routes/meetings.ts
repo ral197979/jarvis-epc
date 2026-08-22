@@ -20,6 +20,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   createMeeting, getMeeting, listMeetings, updateMeeting, publishMeeting, archiveMeeting,
   listAgendaItems, addAgendaItem, updateAgendaItem, deleteAgendaItem,
@@ -43,7 +44,7 @@ meetingsRouter.use(requireTenant() as never)
 
 // ─── Meetings ─────────────────────────────────────────────────────────────────
 
-meetingsRouter.post('/projects/:projectId/meetings', requireCapability('project.write') as never, async (req: Request, res: Response) => {
+meetingsRouter.post('/projects/:projectId/meetings', requireCapability('project.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, meetingDate } = req.body as Record<string, unknown>
   if (!title || !meetingDate) { res.status(400).json({ error: 'title and meetingDate are required' }); return }

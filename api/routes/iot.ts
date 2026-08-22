@@ -29,6 +29,7 @@ import {
 } from '../services/iot/sensorIngestService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import type { ServerCapability } from '../authz/capabilities'
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -124,7 +125,7 @@ const authRouter = Router()
 authRouter.use(requireAuth   as never)
 authRouter.use(requireTenant() as never)
 
-authRouter.post('/projects/:projectId/sensors', requireCapability('construction.write') as never, async (req: Request, res: Response) => {
+authRouter.post('/projects/:projectId/sensors', requireCapability('construction.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const sensor = await registerSensor(r.tenantId!, { projectId: p(req, 'projectId'), ...req.body })

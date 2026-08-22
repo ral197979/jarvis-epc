@@ -13,6 +13,7 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { getProjectLifecycle, setGate, advancePhase } from '../services/lifecycle/lifecycleService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -29,7 +30,7 @@ router.get('/projects/:projectId/lifecycle', requireCapability('project.view') a
   } catch (err) { res.status(500).json({ error: 'Failed to build lifecycle', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/gates/:gateKey', requireCapability('project.approve') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/gates/:gateKey', requireCapability('project.approve') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const action = String((req.body as { action?: string }).action ?? '')
   if (!ACTIONS.has(action)) return res.status(400).json({ error: `action must be one of ${[...ACTIONS].join(', ')}` })
@@ -46,7 +47,7 @@ router.post('/projects/:projectId/gates/:gateKey', requireCapability('project.ap
   }
 })
 
-router.post('/projects/:projectId/advance', requireCapability('project.approve') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/advance', requireCapability('project.approve') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await advancePhase(r.tenantId!, String(req.params.projectId))

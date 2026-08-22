@@ -16,6 +16,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   createBaseline, listBaselines,
   upsertWbsEntries, listWbsEntries,
@@ -35,7 +36,7 @@ evmRouter.use(requireTenant() as never)
 
 // ─── Baselines ────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/baselines', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/baselines', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const baseline = await createBaseline(r.tenantId!, {
@@ -86,7 +87,7 @@ evmRouter.get('/evm/baselines/:baselineId/wbs', requireCapability('cost.view') a
 
 // ─── Actuals ──────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/actuals', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/actuals', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actual = await recordActual(r.tenantId!, {
@@ -112,7 +113,7 @@ evmRouter.get('/projects/:projectId/evm/actuals', requireCapability('cost.view')
 
 // ─── Progress ─────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/progress', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/progress', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const progress = await recordProgress(r.tenantId!, {
@@ -140,7 +141,7 @@ evmRouter.get('/projects/:projectId/evm/metrics', requireCapability('cost.view')
   }
 })
 
-evmRouter.post('/projects/:projectId/evm/snapshot', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/snapshot', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const statusDate = req.body.status_date as string | undefined

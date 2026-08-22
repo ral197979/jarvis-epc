@@ -32,6 +32,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import {
   createBidPackage, listBidPackages, getBidPackage,
   issueBidPackage, closeBidPackage, cancelBidPackage,
@@ -58,7 +59,7 @@ subcontractsRouter.use(requireTenant() as never)
 
 // ─── Bid packages ─────────────────────────────────────────────────────────────
 
-subcontractsRouter.post('/projects/:projectId/bid-packages', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
+subcontractsRouter.post('/projects/:projectId/bid-packages', requireCapability('procurement.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title } = req.body as Record<string, unknown>
   if (!title) { res.status(400).json({ error: 'title is required' }); return }
@@ -151,7 +152,7 @@ subcontractsRouter.post('/bid-submissions/:id/award', requireCapability('procure
 
 // ─── Subcontracts ─────────────────────────────────────────────────────────────
 
-subcontractsRouter.post('/projects/:projectId/subcontracts', requireCapability('procurement.write') as never, async (req: Request, res: Response) => {
+subcontractsRouter.post('/projects/:projectId/subcontracts', requireCapability('procurement.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { vendorId, title, contractValue } = req.body as Record<string, unknown>
   if (!vendorId || !title || contractValue == null) {

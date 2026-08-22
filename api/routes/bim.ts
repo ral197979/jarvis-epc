@@ -19,6 +19,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { getApsViewerToken, fromStorageKey } from '../services/bim/apsViewerService' // v10.2.0
 
@@ -42,7 +43,7 @@ router.get('/projects/:projectId/bim-models', requireCapability('engineering.vie
   }
 })
 
-router.post('/projects/:projectId/bim-models', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/bim-models', requireCapability('engineering.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.name || !b.format) return res.status(400).json({ error: 'name and format required' })
@@ -153,7 +154,7 @@ router.get('/projects/:projectId/bim-issues', requireCapability('engineering.vie
   }
 })
 
-router.post('/projects/:projectId/bim-issues', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/bim-issues', requireCapability('engineering.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.title) return res.status(400).json({ error: 'title required' })

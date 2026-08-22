@@ -18,6 +18,7 @@ import {
 } from '../services/safety/safetyService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -34,7 +35,7 @@ router.get('/projects/:projectId/safety/observations', requireCapability('safety
   catch (err) { res.status(500).json({ error: 'Failed to list observations', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/safety/observations', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/safety/observations', requireCapability('safety.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { description?: string }
   if (!b.description || !String(b.description).trim()) return res.status(400).json({ error: 'description is required' })
@@ -63,7 +64,7 @@ router.get('/projects/:projectId/safety/incidents', requireCapability('safety.vi
   catch (err) { res.status(500).json({ error: 'Failed to list incidents', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/safety/incidents', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/safety/incidents', requireCapability('safety.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { description?: string }
   if (!b.description || !String(b.description).trim()) return res.status(400).json({ error: 'description is required' })

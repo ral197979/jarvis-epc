@@ -12,6 +12,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import {
   createRisk, listRisks, getRisk, updateRisk, closeRisk, getRiskSummary,
@@ -38,7 +39,7 @@ riskRegisterRouter.get('/projects/:projectId/risks/summary', requireCapability('
   catch (e) { res.status(500).json({ error: 'Failed to load risk summary' }) }
 })
 
-riskRegisterRouter.post('/projects/:projectId/risks', requireCapability('risk.write') as never, async (req: Request, res: Response) => {
+riskRegisterRouter.post('/projects/:projectId/risks', requireCapability('risk.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, category, probability, impact } = req.body as Record<string, unknown>
   if (!title || !category || !probability || !impact) {

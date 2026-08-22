@@ -14,6 +14,7 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { listPackages, createPackage, updatePackage, acceptPackage, isValidStatus } from '../services/turnover/turnoverService'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -26,7 +27,7 @@ router.get('/projects/:projectId/turnover-packages', requireCapability('docs.vie
   catch (err) { res.status(500).json({ error: 'Failed to list turnover packages', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/turnover-packages', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/turnover-packages', requireCapability('docs.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const name = (req.body as { name?: string }).name
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' })

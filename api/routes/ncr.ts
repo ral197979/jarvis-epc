@@ -37,7 +37,7 @@ router.get('/projects/:projectId/ncrs', requireCapability('quality.view') as nev
   catch (err) { res.status(500).json({ error: 'Failed to list NCRs', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/ncrs', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/ncrs', requireCapability('quality.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { title?: string }
   if (!b.title || !String(b.title).trim()) return res.status(400).json({ error: 'title is required' })
@@ -106,7 +106,7 @@ router.post('/capas/:id/verify', requireCapability('quality.verify') as never, a
   } catch (err) { res.status(500).json({ error: 'Failed to verify corrective action', detail: (err as Error).message }) }
 })
 
-router.post('/projects/:projectId/ncrs/auto-raise', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
+router.post('/projects/:projectId/ncrs/auto-raise', requireCapability('quality.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await autoRaiseNcrsFromInspections(r.tenantId!, String(req.params.projectId), r.auth?.sub ?? null)
