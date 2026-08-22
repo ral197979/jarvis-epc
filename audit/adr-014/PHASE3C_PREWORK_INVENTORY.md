@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `a8d6a4fe7019a2435ae620aa5887eb4568f2a0ae`.**
+**Generated from checked-in source at `59985e5c457fd82104ffa2c13d802787a4283b44`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
