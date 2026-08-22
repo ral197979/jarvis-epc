@@ -28,6 +28,7 @@ import { getStorage } from '../files/storage'
 import { slog } from '../../src/modules/observability/index'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -227,7 +228,7 @@ router.put('/upload/:token', requireCapability('docs.write') as never, async (re
 // ─── POST /confirm/:versionId ─────────────────────────────────────────────────
 // Called after upload completes. Sets version + document status to 'active'.
 
-router.post('/confirm/:versionId', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
+router.post('/confirm/:versionId', requireCapability('docs.write') as never, requireRecordScope('document_versions', 'versionId') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -369,7 +370,7 @@ router.get('/documents/:id', requireTenant() as never, requireCapability('docs.v
 
 // ─── PATCH /documents/:id ─────────────────────────────────────────────────────
 
-router.patch('/documents/:id', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
+router.patch('/documents/:id', requireCapability('docs.write') as never, requireRecordScope('documents') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -393,7 +394,7 @@ router.patch('/documents/:id', requireCapability('docs.write') as never, require
 
 // ─── DELETE /documents/:id ────────────────────────────────────────────────────
 
-router.delete('/documents/:id', requireCapability('docs.write') as never, requireTenant() as never, async (req: Req, res: Response) => {
+router.delete('/documents/:id', requireCapability('docs.write') as never, requireRecordScope('documents') as never, requireTenant() as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

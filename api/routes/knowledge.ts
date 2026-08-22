@@ -19,6 +19,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
 import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
@@ -299,7 +300,7 @@ router.get('/sources/:id/chunks', async (req: Req, res: Response) => {
 
 // ─── Re-ingest ────────────────────────────────────────────────────────────────
 
-router.post('/sources/:id/reingest', requireCorpusAdmin, async (req: Req, res: Response) => {
+router.post('/sources/:id/reingest', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -319,7 +320,7 @@ router.post('/sources/:id/reingest', requireCorpusAdmin, async (req: Req, res: R
 
 // ─── Mine fixes from a single source ──────────────────────────────────────────
 
-router.post('/sources/:id/mine-fixes', requireCorpusAdmin, async (req: Req, res: Response) => {
+router.post('/sources/:id/mine-fixes', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -357,7 +358,7 @@ router.post('/sources/:id/mine-fixes', requireCorpusAdmin, async (req: Req, res:
 
 // ─── Embed chunks (per source) ────────────────────────────────────────────────
 
-router.post('/sources/:id/embed', requireCorpusAdmin, async (req: Req, res: Response) => {
+router.post('/sources/:id/embed', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -446,7 +447,7 @@ router.post('/mine-fixes-bulk', requireCorpusAdmin, async (req: Req, res: Respon
 
 // ─── Delete (admin) ───────────────────────────────────────────────────────────
 
-router.delete('/sources/:id', requireCorpusAdmin, async (req: Req, res: Response) => {
+router.delete('/sources/:id', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -21,7 +21,7 @@ import { slog } from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { resolveCurrentUser } from '../authz/currentUser'
-import { canAccessProject, projectScopeSql } from '../authz/recordScope'
+import { canAccessProject, projectScopeSql, requireRecordScope } from '../authz/recordScope'
 import { roleHasCapability } from '../authz/capabilities'
 import {
   syncMembershipsForNewProject, syncSystemSource, openMembership, closeMembership,
@@ -284,7 +284,7 @@ router.post('/', requireCapability('project.write') as never, async (req: Req, r
 
 // ─── PATCH /api/v1/projects/:id ───────────────────────────────────────────────
 
-router.patch('/:id', requireCapability('project.write') as never, guardTransitionOwnedState('projects') as never, async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('project.write') as never, requireRecordScope('project') as never, guardTransitionOwnedState('projects') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -488,7 +488,7 @@ router.delete('/:id/members/:userId', requireCapability('project.members.manage'
 // project root, and the delivery and commercial history hanging off it, to every
 // project manager. The previous check read the JWT role, so a demoted owner kept
 // the power until the token expired; authority is now the live database role.
-router.delete('/:id', requireCapability('project.delete') as never, async (req: Req, res: Response) => {
+router.delete('/:id', requireCapability('project.delete') as never, requireRecordScope('project') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -554,7 +554,7 @@ router.get('/:id/summary', requireCapability('cost.view') as never, async (req: 
 // ─── PATCH /api/v1/projects/:id/agent-mode ────────────────────────────────────
 // v4.31.0: agentic kill switch. Owner/admin only. The value here gates
 // downstream agent-originated writes via api/middleware/agentMode.ts.
-router.patch('/:id/agent-mode', requireCapability('ai.govern') as never, async (req: Req, res: Response) => {
+router.patch('/:id/agent-mode', requireCapability('ai.govern') as never, requireRecordScope('project') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
@@ -588,7 +588,7 @@ router.patch('/:id/agent-mode', requireCapability('ai.govern') as never, async (
  * generic PATCH could set either directly, so closure had no authorization at
  * all. One route owns both outcomes.
  */
-router.post('/:id/close', requireCapability('project.approve') as never, async (req: Req, res: Response) => {
+router.post('/:id/close', requireCapability('project.approve') as never, requireRecordScope('project') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

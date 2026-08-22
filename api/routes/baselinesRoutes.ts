@@ -18,6 +18,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -91,7 +92,7 @@ router.get('/:id', requireCapability('commissioning.view') as never, async (req:
   res.json({ data: { baseline: baseline.rows[0], observations: observations.rows } })
 })
 
-router.delete('/:id', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
+router.delete('/:id', requireCapability('commissioning.approve') as never, requireRecordScope('commissioning_baselines') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

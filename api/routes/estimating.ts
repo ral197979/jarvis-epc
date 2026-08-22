@@ -50,6 +50,7 @@ import {
 import { runEstimatingAgent } from '../services/estimating/estimatingAgent'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -67,7 +68,7 @@ const p   = (req: Request, key: string): string =>
 
 // POST /bim-models/:modelId/parse-elements
 // Accepts a JSON array of IFC element objects (from IFC.js parser output)
-router.post('/bim-models/:modelId/parse-elements', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/parse-elements', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const { elements } = req.body as { elements?: unknown[] }
   if (!Array.isArray(elements) || !elements.length) {
     res.status(400).json({ error: 'elements array required' }); return
@@ -250,7 +251,7 @@ router.get('/estimates/:id', requireCapability('cost.view') as never, async (req
 })
 
 // POST /estimates/:id/lines
-router.post('/estimates/:id/lines', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/estimates/:id/lines', requireCapability('engineering.write') as never, requireRecordScope('estimates') as never, async (req: Request, res: Response) => {
   const { lines } = req.body as { lines?: EstimateLineDraft[] }
   if (!Array.isArray(lines) || !lines.length) {
     res.status(400).json({ error: 'lines array required' }); return
@@ -265,7 +266,7 @@ router.post('/estimates/:id/lines', requireCapability('engineering.write') as ne
 })
 
 // POST /estimates/:id/approve
-router.post('/estimates/:id/approve', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
+router.post('/estimates/:id/approve', requireCapability('cost.approve') as never, requireRecordScope('estimates') as never, async (req: Request, res: Response) => {
   try {
     await tenantQuery(tid(req),
       `UPDATE estimates SET status='approved', approved_by=$1, approved_at=now(), updated_at=now()
@@ -281,7 +282,7 @@ router.post('/estimates/:id/approve', requireCapability('cost.approve') as never
 
 // POST /bim-models/:modelId/ava-estimate
 // Full pipeline: BIM elements → takeoff → cost lookup → estimate + AI summary
-router.post('/bim-models/:modelId/ava-estimate', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/ava-estimate', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const b = req.body as { project_id?: string; region?: string; name?: string }
   try {
     const result = await runEstimatingAgent({

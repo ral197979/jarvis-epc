@@ -22,6 +22,7 @@ import {
 } from '../services/cxExecution'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const testPacksRouter = Router()
@@ -94,7 +95,7 @@ testPacksRouter.get('/test-packs/:packId', requireCapability('commissioning.view
   } catch (err) { _handleErr(err, res, 'get') }
 })
 
-testPacksRouter.patch('/test-packs/:packId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+testPacksRouter.patch('/test-packs/:packId', requireCapability('commissioning.write') as never, requireRecordScope('test_packs', 'packId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

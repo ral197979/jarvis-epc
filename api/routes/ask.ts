@@ -19,6 +19,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 import { askJarvis } from '../services/askBuilder'
 import { AiBudgetExceededError } from '../services/enterprise/aiCostTracker'
 
@@ -192,7 +193,7 @@ router.post('/sessions/:id/resolve', async (req: Req, res: Response) => {
 
 // ─── DELETE /ask/sessions/:id (admin) ─────────────────────────────────────────
 
-router.delete('/sessions/:id', requireCapability('assistant.admin') as never, async (req: Req, res: Response) => {
+router.delete('/sessions/:id', requireCapability('assistant.admin') as never, requireRecordScope('chat_sessions') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const r = await tenantQuery<{ id: string }>(tenantId, `

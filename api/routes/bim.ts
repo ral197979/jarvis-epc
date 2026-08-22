@@ -19,7 +19,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { getApsViewerToken, fromStorageKey } from '../services/bim/apsViewerService' // v10.2.0
 
@@ -79,7 +79,7 @@ router.get('/bim-models/:id', requireCapability('engineering.view') as never, as
   }
 })
 
-router.patch('/bim-models/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.patch('/bim-models/:id', requireCapability('engineering.write') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['name','discipline','document_id','size_bytes','element_count',
                    'coord_system','georef','metadata','status']
@@ -100,7 +100,7 @@ router.patch('/bim-models/:id', requireCapability('engineering.write') as never,
   }
 })
 
-router.delete('/bim-models/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.delete('/bim-models/:id', requireCapability('engineering.write') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,
@@ -186,7 +186,7 @@ router.post('/projects/:projectId/bim-issues', requireCapability('engineering.wr
   }
 })
 
-router.patch('/bim-issues/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.patch('/bim-issues/:id', requireCapability('engineering.write') as never, requireRecordScope('bim_issues') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title','description','severity','status','element_ids','viewpoint','assigned_to']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))

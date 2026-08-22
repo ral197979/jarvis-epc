@@ -22,6 +22,7 @@ import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -141,7 +142,7 @@ router.post('/', requireCapability('safety.write') as never, async (req: Req, re
 
 // ─── PATCH update ─────────────────────────────────────────────────────────────
 
-router.patch('/:id', requireCapability('safety.write') as never, async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('safety.write') as never, requireRecordScope('compliance_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -178,7 +179,7 @@ router.patch('/:id', requireCapability('safety.write') as never, async (req: Req
 
 // ─── POST complete ────────────────────────────────────────────────────────────
 
-router.post('/:id/complete', requireCapability('safety.approve') as never, async (req: Req, res: Response) => {
+router.post('/:id/complete', requireCapability('safety.approve') as never, requireRecordScope('compliance_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -200,7 +201,7 @@ router.post('/:id/complete', requireCapability('safety.approve') as never, async
 
 // ─── POST waive (admin) ───────────────────────────────────────────────────────
 
-router.post('/:id/waive', requireCapability('safety.approve') as never, async (req: Req, res: Response) => {
+router.post('/:id/waive', requireCapability('safety.approve') as never, requireRecordScope('compliance_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -221,7 +222,7 @@ router.post('/:id/waive', requireCapability('safety.approve') as never, async (r
 
 // ─── DELETE (admin) ───────────────────────────────────────────────────────────
 
-router.delete('/:id', requireCapability('safety.approve') as never, async (req: Req, res: Response) => {
+router.delete('/:id', requireCapability('safety.approve') as never, requireRecordScope('compliance_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

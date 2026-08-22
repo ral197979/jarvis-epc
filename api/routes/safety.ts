@@ -18,7 +18,7 @@ import {
 } from '../services/safety/safetyService'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -45,7 +45,7 @@ router.post('/projects/:projectId/safety/observations', requireCapability('safet
   } catch (err) { res.status(500).json({ error: 'Failed to create observation', detail: (err as Error).message }) }
 })
 
-router.patch('/safety/observations/:id', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
+router.patch('/safety/observations/:id', requireCapability('safety.write') as never, requireRecordScope('safety_observations') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !OBS_STATUS.has(status)) return res.status(400).json({ error: `status must be one of ${[...OBS_STATUS].join(', ')}` })
@@ -74,7 +74,7 @@ router.post('/projects/:projectId/safety/incidents', requireCapability('safety.w
   } catch (err) { res.status(500).json({ error: 'Failed to create incident', detail: (err as Error).message }) }
 })
 
-router.patch('/safety/incidents/:id', requireCapability('safety.write') as never, async (req: Request, res: Response) => {
+router.patch('/safety/incidents/:id', requireCapability('safety.write') as never, requireRecordScope('safety_incidents') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (!status || !INC_STATUS.has(status)) return res.status(400).json({ error: `status must be one of ${[...INC_STATUS].join(', ')}` })

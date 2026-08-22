@@ -14,7 +14,7 @@ import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { listPackages, createPackage, updatePackage, acceptPackage, isValidStatus } from '../services/turnover/turnoverService'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -37,7 +37,7 @@ router.post('/projects/:projectId/turnover-packages', requireCapability('docs.wr
   } catch (err) { res.status(500).json({ error: 'Failed to create turnover package', detail: (err as Error).message }) }
 })
 
-router.patch('/turnover-packages/:id', requireCapability('docs.write') as never, guardTransitionOwnedState('turnover_packages') as never, async (req: Request, res: Response) => {
+router.patch('/turnover-packages/:id', requireCapability('docs.write') as never, requireRecordScope('turnover_packages') as never, guardTransitionOwnedState('turnover_packages') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { status?: string }
   if (b.status !== undefined && !isValidStatus(b.status)) return res.status(400).json({ error: 'invalid status' })
@@ -48,7 +48,7 @@ router.patch('/turnover-packages/:id', requireCapability('docs.write') as never,
   } catch (err) { res.status(500).json({ error: 'Failed to update turnover package', detail: (err as Error).message }) }
 })
 
-router.post('/turnover-packages/:id/accept', requireCapability('commissioning.approve') as never, async (req: Request, res: Response) => {
+router.post('/turnover-packages/:id/accept', requireCapability('commissioning.approve') as never, requireRecordScope('turnover_packages') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const row = await acceptPackage(r.tenantId!, String(req.params.id))

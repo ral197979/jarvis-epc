@@ -16,6 +16,7 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 import {
   createFix, searchFixes, getFix, deleteFix, verifyFix, listUsedSymptoms,
   type FixConfidence,
@@ -148,7 +149,7 @@ router.get('/:id', requireCapability('engineering.view') as never, async (req: R
 
 // ─── Update ──────────────────────────────────────────────────────────────────
 
-router.patch('/:id', requireCapability('engineering.write') as never, async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('engineering.write') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -183,7 +184,7 @@ router.patch('/:id', requireCapability('engineering.write') as never, async (req
 
 // ─── Verify ──────────────────────────────────────────────────────────────────
 
-router.post('/:id/verify', requireCapability('assistant.admin') as never, async (req: Req, res: Response) => {
+router.post('/:id/verify', requireCapability('assistant.admin') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const userId = req.auth?.sub
@@ -202,7 +203,7 @@ router.post('/:id/verify', requireCapability('assistant.admin') as never, async 
 
 // ─── Delete (admin) ──────────────────────────────────────────────────────────
 
-router.delete('/:id', requireCapability('assistant.admin') as never, async (req: Req, res: Response) => {
+router.delete('/:id', requireCapability('assistant.admin') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const ok = await deleteFix(tenantId, String(req.params['id']))

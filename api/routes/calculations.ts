@@ -10,7 +10,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
 // requireAuth + requireTenant middleware guarantee these are set before any
 // handler in this file runs; asserting their presence at the type level avoids
@@ -109,7 +109,7 @@ router.get('/calc-sessions/:id', requireCapability('engineering.view') as never,
 })
 
 // ─── Update notes ─────────────────────────────────────────────────────────────
-router.patch('/calc-sessions/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.patch('/calc-sessions/:id', requireCapability('engineering.write') as never, requireRecordScope('calc_sessions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { notes } = req.body
   if (typeof notes !== 'string') return res.status(400).json({ error: 'notes (string) required' })
@@ -126,7 +126,7 @@ router.patch('/calc-sessions/:id', requireCapability('engineering.write') as nev
 })
 
 // ─── Delete session ───────────────────────────────────────────────────────────
-router.delete('/calc-sessions/:id', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
+router.delete('/calc-sessions/:id', requireCapability('engineering.write') as never, requireRecordScope('calc_sessions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   try {
     await tenantQuery(r.tenantId,

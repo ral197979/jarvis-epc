@@ -13,8 +13,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'owner', is_active: true }))
 
 const mockQuery = vi.fn()
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery:       (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
+  tenantQuery:       (...__a: unknown[]) => _recordScopeAnswer(__a[1], __a[2]) ?? (((t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p)) as (...z: unknown[]) => unknown)(...__a),
   query:             (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -132,7 +152,7 @@ describe('Pay application routes', () => {
       if (/FROM pay_application_lines/.test(sql)) return { rows: [{ sov_item_id: 's1', work_completed: 30000, materials_stored: 0 }] }  // this app
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/pay-applications/pa1')
+    const res = await request(makeApp()).get('/api/v1/pay-applications/4361b644-1337-47c5-80da-cde691017e3e')
     expect(res.status).toBe(200)
     expect(res.body.data.summary.currentPaymentDue).toBe(27000)
     expect(res.body.data.lines[0].completedAndStored).toBe(70000)
@@ -147,14 +167,14 @@ describe('Pay application routes', () => {
   it('PATCH /pay-applications/:id/lines is blocked once approved', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ status: 'approved' }], rowCount: 1 })
     const res = await request(makeApp())
-      .patch('/api/v1/pay-applications/pa1/lines')
+      .patch('/api/v1/pay-applications/4361b644-1337-47c5-80da-cde691017e3e/lines')
       .send({ lines: [{ sov_item_id: 's1', work_completed: 100 }] })
     expect(res.status).toBe(409)
   })
 
   it('POST /projects/:id/sov-items validates required fields', async () => {
     const res = await request(makeApp())
-      .post('/api/v1/projects/p1/sov-items')
+      .post('/api/v1/projects/30000000-0000-4000-8000-000000000001/sov-items')
       .send({ description: 'no item_no' })
     expect(res.status).toBe(400)
   })
@@ -166,7 +186,7 @@ describe('Pay application routes', () => {
       return { rows: [] }
     })
     const res = await request(makeApp())
-      .post('/api/v1/projects/p1/pay-applications')
+      .post('/api/v1/projects/30000000-0000-4000-8000-000000000001/pay-applications')
       .send({ retention_pct: 10 })
     expect(res.status).toBe(201)
     expect(res.body.data.application_number).toBe(1)

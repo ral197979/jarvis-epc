@@ -10,7 +10,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import {
   scanProject, listRecommendations, approveRecommendation, dismissRecommendation,
 } from '../services/coordination/autoCoordinationService'
@@ -45,7 +45,7 @@ router.post('/coordination/recommendations/:id/approve', requireCapability('ai.g
   } catch (err) { res.status(500).json({ error: 'Approval failed', detail: (err as Error).message }) }
 })
 
-router.post('/coordination/recommendations/:id/dismiss', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
+router.post('/coordination/recommendations/:id/dismiss', requireCapability('ai.govern') as never, requireRecordScope('coordination_recommendations') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await dismissRecommendation(r.tenantId!, String(req.params.id), r.auth?.sub ?? null)

@@ -24,6 +24,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { arbitrate } from '../services/ciArbiter'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -141,7 +142,7 @@ router.post('/', requireCapability('commissioning.approve') as never, async (req
   }
 })
 
-router.patch('/:id', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('commissioning.approve') as never, requireRecordScope('commissioning_autosign_rules') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -169,7 +170,7 @@ router.patch('/:id', requireCapability('commissioning.approve') as never, async 
   res.json({ data: result.rows[0] })
 })
 
-router.delete('/:id', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
+router.delete('/:id', requireCapability('commissioning.approve') as never, requireRecordScope('commissioning_autosign_rules') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

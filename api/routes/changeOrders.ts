@@ -18,7 +18,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import {
   createChangeOrder, getChangeOrder, listChangeOrders, updateChangeOrder,
   submitChangeOrder, approveChangeOrder, rejectChangeOrder, voidChangeOrder,
@@ -103,7 +103,7 @@ changeOrdersRouter.get('/change-orders/:id', requireCapability('cost.view') as n
 
 // ─── Update (draft only) ──────────────────────────────────────────────────────
 
-changeOrdersRouter.patch('/change-orders/:id', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.patch('/change-orders/:id', requireCapability('cost.write') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await updateChangeOrder(r.tenantId!, p(req, 'id'), req.body)
@@ -116,7 +116,7 @@ changeOrdersRouter.patch('/change-orders/:id', requireCapability('cost.write') a
 
 // ─── Workflow transitions ─────────────────────────────────────────────────────
 
-changeOrdersRouter.post('/change-orders/:id/submit', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/submit', requireCapability('cost.write') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await submitChangeOrder(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown')
@@ -132,7 +132,7 @@ changeOrdersRouter.post('/change-orders/:id/submit', requireCapability('cost.wri
 // reject a budget/contract-impacting change order. owner/admin/project_manager
 // matches the roles with approval authority elsewhere in the RBAC hierarchy
 // (README.md: owner → admin → project_manager → engineer → viewer).
-changeOrdersRouter.post('/change-orders/:id/approve', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/approve', requireCapability('cost.approve') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {
@@ -144,7 +144,7 @@ changeOrdersRouter.post('/change-orders/:id/approve', requireCapability('cost.ap
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/reject', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/reject', requireCapability('cost.approve') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { reviewNotes } = req.body as { reviewNotes?: string }
   try {
@@ -156,7 +156,7 @@ changeOrdersRouter.post('/change-orders/:id/reject', requireCapability('cost.app
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/void', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/void', requireCapability('cost.approve') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const co = await voidChangeOrder(r.tenantId!, p(req, 'id'))
@@ -179,7 +179,7 @@ changeOrdersRouter.get('/change-orders/:id/tasks', requireCapability('cost.view'
   }
 })
 
-changeOrdersRouter.post('/change-orders/:id/tasks', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.post('/change-orders/:id/tasks', requireCapability('cost.write') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { taskIds } = req.body as { taskIds?: string[] }
   if (!Array.isArray(taskIds) || taskIds.length === 0) {
@@ -193,7 +193,7 @@ changeOrdersRouter.post('/change-orders/:id/tasks', requireCapability('cost.writ
   }
 })
 
-changeOrdersRouter.delete('/change-orders/:id/tasks/:taskId', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+changeOrdersRouter.delete('/change-orders/:id/tasks/:taskId', requireCapability('cost.write') as never, requireRecordScope('changeorder') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     await unlinkTask(r.tenantId!, p(req, 'id'), p(req, 'taskId'))

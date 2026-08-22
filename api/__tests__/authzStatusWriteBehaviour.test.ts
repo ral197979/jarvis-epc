@@ -108,13 +108,13 @@ describe('§26 generic-route escape is closed', () => {
     { name: 'punch item close',        method: 'patch', url: '/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1',        body: { status: 'closed' },    writer: 'engineer' },
     { name: 'punch item verify',       method: 'patch', url: '/api/v1/punch-items/40000000-0000-4000-8000-0000000000a1',        body: { status: 'verified' },  writer: 'engineer' },
     { name: 'inspection completion',   method: 'patch', url: '/api/v1/inspections/40000000-0000-4000-8000-0000000000b1',        body: { status: 'completed' }, writer: 'engineer' },
-    { name: 'purchase order approval', method: 'patch', url: '/api/v1/purchase-orders/po-1',    body: { status: 'approved' },  writer: 'procurement' },
-    { name: 'risk closure',            method: 'patch', url: '/api/v1/risks/r-1',               body: { status: 'closed' },    writer: 'engineer' },
-    { name: 'daily log approval',      method: 'patch', url: '/api/v1/daily-logs/dl-1',         body: { status: 'approved' },  writer: 'field_ops' },
-    { name: 'daily log submission',    method: 'patch', url: '/api/v1/daily-logs/dl-1',         body: { status: 'submitted' }, writer: 'field_ops' },
-    { name: 'NCR closure',             method: 'patch', url: '/api/v1/ncrs/n-1',                body: { status: 'closed' },    writer: 'engineer' },
-    { name: 'CAPA verification',       method: 'patch', url: '/api/v1/capas/c-1',               body: { status: 'verified' },  writer: 'engineer' },
-    { name: 'turnover acceptance',     method: 'patch', url: '/api/v1/turnover-packages/t-1',   body: { status: 'accepted' },  writer: 'project_manager' },
+    { name: 'purchase order approval', method: 'patch', url: '/api/v1/purchase-orders/46d80625-f5bc-42ba-8c16-23d8f99ebcea',    body: { status: 'approved' },  writer: 'procurement' },
+    { name: 'risk closure',            method: 'patch', url: '/api/v1/risks/45fa777a-3dc6-4268-8aea-6eea038ba141',               body: { status: 'closed' },    writer: 'engineer' },
+    { name: 'daily log approval',      method: 'patch', url: '/api/v1/daily-logs/445e1b72-e371-4dc0-8f5b-9a9f48f62a60',         body: { status: 'approved' },  writer: 'field_ops' },
+    { name: 'daily log submission',    method: 'patch', url: '/api/v1/daily-logs/445e1b72-e371-4dc0-8f5b-9a9f48f62a60',         body: { status: 'submitted' }, writer: 'field_ops' },
+    { name: 'NCR closure',             method: 'patch', url: '/api/v1/ncrs/41aeea8f-fa05-4262-8d35-c87463465885',                body: { status: 'closed' },    writer: 'engineer' },
+    { name: 'CAPA verification',       method: 'patch', url: '/api/v1/capas/46f7ef47-ee8d-484a-8905-6a3051ddc302',               body: { status: 'verified' },  writer: 'engineer' },
+    { name: 'turnover acceptance',     method: 'patch', url: '/api/v1/turnover-packages/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda',   body: { status: 'accepted' },  writer: 'project_manager' },
   ]
 
   for (const c of cases) {
@@ -207,19 +207,19 @@ describe('§27–§32 canonical transition authorization', () => {
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'procurement', 'viewer', 'admin'] },
     { name: 'inspection complete', url: '/api/v1/inspections/40000000-0000-4000-8000-0000000000b1/complete',        method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
-    { name: 'NCR close',          url: '/api/v1/ncrs/n-1/close',                    method: 'post',
+    { name: 'NCR close',          url: '/api/v1/ncrs/41aeea8f-fa05-4262-8d35-c87463465885/close',                    method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
-    { name: 'CAPA verify',        url: '/api/v1/capas/c-1/verify',                  method: 'post',
+    { name: 'CAPA verify',        url: '/api/v1/capas/46f7ef47-ee8d-484a-8905-6a3051ddc302/verify',                  method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
-    { name: 'risk close',         url: '/api/v1/risks/r-1/close',                   method: 'post',
+    { name: 'risk close',         url: '/api/v1/risks/45fa777a-3dc6-4268-8aea-6eea038ba141/close',                   method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'viewer', 'admin'] },
-    { name: 'daily log approve',  url: '/api/v1/daily-logs/dl-1/approve',           method: 'post',
+    { name: 'daily log approve',  url: '/api/v1/daily-logs/445e1b72-e371-4dc0-8f5b-9a9f48f62a60/approve',           method: 'post',
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
-    { name: 'PO approve',         url: '/api/v1/purchase-orders/po-1/approve',      method: 'post',
+    { name: 'PO approve',         url: '/api/v1/purchase-orders/46d80625-f5bc-42ba-8c16-23d8f99ebcea/approve',      method: 'post',
       allowed: ['owner'], denied: ['procurement', 'project_manager', 'engineer', 'viewer', 'admin'] },
-    { name: 'subcontract status', url: '/api/v1/subcontracts/sc-1/status',          method: 'patch', body: { status: 'terminated' },
+    { name: 'subcontract status', url: '/api/v1/subcontracts/4cf569fe-c5e4-4752-89e9-ed3db46abcba/status',          method: 'patch', body: { status: 'terminated' },
       allowed: ['owner'], denied: ['procurement', 'project_manager', 'engineer', 'viewer', 'admin'] },
-    { name: 'turnover accept',    url: '/api/v1/turnover-packages/t-1/accept',      method: 'post',
+    { name: 'turnover accept',    url: '/api/v1/turnover-packages/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/accept',      method: 'post',
       allowed: ['owner'], denied: ['project_manager', 'engineer', 'field_ops', 'viewer', 'admin'] },
     { name: 'lifecycle gate',     url: '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/gates/fid',            method: 'post', body: { action: 'approve' },
       allowed: ['owner', 'project_manager'], denied: ['engineer', 'field_ops', 'viewer', 'admin'] },
@@ -255,28 +255,28 @@ describe('§27–§32 canonical transition authorization', () => {
 describe('§47 stale JWT', () => {
   it('denies a Quality transition on the current role, not the token role', async () => {
     setCurrent(principal({ role: 'engineer', jwtRole: 'owner' }))
-    const res = await request(makeApp()).post('/api/v1/ncrs/n-1/close').send({})
+    const res = await request(makeApp()).post('/api/v1/ncrs/41aeea8f-fa05-4262-8d35-c87463465885/close').send({})
     expect(res.status).toBe(403)
     expect(mutated()).toBe(false)
   })
 
   it('denies a Commissioning transition on the current role', async () => {
     setCurrent(principal({ role: 'project_manager', jwtRole: 'owner' }))
-    const res = await request(makeApp()).post('/api/v1/turnover-packages/t-1/accept').send({})
+    const res = await request(makeApp()).post('/api/v1/turnover-packages/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/accept').send({})
     expect(res.status).toBe(403)
     expect(mutated()).toBe(false)
   })
 
   it('denies a deactivated user holding a valid token', async () => {
     setCurrent(principal({ role: 'owner', active: false }))
-    const res = await request(makeApp()).post('/api/v1/ncrs/n-1/close').send({})
+    const res = await request(makeApp()).post('/api/v1/ncrs/41aeea8f-fa05-4262-8d35-c87463465885/close').send({})
     expect(res.status).toBe(401)
     expect(mutated()).toBe(false)
   })
 
   it('denies a user whose row no longer exists', async () => {
     setCurrent(principal({ role: 'owner', exists: false }))
-    const res = await request(makeApp()).post('/api/v1/turnover-packages/t-1/accept').send({})
+    const res = await request(makeApp()).post('/api/v1/turnover-packages/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/accept').send({})
     expect(res.status).toBe(401)
     expect(mutated()).toBe(false)
   })
@@ -285,9 +285,9 @@ describe('§47 stale JWT', () => {
 // ─── §48 — new transitions are tenant-scoped ─────────────────────────────────
 describe('§48 tenant isolation on the new transitions', () => {
   const newTransitions: [string, 'post' | 'patch', object][] = [
-    ['/api/v1/ncrs/n-1/close', 'post', {}],
-    ['/api/v1/capas/c-1/verify', 'post', {}],
-    ['/api/v1/turnover-packages/t-1/accept', 'post', {}],
+    ['/api/v1/ncrs/41aeea8f-fa05-4262-8d35-c87463465885/close', 'post', {}],
+    ['/api/v1/capas/46f7ef47-ee8d-484a-8905-6a3051ddc302/verify', 'post', {}],
+    ['/api/v1/turnover-packages/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/accept', 'post', {}],
   ]
 
   for (const [url, method, body] of newTransitions) {
@@ -312,7 +312,7 @@ describe('§48 tenant isolation on the new transitions', () => {
     // as far as the transition: `resolveCurrentUser` refuses the mismatch, so
     // the answer is 401 and tenant B is never touched.
     setCurrent(principal({ role: 'owner', tenantId: 'tenant-a', jwtTenantId: 'tenant-b' }))
-    const res = await request(makeApp()).post('/api/v1/ncrs/n-1/close').send({})
+    const res = await request(makeApp()).post('/api/v1/ncrs/41aeea8f-fa05-4262-8d35-c87463465885/close').send({})
     expect(res.status).toBe(401)
     expect(mutated()).toBe(false)
   })

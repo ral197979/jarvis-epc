@@ -11,8 +11,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'field_ops', is_active: true }))
 
 const mockQuery = vi.fn()
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
+  tenantQuery: (...__a: unknown[]) => _recordScopeAnswer(__a[1], __a[2]) ?? (((t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p)) as (...z: unknown[]) => unknown)(...__a),
   query:       (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -101,13 +121,13 @@ describe('Safety routes', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('POST observation requires a description', async () => {
-    const res = await request(makeApp()).post('/api/v1/projects/p1/safety/observations').send({ severity: 'low' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/safety/observations').send({ severity: 'low' })
     expect(res.status).toBe(400)
   })
 
   it('POST observation creates one', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ id: 'o1', type: 'hazard', severity: 'high', status: 'open', description: 'exposed rebar' }], rowCount: 1 })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/safety/observations').send({ type: 'hazard', severity: 'high', description: 'exposed rebar' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/safety/observations').send({ type: 'hazard', severity: 'high', description: 'exposed rebar' })
     expect(res.status).toBe(201)
     expect(res.body.data.id).toBe('o1')
   })
@@ -119,7 +139,7 @@ describe('Safety routes', () => {
       if (/FROM safety_incidents/.test(sql)) return { rows: [{ type: 'near_miss', severity: 'high', location: 'B', description: 'ladder slip', status: 'reported' }] }
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/projects/p1/safety/intelligence')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/safety/intelligence')
     expect(res.status).toBe(200)
     expect(res.body.data.leadingIndicators).toBeTruthy()
     expect(res.body.data.highRiskAreas[0].location).toBe('B')
@@ -132,7 +152,7 @@ describe('Safety routes', () => {
   })
 
   it('PATCH observation status validates', async () => {
-    const res = await request(makeApp()).patch('/api/v1/safety/observations/o1').send({ status: 'bogus' })
+    const res = await request(makeApp()).patch('/api/v1/safety/observations/4352da72-80f1-4ecc-8acf-1ba84eb945c9').send({ status: 'bogus' })
     expect(res.status).toBe(400)
   })
 })

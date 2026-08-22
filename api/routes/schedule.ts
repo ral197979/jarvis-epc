@@ -24,6 +24,7 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { computeCpm, CpmCycleError, CpmMissingTaskError } from '../services/cpm'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -78,7 +79,7 @@ router.post('/:projectId/tasks', requireCapability('schedule.write') as never, a
   res.status(201).json({ data: result.rows[0] })
 })
 
-router.patch('/tasks/:id', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
+router.patch('/tasks/:id', requireCapability('schedule.write') as never, requireRecordScope('schedule_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -106,7 +107,7 @@ router.patch('/tasks/:id', requireCapability('schedule.write') as never, async (
   res.json({ data: result.rows[0] })
 })
 
-router.delete('/tasks/:id', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
+router.delete('/tasks/:id', requireCapability('schedule.write') as never, requireRecordScope('schedule_tasks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -171,7 +172,7 @@ router.post('/:projectId/dependencies', requireCapability('schedule.write') as n
   }
 })
 
-router.delete('/dependencies/:id', requireCapability('schedule.write') as never, async (req: Req, res: Response) => {
+router.delete('/dependencies/:id', requireCapability('schedule.write') as never, requireRecordScope('schedule_dependencies') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

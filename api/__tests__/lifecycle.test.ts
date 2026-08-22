@@ -15,8 +15,28 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 't1', role: 'project_manager', is_active: true }))
 
 const mockQuery = vi.fn()
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
+  tenantQuery: (...__a: unknown[]) => _recordScopeAnswer(__a[1], __a[2]) ?? (((tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params)) as (...z: unknown[]) => unknown)(...__a),
   query:       (sql: string, params: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -158,7 +178,7 @@ describe('Lifecycle route smoke', () => {
 
   it('GET /projects/:id/lifecycle returns the map with computed requirements', async () => {
     mockLifecycle({ phase: 'construction', ncrs: '2', punch: '3', budget: '1000000' })
-    const res = await request(makeApp()).get('/api/v1/projects/p1/lifecycle')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/lifecycle')
     expect(res.status).toBe(200)
     expect(res.body.data.currentPhase).toBe('construction')
     expect(res.body.data.currentGate.key).toBe('commissioning')
@@ -173,7 +193,7 @@ describe('Lifecycle route smoke', () => {
   })
 
   it('POST /gates/:gateKey rejects an invalid action', async () => {
-    const res = await request(makeApp()).post('/api/v1/projects/p1/gates/feed').send({ action: 'bogus' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/gates/feed').send({ action: 'bogus' })
     expect(res.status).toBe(400)
   })
 
@@ -182,7 +202,7 @@ describe('Lifecycle route smoke', () => {
     mockLifecycle({ phase: 'construction', budget: '1000000', approvals: [
       { gate_key: 'commissioning', status: 'approved', owner_id: 'u9', expected_date: null, approved_by: 'u1', approved_at: '2026-06-22' },
     ] })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/gates/commissioning').send({ action: 'approve' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/gates/commissioning').send({ action: 'approve' })
     expect(res.status).toBe(200)
     expect(res.body.data.currentGate.approvalStatus).toBe('approved')
     expect(res.body.data.canAdvance).toBe(true)

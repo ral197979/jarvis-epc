@@ -22,6 +22,7 @@ import {
 } from '../services/epcCore'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const commissioningItemsRouter = Router()
@@ -88,7 +89,7 @@ commissioningItemsRouter.post('/commissioning-items', requireCapability('commiss
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-commissioningItemsRouter.patch('/commissioning-items/:itemId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+commissioningItemsRouter.patch('/commissioning-items/:itemId', requireCapability('commissioning.write') as never, requireRecordScope('commissioning_items', 'itemId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

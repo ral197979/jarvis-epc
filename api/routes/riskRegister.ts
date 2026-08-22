@@ -12,7 +12,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import {
   createRisk, listRisks, getRisk, updateRisk, closeRisk, getRiskSummary,
@@ -71,7 +71,7 @@ riskRegisterRouter.get('/risks/:id', requireCapability('risk.view') as never, as
   } catch (e) { res.status(500).json({ error: 'Failed to get risk' }) }
 })
 
-riskRegisterRouter.patch('/risks/:id', requireCapability('risk.write') as never, guardTransitionOwnedState('risks') as never, async (req: Request, res: Response) => {
+riskRegisterRouter.patch('/risks/:id', requireCapability('risk.write') as never, requireRecordScope('risks') as never, guardTransitionOwnedState('risks') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await updateRisk(r.tenantId!, p(req, 'id'), req.body)
@@ -80,7 +80,7 @@ riskRegisterRouter.patch('/risks/:id', requireCapability('risk.write') as never,
   } catch (e) { res.status(500).json({ error: 'Failed to update risk' }) }
 })
 
-riskRegisterRouter.post('/risks/:id/close', requireCapability('risk.approve') as never, async (req: Request, res: Response) => {
+riskRegisterRouter.post('/risks/:id/close', requireCapability('risk.approve') as never, requireRecordScope('risks') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const risk = await closeRisk(r.tenantId!, p(req, 'id'))

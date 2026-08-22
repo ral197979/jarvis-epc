@@ -15,12 +15,32 @@ const h = vi.hoisted(() => ({
 const mockTenantQuery = vi.fn()
 // ADR-014 Phase 2A: authorization re-resolves the caller's role from the
 // database, so the pool answers that lookup using the identity under test.
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
   query: async (sql: string) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? { rows: [{ id: h.identity.sub ?? 'u1', tenant_id: h.tenantId, role: h.identity.role, is_active: true }], rowCount: 1 }
       : { rows: [], rowCount: 0 },
-  tenantQuery: (...a: unknown[]) => mockTenantQuery(...a),
+  tenantQuery: (...__a: unknown[]) => _recordScopeAnswer(__a[1], __a[2]) ?? (((...a: unknown[]) => mockTenantQuery(...a)) as (...z: unknown[]) => unknown)(...__a),
   pool: { connect: vi.fn() },
 }))
 vi.mock('../auth', () => ({

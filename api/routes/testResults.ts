@@ -15,6 +15,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 import {
   createTestResult, updateTestResult,
   NotFoundError, ValidationError,
@@ -78,7 +79,7 @@ testResultsRouter.post('/test-results', requireCapability('commissioning.write')
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-testResultsRouter.patch('/test-results/:resultId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+testResultsRouter.patch('/test-results/:resultId', requireCapability('commissioning.write') as never, requireRecordScope('test_results', 'resultId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

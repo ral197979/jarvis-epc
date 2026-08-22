@@ -143,7 +143,7 @@ const CASES: {
 }[] = [
   // commercial
   { family: 'commercial / cost.write',        capability: 'cost.write',        method: 'post',   url: '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/budget',                   body: { total: 100 } },
-  { family: 'commercial / cost.approve',      capability: 'cost.approve',      method: 'post',   url: '/api/v1/cost-entries/ce-1/post' },
+  { family: 'commercial / cost.approve',      capability: 'cost.approve',      method: 'post',   url: '/api/v1/cost-entries/41923a13-bf46-41db-8cec-276f478aebf1/post' },
   // crm
   { family: 'crm / crm.write',                capability: 'crm.write',         method: 'post',   url: '/api/v1/proposals',                             body: { title: 'Substation upgrade' } },
   // project
@@ -162,8 +162,8 @@ const CASES: {
   { family: 'commissioning / commissioning.write', capability: 'commissioning.write', method: 'post', url: '/api/v1/test-results',                      body: { projectId: 'p-1', testPackId: 'tp-1', stepNo: 1 } },
   // §17 escalation resolutions
   { family: 'escalation / commissioning.approve', capability: 'commissioning.approve', method: 'post', url: '/api/v1/commissioning/autosign-rules',     body: { name: 'r', predicate: {} } },
-  { family: 'escalation / safety.approve',    capability: 'safety.approve',    method: 'delete', url: '/api/v1/compliance-tasks/ct-1' },
-  { family: 'escalation / assistant.admin',   capability: 'assistant.admin',   method: 'delete', url: '/api/v1/knowledge-fixes/kf-1' },
+  { family: 'escalation / safety.approve',    capability: 'safety.approve',    method: 'delete', url: '/api/v1/compliance-tasks/48398f90-4aa3-4c3b-8141-27c6b7d2522f' },
+  { family: 'escalation / assistant.admin',   capability: 'assistant.admin',   method: 'delete', url: '/api/v1/knowledge-fixes/40c6ad7b-c087-4fe5-8523-b562ec48b163' },
 ]
 
 describe('§40 high-sensitivity mutation authorization', () => {
@@ -299,7 +299,7 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
     for (const [method, url, body] of [
       ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/sov-items',        { item_no: '1', description: 'Mobilisation' }],
       ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/pay-applications', {}],
-      ['patch', '/api/v1/pay-applications/pa-1/lines',   { lines: [{ sov_item_id: 's-1', work_completed: 10 }] }],
+      ['patch', '/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/lines',   { lines: [{ sov_item_id: 's-1', work_completed: 10 }] }],
     ] as const) {
       mockQuery.mockClear()
       const res = await (request(app()) as never as Record<string, (u: string) => { send: (b: unknown) => Promise<{ status: number }> }>)[method](url).send(body)
@@ -309,19 +309,19 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
 
   it('cost.write may submit, and submission is refused outside draft/rejected', async () => {
     setCurrent(principal({ role: 'owner' }))
-    const res = await request(app()).post('/api/v1/pay-applications/pa-1/submit').send({})
+    const res = await request(app()).post('/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/submit').send({})
     expect(res.status).not.toBe(403)
 
     mockQuery.mockImplementation(principalQuery(() => current, recordScopeQuery({ delegate: async () => ({
       rows: [{ status: 'approved' }], rowCount: 1,
     }) })))
-    const late = await request(app()).post('/api/v1/pay-applications/pa-1/submit').send({})
+    const late = await request(app()).post('/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/submit').send({})
     expect(late.status).toBe(409)
   })
 
   it('the approval endpoint refuses `submitted` outright, so submission cannot be laundered through it', async () => {
     setCurrent(principal({ role: 'owner' }))     // holds cost.approve
-    const res = await request(app()).patch('/api/v1/pay-applications/pa-1').send({ status: 'submitted' })
+    const res = await request(app()).patch('/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27').send({ status: 'submitted' })
     expect(res.status).toBe(422)
     expect(res.body).toMatchObject({
       error: 'ordinary_transition_not_writable',
@@ -335,8 +335,8 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
       for (const [method, url] of [
         ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/sov-items'],
         ['post',  '/api/v1/projects/30000000-0000-4000-8000-0000000000a1/pay-applications'],
-        ['patch', '/api/v1/pay-applications/pa-1/lines'],
-        ['post',  '/api/v1/pay-applications/pa-1/submit'],
+        ['patch', '/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/lines'],
+        ['post',  '/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/submit'],
       ] as const) {
         mockQuery.mockClear()
         setCurrent(principal({ role: role as UserRole }))
@@ -353,7 +353,7 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
       for (const status of ['approved', 'paid', 'rejected', 'draft']) {
         mockQuery.mockClear()
         setCurrent(principal({ role: role as UserRole }))
-        const res = await request(app()).patch('/api/v1/pay-applications/pa-1').send({ status })
+        const res = await request(app()).patch('/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27').send({ status })
         expect(res.status, `${role} reached status=${status}`).toBe(403)
         expect(mutated(), `${role} was denied status=${status} but it still mutated`).toBe(false)
       }
@@ -364,7 +364,7 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
     setCurrent(principal({ role: 'owner' }))
     for (const status of ['approved', 'paid', 'rejected']) {
       mockQuery.mockClear()
-      const res = await request(app()).patch('/api/v1/pay-applications/pa-1').send({ status })
+      const res = await request(app()).patch('/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27').send({ status })
       expect(res.status, `owner was refused status=${status}`).not.toBe(403)
     }
   })
@@ -372,8 +372,8 @@ describe('§47 the D1 pay-application lifecycle enforces four distinct contracts
   it('a cross-tenant claim reaches neither half of the lifecycle', async () => {
     setCurrent(principal({ role: 'owner', tenantId: 'tenant-a', jwtTenantId: 'tenant-b' }))
     for (const [method, url, body] of [
-      ['post',  '/api/v1/pay-applications/pa-1/submit', {}],
-      ['patch', '/api/v1/pay-applications/pa-1',        { status: 'approved' }],
+      ['post',  '/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/submit', {}],
+      ['patch', '/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27',        { status: 'approved' }],
     ] as const) {
       mockQuery.mockClear()
       const res = await (request(app()) as never as Record<string, (u: string) => { send: (b: unknown) => Promise<{ status: number }> }>)[method](url).send(body)
@@ -405,7 +405,7 @@ describe('§35 an ordinary capability cannot reach an approval state by mass ass
       rows: [{ status: 'approved' }], rowCount: 1,
     }) })))
     const res = await request(makeApp())
-      .patch('/api/v1/pay-applications/pa-1/lines')
+      .patch('/api/v1/pay-applications/4a16a24b-bbcf-48ad-8cec-beaf93a2fa27/lines')
       .send({ lines: [{ sov_item_id: 's-1', work_completed: 999 }] })
     expect(res.status).toBe(409)
     expect(mutated(), 'an approved billing was edited').toBe(false)

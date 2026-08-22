@@ -25,7 +25,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import {
   listSovItems, createSovItem, listPayApplications, createPayApplication,
   getPayApplicationView, upsertPayApplicationLines, setPayApplicationStatus,
@@ -97,7 +97,7 @@ router.get('/pay-applications/:id', requireCapability('cost.view') as never, asy
   } catch (err) { res.status(500).json({ error: 'Failed to load pay application', detail: (err as Error).message }) }
 })
 
-router.patch('/pay-applications/:id/lines', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+router.patch('/pay-applications/:id/lines', requireCapability('cost.write') as never, requireRecordScope('pay_applications') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body as { lines?: { sov_item_id: string; work_completed?: number; materials_stored?: number }[] }
   if (!Array.isArray(b.lines) || b.lines.length === 0) {
@@ -123,7 +123,7 @@ router.patch('/pay-applications/:id/lines', requireCapability('cost.write') as n
 // ADR-014 D1 — submission is an ordinary commercial act, not an approval.
 // It asks for a decision; it does not make one. Splitting it out is what stops
 // `submitted` being reachable only through the cost.approve status route.
-router.post('/pay-applications/:id/submit', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+router.post('/pay-applications/:id/submit', requireCapability('cost.write') as never, requireRecordScope('pay_applications') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const cur = await tenantQuery(r.tenantId!,
@@ -144,7 +144,7 @@ router.post('/pay-applications/:id/submit', requireCapability('cost.write') as n
 // approves and marks paid, or the two authorities are indistinguishable at the
 // server contract. approve / paid / rejected, and reversal to draft, all commit
 // or undo a commercial outcome and keep cost.approve.
-router.patch('/pay-applications/:id', requireCapability('cost.approve') as never, async (req: Request, res: Response) => {
+router.patch('/pay-applications/:id', requireCapability('cost.approve') as never, requireRecordScope('pay_applications') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const status = (req.body as { status?: string }).status
   if (status === 'submitted') {

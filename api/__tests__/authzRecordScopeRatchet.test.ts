@@ -386,8 +386,8 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // Phase 3B scoped 15 of ~747; Phase 3C took it to 39 by closing the
     // direct-ID surface of three routers. Adoption is real but partial, and
     // saying so is the point — a later slice must not imply full coverage.
-    expect(scoped).toBe(69)
-    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(661)
+    expect(scoped).toBe(180)
+    expect(plain, 'the rest remain capability-only, which is the honest state').toBe(550)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only
@@ -419,5 +419,58 @@ describe('denverMcp stays owner-decided dormant', () => {
     for (const f of ['.env.example', 'fly.toml', 'fly.staging.toml']) {
       expect(src(f), `${f}`).toMatch(/DENVER_MCP_SERVER\s*=\s*"?false"?/)
     }
+  })
+})
+
+// ─── 11. every resource a route scopes on can actually be resolved (§38) ──────
+//
+// `requireRecordScope` fails closed when a policy has no `derivation`, which is
+// the right default and a silent one: the route answers 404 for everyone and
+// looks protected. During the Phase-3D rollout six Phase-3A resources were
+// reused by name and had no derivation, so those routes refused every caller
+// until it was caught. This asserts the two halves stay in step.
+describe('every scoped route names a resolvable resource', () => {
+  const ROUTES_DIR = path.join(process.cwd(), 'api', 'routes')
+
+  it('has a derivation for every resource passed to requireRecordScope', () => {
+    const used = new Set<string>()
+    for (const f of fs.readdirSync(ROUTES_DIR).filter(x => x.endsWith('.ts'))) {
+      const src = fs.readFileSync(path.join(ROUTES_DIR, f), 'utf8')
+      for (const m of src.matchAll(/requireRecordScope\(\s*'([^']+)'/g)) used.add(m[1])
+    }
+    expect(used.size, 'the rollout should have scoped many resources').toBeGreaterThan(40)
+
+    const missing = [...used].filter(r => !policyFor(r)?.derivation).sort()
+    expect(missing, `these resources are scoped by a route but cannot be resolved:\n  ${missing.join('\n  ')}`).toEqual([])
+  })
+
+  it('declares derivations that match the schema parsed from the migrations', () => {
+    const map = JSON.parse(fs.readFileSync(
+      path.join(process.cwd(), 'audit', 'adr-014', 'schema-project-parent-map.json'), 'utf8'))
+    const tables = new Map<string, Record<string, unknown>>(
+      (map.tables as Record<string, unknown>[]).map(t => [t['table'] as string, t]))
+
+    const wrong: string[] = []
+    for (const p of RECORD_SCOPE_POLICIES) {
+      const d = p.derivation
+      if (!d) continue
+      const meta = tables.get(d.table)
+      if (!meta) { wrong.push(`${p.resource}: table ${d.table} is not in the schema map`); continue }
+      const pp = meta['projectParent'] as { strategy: string; column?: string; path?: { via: string; table: string; column: string }[] }
+      if (d.kind === 'DIRECT_COLUMN') {
+        // A project row is its own parent, which the map records as PROJECT_ROOT.
+        const ok = pp.strategy === 'DIRECT_COLUMN' ? pp.column === d.projectColumn
+                 : pp.strategy === 'PROJECT_ROOT'  ? d.projectColumn === 'id'
+                 : false
+        if (!ok) wrong.push(`${p.resource}: declares ${d.table}.${d.projectColumn}, schema says ${pp.strategy} ${pp.column ?? ''}`)
+      } else {
+        const hop = pp.path?.[0]
+        if (pp.strategy !== 'FK_PATH' || !hop) { wrong.push(`${p.resource}: declares an FK path, schema says ${pp.strategy}`); continue }
+        if (hop.via !== d.via || hop.table !== d.parentTable || hop.column !== d.parentProjectColumn) {
+          wrong.push(`${p.resource}: declares ${d.via}→${d.parentTable}.${d.parentProjectColumn}, schema says ${hop.via}→${hop.table}.${hop.column}`)
+        }
+      }
+    }
+    expect(wrong, `derivations disagree with the migrations:\n  ${wrong.join('\n  ')}`).toEqual([])
   })
 })

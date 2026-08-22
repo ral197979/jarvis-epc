@@ -18,6 +18,7 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { stats as actionStats, markReviewed } from '../services/agentActions'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -111,7 +112,7 @@ router.get('/:id', requireCapability('crossdomain.read') as never, async (req: R
 
 // ─── POST review ──────────────────────────────────────────────────────────────
 
-router.post('/:id/review', requireCapability('ai.govern') as never, async (req: Req, res: Response) => {
+router.post('/:id/review', requireCapability('ai.govern') as never, requireRecordScope('agent_actions') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -16,7 +16,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import {
   createBaseline, listBaselines,
   upsertWbsEntries, listWbsEntries,
@@ -61,7 +61,7 @@ evmRouter.get('/projects/:projectId/evm/baselines', requireCapability('cost.view
 
 // ─── WBS entries ──────────────────────────────────────────────────────────────
 
-evmRouter.post('/evm/baselines/:baselineId/wbs', requireCapability('cost.write') as never, async (req: Request, res: Response) => {
+evmRouter.post('/evm/baselines/:baselineId/wbs', requireCapability('cost.write') as never, requireRecordScope('evm_baselines', 'baselineId') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { projectId, entries } = req.body as { projectId: string; entries: unknown[] }
   if (!projectId || !Array.isArray(entries)) {

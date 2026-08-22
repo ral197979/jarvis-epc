@@ -11,10 +11,31 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'engineer', is_active: true }))
 
 const mockQuery = vi.fn()
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (t: string, sql: string, p: unknown[]) => /SELECT (id|p\.id) FROM projects/i.test(String(sql))
-    ? Promise.resolve({ rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
-    : mockQuery(t, sql, p),
+  tenantQuery: (t: string, sql: string, p: unknown[]) =>
+    _recordScopeAnswer(sql, p) ?? (/SELECT (id|p\.id) FROM projects/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
+      : mockQuery(t, sql, p)),
   query:       (sql: string, p: unknown[]) =>
     /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
       ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
@@ -128,8 +149,12 @@ describe('NCR / CAPA routes', () => {
   })
 
   it('POST CAPA 404s when the NCR does not exist', async () => {
+    // A well-formed id that resolves to no NCR: the record-scope guard admits it
+    // and the handler's own lookup is what answers 404, which is the contract
+    // under test. A malformed id would be refused by the guard first, and the
+    // queued row below would leak into the next test unconsumed.
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }) // project lookup in createCorrectiveAction
-    const res = await request(makeApp()).post('/api/v1/ncrs/missing/capas').send({ description: 'Re-weld and re-inspect' })
+    const res = await request(makeApp()).post('/api/v1/ncrs/8f2b1c44-0000-4000-8000-00000000ffff/capas').send({ description: 'Re-weld and re-inspect' })
     expect(res.status).toBe(404)
   })
 
@@ -147,7 +172,7 @@ describe('NCR / CAPA routes', () => {
   })
 
   it('PATCH capa validates status', async () => {
-    const res = await request(makeApp()).patch('/api/v1/capas/c1').send({ status: 'bogus' })
+    const res = await request(makeApp()).patch('/api/v1/capas/40f631ca-1ddb-48db-8bcf-cb9e057cdc98').send({ status: 'bogus' })
     expect(res.status).toBe(400)
   })
 

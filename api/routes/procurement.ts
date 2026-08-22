@@ -16,7 +16,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import { resolveCurrentUser } from '../authz/currentUser'
-import { projectScopeSql } from '../authz/recordScope'
+import { projectScopeSql, requireRecordScope } from '../authz/recordScope'
 import { requireCapability } from '../authz/requireCapability'
 import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
@@ -232,7 +232,7 @@ purchaseOrdersRouter.post('/', requireCapability('procurement.write') as never, 
   res.status(201).json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.patch('/:id', requireCapability('procurement.write') as never, guardTransitionOwnedState('purchase_orders') as never, async (req: Req, res: Response) => {
+purchaseOrdersRouter.patch('/:id', requireCapability('procurement.write') as never, requireRecordScope('purchase_orders') as never, guardTransitionOwnedState('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -254,7 +254,7 @@ purchaseOrdersRouter.patch('/:id', requireCapability('procurement.write') as nev
   res.json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.post('/:id/approve', requireCapability('procurement.approve') as never, async (req: Req, res: Response) => {
+purchaseOrdersRouter.post('/:id/approve', requireCapability('procurement.approve') as never, requireRecordScope('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -353,7 +353,7 @@ rfisRouter.post('/', requireCapability('construction.write') as never, async (re
   res.status(201).json({ data: row })
 })
 
-rfisRouter.post('/:id/respond', requireCapability('construction.write') as never, async (req: Req, res: Response) => {
+rfisRouter.post('/:id/respond', requireCapability('construction.write') as never, requireRecordScope('rfi') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const { response } = req.body as { response?: string }
@@ -439,7 +439,7 @@ submittalsRouter.post('/', requireCapability('construction.write') as never, asy
   res.status(201).json({ data: row })
 })
 
-submittalsRouter.patch('/:id', requireCapability('construction.write') as never, guardTransitionOwnedState('submittals') as never, async (req: Req, res: Response) => {
+submittalsRouter.patch('/:id', requireCapability('construction.write') as never, requireRecordScope('submittal') as never, guardTransitionOwnedState('submittals') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -473,7 +473,7 @@ submittalsRouter.patch('/:id', requireCapability('construction.write') as never,
   res.json({ data: result.rows[0] })
 })
 
-submittalsRouter.post('/:id/review', requireCapability('construction.approve') as never, async (req: Req, res: Response) => {
+submittalsRouter.post('/:id/review', requireCapability('construction.approve') as never, requireRecordScope('submittal') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const { status, review_notes } = req.body as { status?: string; review_notes?: string }

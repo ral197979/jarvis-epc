@@ -1696,7 +1696,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 54,
+      "line": 55,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1716,7 +1716,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions/_stats",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 35,
+      "line": 36,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1734,7 +1734,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions/:id",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 99,
+      "line": 100,
       "pathParams": [
         "id"
       ],
@@ -1756,7 +1756,7 @@
       "method": "POST",
       "path": "/api/v1/agent-actions/:id/review",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 114,
+      "line": 115,
       "pathParams": [
         "id"
       ],
@@ -2751,7 +2751,7 @@
       "method": "POST",
       "path": "/api/v1/ask",
       "file": "api/routes/ask.ts",
-      "line": 55,
+      "line": 56,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2807,7 +2807,7 @@
       "method": "GET",
       "path": "/api/v1/ask/chunks/:id",
       "file": "api/routes/ask.ts",
-      "line": 210,
+      "line": 211,
       "pathParams": [
         "id"
       ],
@@ -2830,7 +2830,7 @@
       "method": "GET",
       "path": "/api/v1/ask/sessions",
       "file": "api/routes/ask.ts",
-      "line": 105,
+      "line": 106,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2850,7 +2850,7 @@
       "method": "DELETE",
       "path": "/api/v1/ask/sessions/:id",
       "file": "api/routes/ask.ts",
-      "line": 195,
+      "line": 196,
       "pathParams": [
         "id"
       ],
@@ -2882,7 +2882,7 @@
       "method": "GET",
       "path": "/api/v1/ask/sessions/:id",
       "file": "api/routes/ask.ts",
-      "line": 140,
+      "line": 141,
       "pathParams": [
         "id"
       ],
@@ -2905,7 +2905,7 @@
       "method": "POST",
       "path": "/api/v1/ask/sessions/:id/resolve",
       "file": "api/routes/ask.ts",
-      "line": 169,
+      "line": 170,
       "pathParams": [
         "id"
       ],
@@ -3341,7 +3341,7 @@
       "method": "GET",
       "path": "/api/v1/bid-packages/:id",
       "file": "api/routes/subcontracts.ts",
-      "line": 87,
+      "line": 88,
       "pathParams": [
         "id"
       ],
@@ -3366,7 +3366,7 @@
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/cancel",
       "file": "api/routes/subcontracts.ts",
-      "line": 114,
+      "line": 115,
       "pathParams": [
         "id"
       ],
@@ -3400,7 +3400,7 @@
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/close",
       "file": "api/routes/subcontracts.ts",
-      "line": 105,
+      "line": 106,
       "pathParams": [
         "id"
       ],
@@ -3434,7 +3434,7 @@
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/issue",
       "file": "api/routes/subcontracts.ts",
-      "line": 96,
+      "line": 97,
       "pathParams": [
         "id"
       ],
@@ -3468,7 +3468,7 @@
       "method": "GET",
       "path": "/api/v1/bid-packages/:id/submissions",
       "file": "api/routes/subcontracts.ts",
-      "line": 125,
+      "line": 126,
       "pathParams": [
         "id"
       ],
@@ -3493,7 +3493,7 @@
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/submissions",
       "file": "api/routes/subcontracts.ts",
-      "line": 133,
+      "line": 134,
       "pathParams": [
         "id"
       ],
@@ -3525,7 +3525,7 @@
       "method": "POST",
       "path": "/api/v1/bid-submissions/:id/award",
       "file": "api/routes/subcontracts.ts",
-      "line": 143,
+      "line": 144,
       "pathParams": [
         "id"
       ],
@@ -3582,7 +3582,7 @@
       "method": "PATCH",
       "path": "/api/v1/bim-issues/:id",
       "file": "api/routes/bim.ts",
-      "line": 188,
+      "line": 189,
       "pathParams": [
         "id"
       ],
@@ -3612,7 +3612,7 @@
       "method": "DELETE",
       "path": "/api/v1/bim-models/:id",
       "file": "api/routes/bim.ts",
-      "line": 102,
+      "line": 103,
       "pathParams": [
         "id"
       ],
@@ -3644,7 +3644,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:id",
       "file": "api/routes/bim.ts",
-      "line": 68,
+      "line": 69,
       "pathParams": [
         "id"
       ],
@@ -3666,7 +3666,7 @@
       "method": "PATCH",
       "path": "/api/v1/bim-models/:id",
       "file": "api/routes/bim.ts",
-      "line": 81,
+      "line": 82,
       "pathParams": [
         "id"
       ],
@@ -3696,7 +3696,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:id/viewer-token",
       "file": "api/routes/bim.ts",
-      "line": 117,
+      "line": 118,
       "pathParams": [
         "id"
       ],
@@ -3721,7 +3721,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/ava-estimate",
       "file": "api/routes/estimating.ts",
-      "line": 284,
+      "line": 285,
       "pathParams": [
         "modelId"
       ],
@@ -3757,7 +3757,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/elements",
       "file": "api/routes/estimating.ts",
-      "line": 109,
+      "line": 110,
       "pathParams": [
         "modelId"
       ],
@@ -3781,7 +3781,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/elements/:id",
       "file": "api/routes/estimating.ts",
-      "line": 128,
+      "line": 129,
       "pathParams": [
         "modelId",
         "id"
@@ -3808,7 +3808,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/elements/:id/link",
       "file": "api/routes/estimating.ts",
-      "line": 140,
+      "line": 141,
       "pathParams": [
         "modelId",
         "id"
@@ -3841,7 +3841,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/parse-elements",
       "file": "api/routes/estimating.ts",
-      "line": 70,
+      "line": 71,
       "pathParams": [
         "modelId"
       ],
@@ -3885,7 +3885,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/parse-job",
       "file": "api/routes/estimating.ts",
-      "line": 98,
+      "line": 99,
       "pathParams": [
         "modelId"
       ],
@@ -3909,7 +3909,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/parse-job",
       "file": "api/routes/estimating.ts",
-      "line": 86,
+      "line": 87,
       "pathParams": [
         "modelId"
       ],
@@ -3941,7 +3941,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/quantity-summary",
       "file": "api/routes/estimating.ts",
-      "line": 154,
+      "line": 155,
       "pathParams": [
         "modelId"
       ],
@@ -3965,7 +3965,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 191,
+      "line": 192,
       "pathParams": [
         "modelId"
       ],
@@ -3989,7 +3989,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 166,
+      "line": 167,
       "pathParams": [
         "modelId"
       ],
@@ -4021,7 +4021,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff/auto",
       "file": "api/routes/estimating.ts",
-      "line": 180,
+      "line": 181,
       "pathParams": [
         "modelId"
       ],
@@ -4058,7 +4058,7 @@
       "method": "DELETE",
       "path": "/api/v1/budget-items/:itemId",
       "file": "api/routes/budgets.ts",
-      "line": 144,
+      "line": 145,
       "pathParams": [
         "itemId"
       ],
@@ -4090,7 +4090,7 @@
       "method": "PATCH",
       "path": "/api/v1/budget-items/:itemId",
       "file": "api/routes/budgets.ts",
-      "line": 124,
+      "line": 125,
       "pathParams": [
         "itemId"
       ],
@@ -4120,7 +4120,7 @@
       "method": "PATCH",
       "path": "/api/v1/budgets/:id",
       "file": "api/routes/budgets.ts",
-      "line": 66,
+      "line": 67,
       "pathParams": [
         "id"
       ],
@@ -4150,7 +4150,7 @@
       "method": "GET",
       "path": "/api/v1/budgets/:id/items",
       "file": "api/routes/budgets.ts",
-      "line": 86,
+      "line": 87,
       "pathParams": [
         "id"
       ],
@@ -4172,7 +4172,7 @@
       "method": "POST",
       "path": "/api/v1/budgets/:id/items",
       "file": "api/routes/budgets.ts",
-      "line": 99,
+      "line": 100,
       "pathParams": [
         "id"
       ],
@@ -4200,7 +4200,7 @@
       "method": "DELETE",
       "path": "/api/v1/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
-      "line": 128,
+      "line": 129,
       "pathParams": [
         "id"
       ],
@@ -4232,7 +4232,7 @@
       "method": "GET",
       "path": "/api/v1/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
-      "line": 94,
+      "line": 95,
       "pathParams": [
         "id"
       ],
@@ -4255,7 +4255,7 @@
       "method": "PATCH",
       "path": "/api/v1/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
-      "line": 111,
+      "line": 112,
       "pathParams": [
         "id"
       ],
@@ -4641,7 +4641,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning-items",
       "file": "api/routes/commissioningItems.ts",
-      "line": 61,
+      "line": 62,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4671,7 +4671,7 @@
       "method": "PATCH",
       "path": "/api/v1/commissioning-items/:itemId",
       "file": "api/routes/commissioningItems.ts",
-      "line": 91,
+      "line": 92,
       "pathParams": [
         "itemId"
       ],
@@ -4705,7 +4705,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/autosign-rules",
       "file": "api/routes/autosignRules.ts",
-      "line": 43,
+      "line": 44,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4725,7 +4725,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/autosign-rules",
       "file": "api/routes/autosignRules.ts",
-      "line": 83,
+      "line": 84,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4751,7 +4751,7 @@
       "method": "DELETE",
       "path": "/api/v1/commissioning/autosign-rules/:id",
       "file": "api/routes/autosignRules.ts",
-      "line": 172,
+      "line": 173,
       "pathParams": [
         "id"
       ],
@@ -4783,7 +4783,7 @@
       "method": "PATCH",
       "path": "/api/v1/commissioning/autosign-rules/:id",
       "file": "api/routes/autosignRules.ts",
-      "line": 144,
+      "line": 145,
       "pathParams": [
         "id"
       ],
@@ -4813,7 +4813,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/autosign-rules/arbitrate",
       "file": "api/routes/autosignRules.ts",
-      "line": 188,
+      "line": 189,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4857,7 +4857,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/balance",
       "file": "api/routes/commissioning.ts",
-      "line": 118,
+      "line": 119,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4875,7 +4875,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/baselines",
       "file": "api/routes/baselinesRoutes.ts",
-      "line": 28,
+      "line": 29,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4895,7 +4895,7 @@
       "method": "DELETE",
       "path": "/api/v1/commissioning/baselines/:id",
       "file": "api/routes/baselinesRoutes.ts",
-      "line": 94,
+      "line": 95,
       "pathParams": [
         "id"
       ],
@@ -4927,7 +4927,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/baselines/:id",
       "file": "api/routes/baselinesRoutes.ts",
-      "line": 70,
+      "line": 71,
       "pathParams": [
         "id"
       ],
@@ -4950,7 +4950,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/credits",
       "file": "api/routes/commissioning.ts",
-      "line": 135,
+      "line": 136,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4976,7 +4976,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/finalize",
       "file": "api/routes/commissioning.ts",
-      "line": 340,
+      "line": 341,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5004,7 +5004,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/generate-draft",
       "file": "api/routes/commissioning.ts",
-      "line": 159,
+      "line": 160,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5030,7 +5030,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/jobs",
       "file": "api/routes/commissioning.ts",
-      "line": 379,
+      "line": 380,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5050,7 +5050,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs",
       "file": "api/routes/commissioning.ts",
-      "line": 230,
+      "line": 231,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5072,7 +5072,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs/:id",
       "file": "api/routes/commissioning.ts",
-      "line": 276,
+      "line": 277,
       "pathParams": [
         "id"
       ],
@@ -5097,7 +5097,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs/:id/download/:format",
       "file": "api/routes/commissioning.ts",
-      "line": 411,
+      "line": 412,
       "pathParams": [
         "id",
         "format"
@@ -5120,7 +5120,7 @@
       "method": "PATCH",
       "path": "/api/v1/commissioning/packs/:id/review",
       "file": "api/routes/commissioning.ts",
-      "line": 310,
+      "line": 311,
       "pathParams": [
         "id"
       ],
@@ -5150,7 +5150,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/packs/manual",
       "file": "api/routes/commissioning.ts",
-      "line": 205,
+      "line": 206,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5176,7 +5176,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/uploads",
       "file": "api/routes/commissioning.ts",
-      "line": 98,
+      "line": 99,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5196,7 +5196,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/uploads/text-ingest",
       "file": "api/routes/commissioning.ts",
-      "line": 71,
+      "line": 72,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5222,7 +5222,7 @@
       "method": "GET",
       "path": "/api/v1/compliance-tasks",
       "file": "api/routes/compliance.ts",
-      "line": 41,
+      "line": 42,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5242,7 +5242,7 @@
       "method": "POST",
       "path": "/api/v1/compliance-tasks",
       "file": "api/routes/compliance.ts",
-      "line": 97,
+      "line": 98,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5280,7 +5280,7 @@
       "method": "DELETE",
       "path": "/api/v1/compliance-tasks/:id",
       "file": "api/routes/compliance.ts",
-      "line": 224,
+      "line": 225,
       "pathParams": [
         "id"
       ],
@@ -5312,7 +5312,7 @@
       "method": "GET",
       "path": "/api/v1/compliance-tasks/:id",
       "file": "api/routes/compliance.ts",
-      "line": 82,
+      "line": 83,
       "pathParams": [
         "id"
       ],
@@ -5334,7 +5334,7 @@
       "method": "PATCH",
       "path": "/api/v1/compliance-tasks/:id",
       "file": "api/routes/compliance.ts",
-      "line": 144,
+      "line": 145,
       "pathParams": [
         "id"
       ],
@@ -5364,7 +5364,7 @@
       "method": "POST",
       "path": "/api/v1/compliance-tasks/:id/complete",
       "file": "api/routes/compliance.ts",
-      "line": 181,
+      "line": 182,
       "pathParams": [
         "id"
       ],
@@ -5394,7 +5394,7 @@
       "method": "POST",
       "path": "/api/v1/compliance-tasks/:id/waive",
       "file": "api/routes/compliance.ts",
-      "line": 203,
+      "line": 204,
       "pathParams": [
         "id"
       ],
@@ -5424,7 +5424,7 @@
       "method": "POST",
       "path": "/api/v1/coordination/recommendations/:id/approve",
       "file": "api/routes/autoCoordination.ts",
-      "line": 37,
+      "line": 38,
       "pathParams": [
         "id"
       ],
@@ -5458,7 +5458,7 @@
       "method": "POST",
       "path": "/api/v1/coordination/recommendations/:id/dismiss",
       "file": "api/routes/autoCoordination.ts",
-      "line": 47,
+      "line": 48,
       "pathParams": [
         "id"
       ],
@@ -5716,7 +5716,7 @@
       "method": "DELETE",
       "path": "/api/v1/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
-      "line": 97,
+      "line": 98,
       "pathParams": [
         "id"
       ],
@@ -5752,7 +5752,7 @@
       "method": "GET",
       "path": "/api/v1/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
-      "line": 79,
+      "line": 80,
       "pathParams": [
         "id"
       ],
@@ -5776,7 +5776,7 @@
       "method": "PATCH",
       "path": "/api/v1/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
-      "line": 88,
+      "line": 89,
       "pathParams": [
         "id"
       ],
@@ -5810,7 +5810,7 @@
       "method": "POST",
       "path": "/api/v1/cost-entries/:id/post",
       "file": "api/routes/costEntry.ts",
-      "line": 106,
+      "line": 107,
       "pathParams": [
         "id"
       ],
@@ -5855,7 +5855,7 @@
       "method": "POST",
       "path": "/api/v1/cost-entries/:id/void",
       "file": "api/routes/costEntry.ts",
-      "line": 115,
+      "line": 116,
       "pathParams": [
         "id"
       ],
@@ -5889,7 +5889,7 @@
       "method": "GET",
       "path": "/api/v1/cost-items/search",
       "file": "api/routes/estimating.ts",
-      "line": 203,
+      "line": 204,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5911,7 +5911,7 @@
       "method": "DELETE",
       "path": "/api/v1/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
-      "line": 142,
+      "line": 143,
       "pathParams": [
         "id"
       ],
@@ -5943,7 +5943,7 @@
       "method": "GET",
       "path": "/api/v1/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
-      "line": 102,
+      "line": 103,
       "pathParams": [
         "id"
       ],
@@ -5965,7 +5965,7 @@
       "method": "PATCH",
       "path": "/api/v1/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
-      "line": 116,
+      "line": 117,
       "pathParams": [
         "id"
       ],
@@ -5995,7 +5995,7 @@
       "method": "POST",
       "path": "/api/v1/daily-logs/:id/approve",
       "file": "api/routes/dailyLogs.ts",
-      "line": 168,
+      "line": 169,
       "pathParams": [
         "id"
       ],
@@ -6025,7 +6025,7 @@
       "method": "POST",
       "path": "/api/v1/daily-logs/:id/submit",
       "file": "api/routes/dailyLogs.ts",
-      "line": 154,
+      "line": 155,
       "pathParams": [
         "id"
       ],
@@ -6055,7 +6055,7 @@
       "method": "POST",
       "path": "/api/v1/deficiencies",
       "file": "api/routes/deficiencies.ts",
-      "line": 55,
+      "line": 56,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6085,7 +6085,7 @@
       "method": "PATCH",
       "path": "/api/v1/deficiencies/:deficiencyId",
       "file": "api/routes/deficiencies.ts",
-      "line": 83,
+      "line": 84,
       "pathParams": [
         "deficiencyId"
       ],
@@ -8940,7 +8940,7 @@
       "method": "GET",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 231,
+      "line": 232,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8962,7 +8962,7 @@
       "method": "POST",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 219,
+      "line": 220,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8992,7 +8992,7 @@
       "method": "GET",
       "path": "/api/v1/estimates/:id",
       "file": "api/routes/estimating.ts",
-      "line": 242,
+      "line": 243,
       "pathParams": [
         "id"
       ],
@@ -9017,7 +9017,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/approve",
       "file": "api/routes/estimating.ts",
-      "line": 268,
+      "line": 269,
       "pathParams": [
         "id"
       ],
@@ -9047,7 +9047,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/lines",
       "file": "api/routes/estimating.ts",
-      "line": 253,
+      "line": 254,
       "pathParams": [
         "id"
       ],
@@ -9323,7 +9323,7 @@
       "method": "GET",
       "path": "/api/v1/evm/baselines/:baselineId/wbs",
       "file": "api/routes/evm.ts",
-      "line": 77,
+      "line": 78,
       "pathParams": [
         "baselineId"
       ],
@@ -9347,7 +9347,7 @@
       "method": "POST",
       "path": "/api/v1/evm/baselines/:baselineId/wbs",
       "file": "api/routes/evm.ts",
-      "line": 63,
+      "line": 64,
       "pathParams": [
         "baselineId"
       ],
@@ -9693,7 +9693,7 @@
       "method": "POST",
       "path": "/api/v1/files/confirm/:versionId",
       "file": "api/routes/files.ts",
-      "line": 230,
+      "line": 231,
       "pathParams": [
         "versionId"
       ],
@@ -9730,7 +9730,7 @@
       "method": "GET",
       "path": "/api/v1/files/documents",
       "file": "api/routes/files.ts",
-      "line": 316,
+      "line": 317,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9752,7 +9752,7 @@
       "method": "DELETE",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 396,
+      "line": 397,
       "pathParams": [
         "id"
       ],
@@ -9782,7 +9782,7 @@
       "method": "GET",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 349,
+      "line": 350,
       "pathParams": [
         "id"
       ],
@@ -9807,7 +9807,7 @@
       "method": "PATCH",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 372,
+      "line": 373,
       "pathParams": [
         "id"
       ],
@@ -9837,7 +9837,7 @@
       "method": "GET",
       "path": "/api/v1/files/download/:token",
       "file": "api/routes/files.ts",
-      "line": 294,
+      "line": 295,
       "pathParams": [
         "token"
       ],
@@ -9856,7 +9856,7 @@
       "method": "GET",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 411,
+      "line": 412,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9877,7 +9877,7 @@
       "method": "POST",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 433,
+      "line": 434,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9905,7 +9905,7 @@
       "method": "GET",
       "path": "/api/v1/files/presign/:versionId",
       "file": "api/routes/files.ts",
-      "line": 277,
+      "line": 278,
       "pathParams": [
         "versionId"
       ],
@@ -9927,7 +9927,7 @@
       "method": "POST",
       "path": "/api/v1/files/request-upload",
       "file": "api/routes/files.ts",
-      "line": 75,
+      "line": 76,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9962,7 +9962,7 @@
       "method": "PUT",
       "path": "/api/v1/files/upload/:token",
       "file": "api/routes/files.ts",
-      "line": 189,
+      "line": 190,
       "pathParams": [
         "token"
       ],
@@ -10501,7 +10501,7 @@
       "method": "POST",
       "path": "/api/v1/iot/ingest",
       "file": "api/routes/iot.ts",
-      "line": 204,
+      "line": 205,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10552,7 +10552,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge-fixes",
       "file": "api/routes/fixLibrary.ts",
-      "line": 67,
+      "line": 68,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10572,7 +10572,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge-fixes",
       "file": "api/routes/fixLibrary.ts",
-      "line": 113,
+      "line": 114,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10602,7 +10602,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge-fixes/_meta/symptoms",
       "file": "api/routes/fixLibrary.ts",
-      "line": 39,
+      "line": 40,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10624,7 +10624,7 @@
       "method": "DELETE",
       "path": "/api/v1/knowledge-fixes/:id",
       "file": "api/routes/fixLibrary.ts",
-      "line": 205,
+      "line": 206,
       "pathParams": [
         "id"
       ],
@@ -10660,7 +10660,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge-fixes/:id",
       "file": "api/routes/fixLibrary.ts",
-      "line": 141,
+      "line": 142,
       "pathParams": [
         "id"
       ],
@@ -10684,7 +10684,7 @@
       "method": "PATCH",
       "path": "/api/v1/knowledge-fixes/:id",
       "file": "api/routes/fixLibrary.ts",
-      "line": 151,
+      "line": 152,
       "pathParams": [
         "id"
       ],
@@ -10714,7 +10714,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge-fixes/:id/verify",
       "file": "api/routes/fixLibrary.ts",
-      "line": 186,
+      "line": 187,
       "pathParams": [
         "id"
       ],
@@ -10748,7 +10748,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge-fixes/search",
       "file": "api/routes/fixLibrary.ts",
-      "line": 48,
+      "line": 49,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10770,7 +10770,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/bulk-ingest",
       "file": "api/routes/knowledge.ts",
-      "line": 65,
+      "line": 66,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10801,7 +10801,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/embed-bulk",
       "file": "api/routes/knowledge.ts",
-      "line": 384,
+      "line": 385,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10836,7 +10836,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/embed-status",
       "file": "api/routes/knowledge.ts",
-      "line": 401,
+      "line": 402,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10856,7 +10856,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/mine-fixes-bulk",
       "file": "api/routes/knowledge.ts",
-      "line": 429,
+      "line": 430,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10902,7 +10902,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/search",
       "file": "api/routes/knowledge.ts",
-      "line": 112,
+      "line": 113,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10925,7 +10925,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/sources",
       "file": "api/routes/knowledge.ts",
-      "line": 134,
+      "line": 135,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10945,7 +10945,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/sources",
       "file": "api/routes/knowledge.ts",
-      "line": 174,
+      "line": 175,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -11014,7 +11014,7 @@
       "method": "DELETE",
       "path": "/api/v1/knowledge/sources/:id",
       "file": "api/routes/knowledge.ts",
-      "line": 449,
+      "line": 450,
       "pathParams": [
         "id"
       ],
@@ -11046,7 +11046,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/sources/:id",
       "file": "api/routes/knowledge.ts",
-      "line": 257,
+      "line": 258,
       "pathParams": [
         "id"
       ],
@@ -11068,7 +11068,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/sources/:id/chunks",
       "file": "api/routes/knowledge.ts",
-      "line": 272,
+      "line": 273,
       "pathParams": [
         "id"
       ],
@@ -11090,7 +11090,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/sources/:id/embed",
       "file": "api/routes/knowledge.ts",
-      "line": 360,
+      "line": 361,
       "pathParams": [
         "id"
       ],
@@ -11114,7 +11114,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/sources/:id/mine-fixes",
       "file": "api/routes/knowledge.ts",
-      "line": 322,
+      "line": 323,
       "pathParams": [
         "id"
       ],
@@ -11138,7 +11138,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/sources/:id/reingest",
       "file": "api/routes/knowledge.ts",
-      "line": 302,
+      "line": 303,
       "pathParams": [
         "id"
       ],
@@ -11472,7 +11472,7 @@
       "method": "GET",
       "path": "/api/v1/meetings/:id",
       "file": "api/routes/meetings.ts",
-      "line": 72,
+      "line": 73,
       "pathParams": [
         "id"
       ],
@@ -11498,7 +11498,7 @@
       "method": "PATCH",
       "path": "/api/v1/meetings/:id",
       "file": "api/routes/meetings.ts",
-      "line": 81,
+      "line": 82,
       "pathParams": [
         "id"
       ],
@@ -11532,7 +11532,7 @@
       "method": "GET",
       "path": "/api/v1/meetings/:id/actions",
       "file": "api/routes/meetings.ts",
-      "line": 147,
+      "line": 148,
       "pathParams": [
         "id"
       ],
@@ -11556,7 +11556,7 @@
       "method": "POST",
       "path": "/api/v1/meetings/:id/actions",
       "file": "api/routes/meetings.ts",
-      "line": 155,
+      "line": 156,
       "pathParams": [
         "id"
       ],
@@ -11588,7 +11588,7 @@
       "method": "GET",
       "path": "/api/v1/meetings/:id/agenda",
       "file": "api/routes/meetings.ts",
-      "line": 110,
+      "line": 111,
       "pathParams": [
         "id"
       ],
@@ -11612,7 +11612,7 @@
       "method": "POST",
       "path": "/api/v1/meetings/:id/agenda",
       "file": "api/routes/meetings.ts",
-      "line": 118,
+      "line": 119,
       "pathParams": [
         "id"
       ],
@@ -11646,7 +11646,7 @@
       "method": "DELETE",
       "path": "/api/v1/meetings/:id/agenda/:itemId",
       "file": "api/routes/meetings.ts",
-      "line": 137,
+      "line": 138,
       "pathParams": [
         "id",
         "itemId"
@@ -11683,7 +11683,7 @@
       "method": "PATCH",
       "path": "/api/v1/meetings/:id/agenda/:itemId",
       "file": "api/routes/meetings.ts",
-      "line": 128,
+      "line": 129,
       "pathParams": [
         "id",
         "itemId"
@@ -11718,7 +11718,7 @@
       "method": "POST",
       "path": "/api/v1/meetings/:id/archive",
       "file": "api/routes/meetings.ts",
-      "line": 99,
+      "line": 100,
       "pathParams": [
         "id"
       ],
@@ -11752,7 +11752,7 @@
       "method": "POST",
       "path": "/api/v1/meetings/:id/publish",
       "file": "api/routes/meetings.ts",
-      "line": 90,
+      "line": 91,
       "pathParams": [
         "id"
       ],
@@ -12828,7 +12828,7 @@
       "method": "GET",
       "path": "/api/v1/pay-applications/:id",
       "file": "api/routes/payApplications.ts",
-      "line": 90,
+      "line": 91,
       "pathParams": [
         "id"
       ],
@@ -12854,7 +12854,7 @@
       "method": "PATCH",
       "path": "/api/v1/pay-applications/:id",
       "file": "api/routes/payApplications.ts",
-      "line": 146,
+      "line": 147,
       "pathParams": [
         "id"
       ],
@@ -12888,7 +12888,7 @@
       "method": "PATCH",
       "path": "/api/v1/pay-applications/:id/lines",
       "file": "api/routes/payApplications.ts",
-      "line": 99,
+      "line": 100,
       "pathParams": [
         "id"
       ],
@@ -12922,7 +12922,7 @@
       "method": "POST",
       "path": "/api/v1/pay-applications/:id/submit",
       "file": "api/routes/payApplications.ts",
-      "line": 125,
+      "line": 126,
       "pathParams": [
         "id"
       ],
@@ -13772,7 +13772,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/advance",
       "file": "api/routes/lifecycle.ts",
-      "line": 49,
+      "line": 50,
       "pathParams": [
         "projectId"
       ],
@@ -13806,7 +13806,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bid-packages",
       "file": "api/routes/subcontracts.ts",
-      "line": 71,
+      "line": 72,
       "pathParams": [
         "projectId"
       ],
@@ -13831,7 +13831,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/bid-packages",
       "file": "api/routes/subcontracts.ts",
-      "line": 61,
+      "line": 62,
       "pathParams": [
         "projectId"
       ],
@@ -13868,7 +13868,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bid-packages/summary",
       "file": "api/routes/subcontracts.ts",
-      "line": 79,
+      "line": 80,
       "pathParams": [
         "projectId"
       ],
@@ -13894,7 +13894,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bim-issues",
       "file": "api/routes/bim.ts",
-      "line": 137,
+      "line": 138,
       "pathParams": [
         "projectId"
       ],
@@ -13916,7 +13916,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/bim-issues",
       "file": "api/routes/bim.ts",
-      "line": 156,
+      "line": 157,
       "pathParams": [
         "projectId"
       ],
@@ -13956,7 +13956,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bim-models",
       "file": "api/routes/bim.ts",
-      "line": 32,
+      "line": 33,
       "pathParams": [
         "projectId"
       ],
@@ -13978,7 +13978,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/bim-models",
       "file": "api/routes/bim.ts",
-      "line": 45,
+      "line": 46,
       "pathParams": [
         "projectId"
       ],
@@ -14006,7 +14006,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/budget",
       "file": "api/routes/budgets.ts",
-      "line": 36,
+      "line": 37,
       "pathParams": [
         "projectId"
       ],
@@ -14028,7 +14028,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/budget",
       "file": "api/routes/budgets.ts",
-      "line": 48,
+      "line": 49,
       "pathParams": [
         "projectId"
       ],
@@ -14056,7 +14056,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/budget/rollup",
       "file": "api/routes/budgets.ts",
-      "line": 156,
+      "line": 157,
       "pathParams": [
         "projectId"
       ],
@@ -14079,7 +14079,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/calc-sessions",
       "file": "api/routes/calculations.ts",
-      "line": 24,
+      "line": 25,
       "pathParams": [
         "projectId"
       ],
@@ -14102,7 +14102,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/calc-sessions",
       "file": "api/routes/calculations.ts",
-      "line": 54,
+      "line": 55,
       "pathParams": [
         "projectId"
       ],
@@ -14232,7 +14232,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/commissioning-items",
       "file": "api/routes/commissioningItems.ts",
-      "line": 50,
+      "line": 51,
       "pathParams": [
         "projectId"
       ],
@@ -14283,7 +14283,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/coordination/recommendations",
       "file": "api/routes/autoCoordination.ts",
-      "line": 29,
+      "line": 30,
       "pathParams": [
         "projectId"
       ],
@@ -14307,7 +14307,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/coordination/scan",
       "file": "api/routes/autoCoordination.ts",
-      "line": 22,
+      "line": 23,
       "pathParams": [
         "projectId"
       ],
@@ -14369,7 +14369,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/cost-entries",
       "file": "api/routes/costEntry.ts",
-      "line": 55,
+      "line": 56,
       "pathParams": [
         "projectId"
       ],
@@ -14393,7 +14393,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/cost-entries",
       "file": "api/routes/costEntry.ts",
-      "line": 39,
+      "line": 40,
       "pathParams": [
         "projectId"
       ],
@@ -14425,7 +14425,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/cost-entries/summary",
       "file": "api/routes/costEntry.ts",
-      "line": 69,
+      "line": 70,
       "pathParams": [
         "projectId"
       ],
@@ -14474,7 +14474,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/coverage",
       "file": "api/routes/systems.ts",
-      "line": 196,
+      "line": 197,
       "pathParams": [
         "projectId"
       ],
@@ -14499,7 +14499,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/daily-logs",
       "file": "api/routes/dailyLogs.ts",
-      "line": 31,
+      "line": 32,
       "pathParams": [
         "projectId"
       ],
@@ -14521,7 +14521,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/daily-logs",
       "file": "api/routes/dailyLogs.ts",
-      "line": 62,
+      "line": 63,
       "pathParams": [
         "projectId"
       ],
@@ -14561,7 +14561,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/deficiencies",
       "file": "api/routes/deficiencies.ts",
-      "line": 47,
+      "line": 48,
       "pathParams": [
         "projectId"
       ],
@@ -14635,7 +14635,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/actuals",
       "file": "api/routes/evm.ts",
-      "line": 103,
+      "line": 104,
       "pathParams": [
         "projectId"
       ],
@@ -14659,7 +14659,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/actuals",
       "file": "api/routes/evm.ts",
-      "line": 89,
+      "line": 90,
       "pathParams": [
         "projectId"
       ],
@@ -14695,7 +14695,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/baselines",
       "file": "api/routes/evm.ts",
-      "line": 51,
+      "line": 52,
       "pathParams": [
         "projectId"
       ],
@@ -14719,7 +14719,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/baselines",
       "file": "api/routes/evm.ts",
-      "line": 38,
+      "line": 39,
       "pathParams": [
         "projectId"
       ],
@@ -14751,7 +14751,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/metrics",
       "file": "api/routes/evm.ts",
-      "line": 131,
+      "line": 132,
       "pathParams": [
         "projectId"
       ],
@@ -14777,7 +14777,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/progress",
       "file": "api/routes/evm.ts",
-      "line": 115,
+      "line": 116,
       "pathParams": [
         "projectId"
       ],
@@ -14809,7 +14809,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/scurve",
       "file": "api/routes/evm.ts",
-      "line": 155,
+      "line": 156,
       "pathParams": [
         "projectId"
       ],
@@ -14833,7 +14833,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/snapshot",
       "file": "api/routes/evm.ts",
-      "line": 143,
+      "line": 144,
       "pathParams": [
         "projectId"
       ],
@@ -14893,7 +14893,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/gates/:gateKey",
       "file": "api/routes/lifecycle.ts",
-      "line": 32,
+      "line": 33,
       "pathParams": [
         "projectId",
         "gateKey"
@@ -15011,7 +15011,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/lifecycle",
       "file": "api/routes/lifecycle.ts",
-      "line": 23,
+      "line": 24,
       "pathParams": [
         "projectId"
       ],
@@ -15035,7 +15035,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/meetings",
       "file": "api/routes/meetings.ts",
-      "line": 60,
+      "line": 61,
       "pathParams": [
         "projectId"
       ],
@@ -15061,7 +15061,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/meetings",
       "file": "api/routes/meetings.ts",
-      "line": 46,
+      "line": 47,
       "pathParams": [
         "projectId"
       ],
@@ -15218,7 +15218,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/nova-integration",
       "file": "api/routes/novaIntegrationStatus.ts",
-      "line": 102,
+      "line": 103,
       "pathParams": [
         "projectId"
       ],
@@ -15244,7 +15244,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/nova-integration/retry",
       "file": "api/routes/novaIntegrationStatus.ts",
-      "line": 204,
+      "line": 205,
       "pathParams": [
         "projectId"
       ],
@@ -15282,7 +15282,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/pay-applications",
       "file": "api/routes/payApplications.ts",
-      "line": 71,
+      "line": 72,
       "pathParams": [
         "projectId"
       ],
@@ -15306,7 +15306,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/pay-applications",
       "file": "api/routes/payApplications.ts",
-      "line": 78,
+      "line": 79,
       "pathParams": [
         "projectId"
       ],
@@ -15455,7 +15455,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/risks",
       "file": "api/routes/riskRegister.ts",
-      "line": 53,
+      "line": 54,
       "pathParams": [
         "projectId"
       ],
@@ -15479,7 +15479,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/risks",
       "file": "api/routes/riskRegister.ts",
-      "line": 41,
+      "line": 42,
       "pathParams": [
         "projectId"
       ],
@@ -15516,7 +15516,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/risks/summary",
       "file": "api/routes/riskRegister.ts",
-      "line": 35,
+      "line": 36,
       "pathParams": [
         "projectId"
       ],
@@ -15540,7 +15540,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 60,
+      "line": 61,
       "pathParams": [
         "projectId"
       ],
@@ -15564,7 +15564,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 66,
+      "line": 67,
       "pathParams": [
         "projectId"
       ],
@@ -15596,7 +15596,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/intelligence",
       "file": "api/routes/safety.ts",
-      "line": 89,
+      "line": 90,
       "pathParams": [
         "projectId"
       ],
@@ -15622,7 +15622,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 31,
+      "line": 32,
       "pathParams": [
         "projectId"
       ],
@@ -15646,7 +15646,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 37,
+      "line": 38,
       "pathParams": [
         "projectId"
       ],
@@ -15678,7 +15678,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/schedule/import",
       "file": "api/routes/scheduleImport.ts",
-      "line": 38,
+      "line": 39,
       "pathParams": [
         "projectId"
       ],
@@ -15769,7 +15769,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/schedule/imports",
       "file": "api/routes/scheduleImport.ts",
-      "line": 66,
+      "line": 67,
       "pathParams": [
         "projectId"
       ],
@@ -15793,7 +15793,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/sensors",
       "file": "api/routes/iot.ts",
-      "line": 135,
+      "line": 136,
       "pathParams": [
         "projectId"
       ],
@@ -15817,7 +15817,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/sensors",
       "file": "api/routes/iot.ts",
-      "line": 127,
+      "line": 128,
       "pathParams": [
         "projectId"
       ],
@@ -15849,7 +15849,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/sensors/alerts",
       "file": "api/routes/iot.ts",
-      "line": 173,
+      "line": 174,
       "pathParams": [
         "projectId"
       ],
@@ -15874,7 +15874,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/sov-items",
       "file": "api/routes/payApplications.ts",
-      "line": 44,
+      "line": 45,
       "pathParams": [
         "projectId"
       ],
@@ -15898,7 +15898,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/sov-items",
       "file": "api/routes/payApplications.ts",
-      "line": 51,
+      "line": 52,
       "pathParams": [
         "projectId"
       ],
@@ -15930,7 +15930,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/subcontracts",
       "file": "api/routes/subcontracts.ts",
-      "line": 166,
+      "line": 167,
       "pathParams": [
         "projectId"
       ],
@@ -15956,7 +15956,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/subcontracts",
       "file": "api/routes/subcontracts.ts",
-      "line": 154,
+      "line": 155,
       "pathParams": [
         "projectId"
       ],
@@ -15993,7 +15993,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/systems",
       "file": "api/routes/systems.ts",
-      "line": 57,
+      "line": 58,
       "pathParams": [
         "projectId"
       ],
@@ -16017,7 +16017,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/systems",
       "file": "api/routes/systems.ts",
-      "line": 65,
+      "line": 66,
       "pathParams": [
         "projectId"
       ],
@@ -16049,7 +16049,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/tags",
       "file": "api/routes/systems.ts",
-      "line": 139,
+      "line": 140,
       "pathParams": [
         "projectId"
       ],
@@ -16073,7 +16073,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/team",
       "file": "api/routes/team.ts",
-      "line": 96,
+      "line": 97,
       "pathParams": [
         "projectId"
       ],
@@ -16098,7 +16098,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/test-packs",
       "file": "api/routes/testPacks.ts",
-      "line": 50,
+      "line": 51,
       "pathParams": [
         "projectId"
       ],
@@ -16124,7 +16124,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 46,
+      "line": 47,
       "pathParams": [
         "projectId"
       ],
@@ -16150,7 +16150,7 @@
       "method": "PUT",
       "path": "/api/v1/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 36,
+      "line": 37,
       "pathParams": [
         "projectId"
       ],
@@ -16182,7 +16182,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/timesheets/summary",
       "file": "api/routes/timesheets.ts",
-      "line": 58,
+      "line": 59,
       "pathParams": [
         "projectId"
       ],
@@ -16206,7 +16206,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/turnover-packages",
       "file": "api/routes/turnover.ts",
-      "line": 23,
+      "line": 24,
       "pathParams": [
         "projectId"
       ],
@@ -16230,7 +16230,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/turnover-packages",
       "file": "api/routes/turnover.ts",
-      "line": 29,
+      "line": 30,
       "pathParams": [
         "projectId"
       ],
@@ -17413,7 +17413,7 @@
       "method": "GET",
       "path": "/api/v1/risks/:id",
       "file": "api/routes/riskRegister.ts",
-      "line": 64,
+      "line": 65,
       "pathParams": [
         "id"
       ],
@@ -17437,7 +17437,7 @@
       "method": "PATCH",
       "path": "/api/v1/risks/:id",
       "file": "api/routes/riskRegister.ts",
-      "line": 73,
+      "line": 74,
       "pathParams": [
         "id"
       ],
@@ -17469,7 +17469,7 @@
       "method": "POST",
       "path": "/api/v1/risks/:id/close",
       "file": "api/routes/riskRegister.ts",
-      "line": 82,
+      "line": 83,
       "pathParams": [
         "id"
       ],
@@ -17871,7 +17871,7 @@
       "method": "PATCH",
       "path": "/api/v1/safety/incidents/:id",
       "file": "api/routes/safety.ts",
-      "line": 76,
+      "line": 77,
       "pathParams": [
         "id"
       ],
@@ -17905,7 +17905,7 @@
       "method": "PATCH",
       "path": "/api/v1/safety/observations/:id",
       "file": "api/routes/safety.ts",
-      "line": 47,
+      "line": 48,
       "pathParams": [
         "id"
       ],
@@ -17939,7 +17939,7 @@
       "method": "POST",
       "path": "/api/v1/sc-invoices/:id/approve",
       "file": "api/routes/subcontracts.ts",
-      "line": 225,
+      "line": 226,
       "pathParams": [
         "id"
       ],
@@ -17973,7 +17973,7 @@
       "method": "POST",
       "path": "/api/v1/sc-invoices/:id/reject",
       "file": "api/routes/subcontracts.ts",
-      "line": 235,
+      "line": 236,
       "pathParams": [
         "id"
       ],
@@ -18007,7 +18007,7 @@
       "method": "POST",
       "path": "/api/v1/sc-invoices/:id/submit",
       "file": "api/routes/subcontracts.ts",
-      "line": 216,
+      "line": 217,
       "pathParams": [
         "id"
       ],
@@ -18352,7 +18352,7 @@
       "method": "GET",
       "path": "/api/v1/schedule/:projectId/cpm",
       "file": "api/routes/schedule.ts",
-      "line": 190,
+      "line": 191,
       "pathParams": [
         "projectId"
       ],
@@ -18399,7 +18399,7 @@
       "method": "GET",
       "path": "/api/v1/schedule/:projectId/dependencies",
       "file": "api/routes/schedule.ts",
-      "line": 125,
+      "line": 126,
       "pathParams": [
         "projectId"
       ],
@@ -18422,7 +18422,7 @@
       "method": "POST",
       "path": "/api/v1/schedule/:projectId/dependencies",
       "file": "api/routes/schedule.ts",
-      "line": 141,
+      "line": 142,
       "pathParams": [
         "projectId"
       ],
@@ -18476,7 +18476,7 @@
       "method": "GET",
       "path": "/api/v1/schedule/:projectId/tasks",
       "file": "api/routes/schedule.ts",
-      "line": 35,
+      "line": 36,
       "pathParams": [
         "projectId"
       ],
@@ -18498,7 +18498,7 @@
       "method": "POST",
       "path": "/api/v1/schedule/:projectId/tasks",
       "file": "api/routes/schedule.ts",
-      "line": 51,
+      "line": 52,
       "pathParams": [
         "projectId"
       ],
@@ -18548,7 +18548,7 @@
       "method": "DELETE",
       "path": "/api/v1/schedule/dependencies/:id",
       "file": "api/routes/schedule.ts",
-      "line": 174,
+      "line": 175,
       "pathParams": [
         "id"
       ],
@@ -18580,7 +18580,7 @@
       "method": "DELETE",
       "path": "/api/v1/schedule/tasks/:id",
       "file": "api/routes/schedule.ts",
-      "line": 109,
+      "line": 110,
       "pathParams": [
         "id"
       ],
@@ -18612,7 +18612,7 @@
       "method": "PATCH",
       "path": "/api/v1/schedule/tasks/:id",
       "file": "api/routes/schedule.ts",
-      "line": 81,
+      "line": 82,
       "pathParams": [
         "id"
       ],
@@ -18742,7 +18742,7 @@
       "method": "GET",
       "path": "/api/v1/sensors/:id",
       "file": "api/routes/iot.ts",
-      "line": 143,
+      "line": 144,
       "pathParams": [
         "id"
       ],
@@ -18766,7 +18766,7 @@
       "method": "GET",
       "path": "/api/v1/sensors/:id/readings",
       "file": "api/routes/iot.ts",
-      "line": 161,
+      "line": 162,
       "pathParams": [
         "id"
       ],
@@ -18790,7 +18790,7 @@
       "method": "PATCH",
       "path": "/api/v1/sensors/:id/thresholds",
       "file": "api/routes/iot.ts",
-      "line": 152,
+      "line": 153,
       "pathParams": [
         "id"
       ],
@@ -18824,7 +18824,7 @@
       "method": "POST",
       "path": "/api/v1/sensors/:uid/readings",
       "file": "api/routes/iot.ts",
-      "line": 243,
+      "line": 244,
       "pathParams": [
         "uid"
       ],
@@ -18869,7 +18869,7 @@
       "method": "POST",
       "path": "/api/v1/sensors/alerts/:alertId/acknowledge",
       "file": "api/routes/iot.ts",
-      "line": 181,
+      "line": 182,
       "pathParams": [
         "alertId"
       ],
@@ -18903,7 +18903,7 @@
       "method": "POST",
       "path": "/api/v1/sensors/tokens",
       "file": "api/routes/iot.ts",
-      "line": 189,
+      "line": 190,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -19059,7 +19059,7 @@
       "method": "GET",
       "path": "/api/v1/subcontracts/:id",
       "file": "api/routes/subcontracts.ts",
-      "line": 174,
+      "line": 175,
       "pathParams": [
         "id"
       ],
@@ -19085,7 +19085,7 @@
       "method": "GET",
       "path": "/api/v1/subcontracts/:id/invoices",
       "file": "api/routes/subcontracts.ts",
-      "line": 208,
+      "line": 209,
       "pathParams": [
         "id"
       ],
@@ -19109,7 +19109,7 @@
       "method": "POST",
       "path": "/api/v1/subcontracts/:id/invoices",
       "file": "api/routes/subcontracts.ts",
-      "line": 196,
+      "line": 197,
       "pathParams": [
         "id"
       ],
@@ -19144,7 +19144,7 @@
       "method": "PATCH",
       "path": "/api/v1/subcontracts/:id/status",
       "file": "api/routes/subcontracts.ts",
-      "line": 183,
+      "line": 184,
       "pathParams": [
         "id"
       ],
@@ -19322,7 +19322,7 @@
       "method": "PATCH",
       "path": "/api/v1/subsystems/:subsystemId",
       "file": "api/routes/systems.ts",
-      "line": 124,
+      "line": 125,
       "pathParams": [
         "subsystemId"
       ],
@@ -19523,7 +19523,7 @@
       "method": "PATCH",
       "path": "/api/v1/systems/:systemId",
       "file": "api/routes/systems.ts",
-      "line": 86,
+      "line": 87,
       "pathParams": [
         "systemId"
       ],
@@ -19557,7 +19557,7 @@
       "method": "POST",
       "path": "/api/v1/systems/:systemId/subsystems",
       "file": "api/routes/systems.ts",
-      "line": 102,
+      "line": 103,
       "pathParams": [
         "systemId"
       ],
@@ -19589,7 +19589,7 @@
       "method": "POST",
       "path": "/api/v1/systems/:systemId/tags",
       "file": "api/routes/systems.ts",
-      "line": 147,
+      "line": 148,
       "pathParams": [
         "systemId"
       ],
@@ -19621,7 +19621,7 @@
       "method": "PATCH",
       "path": "/api/v1/tags/:tagId",
       "file": "api/routes/systems.ts",
-      "line": 174,
+      "line": 175,
       "pathParams": [
         "tagId"
       ],
@@ -19655,7 +19655,7 @@
       "method": "POST",
       "path": "/api/v1/team/assignments",
       "file": "api/routes/team.ts",
-      "line": 86,
+      "line": 87,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -19685,7 +19685,7 @@
       "method": "POST",
       "path": "/api/v1/team/assignments/:id/end",
       "file": "api/routes/team.ts",
-      "line": 102,
+      "line": 103,
       "pathParams": [
         "id"
       ],
@@ -19719,7 +19719,7 @@
       "method": "GET",
       "path": "/api/v1/team/members",
       "file": "api/routes/team.ts",
-      "line": 51,
+      "line": 52,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -19742,7 +19742,7 @@
       "method": "POST",
       "path": "/api/v1/team/members",
       "file": "api/routes/team.ts",
-      "line": 41,
+      "line": 42,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -19772,7 +19772,7 @@
       "method": "GET",
       "path": "/api/v1/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 62,
+      "line": 63,
       "pathParams": [
         "id"
       ],
@@ -19797,7 +19797,7 @@
       "method": "PATCH",
       "path": "/api/v1/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 71,
+      "line": 72,
       "pathParams": [
         "id"
       ],
@@ -19831,7 +19831,7 @@
       "method": "GET",
       "path": "/api/v1/team/members/:id/assignments",
       "file": "api/routes/team.ts",
-      "line": 80,
+      "line": 81,
       "pathParams": [
         "id"
       ],
@@ -19856,7 +19856,7 @@
       "method": "GET",
       "path": "/api/v1/team/members/:memberId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 66,
+      "line": 67,
       "pathParams": [
         "memberId"
       ],
@@ -19882,7 +19882,7 @@
       "method": "GET",
       "path": "/api/v1/team/summary",
       "file": "api/routes/team.ts",
-      "line": 35,
+      "line": 36,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20117,7 +20117,7 @@
       "method": "POST",
       "path": "/api/v1/test-packs",
       "file": "api/routes/testPacks.ts",
-      "line": 58,
+      "line": 59,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20147,7 +20147,7 @@
       "method": "GET",
       "path": "/api/v1/test-packs/:packId",
       "file": "api/routes/testPacks.ts",
-      "line": 89,
+      "line": 90,
       "pathParams": [
         "packId"
       ],
@@ -20173,7 +20173,7 @@
       "method": "PATCH",
       "path": "/api/v1/test-packs/:packId",
       "file": "api/routes/testPacks.ts",
-      "line": 97,
+      "line": 98,
       "pathParams": [
         "packId"
       ],
@@ -20207,7 +20207,7 @@
       "method": "POST",
       "path": "/api/v1/test-results",
       "file": "api/routes/testResults.ts",
-      "line": 47,
+      "line": 48,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20239,7 +20239,7 @@
       "method": "PATCH",
       "path": "/api/v1/test-results/:resultId",
       "file": "api/routes/testResults.ts",
-      "line": 81,
+      "line": 82,
       "pathParams": [
         "resultId"
       ],
@@ -20273,7 +20273,7 @@
       "method": "POST",
       "path": "/api/v1/timesheets/:id/approve",
       "file": "api/routes/timesheets.ts",
-      "line": 83,
+      "line": 84,
       "pathParams": [
         "id"
       ],
@@ -20328,7 +20328,7 @@
       "method": "POST",
       "path": "/api/v1/timesheets/:id/reject",
       "file": "api/routes/timesheets.ts",
-      "line": 92,
+      "line": 93,
       "pathParams": [
         "id"
       ],
@@ -20362,7 +20362,7 @@
       "method": "POST",
       "path": "/api/v1/timesheets/:id/submit",
       "file": "api/routes/timesheets.ts",
-      "line": 74,
+      "line": 75,
       "pathParams": [
         "id"
       ],
@@ -20396,7 +20396,7 @@
       "method": "GET",
       "path": "/api/v1/transmittals",
       "file": "api/routes/transmittals.ts",
-      "line": 68,
+      "line": 69,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20419,7 +20419,7 @@
       "method": "POST",
       "path": "/api/v1/transmittals",
       "file": "api/routes/transmittals.ts",
-      "line": 51,
+      "line": 52,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20465,7 +20465,7 @@
       "method": "GET",
       "path": "/api/v1/transmittals/:id",
       "file": "api/routes/transmittals.ts",
-      "line": 83,
+      "line": 84,
       "pathParams": [
         "id"
       ],
@@ -20493,7 +20493,7 @@
       "method": "POST",
       "path": "/api/v1/transmittals/:id/close",
       "file": "api/routes/transmittals.ts",
-      "line": 119,
+      "line": 120,
       "pathParams": [
         "id"
       ],
@@ -20529,7 +20529,7 @@
       "method": "POST",
       "path": "/api/v1/transmittals/:id/respond",
       "file": "api/routes/transmittals.ts",
-      "line": 104,
+      "line": 105,
       "pathParams": [
         "id"
       ],
@@ -20571,7 +20571,7 @@
       "method": "POST",
       "path": "/api/v1/transmittals/:id/send",
       "file": "api/routes/transmittals.ts",
-      "line": 94,
+      "line": 95,
       "pathParams": [
         "id"
       ],
@@ -20613,7 +20613,7 @@
       "method": "GET",
       "path": "/api/v1/transmittals/overdue",
       "file": "api/routes/transmittals.ts",
-      "line": 41,
+      "line": 42,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20635,7 +20635,7 @@
       "method": "PATCH",
       "path": "/api/v1/turnover-packages/:id",
       "file": "api/routes/turnover.ts",
-      "line": 39,
+      "line": 40,
       "pathParams": [
         "id"
       ],
@@ -20670,7 +20670,7 @@
       "method": "POST",
       "path": "/api/v1/turnover-packages/:id/accept",
       "file": "api/routes/turnover.ts",
-      "line": 50,
+      "line": 51,
       "pathParams": [
         "id"
       ],

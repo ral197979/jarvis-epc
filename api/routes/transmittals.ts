@@ -25,6 +25,7 @@ import {
 } from '../services/transmittals/transmittalService'
 import { tenantQuery } from '../db/pool'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -91,7 +92,7 @@ router.get('/:id', requireCapability('docs.view') as never, async (req: Request,
 })
 
 // POST /transmittals/:id/send
-router.post('/:id/send', requireCapability('docs.publish') as never, async (req: Request, res: Response) => {
+router.post('/:id/send', requireCapability('docs.publish') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   try {
     await sendTransmittal(tid(req), p(req, 'id'), sub(req))
     res.json({ data: { sent: true } })
@@ -101,7 +102,7 @@ router.post('/:id/send', requireCapability('docs.publish') as never, async (req:
 })
 
 // POST /transmittals/:id/respond
-router.post('/:id/respond', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
+router.post('/:id/respond', requireCapability('docs.write') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   const { response, notes } = req.body as { response?: string; notes?: string }
   const valid = ['approved','approved_with_comments','revise_and_resubmit','rejected','received','no_exception_taken']
   if (!response || !valid.includes(response)) {
@@ -116,7 +117,7 @@ router.post('/:id/respond', requireCapability('docs.write') as never, async (req
 })
 
 // POST /transmittals/:id/close
-router.post('/:id/close', requireCapability('docs.publish') as never, async (req: Request, res: Response) => {
+router.post('/:id/close', requireCapability('docs.publish') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   try {
     await tenantQuery(tid(req),
       `UPDATE transmittals SET status='closed', updated_at=now()

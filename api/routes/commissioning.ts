@@ -35,6 +35,7 @@ import { requireAuth, AuthenticatedRequest }     from '../auth'
 import { requireTenant, TenantRequest }          from '../middleware/tenant'
 import { slog }                                  from '../../src/modules/observability/index'
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -307,7 +308,7 @@ router.get('/packs/:id', requireCapability('commissioning.view') as never, async
 // Saves review notes without triggering finalization.
 // Status stays at ready_for_review; finalize is a separate step.
 
-router.patch('/packs/:id/review', requireCapability('commissioning.write') as never, async (req: Req, res: Response) => {
+router.patch('/packs/:id/review', requireCapability('commissioning.write') as never, requireRecordScope('commissioning_packs') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

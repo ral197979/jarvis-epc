@@ -63,26 +63,26 @@
     },
     "RECORD_SCOPE": {
       "candidates": 292,
-      "protected": 36,
-      "deferred": 256,
+      "protected": 177,
+      "deferred": 115,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 39,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 180,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "MUTATION_DELETE": 5,
+      "MUTATION_CREATE": 65,
+      "MUTATION_DELETE": 22,
+      "MUTATION_CONSEQUENTIAL": 31,
+      "MUTATION_UPDATE": 43,
       "READ_DIRECT_ID": 9,
-      "MUTATION_UPDATE": 5,
-      "MUTATION_CREATE": 8,
-      "MUTATION_CONSEQUENTIAL": 2,
       "READ_COLLECTION": 7
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
       "READ_DIRECT_ID": 54,
-      "MUTATION_UPDATE": 40,
-      "MUTATION_CREATE": 63,
-      "MUTATION_DELETE": 18,
-      "MUTATION_CONSEQUENTIAL": 30,
-      "READ_COLLECTION": 51
+      "MUTATION_UPDATE": 2,
+      "MUTATION_CREATE": 6,
+      "MUTATION_DELETE": 1,
+      "READ_COLLECTION": 51,
+      "MUTATION_CONSEQUENTIAL": 1
     }
   },
   "registry": [
@@ -2308,7 +2308,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 54,
+      "line": 55,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -2342,7 +2342,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions/_stats",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 35,
+      "line": 36,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -2372,7 +2372,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions/:id",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 99,
+      "line": 100,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -2406,7 +2406,7 @@
       "method": "POST",
       "path": "/api/v1/agent-actions/:id/review",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 114,
+      "line": 115,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -2419,8 +2419,10 @@
         "ai.govern"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "agent_actions",
       "writeTables": [
         "agent_actions"
@@ -2438,7 +2440,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -3572,7 +3574,7 @@
       "method": "POST",
       "path": "/api/v1/ask",
       "file": "api/routes/ask.ts",
-      "line": 55,
+      "line": 56,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -3616,7 +3618,7 @@
       "method": "GET",
       "path": "/api/v1/ask/chunks/:id",
       "file": "api/routes/ask.ts",
-      "line": 210,
+      "line": 211,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -3655,7 +3657,7 @@
       "method": "GET",
       "path": "/api/v1/ask/sessions",
       "file": "api/routes/ask.ts",
-      "line": 105,
+      "line": 106,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -3689,7 +3691,7 @@
       "method": "DELETE",
       "path": "/api/v1/ask/sessions/:id",
       "file": "api/routes/ask.ts",
-      "line": 195,
+      "line": 196,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -3703,8 +3705,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "chat_sessions",
       "writeTables": [
         "chat_sessions"
@@ -3722,13 +3726,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/ask/sessions/:id",
       "file": "api/routes/ask.ts",
-      "line": 140,
+      "line": 141,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -3767,7 +3771,7 @@
       "method": "POST",
       "path": "/api/v1/ask/sessions/:id/resolve",
       "file": "api/routes/ask.ts",
-      "line": 169,
+      "line": 170,
       "operationType": "MUTATION_CREATE",
       "disposition": "SELF_SCOPED",
       "dispositionReason": "record is scoped to the calling principal, not to a project (HOB §31 — SELF remains SELF)",
@@ -4341,7 +4345,7 @@
       "method": "GET",
       "path": "/api/v1/bid-packages/:id",
       "file": "api/routes/subcontracts.ts",
-      "line": 87,
+      "line": 88,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4375,7 +4379,7 @@
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/cancel",
       "file": "api/routes/subcontracts.ts",
-      "line": 114,
+      "line": 115,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4388,8 +4392,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_packages",
       "writeTables": [
         "bid_packages"
@@ -4407,13 +4413,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/close",
       "file": "api/routes/subcontracts.ts",
-      "line": 105,
+      "line": 106,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4426,8 +4432,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_packages",
       "writeTables": [
         "bid_packages"
@@ -4445,13 +4453,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/issue",
       "file": "api/routes/subcontracts.ts",
-      "line": 96,
+      "line": 97,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4464,8 +4472,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_packages",
       "writeTables": [
         "bid_packages"
@@ -4483,13 +4493,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/bid-packages/:id/submissions",
       "file": "api/routes/subcontracts.ts",
-      "line": 125,
+      "line": 126,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4528,7 +4538,7 @@
       "method": "POST",
       "path": "/api/v1/bid-packages/:id/submissions",
       "file": "api/routes/subcontracts.ts",
-      "line": 133,
+      "line": 134,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4541,8 +4551,10 @@
         "procurement.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_submissions",
       "writeTables": [
         "bid_submissions"
@@ -4563,13 +4575,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/bid-submissions/:id/award",
       "file": "api/routes/subcontracts.ts",
-      "line": 143,
+      "line": 144,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4582,8 +4594,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_packages",
       "writeTables": [
         "bid_packages",
@@ -4604,13 +4618,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/bim-issues/:id",
       "file": "api/routes/bim.ts",
-      "line": 188,
+      "line": 189,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4623,8 +4637,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_issues",
       "writeTables": [
         "bim_issues"
@@ -4642,13 +4658,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
       "path": "/api/v1/bim-models/:id",
       "file": "api/routes/bim.ts",
-      "line": 102,
+      "line": 103,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4661,8 +4677,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [
         "bim_models"
@@ -4680,13 +4698,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/bim-models/:id",
       "file": "api/routes/bim.ts",
-      "line": 68,
+      "line": 69,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4720,7 +4738,7 @@
       "method": "PATCH",
       "path": "/api/v1/bim-models/:id",
       "file": "api/routes/bim.ts",
-      "line": 81,
+      "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4733,8 +4751,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [
         "bim_models"
@@ -4752,13 +4772,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/bim-models/:id/viewer-token",
       "file": "api/routes/bim.ts",
-      "line": 117,
+      "line": 118,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4792,7 +4812,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/ava-estimate",
       "file": "api/routes/estimating.ts",
-      "line": 284,
+      "line": 285,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4805,8 +4825,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [
         "learning_feedback"
@@ -4822,13 +4844,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/elements",
       "file": "api/routes/estimating.ts",
-      "line": 109,
+      "line": 110,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -4860,7 +4882,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/elements/:id",
       "file": "api/routes/estimating.ts",
-      "line": 128,
+      "line": 129,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -4892,7 +4914,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/elements/:id/link",
       "file": "api/routes/estimating.ts",
-      "line": 140,
+      "line": 141,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -4926,7 +4948,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/parse-elements",
       "file": "api/routes/estimating.ts",
-      "line": 70,
+      "line": 71,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -4939,8 +4961,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [
         "bim_elements",
@@ -4959,13 +4983,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/parse-job",
       "file": "api/routes/estimating.ts",
-      "line": 98,
+      "line": 99,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -4997,7 +5021,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/parse-job",
       "file": "api/routes/estimating.ts",
-      "line": 86,
+      "line": 87,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5031,7 +5055,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/quantity-summary",
       "file": "api/routes/estimating.ts",
-      "line": 154,
+      "line": 155,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5063,7 +5087,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 191,
+      "line": 192,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5095,7 +5119,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 166,
+      "line": 167,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5129,7 +5153,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff/auto",
       "file": "api/routes/estimating.ts",
-      "line": 180,
+      "line": 181,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5165,7 +5189,7 @@
       "method": "DELETE",
       "path": "/api/v1/budget-items/:itemId",
       "file": "api/routes/budgets.ts",
-      "line": 144,
+      "line": 145,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5178,8 +5202,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "budget_items",
       "writeTables": [
         "budget_items"
@@ -5202,13 +5228,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/budget-items/:itemId",
       "file": "api/routes/budgets.ts",
-      "line": 124,
+      "line": 125,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5221,8 +5247,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "budget_items",
       "writeTables": [
         "budget_items"
@@ -5245,13 +5273,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/budgets/:id",
       "file": "api/routes/budgets.ts",
-      "line": 66,
+      "line": 67,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5264,8 +5292,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "budgets",
       "writeTables": [
         "budgets"
@@ -5283,13 +5313,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/budgets/:id/items",
       "file": "api/routes/budgets.ts",
-      "line": 86,
+      "line": 87,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5328,7 +5358,7 @@
       "method": "POST",
       "path": "/api/v1/budgets/:id/items",
       "file": "api/routes/budgets.ts",
-      "line": 99,
+      "line": 100,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5341,8 +5371,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "budget_items",
       "writeTables": [
         "budget_items"
@@ -5363,13 +5395,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
       "path": "/api/v1/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
-      "line": 128,
+      "line": 129,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5382,8 +5414,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "calc_sessions",
       "writeTables": [
         "calc_sessions"
@@ -5401,13 +5435,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
-      "line": 94,
+      "line": 95,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5441,7 +5475,7 @@
       "method": "PATCH",
       "path": "/api/v1/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
-      "line": 111,
+      "line": 112,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5454,8 +5488,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "calc_sessions",
       "writeTables": [
         "calc_sessions"
@@ -5473,7 +5509,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -5492,8 +5528,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "corrective_actions",
       "writeTables": [
         "corrective_actions"
@@ -5511,7 +5549,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5530,8 +5568,10 @@
         "quality.verify"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "corrective_actions",
       "writeTables": [
         "corrective_actions"
@@ -5549,7 +5589,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -5602,8 +5642,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [
         "change_orders"
@@ -5621,7 +5663,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5640,8 +5682,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [
         "change_orders"
@@ -5659,7 +5703,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5678,8 +5722,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [
         "change_orders"
@@ -5697,7 +5743,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5716,8 +5762,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [
         "change_orders"
@@ -5735,7 +5783,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -5793,8 +5841,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_order_tasks",
       "writeTables": [
         "change_order_tasks"
@@ -5815,7 +5865,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
@@ -5834,8 +5884,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_order_tasks",
       "writeTables": [
         "change_order_tasks"
@@ -5858,7 +5910,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -5877,8 +5929,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [
         "change_orders"
@@ -5896,13 +5950,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/commissioning-items",
       "file": "api/routes/commissioningItems.ts",
-      "line": 61,
+      "line": 62,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -5938,7 +5992,7 @@
       "method": "PATCH",
       "path": "/api/v1/commissioning-items/:itemId",
       "file": "api/routes/commissioningItems.ts",
-      "line": 91,
+      "line": 92,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -5951,8 +6005,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_items",
       "writeTables": [
         "commissioning_items"
@@ -5970,13 +6026,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/commissioning/autosign-rules",
       "file": "api/routes/autosignRules.ts",
-      "line": 43,
+      "line": 44,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6010,7 +6066,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/autosign-rules",
       "file": "api/routes/autosignRules.ts",
-      "line": 83,
+      "line": 84,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6046,7 +6102,7 @@
       "method": "DELETE",
       "path": "/api/v1/commissioning/autosign-rules/:id",
       "file": "api/routes/autosignRules.ts",
-      "line": 172,
+      "line": 173,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6059,8 +6115,10 @@
         "commissioning.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_autosign_rules",
       "writeTables": [
         "commissioning_autosign_rules"
@@ -6078,13 +6136,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/commissioning/autosign-rules/:id",
       "file": "api/routes/autosignRules.ts",
-      "line": 144,
+      "line": 145,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6097,8 +6155,10 @@
         "commissioning.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_autosign_rules",
       "writeTables": [
         "commissioning_autosign_rules"
@@ -6116,13 +6176,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/commissioning/autosign-rules/arbitrate",
       "file": "api/routes/autosignRules.ts",
-      "line": 188,
+      "line": 189,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6159,7 +6219,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/balance",
       "file": "api/routes/commissioning.ts",
-      "line": 118,
+      "line": 119,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -6189,7 +6249,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/baselines",
       "file": "api/routes/baselinesRoutes.ts",
-      "line": 28,
+      "line": 29,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6223,7 +6283,7 @@
       "method": "DELETE",
       "path": "/api/v1/commissioning/baselines/:id",
       "file": "api/routes/baselinesRoutes.ts",
-      "line": 94,
+      "line": 95,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6236,8 +6296,10 @@
         "commissioning.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_baselines",
       "writeTables": [
         "commissioning_baselines"
@@ -6255,13 +6317,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/commissioning/baselines/:id",
       "file": "api/routes/baselinesRoutes.ts",
-      "line": 70,
+      "line": 71,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6295,7 +6357,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/credits",
       "file": "api/routes/commissioning.ts",
-      "line": 135,
+      "line": 136,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -6329,7 +6391,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/finalize",
       "file": "api/routes/commissioning.ts",
-      "line": 340,
+      "line": 341,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6365,7 +6427,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/generate-draft",
       "file": "api/routes/commissioning.ts",
-      "line": 159,
+      "line": 160,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -6399,7 +6461,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/jobs",
       "file": "api/routes/commissioning.ts",
-      "line": 379,
+      "line": 380,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -6431,7 +6493,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs",
       "file": "api/routes/commissioning.ts",
-      "line": 230,
+      "line": 231,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6465,7 +6527,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs/:id",
       "file": "api/routes/commissioning.ts",
-      "line": 276,
+      "line": 277,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6499,7 +6561,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs/:id/download/:format",
       "file": "api/routes/commissioning.ts",
-      "line": 411,
+      "line": 412,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6533,7 +6595,7 @@
       "method": "PATCH",
       "path": "/api/v1/commissioning/packs/:id/review",
       "file": "api/routes/commissioning.ts",
-      "line": 310,
+      "line": 311,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6546,8 +6608,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "commissioning_packs",
       "writeTables": [
         "commissioning_packs"
@@ -6565,13 +6629,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/commissioning/packs/manual",
       "file": "api/routes/commissioning.ts",
-      "line": 205,
+      "line": 206,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6607,7 +6671,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/uploads",
       "file": "api/routes/commissioning.ts",
-      "line": 98,
+      "line": 99,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6641,7 +6705,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/uploads/text-ingest",
       "file": "api/routes/commissioning.ts",
-      "line": 71,
+      "line": 72,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6677,7 +6741,7 @@
       "method": "GET",
       "path": "/api/v1/compliance-tasks",
       "file": "api/routes/compliance.ts",
-      "line": 41,
+      "line": 42,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6711,7 +6775,7 @@
       "method": "POST",
       "path": "/api/v1/compliance-tasks",
       "file": "api/routes/compliance.ts",
-      "line": 97,
+      "line": 98,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6748,7 +6812,7 @@
       "method": "DELETE",
       "path": "/api/v1/compliance-tasks/:id",
       "file": "api/routes/compliance.ts",
-      "line": 224,
+      "line": 225,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6761,8 +6825,10 @@
         "safety.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "compliance_tasks",
       "writeTables": [
         "compliance_tasks"
@@ -6780,13 +6846,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/compliance-tasks/:id",
       "file": "api/routes/compliance.ts",
-      "line": 82,
+      "line": 83,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6820,7 +6886,7 @@
       "method": "PATCH",
       "path": "/api/v1/compliance-tasks/:id",
       "file": "api/routes/compliance.ts",
-      "line": 144,
+      "line": 145,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6833,8 +6899,10 @@
         "safety.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "compliance_tasks",
       "writeTables": [
         "compliance_tasks"
@@ -6852,13 +6920,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/compliance-tasks/:id/complete",
       "file": "api/routes/compliance.ts",
-      "line": 181,
+      "line": 182,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6871,8 +6939,10 @@
         "safety.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "compliance_tasks",
       "writeTables": [
         "compliance_tasks"
@@ -6890,13 +6960,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/compliance-tasks/:id/waive",
       "file": "api/routes/compliance.ts",
-      "line": 203,
+      "line": 204,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6909,8 +6979,10 @@
         "safety.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "compliance_tasks",
       "writeTables": [
         "compliance_tasks"
@@ -6928,13 +7000,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/coordination/recommendations/:id/approve",
       "file": "api/routes/autoCoordination.ts",
-      "line": 37,
+      "line": 38,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -6970,7 +7042,7 @@
       "method": "POST",
       "path": "/api/v1/coordination/recommendations/:id/dismiss",
       "file": "api/routes/autoCoordination.ts",
-      "line": 47,
+      "line": 48,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -6983,8 +7055,10 @@
         "ai.govern"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "coordination_recommendations",
       "writeTables": [
         "coordination_recommendations"
@@ -7002,7 +7076,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -7339,7 +7413,7 @@
       "method": "DELETE",
       "path": "/api/v1/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
-      "line": 97,
+      "line": 98,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7352,8 +7426,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [
         "cost_entries"
@@ -7371,13 +7447,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
-      "line": 79,
+      "line": 80,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7411,7 +7487,7 @@
       "method": "PATCH",
       "path": "/api/v1/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
-      "line": 88,
+      "line": 89,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7424,8 +7500,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [
         "cost_entries"
@@ -7443,13 +7521,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/cost-entries/:id/post",
       "file": "api/routes/costEntry.ts",
-      "line": 106,
+      "line": 107,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7462,8 +7540,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [
         "cost_entries",
@@ -7482,13 +7562,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/cost-entries/:id/void",
       "file": "api/routes/costEntry.ts",
-      "line": 115,
+      "line": 116,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7501,8 +7581,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [
         "cost_entries"
@@ -7520,13 +7602,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/cost-items/search",
       "file": "api/routes/estimating.ts",
-      "line": 203,
+      "line": 204,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -7558,7 +7640,7 @@
       "method": "DELETE",
       "path": "/api/v1/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
-      "line": 142,
+      "line": 143,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7571,8 +7653,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "daily_logs",
       "writeTables": [
         "daily_logs"
@@ -7590,13 +7674,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
-      "line": 102,
+      "line": 103,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7630,7 +7714,7 @@
       "method": "PATCH",
       "path": "/api/v1/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
-      "line": 116,
+      "line": 117,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7643,8 +7727,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "daily_logs",
       "writeTables": [
         "daily_logs"
@@ -7662,13 +7748,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/daily-logs/:id/approve",
       "file": "api/routes/dailyLogs.ts",
-      "line": 168,
+      "line": 169,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7681,8 +7767,10 @@
         "construction.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "daily_logs",
       "writeTables": [
         "daily_logs"
@@ -7700,13 +7788,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/daily-logs/:id/submit",
       "file": "api/routes/dailyLogs.ts",
-      "line": 154,
+      "line": 155,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7719,8 +7807,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "daily_logs",
       "writeTables": [
         "daily_logs"
@@ -7738,13 +7828,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/deficiencies",
       "file": "api/routes/deficiencies.ts",
-      "line": 55,
+      "line": 56,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -7780,7 +7870,7 @@
       "method": "PATCH",
       "path": "/api/v1/deficiencies/:deficiencyId",
       "file": "api/routes/deficiencies.ts",
-      "line": 83,
+      "line": 84,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -7793,8 +7883,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "deficiencies",
       "writeTables": [
         "deficiencies"
@@ -7812,7 +7904,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
@@ -11113,7 +11205,7 @@
       "method": "GET",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 231,
+      "line": 232,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -11147,7 +11239,7 @@
       "method": "POST",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 219,
+      "line": 220,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -11183,7 +11275,7 @@
       "method": "GET",
       "path": "/api/v1/estimates/:id",
       "file": "api/routes/estimating.ts",
-      "line": 242,
+      "line": 243,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -11217,7 +11309,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/approve",
       "file": "api/routes/estimating.ts",
-      "line": 268,
+      "line": 269,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -11230,8 +11322,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "estimates",
       "writeTables": [
         "estimates"
@@ -11249,13 +11343,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/estimates/:id/lines",
       "file": "api/routes/estimating.ts",
-      "line": 253,
+      "line": 254,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -11268,8 +11362,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "estimates",
       "writeTables": [
         "estimate_lines",
@@ -11286,7 +11382,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -11531,7 +11627,7 @@
       "method": "GET",
       "path": "/api/v1/evm/baselines/:baselineId/wbs",
       "file": "api/routes/evm.ts",
-      "line": 77,
+      "line": 78,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -11565,7 +11661,7 @@
       "method": "POST",
       "path": "/api/v1/evm/baselines/:baselineId/wbs",
       "file": "api/routes/evm.ts",
-      "line": 63,
+      "line": 64,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -11578,8 +11674,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "evm_wbs_entries",
       "writeTables": [
         "evm_wbs_entries"
@@ -11595,7 +11693,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -11999,7 +12097,7 @@
       "method": "POST",
       "path": "/api/v1/files/confirm/:versionId",
       "file": "api/routes/files.ts",
-      "line": 230,
+      "line": 231,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -12012,8 +12110,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "document_versions",
       "writeTables": [
         "document_versions",
@@ -12035,13 +12135,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/files/documents",
       "file": "api/routes/files.ts",
-      "line": 316,
+      "line": 317,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -12075,7 +12175,7 @@
       "method": "DELETE",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 396,
+      "line": 397,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -12088,8 +12188,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "documents",
       "writeTables": [
         "documents"
@@ -12107,13 +12209,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 349,
+      "line": 350,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -12147,7 +12249,7 @@
       "method": "PATCH",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 372,
+      "line": 373,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -12160,8 +12262,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "documents",
       "writeTables": [
         "documents"
@@ -12179,13 +12283,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/files/download/:token",
       "file": "api/routes/files.ts",
-      "line": 294,
+      "line": 295,
       "operationType": "READ_DIRECT_ID",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -12214,7 +12318,7 @@
       "method": "GET",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 411,
+      "line": 412,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -12248,7 +12352,7 @@
       "method": "POST",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 433,
+      "line": 434,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -12284,7 +12388,7 @@
       "method": "GET",
       "path": "/api/v1/files/presign/:versionId",
       "file": "api/routes/files.ts",
-      "line": 277,
+      "line": 278,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -12323,7 +12427,7 @@
       "method": "POST",
       "path": "/api/v1/files/request-upload",
       "file": "api/routes/files.ts",
-      "line": 75,
+      "line": 76,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -12365,7 +12469,7 @@
       "method": "PUT",
       "path": "/api/v1/files/upload/:token",
       "file": "api/routes/files.ts",
-      "line": 189,
+      "line": 190,
       "operationType": "MUTATION_UPDATE",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -13013,7 +13117,7 @@
       "method": "POST",
       "path": "/api/v1/iot/ingest",
       "file": "api/routes/iot.ts",
-      "line": 204,
+      "line": 205,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13055,7 +13159,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge-fixes",
       "file": "api/routes/fixLibrary.ts",
-      "line": 67,
+      "line": 68,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13089,7 +13193,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge-fixes",
       "file": "api/routes/fixLibrary.ts",
-      "line": 113,
+      "line": 114,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13125,7 +13229,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge-fixes/_meta/symptoms",
       "file": "api/routes/fixLibrary.ts",
-      "line": 39,
+      "line": 40,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13159,7 +13263,7 @@
       "method": "DELETE",
       "path": "/api/v1/knowledge-fixes/:id",
       "file": "api/routes/fixLibrary.ts",
-      "line": 205,
+      "line": 206,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13172,8 +13276,10 @@
         "assistant.admin"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_fixes",
       "writeTables": [
         "knowledge_fixes"
@@ -13191,13 +13297,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/knowledge-fixes/:id",
       "file": "api/routes/fixLibrary.ts",
-      "line": 141,
+      "line": 142,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13231,7 +13337,7 @@
       "method": "PATCH",
       "path": "/api/v1/knowledge-fixes/:id",
       "file": "api/routes/fixLibrary.ts",
-      "line": 151,
+      "line": 152,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13244,8 +13350,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_fixes",
       "writeTables": [
         "knowledge_fixes"
@@ -13263,13 +13371,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/knowledge-fixes/:id/verify",
       "file": "api/routes/fixLibrary.ts",
-      "line": 186,
+      "line": 187,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13282,8 +13390,10 @@
         "assistant.admin"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_fixes",
       "writeTables": [
         "knowledge_fixes"
@@ -13301,13 +13411,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/knowledge-fixes/search",
       "file": "api/routes/fixLibrary.ts",
-      "line": 48,
+      "line": 49,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13341,7 +13451,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/bulk-ingest",
       "file": "api/routes/knowledge.ts",
-      "line": 65,
+      "line": 66,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13377,7 +13487,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/embed-bulk",
       "file": "api/routes/knowledge.ts",
-      "line": 384,
+      "line": 385,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13420,7 +13530,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/embed-status",
       "file": "api/routes/knowledge.ts",
-      "line": 401,
+      "line": 402,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13459,7 +13569,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/mine-fixes-bulk",
       "file": "api/routes/knowledge.ts",
-      "line": 429,
+      "line": 430,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13497,7 +13607,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/search",
       "file": "api/routes/knowledge.ts",
-      "line": 112,
+      "line": 113,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13536,7 +13646,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/sources",
       "file": "api/routes/knowledge.ts",
-      "line": 134,
+      "line": 135,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13570,7 +13680,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/sources",
       "file": "api/routes/knowledge.ts",
-      "line": 174,
+      "line": 175,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -13612,7 +13722,7 @@
       "method": "DELETE",
       "path": "/api/v1/knowledge/sources/:id",
       "file": "api/routes/knowledge.ts",
-      "line": 449,
+      "line": 450,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13625,8 +13735,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_sources",
       "writeTables": [
         "knowledge_sources"
@@ -13644,13 +13756,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/knowledge/sources/:id",
       "file": "api/routes/knowledge.ts",
-      "line": 257,
+      "line": 258,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13684,7 +13796,7 @@
       "method": "GET",
       "path": "/api/v1/knowledge/sources/:id/chunks",
       "file": "api/routes/knowledge.ts",
-      "line": 272,
+      "line": 273,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13723,7 +13835,7 @@
       "method": "POST",
       "path": "/api/v1/knowledge/sources/:id/embed",
       "file": "api/routes/knowledge.ts",
-      "line": 360,
+      "line": 361,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13736,8 +13848,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_sources",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -13751,13 +13865,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/knowledge/sources/:id/mine-fixes",
       "file": "api/routes/knowledge.ts",
-      "line": 322,
+      "line": 323,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13770,8 +13884,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_sources",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -13785,13 +13901,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/knowledge/sources/:id/reingest",
       "file": "api/routes/knowledge.ts",
-      "line": 302,
+      "line": 303,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -13804,8 +13920,10 @@
         "assistant.use"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "knowledge_chunks",
       "writeTables": [
         "knowledge_chunks",
@@ -13827,7 +13945,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
@@ -14210,7 +14328,7 @@
       "method": "GET",
       "path": "/api/v1/meetings/:id",
       "file": "api/routes/meetings.ts",
-      "line": 72,
+      "line": 73,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14244,7 +14362,7 @@
       "method": "PATCH",
       "path": "/api/v1/meetings/:id",
       "file": "api/routes/meetings.ts",
-      "line": 81,
+      "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14257,8 +14375,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meetings",
       "writeTables": [
         "meetings"
@@ -14276,13 +14396,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/meetings/:id/actions",
       "file": "api/routes/meetings.ts",
-      "line": 147,
+      "line": 148,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14316,7 +14436,7 @@
       "method": "POST",
       "path": "/api/v1/meetings/:id/actions",
       "file": "api/routes/meetings.ts",
-      "line": 155,
+      "line": 156,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14329,8 +14449,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "action_items",
       "writeTables": [
         "action_items"
@@ -14346,13 +14468,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/meetings/:id/agenda",
       "file": "api/routes/meetings.ts",
-      "line": 110,
+      "line": 111,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14391,7 +14513,7 @@
       "method": "POST",
       "path": "/api/v1/meetings/:id/agenda",
       "file": "api/routes/meetings.ts",
-      "line": 118,
+      "line": 119,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14404,8 +14526,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meeting_agenda_items",
       "writeTables": [
         "meeting_agenda_items"
@@ -14426,13 +14550,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
       "path": "/api/v1/meetings/:id/agenda/:itemId",
       "file": "api/routes/meetings.ts",
-      "line": 137,
+      "line": 138,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14445,8 +14569,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meeting_agenda_items",
       "writeTables": [
         "meeting_agenda_items"
@@ -14469,13 +14595,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/meetings/:id/agenda/:itemId",
       "file": "api/routes/meetings.ts",
-      "line": 128,
+      "line": 129,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14488,8 +14614,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meeting_agenda_items",
       "writeTables": [
         "meeting_agenda_items"
@@ -14512,13 +14640,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/meetings/:id/archive",
       "file": "api/routes/meetings.ts",
-      "line": 99,
+      "line": 100,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14531,8 +14659,10 @@
         "docs.publish"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meetings",
       "writeTables": [
         "meetings"
@@ -14550,13 +14680,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/meetings/:id/publish",
       "file": "api/routes/meetings.ts",
-      "line": 90,
+      "line": 91,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -14569,8 +14699,10 @@
         "docs.publish"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meetings",
       "writeTables": [
         "meetings"
@@ -14588,7 +14720,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -14780,8 +14912,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ncrs",
       "writeTables": [
         "ncrs"
@@ -14799,7 +14933,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -14852,8 +14986,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "corrective_actions",
       "writeTables": [
         "corrective_actions"
@@ -14869,7 +15005,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -14888,8 +15024,10 @@
         "quality.verify"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ncrs",
       "writeTables": [
         "ncrs"
@@ -14907,7 +15045,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -15917,7 +16055,7 @@
       "method": "GET",
       "path": "/api/v1/pay-applications/:id",
       "file": "api/routes/payApplications.ts",
-      "line": 90,
+      "line": 91,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -15951,7 +16089,7 @@
       "method": "PATCH",
       "path": "/api/v1/pay-applications/:id",
       "file": "api/routes/payApplications.ts",
-      "line": 146,
+      "line": 147,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -15964,8 +16102,10 @@
         "cost.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "pay_applications",
       "writeTables": [
         "pay_applications"
@@ -15983,13 +16123,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/pay-applications/:id/lines",
       "file": "api/routes/payApplications.ts",
-      "line": 99,
+      "line": 100,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -16002,8 +16142,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "pay_application_lines",
       "writeTables": [
         "pay_application_lines"
@@ -16024,13 +16166,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/pay-applications/:id/submit",
       "file": "api/routes/payApplications.ts",
-      "line": 125,
+      "line": 126,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -16043,8 +16185,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "pay_applications",
       "writeTables": [
         "pay_applications"
@@ -16062,7 +16206,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -16751,8 +16895,10 @@
         "project.delete"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [
         "projects"
@@ -16769,7 +16915,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -16823,8 +16969,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [
         "projects"
@@ -16841,7 +16989,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
@@ -16860,8 +17008,10 @@
         "ai.govern"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [
         "projects"
@@ -16878,7 +17028,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -16897,8 +17047,10 @@
         "project.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [
         "projects"
@@ -16915,7 +17067,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -17070,7 +17222,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/advance",
       "file": "api/routes/lifecycle.ts",
-      "line": 49,
+      "line": 50,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17083,8 +17235,10 @@
         "project.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "projects",
       "writeTables": [
         "projects"
@@ -17101,13 +17255,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bid-packages",
       "file": "api/routes/subcontracts.ts",
-      "line": 71,
+      "line": 72,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17141,7 +17295,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/bid-packages",
       "file": "api/routes/subcontracts.ts",
-      "line": 61,
+      "line": 62,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17154,8 +17308,10 @@
         "procurement.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bid_packages",
       "writeTables": [
         "bid_packages"
@@ -17174,13 +17330,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bid-packages/summary",
       "file": "api/routes/subcontracts.ts",
-      "line": 79,
+      "line": 80,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17214,7 +17370,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bim-issues",
       "file": "api/routes/bim.ts",
-      "line": 137,
+      "line": 138,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17248,7 +17404,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/bim-issues",
       "file": "api/routes/bim.ts",
-      "line": 156,
+      "line": 157,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17261,8 +17417,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_issues",
       "writeTables": [
         "actions",
@@ -17279,13 +17437,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/bim-models",
       "file": "api/routes/bim.ts",
-      "line": 32,
+      "line": 33,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17319,7 +17477,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/bim-models",
       "file": "api/routes/bim.ts",
-      "line": 45,
+      "line": 46,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17332,8 +17490,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_models",
       "writeTables": [
         "bim_models"
@@ -17349,13 +17509,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/budget",
       "file": "api/routes/budgets.ts",
-      "line": 36,
+      "line": 37,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17389,7 +17549,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/budget",
       "file": "api/routes/budgets.ts",
-      "line": 48,
+      "line": 49,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17402,8 +17562,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "budgets",
       "writeTables": [
         "budgets"
@@ -17419,13 +17581,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/budget/rollup",
       "file": "api/routes/budgets.ts",
-      "line": 156,
+      "line": 157,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17459,7 +17621,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/calc-sessions",
       "file": "api/routes/calculations.ts",
-      "line": 24,
+      "line": 25,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17493,7 +17655,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/calc-sessions",
       "file": "api/routes/calculations.ts",
-      "line": 54,
+      "line": 55,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17506,8 +17668,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "calc_sessions",
       "writeTables": [
         "calc_sessions",
@@ -17524,7 +17688,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -17579,8 +17743,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "change_orders",
       "writeTables": [
         "change_orders"
@@ -17599,7 +17765,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -17643,7 +17809,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/commissioning-items",
       "file": "api/routes/commissioningItems.ts",
-      "line": 50,
+      "line": 51,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17710,7 +17876,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/coordination/recommendations",
       "file": "api/routes/autoCoordination.ts",
-      "line": 29,
+      "line": 30,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17749,7 +17915,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/coordination/scan",
       "file": "api/routes/autoCoordination.ts",
-      "line": 22,
+      "line": 23,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17767,8 +17933,10 @@
         "schedule.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "coordination_recommendations",
       "writeTables": [
         "coordination_recommendations"
@@ -17784,7 +17952,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -17824,7 +17992,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/cost-entries",
       "file": "api/routes/costEntry.ts",
-      "line": 55,
+      "line": 56,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17858,7 +18026,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/cost-entries",
       "file": "api/routes/costEntry.ts",
-      "line": 39,
+      "line": 40,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17871,8 +18039,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [
         "cost_entries"
@@ -17888,13 +18058,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/cost-entries/summary",
       "file": "api/routes/costEntry.ts",
-      "line": 69,
+      "line": 70,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17962,7 +18132,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/coverage",
       "file": "api/routes/systems.ts",
-      "line": 196,
+      "line": 197,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -17996,7 +18166,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/daily-logs",
       "file": "api/routes/dailyLogs.ts",
-      "line": 31,
+      "line": 32,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18030,7 +18200,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/daily-logs",
       "file": "api/routes/dailyLogs.ts",
-      "line": 62,
+      "line": 63,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18043,8 +18213,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "daily_logs",
       "writeTables": [
         "actions",
@@ -18061,13 +18233,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/deficiencies",
       "file": "api/routes/deficiencies.ts",
-      "line": 47,
+      "line": 48,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18175,7 +18347,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/actuals",
       "file": "api/routes/evm.ts",
-      "line": 103,
+      "line": 104,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18209,7 +18381,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/actuals",
       "file": "api/routes/evm.ts",
-      "line": 89,
+      "line": 90,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18222,8 +18394,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "forecast_accuracy_history",
       "writeTables": [
         "forecast_accuracy_history"
@@ -18239,13 +18413,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/baselines",
       "file": "api/routes/evm.ts",
-      "line": 51,
+      "line": 52,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18279,7 +18453,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/baselines",
       "file": "api/routes/evm.ts",
-      "line": 38,
+      "line": 39,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18292,8 +18466,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "evm_baselines",
       "writeTables": [
         "evm_baselines"
@@ -18309,13 +18485,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/metrics",
       "file": "api/routes/evm.ts",
-      "line": 131,
+      "line": 132,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18349,7 +18525,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/progress",
       "file": "api/routes/evm.ts",
-      "line": 115,
+      "line": 116,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18362,8 +18538,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "evm_progress",
       "writeTables": [
         "evm_progress"
@@ -18379,13 +18557,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/evm/scurve",
       "file": "api/routes/evm.ts",
-      "line": 155,
+      "line": 156,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18419,7 +18597,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/evm/snapshot",
       "file": "api/routes/evm.ts",
-      "line": 143,
+      "line": 144,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18432,8 +18610,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "evm_snapshots",
       "writeTables": [
         "evm_snapshots"
@@ -18449,7 +18629,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -18492,7 +18672,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/gates/:gateKey",
       "file": "api/routes/lifecycle.ts",
-      "line": 32,
+      "line": 33,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18505,8 +18685,10 @@
         "project.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "project_gates",
       "writeTables": [
         "project_gates"
@@ -18522,7 +18704,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -18635,7 +18817,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/lifecycle",
       "file": "api/routes/lifecycle.ts",
-      "line": 23,
+      "line": 24,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18668,7 +18850,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/meetings",
       "file": "api/routes/meetings.ts",
-      "line": 60,
+      "line": 61,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18702,7 +18884,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/meetings",
       "file": "api/routes/meetings.ts",
-      "line": 46,
+      "line": 47,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18715,8 +18897,10 @@
         "project.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "meetings",
       "writeTables": [
         "meetings"
@@ -18735,7 +18919,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -18826,8 +19010,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ncrs",
       "writeTables": [
         "ncrs"
@@ -18843,7 +19029,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -18862,8 +19048,10 @@
         "quality.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ncrs",
       "writeTables": [
         "ncrs"
@@ -18879,13 +19067,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/nova-integration",
       "file": "api/routes/novaIntegrationStatus.ts",
-      "line": 102,
+      "line": 103,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18919,7 +19107,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/nova-integration/retry",
       "file": "api/routes/novaIntegrationStatus.ts",
-      "line": 204,
+      "line": 205,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18932,8 +19120,10 @@
         "platform.integrations"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "nova_project_links",
       "writeTables": [
         "audit_log",
@@ -18952,13 +19142,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/pay-applications",
       "file": "api/routes/payApplications.ts",
-      "line": 71,
+      "line": 72,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -18992,7 +19182,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/pay-applications",
       "file": "api/routes/payApplications.ts",
-      "line": 78,
+      "line": 79,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19005,8 +19195,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "pay_applications",
       "writeTables": [
         "pay_application_lines",
@@ -19026,7 +19218,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -19173,7 +19365,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/risks",
       "file": "api/routes/riskRegister.ts",
-      "line": 53,
+      "line": 54,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19207,7 +19399,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/risks",
       "file": "api/routes/riskRegister.ts",
-      "line": 41,
+      "line": 42,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19220,8 +19412,10 @@
         "risk.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "risks",
       "writeTables": [
         "risks"
@@ -19240,13 +19434,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/risks/summary",
       "file": "api/routes/riskRegister.ts",
-      "line": 35,
+      "line": 36,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19280,7 +19474,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 60,
+      "line": 61,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19314,7 +19508,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 66,
+      "line": 67,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19327,8 +19521,10 @@
         "safety.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "safety_incidents",
       "writeTables": [
         "safety_incidents"
@@ -19344,13 +19540,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/intelligence",
       "file": "api/routes/safety.ts",
-      "line": 89,
+      "line": 90,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19383,7 +19579,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 31,
+      "line": 32,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19417,7 +19613,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 37,
+      "line": 38,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19430,8 +19626,10 @@
         "safety.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "safety_observations",
       "writeTables": [
         "safety_observations"
@@ -19447,13 +19645,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/projects/:projectId/schedule/import",
       "file": "api/routes/scheduleImport.ts",
-      "line": 38,
+      "line": 39,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19466,8 +19664,10 @@
         "schedule.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "schedule_dependencies",
       "writeTables": [
         "schedule_dependencies",
@@ -19493,13 +19693,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/schedule/imports",
       "file": "api/routes/scheduleImport.ts",
-      "line": 66,
+      "line": 67,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19529,7 +19729,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/sensors",
       "file": "api/routes/iot.ts",
-      "line": 135,
+      "line": 136,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19563,7 +19763,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/sensors",
       "file": "api/routes/iot.ts",
-      "line": 127,
+      "line": 128,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19576,8 +19776,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "sensors",
       "writeTables": [
         "sensors"
@@ -19593,13 +19795,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/sensors/alerts",
       "file": "api/routes/iot.ts",
-      "line": 173,
+      "line": 174,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19638,7 +19840,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/sov-items",
       "file": "api/routes/payApplications.ts",
-      "line": 44,
+      "line": 45,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19672,7 +19874,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/sov-items",
       "file": "api/routes/payApplications.ts",
-      "line": 51,
+      "line": 52,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19685,8 +19887,10 @@
         "cost.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "sov_items",
       "writeTables": [
         "sov_items"
@@ -19702,13 +19906,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/subcontracts",
       "file": "api/routes/subcontracts.ts",
-      "line": 166,
+      "line": 167,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19742,7 +19946,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/subcontracts",
       "file": "api/routes/subcontracts.ts",
-      "line": 154,
+      "line": 155,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19755,8 +19959,10 @@
         "procurement.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontracts",
       "writeTables": [
         "subcontracts"
@@ -19775,13 +19981,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/systems",
       "file": "api/routes/systems.ts",
-      "line": 57,
+      "line": 58,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19815,7 +20021,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/systems",
       "file": "api/routes/systems.ts",
-      "line": 65,
+      "line": 66,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19828,8 +20034,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "systems",
       "writeTables": [
         "systems"
@@ -19845,13 +20053,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/tags",
       "file": "api/routes/systems.ts",
-      "line": 139,
+      "line": 140,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19885,7 +20093,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/team",
       "file": "api/routes/team.ts",
-      "line": 96,
+      "line": 97,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19919,7 +20127,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/test-packs",
       "file": "api/routes/testPacks.ts",
-      "line": 50,
+      "line": 51,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19953,7 +20161,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 46,
+      "line": 47,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19987,7 +20195,7 @@
       "method": "PUT",
       "path": "/api/v1/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 36,
+      "line": 37,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20000,8 +20208,10 @@
         "team.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "timesheets",
       "writeTables": [
         "timesheets"
@@ -20017,13 +20227,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/projects/:projectId/timesheets/summary",
       "file": "api/routes/timesheets.ts",
-      "line": 58,
+      "line": 59,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20057,7 +20267,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/turnover-packages",
       "file": "api/routes/turnover.ts",
-      "line": 23,
+      "line": 24,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20091,7 +20301,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/turnover-packages",
       "file": "api/routes/turnover.ts",
-      "line": 29,
+      "line": 30,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20104,8 +20314,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": null,
       "writeTables": [],
       "writeScopeColumns": [],
@@ -20115,7 +20327,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "UNRESOLVED",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -21055,8 +21267,10 @@
         "procurement.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "submittals",
       "writeTables": [
         "submittals"
@@ -21074,7 +21288,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -21093,8 +21307,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "purchase_orders",
       "writeTables": [
         "purchase_orders"
@@ -21112,7 +21328,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -21460,8 +21676,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "rfis",
       "writeTables": [
         "rfis"
@@ -21479,13 +21697,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/risks/:id",
       "file": "api/routes/riskRegister.ts",
-      "line": 64,
+      "line": 65,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21519,7 +21737,7 @@
       "method": "PATCH",
       "path": "/api/v1/risks/:id",
       "file": "api/routes/riskRegister.ts",
-      "line": 73,
+      "line": 74,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21532,8 +21750,10 @@
         "risk.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "risks",
       "writeTables": [
         "risks"
@@ -21549,13 +21769,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/risks/:id/close",
       "file": "api/routes/riskRegister.ts",
-      "line": 82,
+      "line": 83,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21568,8 +21788,10 @@
         "risk.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "risks",
       "writeTables": [
         "risks"
@@ -21587,7 +21809,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -21837,7 +22059,7 @@
       "method": "PATCH",
       "path": "/api/v1/safety/incidents/:id",
       "file": "api/routes/safety.ts",
-      "line": 76,
+      "line": 77,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21850,8 +22072,10 @@
         "safety.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "safety_incidents",
       "writeTables": [
         "safety_incidents"
@@ -21869,13 +22093,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/safety/observations/:id",
       "file": "api/routes/safety.ts",
-      "line": 47,
+      "line": 48,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21888,8 +22112,10 @@
         "safety.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "safety_observations",
       "writeTables": [
         "safety_observations"
@@ -21907,13 +22133,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/sc-invoices/:id/approve",
       "file": "api/routes/subcontracts.ts",
-      "line": 225,
+      "line": 226,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21926,8 +22152,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontract_invoices",
       "writeTables": [
         "subcontract_invoices"
@@ -21950,13 +22178,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/sc-invoices/:id/reject",
       "file": "api/routes/subcontracts.ts",
-      "line": 235,
+      "line": 236,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -21969,8 +22197,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontract_invoices",
       "writeTables": [
         "subcontract_invoices"
@@ -21993,13 +22223,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/sc-invoices/:id/submit",
       "file": "api/routes/subcontracts.ts",
-      "line": 216,
+      "line": 217,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -22012,8 +22242,10 @@
         "procurement.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontract_invoices",
       "writeTables": [
         "subcontract_invoices"
@@ -22036,7 +22268,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -22404,7 +22636,7 @@
       "method": "GET",
       "path": "/api/v1/schedule/:projectId/cpm",
       "file": "api/routes/schedule.ts",
-      "line": 190,
+      "line": 191,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -22473,7 +22705,7 @@
       "method": "GET",
       "path": "/api/v1/schedule/:projectId/dependencies",
       "file": "api/routes/schedule.ts",
-      "line": 125,
+      "line": 126,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -22512,7 +22744,7 @@
       "method": "POST",
       "path": "/api/v1/schedule/:projectId/dependencies",
       "file": "api/routes/schedule.ts",
-      "line": 141,
+      "line": 142,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -22586,7 +22818,7 @@
       "method": "GET",
       "path": "/api/v1/schedule/:projectId/tasks",
       "file": "api/routes/schedule.ts",
-      "line": 35,
+      "line": 36,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -22620,7 +22852,7 @@
       "method": "POST",
       "path": "/api/v1/schedule/:projectId/tasks",
       "file": "api/routes/schedule.ts",
-      "line": 51,
+      "line": 52,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -22686,7 +22918,7 @@
       "method": "DELETE",
       "path": "/api/v1/schedule/dependencies/:id",
       "file": "api/routes/schedule.ts",
-      "line": 174,
+      "line": 175,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -22699,8 +22931,10 @@
         "schedule.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "schedule_dependencies",
       "writeTables": [
         "schedule_dependencies"
@@ -22723,13 +22957,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "DELETE",
       "path": "/api/v1/schedule/tasks/:id",
       "file": "api/routes/schedule.ts",
-      "line": 109,
+      "line": 110,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -22742,8 +22976,10 @@
         "schedule.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "schedule_tasks",
       "writeTables": [
         "schedule_tasks"
@@ -22761,13 +22997,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/schedule/tasks/:id",
       "file": "api/routes/schedule.ts",
-      "line": 81,
+      "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -22780,8 +23016,10 @@
         "schedule.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "schedule_tasks",
       "writeTables": [
         "schedule_tasks"
@@ -22799,7 +23037,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -22943,7 +23181,7 @@
       "method": "GET",
       "path": "/api/v1/sensors/:id",
       "file": "api/routes/iot.ts",
-      "line": 143,
+      "line": 144,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -22977,7 +23215,7 @@
       "method": "GET",
       "path": "/api/v1/sensors/:id/readings",
       "file": "api/routes/iot.ts",
-      "line": 161,
+      "line": 162,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23016,7 +23254,7 @@
       "method": "PATCH",
       "path": "/api/v1/sensors/:id/thresholds",
       "file": "api/routes/iot.ts",
-      "line": 152,
+      "line": 153,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23029,8 +23267,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "sensors",
       "writeTables": [
         "sensors"
@@ -23048,13 +23288,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/sensors/:uid/readings",
       "file": "api/routes/iot.ts",
-      "line": 243,
+      "line": 244,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23095,7 +23335,7 @@
       "method": "POST",
       "path": "/api/v1/sensors/alerts/:alertId/acknowledge",
       "file": "api/routes/iot.ts",
-      "line": 181,
+      "line": 182,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23108,8 +23348,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "sensor_alerts",
       "writeTables": [
         "sensor_alerts"
@@ -23132,13 +23374,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/sensors/tokens",
       "file": "api/routes/iot.ts",
-      "line": 189,
+      "line": 190,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -23298,7 +23540,7 @@
       "method": "GET",
       "path": "/api/v1/subcontracts/:id",
       "file": "api/routes/subcontracts.ts",
-      "line": 174,
+      "line": 175,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23332,7 +23574,7 @@
       "method": "GET",
       "path": "/api/v1/subcontracts/:id/invoices",
       "file": "api/routes/subcontracts.ts",
-      "line": 208,
+      "line": 209,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23371,7 +23613,7 @@
       "method": "POST",
       "path": "/api/v1/subcontracts/:id/invoices",
       "file": "api/routes/subcontracts.ts",
-      "line": 196,
+      "line": 197,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23384,8 +23626,10 @@
         "procurement.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontract_invoices",
       "writeTables": [
         "subcontract_invoices"
@@ -23406,13 +23650,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/subcontracts/:id/status",
       "file": "api/routes/subcontracts.ts",
-      "line": 183,
+      "line": 184,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23425,8 +23669,10 @@
         "procurement.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subcontracts",
       "writeTables": [
         "subcontracts"
@@ -23444,7 +23690,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -23536,8 +23782,10 @@
         "construction.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "submittals",
       "writeTables": [
         "submittals"
@@ -23555,7 +23803,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -23608,8 +23856,10 @@
         "construction.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "submittals",
       "writeTables": [
         "submittals"
@@ -23627,13 +23877,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/subsystems/:subsystemId",
       "file": "api/routes/systems.ts",
-      "line": 124,
+      "line": 125,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23646,8 +23896,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subsystems",
       "writeTables": [
         "subsystems"
@@ -23665,7 +23917,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
@@ -23872,7 +24124,7 @@
       "method": "PATCH",
       "path": "/api/v1/systems/:systemId",
       "file": "api/routes/systems.ts",
-      "line": 86,
+      "line": 87,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23885,8 +24137,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "systems",
       "writeTables": [
         "systems"
@@ -23904,13 +24158,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/systems/:systemId/subsystems",
       "file": "api/routes/systems.ts",
-      "line": 102,
+      "line": 103,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23923,8 +24177,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "subsystems",
       "writeTables": [
         "subsystems"
@@ -23940,13 +24196,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/systems/:systemId/tags",
       "file": "api/routes/systems.ts",
-      "line": 147,
+      "line": 148,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23959,8 +24215,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "tags",
       "writeTables": [
         "tags"
@@ -23976,13 +24234,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/tags/:tagId",
       "file": "api/routes/systems.ts",
-      "line": 174,
+      "line": 175,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -23995,8 +24253,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "tags",
       "writeTables": [
         "tags"
@@ -24014,13 +24274,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/team/assignments",
       "file": "api/routes/team.ts",
-      "line": 86,
+      "line": 87,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24056,7 +24316,7 @@
       "method": "POST",
       "path": "/api/v1/team/assignments/:id/end",
       "file": "api/routes/team.ts",
-      "line": 102,
+      "line": 103,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24069,8 +24329,10 @@
         "team.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "project_assignments",
       "writeTables": [
         "project_assignments"
@@ -24088,13 +24350,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/team/members",
       "file": "api/routes/team.ts",
-      "line": 51,
+      "line": 52,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24128,7 +24390,7 @@
       "method": "POST",
       "path": "/api/v1/team/members",
       "file": "api/routes/team.ts",
-      "line": 41,
+      "line": 42,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -24162,7 +24424,7 @@
       "method": "GET",
       "path": "/api/v1/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 62,
+      "line": 63,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24196,7 +24458,7 @@
       "method": "PATCH",
       "path": "/api/v1/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 71,
+      "line": 72,
       "operationType": "MUTATION_UPDATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -24232,7 +24494,7 @@
       "method": "GET",
       "path": "/api/v1/team/members/:id/assignments",
       "file": "api/routes/team.ts",
-      "line": 80,
+      "line": 81,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24266,7 +24528,7 @@
       "method": "GET",
       "path": "/api/v1/team/members/:memberId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 66,
+      "line": 67,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24300,7 +24562,7 @@
       "method": "GET",
       "path": "/api/v1/team/summary",
       "file": "api/routes/team.ts",
-      "line": 35,
+      "line": 36,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24604,7 +24866,7 @@
       "method": "POST",
       "path": "/api/v1/test-packs",
       "file": "api/routes/testPacks.ts",
-      "line": 58,
+      "line": 59,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24640,7 +24902,7 @@
       "method": "GET",
       "path": "/api/v1/test-packs/:packId",
       "file": "api/routes/testPacks.ts",
-      "line": 89,
+      "line": 90,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24674,7 +24936,7 @@
       "method": "PATCH",
       "path": "/api/v1/test-packs/:packId",
       "file": "api/routes/testPacks.ts",
-      "line": 97,
+      "line": 98,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24687,8 +24949,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "test_packs",
       "writeTables": [
         "test_packs"
@@ -24706,13 +24970,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/test-results",
       "file": "api/routes/testResults.ts",
-      "line": 47,
+      "line": 48,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24748,7 +25012,7 @@
       "method": "PATCH",
       "path": "/api/v1/test-results/:resultId",
       "file": "api/routes/testResults.ts",
-      "line": 81,
+      "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24761,8 +25025,10 @@
         "commissioning.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "test_results",
       "writeTables": [
         "test_results"
@@ -24780,13 +25046,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/timesheets/:id/approve",
       "file": "api/routes/timesheets.ts",
-      "line": 83,
+      "line": 84,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24799,8 +25065,10 @@
         "team.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "cost_entries",
       "writeTables": [
         "cost_entries",
@@ -24820,13 +25088,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/timesheets/:id/reject",
       "file": "api/routes/timesheets.ts",
-      "line": 92,
+      "line": 93,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24839,8 +25107,10 @@
         "team.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "timesheets",
       "writeTables": [
         "timesheets"
@@ -24858,13 +25128,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/timesheets/:id/submit",
       "file": "api/routes/timesheets.ts",
-      "line": 74,
+      "line": 75,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -24877,8 +25147,10 @@
         "team.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "timesheets",
       "writeTables": [
         "timesheets"
@@ -24896,13 +25168,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/transmittals",
       "file": "api/routes/transmittals.ts",
-      "line": 68,
+      "line": 69,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24936,7 +25208,7 @@
       "method": "POST",
       "path": "/api/v1/transmittals",
       "file": "api/routes/transmittals.ts",
-      "line": 51,
+      "line": 52,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24974,7 +25246,7 @@
       "method": "GET",
       "path": "/api/v1/transmittals/:id",
       "file": "api/routes/transmittals.ts",
-      "line": 83,
+      "line": 84,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -25008,7 +25280,7 @@
       "method": "POST",
       "path": "/api/v1/transmittals/:id/close",
       "file": "api/routes/transmittals.ts",
-      "line": 119,
+      "line": 120,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -25021,8 +25293,10 @@
         "docs.publish"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "transmittals",
       "writeTables": [
         "transmittal_events",
@@ -25041,13 +25315,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/transmittals/:id/respond",
       "file": "api/routes/transmittals.ts",
-      "line": 104,
+      "line": 105,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -25060,8 +25334,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "transmittals",
       "writeTables": [
         "transmittal_events",
@@ -25080,13 +25356,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/transmittals/:id/send",
       "file": "api/routes/transmittals.ts",
-      "line": 94,
+      "line": 95,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -25099,8 +25375,10 @@
         "docs.publish"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "transmittals",
       "writeTables": [
         "transmittal_events",
@@ -25119,13 +25397,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/transmittals/overdue",
       "file": "api/routes/transmittals.ts",
-      "line": 41,
+      "line": 42,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -25159,7 +25437,7 @@
       "method": "PATCH",
       "path": "/api/v1/turnover-packages/:id",
       "file": "api/routes/turnover.ts",
-      "line": 39,
+      "line": 40,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -25172,8 +25450,10 @@
         "docs.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "turnover_packages",
       "writeTables": [
         "turnover_packages"
@@ -25191,13 +25471,13 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/turnover-packages/:id/accept",
       "file": "api/routes/turnover.ts",
-      "line": 50,
+      "line": 51,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
@@ -25210,8 +25490,10 @@
         "commissioning.approve"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "turnover_packages",
       "writeTables": [
         "turnover_packages"
@@ -25229,7 +25511,7 @@
       "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",

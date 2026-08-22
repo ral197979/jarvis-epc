@@ -27,7 +27,7 @@ import {
 import { getTagPackCoverage } from '../services/cxExecution'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const systemsRouter = Router()
@@ -84,7 +84,7 @@ systemsRouter.post('/projects/:projectId/systems', requireCapability('commission
   } catch (err) { _handleErr(err, res, 'createSystem') }
 })
 
-systemsRouter.patch('/systems/:systemId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+systemsRouter.patch('/systems/:systemId', requireCapability('commissioning.write') as never, requireRecordScope('systems', 'systemId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {
@@ -100,7 +100,7 @@ systemsRouter.patch('/systems/:systemId', requireCapability('commissioning.write
 // ─── SUBSYSTEMS ───────────────────────────────────────────────────────────────
 
 // POST body must include projectId so the service can verify system-in-project scope.
-systemsRouter.post('/systems/:systemId/subsystems', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+systemsRouter.post('/systems/:systemId/subsystems', requireCapability('commissioning.write') as never, requireRecordScope('systems', 'systemId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.code || !b.name) {
@@ -122,7 +122,7 @@ systemsRouter.post('/systems/:systemId/subsystems', requireCapability('commissio
   } catch (err) { _handleErr(err, res, 'createSubsystem') }
 })
 
-systemsRouter.patch('/subsystems/:subsystemId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+systemsRouter.patch('/subsystems/:subsystemId', requireCapability('commissioning.write') as never, requireRecordScope('subsystems', 'subsystemId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {
@@ -145,7 +145,7 @@ systemsRouter.get('/projects/:projectId/tags', requireCapability('commissioning.
   } catch (err) { _handleErr(err, res, 'listTags') }
 })
 
-systemsRouter.post('/systems/:systemId/tags', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+systemsRouter.post('/systems/:systemId/tags', requireCapability('commissioning.write') as never, requireRecordScope('systems', 'systemId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.tagNo || !b.equipmentName) {
@@ -172,7 +172,7 @@ systemsRouter.post('/systems/:systemId/tags', requireCapability('commissioning.w
   } catch (err) { _handleErr(err, res, 'createTag') }
 })
 
-systemsRouter.patch('/tags/:tagId', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
+systemsRouter.patch('/tags/:tagId', requireCapability('commissioning.write') as never, requireRecordScope('tags', 'tagId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

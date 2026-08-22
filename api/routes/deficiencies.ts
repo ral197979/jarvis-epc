@@ -20,6 +20,7 @@ import {
 } from '../services/cxExecution'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 type Req = Request & AuthenticatedRequest & TenantRequest
 
 export const deficienciesRouter = Router()
@@ -80,7 +81,7 @@ deficienciesRouter.post('/deficiencies', requireCapability('quality.write') as n
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-deficienciesRouter.patch('/deficiencies/:deficiencyId', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
+deficienciesRouter.patch('/deficiencies/:deficiencyId', requireCapability('quality.write') as never, requireRecordScope('deficiencies', 'deficiencyId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {
