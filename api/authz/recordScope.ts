@@ -464,37 +464,71 @@ export async function resolveParentProjectId(
  */
 export function requireRecordScope(resource: string, param = 'id'): RequestHandler {
   return async (req, res, next): Promise<void> => {
-    const policy = policyFor(resource)
     const notFound = (): void => { res.status(404).json({ error: 'not_found' }) }
-
-    // An unregistered resource fails closed. There is no permissive default:
-    // adding a direct-ID route without a policy denies rather than inherits
-    // tenant-wide reach.
-    if (!policy?.derivation) { notFound(); return }
 
     const principal = await resolveCurrentUser(req as AuthorizedRequest)
     if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
 
     const recordId = (req.params as Record<string, string | undefined>)[param]
-    if (!recordId) { notFound(); return }
 
-    const found = await resolveRecordScope(principal, policy.derivation, recordId)
-
-    if (found.kind === 'NOT_FOUND') { notFound(); return }
-
-    if (found.kind === 'TENANT_GLOBAL') {
-      // Only a resource that has DECLARED project-less rows legitimate may take
-      // this branch. PROJECT_REQUIRED keeps the Phase-3D/3E refusal, and
-      // SELF_SCOPED refuses too — its records are governed by an ownership rule
-      // that this guard is not the place to evaluate.
-      if (!allowsTenantGlobal(policy.projectSemantics)) { notFound(); return }
-      next()
-      return
-    }
-
-    if (!await canAccessProject(principal, found.projectId)) { notFound(); return }
+    if (await authorizeRecordScope(principal, resource, recordId) === 'REFUSE') { notFound(); return }
     next()
   }
+}
+
+/** ADMIT means the caller may act on this record; REFUSE is always a 404. */
+export type RecordScopeDecision = 'ADMIT' | 'REFUSE'
+
+/**
+ * The record-scope DECISION itself, without the Express wrapper (Phase 3K).
+ *
+ * `requireRecordScope` is middleware, so it can only ask about a record whose
+ * id is in `req.params`. Not every surface puts it there: `GET
+ * /files/download/:token` carries the record id INSIDE the token, and the
+ * decision cannot be made until the token has been read and parsed.
+ *
+ * Before this split that surface had two options — duplicate the ladder, or
+ * skip it. It skipped it, and a download token outlived the access that minted
+ * it for its whole hour. Splitting the decision out is what lets the token path
+ * ask the identical question: the middleware IS this function plus a `params`
+ * lookup, so the two cannot drift and a change to the ladder reaches both.
+ *
+ * Every uncertain input is REFUSE, and for the same reasons as the guard:
+ *
+ *   unregistered resource   → REFUSE  (no permissive default; a route without
+ *                                      a policy denies, it does not inherit
+ *                                      tenant-wide reach)
+ *   absent / malformed id   → REFUSE
+ *   row absent, or another tenant's → REFUSE (`resolveRecordScope` carries the
+ *                                      tenant predicate, so a cross-tenant row
+ *                                      never reaches the TENANT_GLOBAL branch)
+ *   project-less row        → ADMIT only where the resource DECLARES that
+ *                             legitimate; PROJECT_REQUIRED and SELF_SCOPED
+ *                             still refuse
+ *   named project           → ADMIT only on live membership of it
+ *
+ * The caller is responsible for turning REFUSE into a response. Every caller
+ * must use 404 — the three refusal reasons are deliberately indistinguishable
+ * so the surface cannot be used to confirm that a UUID exists.
+ */
+export async function authorizeRecordScope(
+  principal: CurrentUser,
+  resource: string,
+  recordId: string | undefined,
+): Promise<RecordScopeDecision> {
+  const policy = policyFor(resource)
+  if (!policy?.derivation) return 'REFUSE'
+  if (!recordId) return 'REFUSE'
+
+  const found = await resolveRecordScope(principal, policy.derivation, recordId)
+
+  if (found.kind === 'NOT_FOUND') return 'REFUSE'
+
+  if (found.kind === 'TENANT_GLOBAL') {
+    return allowsTenantGlobal(policy.projectSemantics) ? 'ADMIT' : 'REFUSE'
+  }
+
+  return await canAccessProject(principal, found.projectId) ? 'ADMIT' : 'REFUSE'
 }
 
 /** Whether a resource's declared semantics admit a project-less row. */

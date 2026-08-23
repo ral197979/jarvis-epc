@@ -383,11 +383,15 @@ describe('prior read perimeters are untouched', () => {
     expect(HIGH_SENSITIVITY_READS.length).toBe(126)
   })
 
-  it('keeps all 108 project-delivery reads on their own capability', () => {
+  it('keeps every project-delivery read on its own capability', () => {
     const all = [...PROJECT_DELIVERY_READS, ...MIXED_PAYLOAD_DELIVERY_READS]
     const kept = all.filter(r => byKey.get(key(r))?.capability === r.capability).length
+    // The property is CONSERVATION: no delivery read may drift onto a different
+    // capability. That is the line above and it does not depend on the count.
     expect(kept).toBe(all.length)
-    expect(all.length).toBe(108)
+    // 108 → 109 on 2026-08-23 with `GET /files/documents/:id/content`, the
+    // in-app viewer route. New surface on `docs.view`, not a reclassification.
+    expect(all.length).toBe(109)
   })
 
   it('registers no endpoint in two gates at once', () => {

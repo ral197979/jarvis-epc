@@ -297,7 +297,21 @@ describe('the canonical resolver reads the declaration rather than assuming', ()
   })
 
   it('still requires membership on the project branch', () => {
-    expect(resolver).toMatch(/if \(!await canAccessProject\(principal, found\.projectId\)\) \{ notFound\(\); return \}/)
+    // Phase 3K moved this rung out of the Express guard and into
+    // `authorizeRecordScope`, so `GET /files/download/:token` — whose record id
+    // is inside the token rather than in `req.params` — could ask the identical
+    // question instead of skipping it. The assertion FOLLOWS the rung rather
+    // than being relaxed, and now holds both halves: the project branch still
+    // ends at `canAccessProject`, and the guard still reaches that branch.
+    const fn = /export async function authorizeRecordScope[\s\S]*?\n}/.exec(resolver)?.[0] ?? ''
+    expect(fn, 'authorizeRecordScope was not found').toContain('found.projectId')
+    expect(fn).toMatch(/return await canAccessProject\(principal, found\.projectId\) \? 'ADMIT' : 'REFUSE'/)
+
+    const guard = /export function requireRecordScope[\s\S]*?\n}/.exec(resolver)?.[0] ?? ''
+    expect(guard, 'requireRecordScope was not found').toMatch(
+      /authorizeRecordScope\(principal, resource, recordId\) === 'REFUSE'/)
+    // Non-vacuity: the guard must not have kept a second, divergent copy.
+    expect(guard).not.toContain('canAccessProject(')
   })
 
   it('keeps the tenant predicate on the parent lookup, so global stays tenant-bound', () => {

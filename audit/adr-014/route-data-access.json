@@ -1,10 +1,10 @@
 {
   "generatedFrom": "api/routes/*.ts + api/services/**/*.ts",
   "counts": {
-    "endpoints": 765,
-    "resolvedHandlerSql": 249,
+    "endpoints": 766,
+    "resolvedHandlerSql": 251,
     "resolvedViaService": 457,
-    "unresolved": 59,
+    "unresolved": 58,
     "serviceFunctionsIndexed": 1621
   },
   "endpoints": [
@@ -10820,7 +10820,7 @@
       "method": "POST",
       "path": "/api/v1/files/confirm/:versionId",
       "file": "api/routes/files.ts",
-      "line": 232,
+      "line": 240,
       "pathParams": [
         "versionId"
       ],
@@ -10861,7 +10861,7 @@
       "method": "GET",
       "path": "/api/v1/files/documents",
       "file": "api/routes/files.ts",
-      "line": 318,
+      "line": 435,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10887,7 +10887,7 @@
       "method": "DELETE",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 411,
+      "line": 613,
       "pathParams": [
         "id"
       ],
@@ -10919,7 +10919,7 @@
       "method": "GET",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 364,
+      "line": 481,
       "pathParams": [
         "id"
       ],
@@ -10949,7 +10949,7 @@
       "method": "PATCH",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 387,
+      "line": 589,
       "pathParams": [
         "id"
       ],
@@ -10979,30 +10979,62 @@
     },
     {
       "method": "GET",
-      "path": "/api/v1/files/download/:token",
+      "path": "/api/v1/files/documents/:id/content",
       "file": "api/routes/files.ts",
-      "line": 296,
+      "line": 536,
       "pathParams": [
-        "token"
+        "id"
       ],
       "guards": [
-        "requireAuth"
+        "requireAuth",
+        "requireTenant"
       ],
       "bodyProjectRefs": [],
       "mounted": true,
       "writes": [],
-      "reads": [],
-      "readsFrom": [],
-      "primaryReadTable": null,
+      "reads": [
+        "document_versions",
+        "documents"
+      ],
+      "readsFrom": [
+        "documents"
+      ],
+      "primaryReadTable": "documents",
       "writeTables": [],
       "delegatesTo": [],
-      "resolvedVia": "UNRESOLVED"
+      "resolvedVia": "HANDLER_SQL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files/download/:token",
+      "file": "api/routes/files.ts",
+      "line": 344,
+      "pathParams": [
+        "token"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "document_versions"
+      ],
+      "readsFrom": [
+        "document_versions"
+      ],
+      "primaryReadTable": "document_versions",
+      "writeTables": [],
+      "delegatesTo": [],
+      "resolvedVia": "HANDLER_SQL"
     },
     {
       "method": "GET",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 426,
+      "line": 628,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -11027,7 +11059,7 @@
       "method": "POST",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 462,
+      "line": 664,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -11061,7 +11093,7 @@
       "method": "GET",
       "path": "/api/v1/files/presign/:versionId",
       "file": "api/routes/files.ts",
-      "line": 279,
+      "line": 287,
       "pathParams": [
         "versionId"
       ],
@@ -11087,7 +11119,7 @@
       "method": "POST",
       "path": "/api/v1/files/request-upload",
       "file": "api/routes/files.ts",
-      "line": 77,
+      "line": 78,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -11129,7 +11161,7 @@
       "method": "PUT",
       "path": "/api/v1/files/upload/:token",
       "file": "api/routes/files.ts",
-      "line": 191,
+      "line": 192,
       "pathParams": [
         "token"
       ],

@@ -293,9 +293,14 @@ export const CAPABILITIES: Capability[] = [
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
     backendLocation: 'api/routes/drawings.ts (register/revisions/markups — real, mounted server.ts:555)',
     productionSuitable: true, engineerReviewRequired: false,
-    honestyIssue: 'Downgraded from VERIFIED_NATIVE (independent review 2026-07-21): register, revisions, and markups are genuinely wired, but the in-app PDF viewer iframe (DrawingsView.tsx:162) points at /api/v1/documents/:id/file, which does not exist — the real route is /api/v1/files/documents/:id (no /file suffix). The request falls into the SPA catch-all (server.ts:678) and silently renders HTML instead of a PDF.',
-    limitations: ['Sheet register + markups + revisions work. Embedded PDF viewer 404s (wrong route) and renders SPA HTML instead of the document.'],
-    evidence: ['DrawingsView.tsx:162 iframe src; filesRouter mounted at /api/v1/files (server.ts:530); no :id/file route exists; independent review 2026-07-21'],
+    honestyIssue: 'Viewer route repaired 2026-08-23: the iframe now points at GET /api/v1/files/documents/:id/content, an inline viewer route that did not previously exist (the old /api/v1/documents/:id/file fell into the SPA catch-all and rendered HTML). The route streams the current active version behind tenant + docs.view + requireRecordScope(documents), restricted to an inline-safe mime allowlist. STILL PARTIAL, for a different reason than before: the route is covered by API tests only — no browser-level verification has been performed — and the markup overlay is a fixed 800x500 canvas laid over a responsive iframe, so annotation coordinates do not track the rendered page.',
+    limitations: [
+      'Embedded viewer is wired and API-tested but has not been verified in a real browser.',
+      'Markup overlay uses a fixed 800x500 canvas over a responsive iframe; annotation coordinates do not align to the rendered PDF page.',
+      'Only PDF and raster images render inline; other document types return 415 and must be downloaded.',
+      'No page navigation or zoom — the browser/PDF.js native viewer supplies whatever chrome it has.',
+    ],
+    evidence: ['DrawingsView.tsx iframe src -> /api/v1/files/documents/:id/content; route in api/routes/files.ts; api/__tests__/filesInlineContentBehaviour.test.ts; filesRouter mounted at /api/v1/files (server.ts)'],
   },
   {
     id: 'bim', name: 'BIM', route: 'bim', navigationSection: 'engineering',

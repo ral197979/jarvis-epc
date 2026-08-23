@@ -1,10 +1,10 @@
 {
   "generatedFrom": "checked-in source (api/server.ts + api/routes/*.ts)",
   "counts": {
-    "endpoints": 765,
-    "mounted": 763,
+    "endpoints": 766,
+    "mounted": 764,
     "unmounted": 2,
-    "reads": 357,
+    "reads": 358,
     "mutations": 408,
     "routeFiles": 100,
     "mounts": 106
@@ -7501,7 +7501,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/confirm/:versionId",
       "file": "api/routes/files.ts",
-      "line": 232,
+      "line": 240,
       "serverLine": 539,
       "pathParams": [
         "versionId"
@@ -7525,7 +7525,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/documents",
       "file": "api/routes/files.ts",
-      "line": 318,
+      "line": 435,
       "serverLine": 539,
       "pathParams": [],
       "guards": [
@@ -7547,7 +7547,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 411,
+      "line": 613,
       "serverLine": 539,
       "pathParams": [
         "id"
@@ -7571,7 +7571,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 364,
+      "line": 481,
       "serverLine": 539,
       "pathParams": [
         "id"
@@ -7595,7 +7595,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 387,
+      "line": 589,
       "serverLine": 539,
       "pathParams": [
         "id"
@@ -7615,22 +7615,49 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/files/documents/:id/content",
+      "mountPrefix": "/api/v1/files",
+      "routePath": "/documents/:id/content",
+      "file": "api/routes/files.ts",
+      "line": 536,
+      "serverLine": 539,
+      "pathParams": [
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "docs.view"
+      ],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/files/download/:token",
       "mountPrefix": "/api/v1/files",
       "routePath": "/download/:token",
       "file": "api/routes/files.ts",
-      "line": 296,
+      "line": 344,
       "serverLine": 539,
       "pathParams": [
         "token"
       ],
       "guards": [
-        "requireAuth"
+        "requireAuth",
+        "requireTenant"
       ],
       "capabilities": [
         "docs.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7640,7 +7667,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/folders",
       "file": "api/routes/files.ts",
-      "line": 426,
+      "line": 628,
       "serverLine": 539,
       "pathParams": [],
       "guards": [
@@ -7662,7 +7689,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/folders",
       "file": "api/routes/files.ts",
-      "line": 462,
+      "line": 664,
       "serverLine": 539,
       "pathParams": [],
       "guards": [
@@ -7686,7 +7713,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/presign/:versionId",
       "file": "api/routes/files.ts",
-      "line": 279,
+      "line": 287,
       "serverLine": 539,
       "pathParams": [
         "versionId"
@@ -7710,7 +7737,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/request-upload",
       "file": "api/routes/files.ts",
-      "line": 77,
+      "line": 78,
       "serverLine": 539,
       "pathParams": [],
       "guards": [
@@ -7734,7 +7761,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/upload/:token",
       "file": "api/routes/files.ts",
-      "line": 191,
+      "line": 192,
       "serverLine": 539,
       "pathParams": [
         "token"

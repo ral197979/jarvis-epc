@@ -83,6 +83,11 @@ const RECORD_SCOPE_CALLS = [
   // ADR-014 Phase 3I: the body-selected polymorphic form, for the AI-governance
   // routes that name their target in the payload.
   'requireBodyPolymorphicScope(',
+  // ADR-014 Phase 3K: the same decision reached from a handler rather than
+  // from middleware, for `GET /files/download/:token` — the record id lives
+  // inside the token, so the guard form cannot be used and the ladder is
+  // called directly instead.
+  'authorizeRecordScope(',
   // ADR-014 Phase 3B: the guard form, for a route whose PATH names the project
   // it operates on. Roughly fifty project-child collections share that shape,
   // so the rule is expressed once as middleware rather than as fifty copies of

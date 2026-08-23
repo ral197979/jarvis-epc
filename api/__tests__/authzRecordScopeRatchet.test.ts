@@ -434,13 +434,19 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // must not imply full coverage. What remains is the aggregate surface whose
     // capabilities are Owner-only today, and three collections whose returned
     // rows have no record-scope policy at all.
-    expect(scoped).toBe(352)
+    // Phase 3K takes it to 354: the download token, plus the repaired
+    // inline viewer route, which is new surface that arrives already scoped.
+    expect(scoped).toBe(354)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only
     // ever moves BETWEEN these two classes: gaining record scope must not
     // invent a guard, and losing it must not hide one.
-    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(730)
+    // 730 before Phase 3K; the viewer route is the 731st capability-guarded
+    // endpoint. Conservation is the property — the total may only move when
+    // surface is genuinely added or removed, never by an endpoint slipping
+    // out of both classes.
+    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(731)
   })
 })
 

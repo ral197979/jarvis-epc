@@ -217,9 +217,16 @@ describe('project-delivery read ratchet', () => {
     // 224 pending read-shaped endpoints at 7c99ac9 → registered + deferred, with
     // nothing lost. Deferrals also cover a few endpoints Phase 2B-1 recorded, so
     // the delivery classification must at least span what this gate closed.
+    //
+    // 225 from 2026-08-23: `GET /files/documents/:id/content` is genuinely NEW
+    // read surface — the in-app viewer route, which replaces an iframe pointed
+    // at a path that was never registered. The total moves only because the API
+    // grew, not because anything moved out of the classification; the two
+    // assertions above still hold that every candidate is classified once.
     const closed = PROJECT_DELIVERY_READS.length + MIXED_PAYLOAD_DELIVERY_READS.length
-    expect(closed + DEFERRED_DELIVERY_READS.length).toBe(224)
-    expect(closed).toBe(108)
+    expect(closed + DEFERRED_DELIVERY_READS.length).toBe(225)
+    // 108 → 109 for the same one route; the deferral count is unchanged.
+    expect(closed).toBe(109)
   })
 
   it('recognises a disposable unprotected delivery read', () => {

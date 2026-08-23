@@ -285,10 +285,17 @@ describe('the direct-ID inventory reconciles with nothing unexplained', () => {
   const direct = registry.registry.filter(r => r.projectBound && r.operationType === 'READ_DIRECT_ID')
 
   it('reports the corrected candidate set', () => {
-    expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(60)
+    // Phase 3K adds the 61st: `GET /files/download/:token`. It was always a
+    // project-bound direct-ID read — the token names a `document_versions` row
+    // — but the classifier could not see the table until the handler named it,
+    // so it sat in UNRESOLVED_DATA_ACCESS instead. The denominator moves and
+    // the numerator moves with it: the route arrives already scoped.
+    // 62 with the repaired viewer route, which is also a project-bound
+    // direct-ID read and is scoped from the moment it exists.
+    expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(62)
     // 55 after Phase 3G; Phase 3H closed the twin projection route, which is the
     // last project-bound direct-ID read that was open for a MODEL reason.
-    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(56)
+    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(58)
   })
 
   it('leaves open only SELF surfaces, whose guard is narrower than membership', () => {

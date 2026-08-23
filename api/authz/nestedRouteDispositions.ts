@@ -89,6 +89,7 @@ export const NESTED_ROUTE_FAMILIES: readonly NestedFamily[] = [
     ['/api/v1/daily-logs/:id',               'daily_logs'],
     ['/api/v1/drawings/:id',                 'drawings'],
     ['/api/v1/estimates/:id',                'estimates'],
+    ['/api/v1/files/documents/:id',          'documents'],
     ['/api/v1/evm/baselines/:baselineId',    'evm_baselines'],
     ['/api/v1/inspections/:id',              'inspections'],
     ['/api/v1/knowledge-fixes/:id',          'knowledge_fixes'],

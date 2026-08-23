@@ -244,6 +244,10 @@ const RECORD_SCOPE_CALLS = [
   // routes name their target as `{ scope, scopeId }` in the payload, which is
   // the same question against the same registry — only the selector moves.
   'requireBodyPolymorphicScope(',
+  // ADR-014 Phase 3K: the decision without the Express wrapper, for a surface
+  // whose record id is not in `req.params` — the download token carries it.
+  // Same function, same ladder as `requireRecordScope`; only the lookup moves.
+  'authorizeRecordScope(',
 ]
 const recordScopeCallsIn = fragment =>
   RECORD_SCOPE_CALLS.filter(c => fragment.includes(c)).map(c => c.slice(0, -1)).sort()

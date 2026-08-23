@@ -24,11 +24,12 @@ import crypto  from 'node:crypto'
 import { tenantQuery, tenantTransaction } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
-import { getStorage } from '../files/storage'
+import { getStorage, DOWNLOAD_TOKEN_PATTERN, UPLOAD_TOKEN_PATTERN } from '../files/storage'
+import type { LocalDownloadTokenMeta } from '../files/storage'
 import { slog } from '../../src/modules/observability/index'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams, authorizeRecordScope } from '../authz/recordScope'
 import { resolveCurrentUser } from '../authz/currentUser'
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -190,6 +191,13 @@ router.post('/request-upload', requireCapability('docs.write') as never, require
 
 router.put('/upload/:token', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
   const { token } = req.params
+  // ADR-014 Phase 3K, same reasoning as the download route: Express decodes
+  // path parameters, so `%2F` and `..` arrive intact and `path.join` would
+  // honour them. Only a minted token shape may build a sidecar path.
+  if (!token || !UPLOAD_TOKEN_PATTERN.test(String(token))) {
+    res.status(404).json({ error: 'invalid_token', message: 'Upload token not found or already used.' })
+    return
+  }
   const tokenDir  = path.join(LOCAL_DIR, '.tokens')
   const metaPath  = path.join(tokenDir, `${token}.json`)
 
@@ -287,23 +295,132 @@ router.get('/presign/:versionId', requireTenant() as never, requireCapability('d
 
   if (!ver.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
 
-  const { downloadUrl, expiresAt } = await getStorage().presignDownload(ver.rows[0].storage_key, 3600)
+  // ADR-014 Phase 3K. The token is minted FOR this principal and AGAINST this
+  // version. `requireRecordScope` above proved the caller may reach it now; the
+  // binding is what lets the redemption path prove it again then.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+  const { downloadUrl, expiresAt } = await getStorage().presignDownload(
+    ver.rows[0].storage_key,
+    { tenantId, subjectId: principal.id, resource: 'document_versions', recordId: String(req.params['versionId']) },
+    3600,
+  )
   res.json({ data: { downloadUrl, expiresAt, filename: ver.rows[0].original_name } })
 })
 
 // ─── GET /download/:token — Local backend streaming download ─────────────────
+//
+// ADR-014 Phase 3K. This was the last surface in the ADR-014 perimeter that
+// answered from a credential instead of from the database.
+//
+// Every other authorization surface now re-derives authority on every call:
+// `resolveCurrentUser` re-reads the role, `requireRecordScope` re-reads the
+// record's project, `canAccessProject` re-reads live membership. This route
+// re-read none of them. It checked that the caller held `docs.view` — which is
+// a role-level capability, not access to any particular file — and then handed
+// over whatever `key` the sidecar named. Close a membership, demote a user out
+// of a project, move the document: the token minted a minute earlier still
+// worked, for the rest of its hour.
+//
+// The token is now a POINTER, not a credential. It names a tenant, a subject
+// and a `document_versions` row; the answer is re-derived from those on every
+// redemption, through the same ladder `requireRecordScope` uses (§20). Order
+// matters — each check must refuse before the next one leaks anything:
+//
+//   1. token FORMAT      before any path is built     (traversal)
+//   2. sidecar exists / not expired                    (404 / 410)
+//   3. BINDING present   — an unbound token is dead    (fail closed)
+//   4. TENANT match      before the record is named    (cross-tenant)
+//   5. SUBJECT match     — the token is not bearer     (transfer)
+//   6. RECORD SCOPE, live                              (revocation)
+//   7. the version is still active and still points at this key
+//   8. only then: consume the token and stream
+//
+// A refusal never consumes the token. Burning it on a refused request would let
+// anyone who guessed a token deny the legitimate holder their download, and
+// would make the refusal observable to the prober.
 
-router.get('/download/:token', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
+router.get('/download/:token',
+  requireTenant() as never,
+  requireCapability('docs.view') as never,
+  async (req: Req, res: Response) => {
+
+  const invalid = (): void => { res.status(404).json({ error: 'invalid_token' }) }
+
+  // (1) Format first. `req.params.token` is percent-decoded by Express, so it
+  // can contain `/` and `..`; nothing but a minted token may reach `path.join`.
+  const token = String(req.params['token'] ?? '')
+  if (!DOWNLOAD_TOKEN_PATTERN.test(token)) { invalid(); return }
+
   const tokenDir = path.join(LOCAL_DIR, '.tokens')
-  const metaPath = path.join(tokenDir, `dl_${req.params['token']}.json`)
+  const metaPath = path.join(tokenDir, `dl_${token}.json`)
 
-  if (!fs.existsSync(metaPath)) { res.status(404).json({ error: 'invalid_token' }); return }
-  const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) as { key: string; expiresAt: string }
-  if (new Date(meta.expiresAt) < new Date()) { fs.unlinkSync(metaPath); res.status(410).json({ error: 'expired' }); return }
+  // (2) Existence and expiry.
+  if (!fs.existsSync(metaPath)) { invalid(); return }
+  let meta: Partial<LocalDownloadTokenMeta>
+  try {
+    meta = JSON.parse(fs.readFileSync(metaPath, 'utf8')) as Partial<LocalDownloadTokenMeta>
+  } catch { invalid(); return }
+  if (!meta.expiresAt || new Date(meta.expiresAt) < new Date()) {
+    // Expiry is the one refusal that DOES consume: the token is spent either
+    // way, and leaving it on disk only accumulates dead sidecars.
+    fs.unlinkSync(metaPath)
+    res.status(410).json({ error: 'expired' })
+    return
+  }
 
-  const safePath = path.join(LOCAL_DIR, path.normalize(meta.key).replace(/^(\.\.[/\\])+/, ''))
+  // (3) An unbound sidecar is one minted before Phase 3K, or by a mint site
+  // that could not say who it was for. Neither can be re-authorized, so neither
+  // is honoured. Tokens live one hour, so this is self-clearing.
+  //
+  // Honest note: this line is a TYPE-NARROWING gate and defence in depth, not
+  // an independent control. Removing it does not open anything — every missing
+  // field is caught again below, because `undefined` fails the tenant, subject,
+  // scope and key comparisons in turn. The Phase-3K mutation run records it as
+  // the one mutant that stays green, and that is why. It is kept because it
+  // states the invariant in one place and because it is what lets checks 4–7
+  // compare strings rather than `string | undefined`.
+  if (!meta.tenantId || !meta.subjectId || !meta.resource || !meta.recordId || !meta.key) {
+    invalid(); return
+  }
+
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+  // (4) Tenant. Checked against the resolved principal, not the token's own
+  // claim about itself, and before the record id is used for anything.
+  if (meta.tenantId !== principal.tenantId) { invalid(); return }
+
+  // (5) Subject. The URL is handed to the caller who asked for it; it is not a
+  // shareable link, and a forwarded one is worth nothing to anyone else.
+  if (meta.subjectId !== principal.id) { invalid(); return }
+
+  // (6) The live scope decision — the same one `requireRecordScope` makes, from
+  // the same function, so the two cannot drift.
+  if (await authorizeRecordScope(principal, meta.resource, meta.recordId) === 'REFUSE') {
+    invalid(); return
+  }
+
+  // (7) The version must still be active, and must still be the row this key
+  // belongs to. A soft-deleted or superseded version stops being downloadable
+  // now rather than when the token happens to expire.
+  const live = await tenantQuery<{ storage_key: string }>(req.tenantId!, `
+    SELECT storage_key FROM document_versions
+    WHERE id = $1 AND status = 'active'
+      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+  `, [meta.recordId])
+  if (live.rows[0]?.storage_key !== meta.key) { invalid(); return }
+
+  // Containment, belt and braces: the resolved path must stay inside the
+  // storage root even though `key` is server-generated.
+  const safePath = path.resolve(LOCAL_DIR, path.normalize(meta.key).replace(/^(\.\.[/\\])+/, ''))
+  if (safePath !== path.resolve(LOCAL_DIR) && !safePath.startsWith(path.resolve(LOCAL_DIR) + path.sep)) {
+    invalid(); return
+  }
   if (!fs.existsSync(safePath)) { res.status(404).json({ error: 'file_not_found' }); return }
 
+  // (8) Admitted. Only now is the token spent.
   fs.unlinkSync(metaPath)
   // AUD-006: force a non-renderable content type + disable MIME sniffing so a
   // stored HTML/SVG/polyglot cannot execute as script in the app origin.
@@ -380,6 +497,91 @@ router.get('/documents/:id', requireTenant() as never, requireCapability('docs.v
 
   if (!docRes.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
   res.json({ data: { ...docRes.rows[0], versions: versionsRes.rows } })
+})
+
+// ─── GET /documents/:id/content — inline viewer stream ───────────────────────
+//
+// The in-app viewers (drawings, document preview) need to RENDER a document,
+// not download it. `GET /download/:token` deliberately cannot serve them:
+// AUD-006 forces `application/octet-stream` + `attachment` on that route so a
+// stored polyglot can never execute in the app origin, which means a browser
+// saves the file instead of displaying it.
+//
+// So DrawingsView pointed its iframe at `/api/v1/documents/:id/file`, a route
+// that has never existed. The request fell through to the SPA catch-all and the
+// iframe rendered the application's own HTML shell — a viewer that looked wired
+// and displayed nothing. This is that route, built rather than aliased.
+//
+// It is inline, so it re-opens the AUD-006 question and answers it by TYPE
+// rather than by header alone:
+//
+//   • the mime type must be on INLINE_SAFE_MIME_TYPES — PDF and raster images,
+//     all passive formats. `image/svg+xml` is absent for the same reason it is
+//     absent from the upload allowlist: SVG is script-capable.
+//   • the type served is the ALLOWLIST's spelling, never the stored string, so
+//     a crafted `mime_type` column cannot choose the response type.
+//   • `nosniff` stops the browser second-guessing that decision, and
+//     `sandbox` neutralises active content even if one ever gets through.
+//   • anything else is 415 and points at the download route, which is safe for
+//     arbitrary bytes precisely because it refuses to render them.
+//
+// Authorization is the ordinary ladder — tenant, capability, record scope on
+// `documents` — so the viewer reaches exactly the documents its list does.
+
+const INLINE_SAFE_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+])
+
+router.get('/documents/:id/content',
+  requireTenant() as never,
+  requireCapability('docs.view') as never,
+  requireRecordScope('documents') as never,
+  async (req: Req, res: Response) => {
+
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  // The document's CURRENT version, chosen by the server. A caller cannot ask
+  // for an arbitrary version here; that is what /presign/:versionId is for, and
+  // it carries its own record-scope guard on `document_versions`.
+  //
+  // Honest note on the tenant predicate below: it is defence in depth, not an
+  // independent control. `requireRecordScope('documents')` is tenant-bounded on
+  // the same row and has already refused a cross-tenant id by the time this
+  // runs, so removing the predicate breaks no test — the mutation run records
+  // it as green for that reason. It stays because this statement must remain
+  // correct on its own if the guard above it is ever reordered or replaced.
+  const ver = await tenantQuery<{ storage_key: string; original_name: string; mime_type: string }>(tenantId, `
+    SELECT dv.storage_key, dv.original_name, dv.mime_type
+    FROM documents d
+    JOIN document_versions dv
+      ON dv.document_id = d.id AND dv.version = d.current_version AND dv.status = 'active'
+    WHERE d.id = $1 AND d.status != 'deleted'
+      AND d.tenant_id = current_setting('app.current_tenant_id',true)::uuid
+  `, [req.params['id']])
+
+  const row = ver.rows[0]
+  if (!row) { res.status(404).json({ error: 'not_found' }); return }
+
+  const declared = String(row.mime_type ?? '').toLowerCase()
+  if (!INLINE_SAFE_MIME_TYPES.has(declared)) {
+    res.status(415).json({
+      error:   'not_inline_renderable',
+      message: 'This document type cannot be displayed inline. Use the download endpoint.',
+    })
+    return
+  }
+
+  const stream = await getStorage().readStream(row.storage_key)
+  if (!stream) { res.status(404).json({ error: 'file_not_found' }); return }
+
+  // The allowlist's own spelling, not the column's.
+  res.setHeader('Content-Type', [...INLINE_SAFE_MIME_TYPES].find(m => m === declared)!)
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Content-Security-Policy', 'sandbox')
+  res.setHeader('Content-Disposition', `inline; filename="${path.basename(String(row.original_name ?? 'document'))}"`)
+  stream.pipe(res)
 })
 
 // ─── PATCH /documents/:id ─────────────────────────────────────────────────────

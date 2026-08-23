@@ -1,14 +1,14 @@
 {
   "generatedFrom": "endpoint-inventory + route-data-access + schema-project-parent-map",
   "counters": {
-    "TOTAL_API_ENDPOINTS": 765,
+    "TOTAL_API_ENDPOINTS": 766,
     "DISPOSITIONS": {
       "SERVICE_BOUNDARY": 31,
       "TENANT_GLOBAL": 253,
       "NO_PROJECT_PARENT": 39,
       "PROJECT_CHILD_TENANT_COLLECTION": 45,
-      "PROJECT_CHILD_RECORD_ID": 184,
-      "UNRESOLVED_DATA_ACCESS": 31,
+      "PROJECT_CHILD_RECORD_ID": 186,
+      "UNRESOLVED_DATA_ACCESS": 30,
       "SELF_SCOPED": 16,
       "PROJECT_CHILD_BODY_PROJECT": 13,
       "PROJECT_CHILD_PATH_PROJECT": 104,
@@ -20,10 +20,10 @@
       "PUBLIC_UNAUTHENTICATED": 1
     },
     "UNEXPLAINED": 0,
-    "PROJECT_BOUND_TOTAL": 350,
+    "PROJECT_BOUND_TOTAL": 352,
     "PROJECT_BOUND_BY_OPERATION": {
       "READ_COLLECTION": 108,
-      "READ_DIRECT_ID": 60,
+      "READ_DIRECT_ID": 62,
       "MUTATION_UPDATE": 44,
       "MUTATION_CREATE": 84,
       "MUTATION_DELETE": 23,
@@ -51,28 +51,28 @@
       "projectBoundWithNoProjectPredicateInSql": 174
     },
     "DIRECT_ID_READS": {
-      "total": 132,
-      "projectBound": 60
+      "total": 133,
+      "projectBound": 62
     },
     "READ_COLLECTIONS": {
       "total": 225,
       "projectBound": 108
     },
     "SELF_SCOPED": 16,
-    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 31,
+    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 30,
     "FUNCTIONAL_CAPABILITY": {
-      "guarded": 729,
+      "guarded": 730,
       "unguarded": 36
     },
     "RECORD_SCOPE": {
-      "candidates": 350,
-      "protected": 312,
+      "candidates": 352,
+      "protected": 314,
       "deferred": 38,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 352,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 354,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "READ_DIRECT_ID": 56,
+      "READ_DIRECT_ID": 58,
       "MUTATION_CREATE": 78,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
@@ -12161,7 +12161,7 @@
       "method": "POST",
       "path": "/api/v1/files/confirm/:versionId",
       "file": "api/routes/files.ts",
-      "line": 232,
+      "line": 240,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -12205,7 +12205,7 @@
       "method": "GET",
       "path": "/api/v1/files/documents",
       "file": "api/routes/files.ts",
-      "line": 318,
+      "line": 435,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -12241,7 +12241,7 @@
       "method": "DELETE",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 411,
+      "line": 613,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -12281,7 +12281,7 @@
       "method": "GET",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 364,
+      "line": 481,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -12317,7 +12317,7 @@
       "method": "PATCH",
       "path": "/api/v1/files/documents/:id",
       "file": "api/routes/files.ts",
-      "line": 387,
+      "line": 589,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -12355,38 +12355,86 @@
     },
     {
       "method": "GET",
-      "path": "/api/v1/files/download/:token",
+      "path": "/api/v1/files/documents/:id/content",
       "file": "api/routes/files.ts",
-      "line": 296,
+      "line": 536,
       "operationType": "READ_DIRECT_ID",
-      "disposition": "UNRESOLVED_DATA_ACCESS",
-      "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
-      "projectBound": false,
+      "disposition": "PROJECT_CHILD_RECORD_ID",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
+      "projectBound": true,
       "functionalAuthority": [
-        "requireAuth"
+        "requireAuth",
+        "requireTenant"
       ],
       "capabilities": [
         "docs.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
-      "primaryTable": null,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "documents",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "NO_TABLE_RESOLVED",
-      "projectParent": null,
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
-      "tableResolution": "UNRESOLVED",
-      "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
+      "tableResolution": "HANDLER_SQL",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/files/download/:token",
+      "file": "api/routes/files.ts",
+      "line": 344,
+      "operationType": "READ_DIRECT_ID",
+      "disposition": "PROJECT_CHILD_RECORD_ID",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "docs.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "document_versions",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "FK_PATH",
+      "projectParent": {
+        "strategy": "FK_PATH",
+        "path": [
+          {
+            "via": "document_id",
+            "table": "documents",
+            "column": "project_id"
+          }
+        ]
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "HANDLER_SQL",
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 426,
+      "line": 628,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -12422,7 +12470,7 @@
       "method": "POST",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 462,
+      "line": 664,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -12462,7 +12510,7 @@
       "method": "GET",
       "path": "/api/v1/files/presign/:versionId",
       "file": "api/routes/files.ts",
-      "line": 279,
+      "line": 287,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -12503,7 +12551,7 @@
       "method": "POST",
       "path": "/api/v1/files/request-upload",
       "file": "api/routes/files.ts",
-      "line": 77,
+      "line": 78,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -12549,7 +12597,7 @@
       "method": "PUT",
       "path": "/api/v1/files/upload/:token",
       "file": "api/routes/files.ts",
-      "line": 191,
+      "line": 192,
       "operationType": "MUTATION_UPDATE",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",

@@ -156,10 +156,14 @@ export function DrawingsView({ policy, onToast, onAudit }: DrawingsViewProps) {
               <button onClick={() => setSelected(null)}>Close</button>
             </div>
 
-            {/* PDF viewer iframe (uses browser native / PDF.js) */}
+            {/* PDF viewer iframe (uses browser native / PDF.js).
+                The src is `/files/documents/:id/content` — the inline viewer
+                route. It used to be `/documents/:id/file`, which has never
+                existed: the request fell into the SPA catch-all and this frame
+                rendered the app's own HTML instead of the drawing. */}
             <div style={{ position: 'relative', border: '1px solid var(--jarvis-bd)', background: '#fff', height: 500 }}>
               {selected.document_id ? (
-                <iframe src={`/api/v1/documents/${selected.document_id}/file`} style={{ width: '100%', height: '100%', border: 0 }} title="Drawing PDF" />
+                <iframe src={`/api/v1/files/documents/${selected.document_id}/content`} style={{ width: '100%', height: '100%', border: 0 }} title="Drawing PDF" />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}>No PDF attached. Upload a document and link via API.</div>
               )}

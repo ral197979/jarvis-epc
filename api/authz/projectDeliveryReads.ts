@@ -119,6 +119,7 @@ export const PROJECT_DELIVERY_READS: readonly DeliveryRead[] = [
   // ── docs → docs.view ─────────────────────────────────
   { file: 'files.ts', router: 'router', method: 'GET', path: '/documents', domain: 'docs', capability: 'docs.view' },
   { file: 'files.ts', router: 'router', method: 'GET', path: '/documents/:id', domain: 'docs', capability: 'docs.view' },
+  { file: 'files.ts', router: 'router', method: 'GET', path: '/documents/:id/content', domain: 'docs', capability: 'docs.view' },
   { file: 'files.ts', router: 'router', method: 'GET', path: '/download/:token', domain: 'docs', capability: 'docs.view' },
   { file: 'files.ts', router: 'router', method: 'GET', path: '/folders', domain: 'docs', capability: 'docs.view' },
   { file: 'files.ts', router: 'router', method: 'GET', path: '/presign/:versionId', domain: 'docs', capability: 'docs.view' },
