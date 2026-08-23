@@ -33,6 +33,8 @@ interface ActionItem {
   due?:        string
   category?:   string
   status?:     string
+  /** `actions.source_module` — which module raised this, for the drill-through. */
+  source?:     string
   notes?:      string
   ref_id?:     string
   created?:    string
@@ -107,6 +109,41 @@ const STATUS_FROM_API: Record<string, string> = {
 }
 
 /**
+ * Where actions come from.
+ *
+ * Migration 029 is explicit: "every module emits actions here. One row per
+ * source record per tenant (idempotent via UNIQUE on
+ * tenant_id+source_module+source_id)". `source_module` and `source_id` are both
+ * NOT NULL, there is no POST /api/v1/actions, and `createAction` is called only
+ * from the modules below. An action typed in by hand would have no source
+ * record to point at, so the register is a DERIVED view by design — which is
+ * why this file offers no create control (see NO_MANUAL_CREATE).
+ *
+ * The tabs are matched against the `source_module` values the API actually
+ * emits, not guessed from the table name.
+ */
+const SOURCE_MODULE_TABS: Record<string, { tab: string; label: string }> = {
+  rfis:                       { tab: 'rfis',         label: 'RFIs' },
+  submittals:                 { tab: 'submittals',   label: 'Submittals' },
+  punch_items:                { tab: 'punch',        label: 'Punch Lists' },
+  inspections:                { tab: 'inspections',  label: 'Inspections' },
+  compliance_tasks:           { tab: 'compliance',   label: 'Compliance' },
+  daily_logs:                 { tab: 'dailylogs',    label: 'Daily Logs' },
+  bim_issues:                 { tab: 'bim',          label: 'BIM' },
+  coordination_recommendation:{ tab: 'coordination', label: 'Coordination' },
+}
+
+/**
+ * There is no create endpoint, and that is the design rather than a gap.
+ *
+ * This screen used to carry a `+ Add Action` button with no onClick — a control
+ * for an operation the API does not expose and, given the NOT NULL source
+ * columns, could not expose without changing the model. It has been removed in
+ * favour of saying where actions come from.
+ */
+const NO_MANUAL_CREATE = true
+
+/**
  * The transitions offered on the detail panel.
  *
  * `from` is in the COMPONENT vocabulary (what a row's status looks like after
@@ -155,6 +192,7 @@ function toActionItem(row: ActionApiRow, selfLabel?: string): ActionItem {
     status:   STATUS_FROM_API[String(row.status ?? '')] ?? row.status,
     notes:    row.description,
     ref_id:   row.source_id,
+    source:   row.source_module,
     created:  row.created_at ? String(row.created_at).slice(0, 10) : undefined,
   }
 }
@@ -358,14 +396,21 @@ function TransitionBar({ item, canWrite, onChanged }: {
   )
 }
 
-function ItemDetail({ item, canWrite, writable, onChanged, onBack }: {
+function ItemDetail({ item, canWrite, writable, onChanged, onBack, onNavigate }: {
   item: ActionItem
   canWrite: boolean
   /** The action came from the API, so its id addresses a real row. */
   writable: boolean
   onChanged: (next: ActionItem) => void
   onBack: () => void
+  onNavigate?: (tab: string) => void
 }) {
+  // An action is a pointer at a record in another module, so the register has
+  // to lead back to it. The app routes by TAB, not by record, so this opens the
+  // module rather than the row — and says "Open X" rather than implying it will
+  // land on the reference. An unrecognised source_module gets no control at
+  // all: a link that goes nowhere is worse than plain text.
+  const source = item.source ? SOURCE_MODULE_TABS[item.source] : undefined
   return (
     <div>
       <div className="jarvis-header" style={{ padding: '10px 0', marginBottom: 16 }}>
@@ -380,6 +425,20 @@ function ItemDetail({ item, canWrite, writable, onChanged, onBack }: {
       </p>
       <StagePipeline current={item.status} />
       {writable && <TransitionBar item={item} canWrite={canWrite} onChanged={onChanged} />}
+      {source && onNavigate && (
+        <div style={{ marginBottom: 16 }}>
+          <button
+            className="jarvis-btn jarvis-btn-sm"
+            onClick={() => onNavigate(source.tab)}
+          >
+            Open {source.label}
+          </button>
+          <span className="jarvis-small" style={{ marginLeft: 8, color: 'var(--jarvis-ts)' }}>
+            Raised from {source.label}
+            {item.ref_id ? ` · reference ${item.ref_id}` : ''}
+          </span>
+        </div>
+      )}
       <FieldGrid fields={[
         ['Priority',   item.priority],
         ['Assigned',   item.assigned],
@@ -448,7 +507,7 @@ function ItemsTable({
 }
 
 // ─── ActionItemsView ──────────────────────────────────────────────────────────
-export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onAudit, onToast: _onToast }: ActionItemsViewProps) {
+export function ActionItemsView({ policy, onNavigate, onAudit: _onAudit, onToast: _onToast }: ActionItemsViewProps) {
   const storeItems = useBizStore(selectActionItems) as ActionItem[]
   // The store is a legacy in-app source that some flows still dispatch into.
   // When it holds nothing — the routed case, since nothing hydrates it — read
@@ -508,6 +567,7 @@ export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onA
         writable={live}
         onChanged={next => { fetched.replace(next); setSelected(next) }}
         onBack={() => setSelected(null)}
+        onNavigate={onNavigate}
       />
     )
   }
@@ -587,10 +647,16 @@ export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onA
 
       <div className="jarvis-row" style={{ marginBottom: 10 }}>
         <span className="jarvis-small">{filtered.length} of {allItems.length} items</span>
-        {canWrite && (
-          <button className="jarvis-btn jarvis-btn-sm" aria-label="Add action item">
-            + Add Action
-          </button>
+        {/* The `+ Add Action` button that stood here had no onClick and never
+            could have: actions are emitted by the modules that raise them, and
+            `source_module` / `source_id` are NOT NULL with a uniqueness rule
+            that makes one action per source record. Saying so is more use than
+            a control that cannot work. */}
+        {NO_MANUAL_CREATE && (
+          <span className="jarvis-small" style={{ marginLeft: 'auto', color: 'var(--jarvis-ts)' }}>
+            Actions are raised by the module that needs them — RFIs, submittals,
+            punch items, inspections, compliance, daily logs, BIM and coordination.
+          </span>
         )}
       </div>
 

@@ -19,7 +19,7 @@
  * list that reads as tenant-wide is the more dangerous of the two mistakes.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent, cleanup, within } from '@testing-library/react'
 import React from 'react'
 import { ActionItemsView } from '../../components/ActionItemsView'
 import { useBizStore } from '../../modules/biz/store'
@@ -272,7 +272,109 @@ describe('a store that holds rows is never overridden by a fetch', () => {
   })
 })
 
-// ─── 6. The detail panel opens on a live row ─────────────────────────────────
+// ─── 6. No control for an operation the API does not have ────────────────────
+
+describe('the register offers no way to create an action by hand', () => {
+  it('shows no create control, because there is no create endpoint', async () => {
+    // Migration 029: source_module and source_id are NOT NULL with a UNIQUE
+    // (tenant_id, source_module, source_id) idempotency rule, and there is no
+    // POST /api/v1/actions. A hand-typed action would have no source record to
+    // point at. The `+ Add Action` button that used to sit here had no onClick
+    // and could not have had one.
+    render(<ActionItemsView {...props} />)
+    await screen.findByText('Respond to HAZOP action')
+    expect(screen.queryByRole('button', { name: /Add Action/i })).toBeNull()
+  })
+
+  it('says where actions come from instead', async () => {
+    render(<ActionItemsView {...props} />)
+    await screen.findByText('Respond to HAZOP action')
+    expect(screen.getByText(/raised by the module that needs them/i)).toBeDefined()
+  })
+})
+
+// ─── 7. An action leads back to the record that raised it ────────────────────
+
+describe('the register drills through to the source module', () => {
+  async function openFirst(nav?: (tab: string) => void): Promise<void> {
+    render(<ActionItemsView policy={ownerPolicy} onNavigate={nav} />)
+    fireEvent.click(await screen.findByText('Respond to HAZOP action'))
+    await screen.findByText(/All Actions/i)
+  }
+
+  it('offers a control naming the module that raised the action', async () => {
+    await openFirst(vi.fn())
+    // The fixture row's source_module is `rfis`.
+    expect(screen.getByRole('button', { name: /Open RFIs/i })).toBeDefined()
+    expect(screen.getByText(/Raised from RFIs/i)).toBeDefined()
+  })
+
+  it('navigates to the tab for that module', async () => {
+    const nav = vi.fn()
+    await openFirst(nav)
+    fireEvent.click(screen.getByRole('button', { name: /Open RFIs/i }))
+    expect(nav).toHaveBeenCalledWith('rfis')
+  })
+
+  it('maps every source_module the API actually emits', async () => {
+    // Derived from the emitted values, not from table names — a mapping that
+    // silently missed one would leave those actions with no way back.
+    const cases: [string, string, string][] = [
+      ['submittals',                  'submittals',   'Submittals'],
+      ['punch_items',                 'punch',        'Punch Lists'],
+      ['inspections',                 'inspections',  'Inspections'],
+      ['compliance_tasks',            'compliance',   'Compliance'],
+      ['daily_logs',                  'dailylogs',    'Daily Logs'],
+      ['bim_issues',                  'bim',          'BIM'],
+      ['coordination_recommendation', 'coordination', 'Coordination'],
+    ]
+    for (const [sourceModule, tab, label] of cases) {
+      cleanup()   // each case is its own mount; queries must not see the last one
+      const nav = vi.fn()
+      fetchMock.mockImplementation(async (url: string) =>
+        url.startsWith('/api/v1/actions?')
+          ? ok([{ ...TENANT_ROWS[0], source_module: sourceModule }])
+          : ok([]))
+      const view = render(<ActionItemsView policy={ownerPolicy} onNavigate={nav} />)
+      const q = within(view.container)
+      await waitFor(() => expect(q.getByText('Respond to HAZOP action')).toBeDefined())
+      fireEvent.click(q.getByText('Respond to HAZOP action'))
+      await waitFor(() => expect(q.getByRole('button', { name: new RegExp(`Open ${label}`, 'i') })).toBeDefined())
+      fireEvent.click(q.getByRole('button', { name: new RegExp(`Open ${label}`, 'i') }))
+      expect(nav, `${sourceModule} must open ${tab}`).toHaveBeenCalledWith(tab)
+    }
+    // Seven mounts, each with an async load. The default 5s budget is enough in
+    // isolation and not under full-suite load, which showed up as a flake
+    // rather than a failure — so the budget is stated rather than discovered.
+  }, 20_000)
+
+  it('offers nothing for a source module it does not recognise', async () => {
+    // A link that goes nowhere is worse than plain text.
+    fetchMock.mockImplementation(async (url: string) =>
+      url.startsWith('/api/v1/actions?')
+        ? ok([{ ...TENANT_ROWS[0], source_module: 'something_new' }])
+        : ok([]))
+    await openFirst(vi.fn())
+    expect(screen.queryByRole('button', { name: /^Open /i })).toBeNull()
+  })
+
+  it('offers nothing when the host gave it no way to navigate', async () => {
+    await openFirst(undefined)
+    expect(screen.queryByRole('button', { name: /Open RFIs/i })).toBeNull()
+  })
+
+  it('offers nothing on a store row, which carries no source module', async () => {
+    useBizStore.getState().dispatch(actions.addAction({
+      id: 'AI-001', subject: 'Store-dispatched item', status: 'open', priority: 'high',
+    }))
+    render(<ActionItemsView policy={ownerPolicy} onNavigate={vi.fn()} />)
+    fireEvent.click(await screen.findByText('Store-dispatched item'))
+    await screen.findByText(/All Actions/i)
+    expect(screen.queryByRole('button', { name: /^Open /i })).toBeNull()
+  })
+})
+
+// ─── 8. The detail panel opens on a live row ─────────────────────────────────
 
 describe('a live row drills through', () => {
   it('opens the detail panel for a backend action', async () => {
