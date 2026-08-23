@@ -25,9 +25,17 @@ PROMOTION ...................................... NOT AUTHORIZED
 
 ```text
 repository ..... ral197979 / jarvis-epc
-branch ......... security/adr-014-phase3j-subcollection-guard-sweep
-parent commit .. e398e79996cf42cd54f35fc5850812e497e309d5  (Phase 3J tip)
+branch ......... security/adr-014-phase3k-download-token-revocation
+parent commit .. e398e79996cf42cd54f35fc5850812e497e309d5  (Phase 3J tip, resolved
+                 from origin — the Phase-3J PRODUCT commit was c9169ca, two
+                 commits earlier, and branching from it would have dropped the
+                 Phase-3J evidence.)
+product commit . 4c9d97a
 origin/main .... untouched.  No PR opened, nothing merged, tagged or deployed.
+
+A separate branch on purpose: the Phase-3J evidence declares
+`security/adr-014-phase3j-subcollection-guard-sweep` @ `e398e79` as its tip, and
+pushing onto that branch would have made its own provenance record false.
 ```
 
 ## C. What changed
