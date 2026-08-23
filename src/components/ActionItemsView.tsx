@@ -106,6 +106,29 @@ const STATUS_FROM_API: Record<string, string> = {
   cancelled:   'cancelled',
 }
 
+/**
+ * The transitions offered on the detail panel.
+ *
+ * `from` is in the COMPONENT vocabulary (what a row's status looks like after
+ * `toActionItem`) and `to` is in the migration-029 CHECK vocabulary (what the
+ * PATCH body must carry). Keeping the target in schema terms is what stops the
+ * display label leaking into the request — `Complete` sends `completed`, never
+ * the `resolved` the badge shows.
+ *
+ * Only `status` is offered. `PATCH /actions/:id` also accepts `priority` and
+ * `description` on the same personal.write + requireActionAccess ladder, and
+ * `assigned_to_user_id` / `assigned_to_role` behind `personal.admin` — but
+ * reassignment moves work out of somebody's inbox and is refused for every role
+ * but Owner, so putting it on this panel would render a control that 403s for
+ * nearly everyone. It is left off deliberately, not overlooked.
+ */
+const TRANSITIONS: { to: string; label: string; from: string[] }[] = [
+  { to: 'in_progress', label: 'Start',    from: ['open', 'assigned'] },
+  { to: 'completed',   label: 'Complete', from: ['open', 'assigned', 'in-progress'] },
+  { to: 'cancelled',   label: 'Cancel',   from: ['open', 'assigned', 'in-progress'] },
+  { to: 'open',        label: 'Reopen',   from: ['resolved', 'verified', 'cancelled'] },
+]
+
 interface ActionApiRow {
   id: string
   title?: string; description?: string
@@ -143,8 +166,9 @@ interface ActionsData {
   scope?: ActionsScope
   detail?: string
 }
+interface ActionsSource extends ActionsData { replace: (next: ActionItem) => void }
 
-function useActionItems(enabled: boolean): ActionsData {
+function useActionItems(enabled: boolean): ActionsSource {
   const [data, setData] = useState<ActionsData>({ items: [], state: enabled ? 'loading' : 'ready' })
 
   useEffect(() => {
@@ -191,7 +215,17 @@ function useActionItems(enabled: boolean): ActionsData {
     return () => { live = false }
   }, [enabled])
 
-  return data
+  /**
+   * Replace one row after a successful write, from the row the server returned.
+   * The list is not refetched: the PATCH response IS the updated record, and a
+   * refetch would race with it and cost a round trip to learn what we already
+   * hold.
+   */
+  const replace = React.useCallback((next: ActionItem) => {
+    setData(d => ({ ...d, items: d.items.map(i => (i.id === next.id ? next : i)) }))
+  }, [])
+
+  return { ...data, replace }
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────────
@@ -248,7 +282,90 @@ function FieldGrid({ fields }: { fields: [string, string | undefined | null][] }
 }
 
 // ─── Detail view ───────────────────────────────────────────────────────────────
-function ItemDetail({ item, onBack }: { item: ActionItem; onBack: () => void }) {
+/**
+ * The transition strip.
+ *
+ * Rendered only when the action came from the API. A store-dispatched row has
+ * an id like `AI-001`, which is not an `actions.id`, so a PATCH would 404 —
+ * offering the control there would be a button that cannot work.
+ *
+ * The server is the authority on whether the caller may do this:
+ * `personal.write` plus `requireActionAccess`, which is personal ownership and
+ * strictly narrower than project membership (ADR-014 D29). `canWrite` only
+ * hides controls the local policy already disables; it is not the check.
+ */
+function TransitionBar({ item, canWrite, onChanged }: {
+  item: ActionItem
+  canWrite: boolean
+  onChanged: (next: ActionItem) => void
+}) {
+  const [busy,  setBusy]  = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const current   = item.status ?? 'open'
+  const available = TRANSITIONS.filter(t => t.from.includes(current))
+  if (!canWrite || available.length === 0) return null
+
+  async function go(to: string, label: string): Promise<void> {
+    setBusy(to); setError(null)
+    try {
+      const res = await fetch(`/api/v1/actions/${item.id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ status: to }),
+      })
+      if (res.status === 401 || res.status === 403) {
+        setError(`You are not allowed to ${label.toLowerCase()} this action.`); return
+      }
+      if (res.status === 404) {
+        setError('This action no longer exists, or is not yours to change.'); return
+      }
+      if (!res.ok) { setError(`Update failed (${res.status}).`); return }
+
+      // Answer from the row the server returned, never from the request — the
+      // handler stamps completed_at / cancelled_at and may have applied its own
+      // rules, so echoing the optimistic value would drift from the record.
+      const body = await res.json() as { data?: ActionApiRow }
+      onChanged(body.data ? toActionItem(body.data, item.assigned) : { ...item, status: STATUS_FROM_API[to] ?? to })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {available.map(t => (
+          <button
+            key={t.to}
+            className="jarvis-btn jarvis-btn-sm"
+            disabled={busy !== null}
+            aria-busy={busy === t.to}
+            onClick={() => void go(t.to, t.label)}
+          >
+            {busy === t.to ? `${t.label}…` : t.label}
+          </button>
+        ))}
+      </div>
+      {error && (
+        <p role="alert" className="jarvis-small" style={{ color: 'var(--jarvis-red)', marginTop: 6 }}>
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function ItemDetail({ item, canWrite, writable, onChanged, onBack }: {
+  item: ActionItem
+  canWrite: boolean
+  /** The action came from the API, so its id addresses a real row. */
+  writable: boolean
+  onChanged: (next: ActionItem) => void
+  onBack: () => void
+}) {
   return (
     <div>
       <div className="jarvis-header" style={{ padding: '10px 0', marginBottom: 16 }}>
@@ -262,6 +379,7 @@ function ItemDetail({ item, onBack }: { item: ActionItem; onBack: () => void }) 
         {item.project} · {item.category}
       </p>
       <StagePipeline current={item.status} />
+      {writable && <TransitionBar item={item} canWrite={canWrite} onChanged={onChanged} />}
       <FieldGrid fields={[
         ['Priority',   item.priority],
         ['Assigned',   item.assigned],
@@ -381,7 +499,17 @@ export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onA
   const kpiResolved = allItems.filter(i => i.status === 'resolved' || i.status === 'verified').length
 
   if (selected) {
-    return <ItemDetail item={selected} onBack={() => setSelected(null)} />
+    return (
+      <ItemDetail
+        item={selected}
+        canWrite={canWrite}
+        // Only API-backed rows are writable. A store-dispatched id is not an
+        // `actions.id`, so its PATCH would 404 — no control is offered for it.
+        writable={live}
+        onChanged={next => { fetched.replace(next); setSelected(next) }}
+        onBack={() => setSelected(null)}
+      />
+    )
   }
 
   if (live && fetched.state === 'loading') {
