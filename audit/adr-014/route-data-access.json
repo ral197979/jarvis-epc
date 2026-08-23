@@ -13686,7 +13686,7 @@
       "method": "GET",
       "path": "/api/v1/ops/blockers",
       "file": "api/routes/ops.ts",
-      "line": 166,
+      "line": 187,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13711,7 +13711,7 @@
       "method": "POST",
       "path": "/api/v1/ops/escalate",
       "file": "api/routes/ops.ts",
-      "line": 232,
+      "line": 253,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13756,7 +13756,7 @@
       "method": "GET",
       "path": "/api/v1/ops/escalations",
       "file": "api/routes/ops.ts",
-      "line": 141,
+      "line": 162,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13782,7 +13782,7 @@
       "method": "POST",
       "path": "/api/v1/ops/freeze",
       "file": "api/routes/ops.ts",
-      "line": 268,
+      "line": 289,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13826,7 +13826,7 @@
       "method": "POST",
       "path": "/api/v1/ops/incident",
       "file": "api/routes/ops.ts",
-      "line": 330,
+      "line": 351,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13856,7 +13856,7 @@
       "method": "GET",
       "path": "/api/v1/ops/live-feed",
       "file": "api/routes/ops.ts",
-      "line": 83,
+      "line": 84,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13876,7 +13876,7 @@
       "method": "GET",
       "path": "/api/v1/ops/overview",
       "file": "api/routes/ops.ts",
-      "line": 33,
+      "line": 34,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13907,7 +13907,7 @@
       "method": "GET",
       "path": "/api/v1/ops/readiness",
       "file": "api/routes/ops.ts",
-      "line": 98,
+      "line": 119,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13939,7 +13939,7 @@
       "method": "POST",
       "path": "/api/v1/ops/reassign",
       "file": "api/routes/ops.ts",
-      "line": 191,
+      "line": 212,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13984,7 +13984,7 @@
       "method": "GET",
       "path": "/api/v1/ops/recommendations",
       "file": "api/routes/ops.ts",
-      "line": 355,
+      "line": 376,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14013,7 +14013,7 @@
       "method": "POST",
       "path": "/api/v1/ops/unfreeze",
       "file": "api/routes/ops.ts",
-      "line": 302,
+      "line": 323,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14648,7 +14648,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/anomalies",
       "file": "api/routes/portfolio.ts",
-      "line": 87,
+      "line": 88,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14675,7 +14675,7 @@
       "method": "POST",
       "path": "/api/v1/portfolio/anomalies/:anomalyId/false-positive",
       "file": "api/routes/portfolio.ts",
-      "line": 127,
+      "line": 128,
       "pathParams": [
         "anomalyId"
       ],
@@ -14718,7 +14718,7 @@
       "method": "POST",
       "path": "/api/v1/portfolio/anomalies/:anomalyId/resolve",
       "file": "api/routes/portfolio.ts",
-      "line": 117,
+      "line": 118,
       "pathParams": [
         "anomalyId"
       ],
@@ -14754,7 +14754,7 @@
       "method": "POST",
       "path": "/api/v1/portfolio/anomalies/detect",
       "file": "api/routes/portfolio.ts",
-      "line": 105,
+      "line": 106,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14787,7 +14787,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/bottlenecks",
       "file": "api/routes/portfolio.ts",
-      "line": 55,
+      "line": 56,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14815,7 +14815,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/conflicts",
       "file": "api/routes/portfolio.ts",
-      "line": 43,
+      "line": 44,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14837,7 +14837,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/forecast",
       "file": "api/routes/portfolio.ts",
-      "line": 68,
+      "line": 69,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14877,7 +14877,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/maintenance/health/:twinId",
       "file": "api/routes/portfolio.ts",
-      "line": 153,
+      "line": 154,
       "pathParams": [
         "twinId"
       ],
@@ -14905,7 +14905,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/maintenance/recommendations",
       "file": "api/routes/portfolio.ts",
-      "line": 139,
+      "line": 140,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14937,7 +14937,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/readiness",
       "file": "api/routes/portfolio.ts",
-      "line": 16,
+      "line": 17,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14963,7 +14963,7 @@
       "method": "GET",
       "path": "/api/v1/portfolio/readiness/:scopeType/:scopeId",
       "file": "api/routes/portfolio.ts",
-      "line": 26,
+      "line": 27,
       "pathParams": [
         "scopeType",
         "scopeId"
@@ -20196,7 +20196,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios",
       "file": "api/routes/scenarios.ts",
-      "line": 25,
+      "line": 26,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20222,7 +20222,7 @@
       "method": "POST",
       "path": "/api/v1/scenarios",
       "file": "api/routes/scenarios.ts",
-      "line": 14,
+      "line": 15,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -20254,7 +20254,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/:scenarioId",
       "file": "api/routes/scenarios.ts",
-      "line": 41,
+      "line": 42,
       "pathParams": [
         "scenarioId"
       ],
@@ -20282,7 +20282,7 @@
       "method": "POST",
       "path": "/api/v1/scenarios/:scenarioId/cancel",
       "file": "api/routes/scenarios.ts",
-      "line": 62,
+      "line": 63,
       "pathParams": [
         "scenarioId"
       ],
@@ -20324,7 +20324,7 @@
       "method": "POST",
       "path": "/api/v1/scenarios/:scenarioId/run",
       "file": "api/routes/scenarios.ts",
-      "line": 52,
+      "line": 53,
       "pathParams": [
         "scenarioId"
       ],
@@ -20382,7 +20382,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/projection/:twinId",
       "file": "api/routes/scenarios.ts",
-      "line": 74,
+      "line": 75,
       "pathParams": [
         "twinId"
       ],
@@ -20412,7 +20412,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/temporal/:twinId/at",
       "file": "api/routes/scenarios.ts",
-      "line": 87,
+      "line": 88,
       "pathParams": [
         "twinId"
       ],
@@ -20440,7 +20440,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/temporal/:twinId/diff",
       "file": "api/routes/scenarios.ts",
-      "line": 111,
+      "line": 112,
       "pathParams": [
         "twinId"
       ],
@@ -20464,7 +20464,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/temporal/:twinId/replay",
       "file": "api/routes/scenarios.ts",
-      "line": 99,
+      "line": 100,
       "pathParams": [
         "twinId"
       ],
@@ -20492,7 +20492,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/temporal/:twinId/trend/:field",
       "file": "api/routes/scenarios.ts",
-      "line": 134,
+      "line": 135,
       "pathParams": [
         "twinId",
         "field"
@@ -20521,7 +20521,7 @@
       "method": "GET",
       "path": "/api/v1/scenarios/temporal/:twinId/velocity",
       "file": "api/routes/scenarios.ts",
-      "line": 123,
+      "line": 124,
       "pathParams": [
         "twinId"
       ],

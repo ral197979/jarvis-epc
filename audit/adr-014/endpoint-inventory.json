@@ -9427,7 +9427,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/blockers",
       "file": "api/routes/ops.ts",
-      "line": 166,
+      "line": 187,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9447,7 +9447,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/escalate",
       "file": "api/routes/ops.ts",
-      "line": 232,
+      "line": 253,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9467,7 +9467,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/escalations",
       "file": "api/routes/ops.ts",
-      "line": 141,
+      "line": 162,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9487,7 +9487,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/freeze",
       "file": "api/routes/ops.ts",
-      "line": 268,
+      "line": 289,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9507,7 +9507,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/incident",
       "file": "api/routes/ops.ts",
-      "line": 330,
+      "line": 351,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9531,7 +9531,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/live-feed",
       "file": "api/routes/ops.ts",
-      "line": 83,
+      "line": 84,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9541,7 +9541,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "polymorphicCollectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9551,7 +9553,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/overview",
       "file": "api/routes/ops.ts",
-      "line": 33,
+      "line": 34,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9571,7 +9573,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/readiness",
       "file": "api/routes/ops.ts",
-      "line": 98,
+      "line": 119,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9594,7 +9596,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/reassign",
       "file": "api/routes/ops.ts",
-      "line": 191,
+      "line": 212,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9614,7 +9616,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/recommendations",
       "file": "api/routes/ops.ts",
-      "line": 355,
+      "line": 376,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9634,7 +9636,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/unfreeze",
       "file": "api/routes/ops.ts",
-      "line": 302,
+      "line": 323,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -10075,7 +10077,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/anomalies",
       "file": "api/routes/portfolio.ts",
-      "line": 87,
+      "line": 88,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10095,7 +10097,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/anomalies/:anomalyId/false-positive",
       "file": "api/routes/portfolio.ts",
-      "line": 127,
+      "line": 128,
       "serverLine": 609,
       "pathParams": [
         "anomalyId"
@@ -10117,7 +10119,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/anomalies/:anomalyId/resolve",
       "file": "api/routes/portfolio.ts",
-      "line": 117,
+      "line": 118,
       "serverLine": 609,
       "pathParams": [
         "anomalyId"
@@ -10139,7 +10141,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/anomalies/detect",
       "file": "api/routes/portfolio.ts",
-      "line": 105,
+      "line": 106,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10159,7 +10161,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/bottlenecks",
       "file": "api/routes/portfolio.ts",
-      "line": 55,
+      "line": 56,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10179,7 +10181,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/conflicts",
       "file": "api/routes/portfolio.ts",
-      "line": 43,
+      "line": 44,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10199,7 +10201,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/forecast",
       "file": "api/routes/portfolio.ts",
-      "line": 68,
+      "line": 69,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10219,7 +10221,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/maintenance/health/:twinId",
       "file": "api/routes/portfolio.ts",
-      "line": 153,
+      "line": 154,
       "serverLine": 609,
       "pathParams": [
         "twinId"
@@ -10241,7 +10243,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/maintenance/recommendations",
       "file": "api/routes/portfolio.ts",
-      "line": 139,
+      "line": 140,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10261,7 +10263,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/readiness",
       "file": "api/routes/portfolio.ts",
-      "line": 16,
+      "line": 17,
       "serverLine": 609,
       "pathParams": [],
       "guards": [
@@ -10281,7 +10283,7 @@
       "mountPrefix": "/api/v1/portfolio",
       "routePath": "/readiness/:scopeType/:scopeId",
       "file": "api/routes/portfolio.ts",
-      "line": 26,
+      "line": 27,
       "serverLine": 609,
       "pathParams": [
         "scopeType",
@@ -10294,7 +10296,9 @@
       "capabilities": [
         "portfolio.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requirePolymorphicScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -13893,7 +13897,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/",
       "file": "api/routes/scenarios.ts",
-      "line": 25,
+      "line": 26,
       "serverLine": 610,
       "pathParams": [],
       "guards": [
@@ -13913,7 +13917,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/",
       "file": "api/routes/scenarios.ts",
-      "line": 14,
+      "line": 15,
       "serverLine": 610,
       "pathParams": [],
       "guards": [
@@ -13933,7 +13937,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/:scenarioId",
       "file": "api/routes/scenarios.ts",
-      "line": 41,
+      "line": 42,
       "serverLine": 610,
       "pathParams": [
         "scenarioId"
@@ -13955,7 +13959,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/:scenarioId/cancel",
       "file": "api/routes/scenarios.ts",
-      "line": 62,
+      "line": 63,
       "serverLine": 610,
       "pathParams": [
         "scenarioId"
@@ -13977,7 +13981,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/:scenarioId/run",
       "file": "api/routes/scenarios.ts",
-      "line": 52,
+      "line": 53,
       "serverLine": 610,
       "pathParams": [
         "scenarioId"
@@ -13999,7 +14003,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/projection/:twinId",
       "file": "api/routes/scenarios.ts",
-      "line": 74,
+      "line": 75,
       "serverLine": 610,
       "pathParams": [
         "twinId"
@@ -14011,7 +14015,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14021,7 +14027,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/temporal/:twinId/at",
       "file": "api/routes/scenarios.ts",
-      "line": 87,
+      "line": 88,
       "serverLine": 610,
       "pathParams": [
         "twinId"
@@ -14033,7 +14039,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14043,7 +14051,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/temporal/:twinId/diff",
       "file": "api/routes/scenarios.ts",
-      "line": 111,
+      "line": 112,
       "serverLine": 610,
       "pathParams": [
         "twinId"
@@ -14055,7 +14063,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14065,7 +14075,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/temporal/:twinId/replay",
       "file": "api/routes/scenarios.ts",
-      "line": 99,
+      "line": 100,
       "serverLine": 610,
       "pathParams": [
         "twinId"
@@ -14077,7 +14087,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14087,7 +14099,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/temporal/:twinId/trend/:field",
       "file": "api/routes/scenarios.ts",
-      "line": 134,
+      "line": 135,
       "serverLine": 610,
       "pathParams": [
         "twinId",
@@ -14110,7 +14122,7 @@
       "mountPrefix": "/api/v1/scenarios",
       "routePath": "/temporal/:twinId/velocity",
       "file": "api/routes/scenarios.ts",
-      "line": 123,
+      "line": 124,
       "serverLine": 610,
       "pathParams": [
         "twinId"
