@@ -103,14 +103,26 @@ router.get('/uploads', requireCapability('commissioning.view') as never, async (
 
   const { limit, offset } = _paginationParams(req.query as Record<string, unknown>)
 
+  // ADR-014 Phase 3G. `source_uploads` is DUAL_PROJECT_OR_TENANT: migration 006
+  // makes `project_id` nullable with ON DELETE SET NULL — an upload outlives the
+  // project it was filed against — and commissioning.ts stages uploads with
+  // `projectId ?? null` before a project is chosen. The predicate goes before
+  // LIMIT so the page describes the authorized set, and the preview text of an
+  // out-of-scope upload is never serialized.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'source_uploads', 'project_id', '$3')
+  const scopeVals = collectionScopeParams(principal, 'source_uploads')
+
   const result = await tenantQuery(tenantId, `
     SELECT id, file_name, content_type, size_bytes, project_id, created_at,
            LEFT(extracted_text, 200) AS extracted_text_preview
     FROM source_uploads
     WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    ${scopeSql}
     ORDER BY created_at DESC
     LIMIT $1 OFFSET $2
-  `, [limit, offset])
+  `, [limit, offset, ...scopeVals])
 
   res.json({ items: result.rows })
 })

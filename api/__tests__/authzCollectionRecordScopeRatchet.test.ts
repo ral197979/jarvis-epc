@@ -70,10 +70,10 @@ describe('every project-bound collection is dispositioned', () => {
   it('reports the split this slice actually achieved', () => {
     const c = collectionScopeCounters()
     expect(c.candidates, 'the corrected denominator, not the 58 Phase 3E-R reported').toBe(108)
-    expect(c.protected_).toBe(79)
+    expect(c.protected_).toBe(82)
     expect(c.selfScoped).toBe(7)
     expect(c.aggregate).toBe(19)
-    expect(c.deferred).toBe(3)
+    expect(c.deferred, 'Phase 3G closed the last three').toBe(0)
   })
 
   it('agrees with the inventory about which collections enforce scope', () => {
@@ -175,8 +175,12 @@ describe('a tenant-wide collection scopes in SQL, from the resource policy', () 
       const counting = statements.filter(q => /COUNT\s*\(/i.test(q))
       if (!counting.length) continue
       for (const q of counting) {
+        // Any interpolated identifier naming a scope predicate. Routes name
+        // theirs for what they scope — `scope`, `countScopeSql`, `folderScope`,
+        // `docScope` — and pinning one spelling would fail the product for its
+        // choice of variable name rather than for an unscoped COUNT.
         expect(q, `${a.endpoint} has a COUNT statement with no scope predicate`)
-          .toMatch(/\$\{(?:count)?[sS]cope(?:Sql)?\}/)
+          .toMatch(/\$\{[A-Za-z]*[sS]cope[A-Za-z]*\}/)
       }
     }
   })
@@ -239,13 +243,13 @@ describe('the collections this slice does not close are classified, not ignored'
     }
   })
 
-  it('defers only where the returned rows have no record-scope policy', () => {
-    expect(deferred.length).toBe(3)
-    for (const a of deferred) {
-      if (a.rows === 'n/a') continue
-      expect(policyFor(a.rows),
-        `${a.endpoint} is deferred but ${a.rows} HAS a policy — it should have been scoped`).toBeNull()
-    }
+  it('defers nothing: every returned row model now has a record-scope policy', () => {
+    // Phase 3F deferred three for want of a policy. Phase 3G wrote two of them
+    // — `document_folders` and `source_uploads` — and dissolved the third:
+    // `/ops/readiness` returns PROJECTS, not `action_relations`, so it needed
+    // the membership predicate `GET /projects` already had rather than a
+    // relation-graph model.
+    expect(deferred.length).toBe(0)
   })
 })
 

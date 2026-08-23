@@ -103,10 +103,23 @@ const RULES = [
     MUTATION.has(ep.method) && ep.bodyProjectRefs.length > 0,
     'project selected by a project id in the request body (HOB §16)'],
 
+  // ADR-014 Phase 3G §25–§28. Project-boundness for a direct-ID READ comes from
+  // the resource the PATH IDENTIFIER addresses, not from every table the payload
+  // query happens to touch. `GET /vendors/:id` selects FROM vendors and JOINs
+  // purchase orders for a count; the id names a vendor, and a vendor registry is
+  // not a project child. Using merged `reads` made that route — and others like
+  // it — look project-bound, which is the defect Phase 3F recorded and this rule
+  // repairs.
+  //
+  // MUTATIONS keep the old test: a write has no outer SELECT to read a primary
+  // entity from, and narrowing them here would silently move counters Phase 3D
+  // certified.
   ['PROJECT_CHILD_RECORD_ID', ep =>
     recordIdParams(ep).length > 0 &&
-    (ep.writeTables.some(hasProjectParent) || ep.reads.some(hasProjectParent)),
-    'child record addressed by its own id; the record\'s table reaches a project'],
+    (MUTATION.has(ep.method)
+      ? (ep.writeTables.some(hasProjectParent) || ep.reads.some(hasProjectParent))
+      : (!!ep.primaryReadTable && hasProjectParent(ep.primaryReadTable))),
+    'child record addressed by its own id; the record\'s own table reaches a project'],
 
   ['CROSSDOMAIN', ep => /\/related|\/cross-domain|\/correlations/.test(ep.path),
     'cross-domain synthesised record — provenance unresolved (HOB §32)'],
@@ -174,7 +187,14 @@ for (const e of inv.endpoints) {
     t === slug || t === slug + 's' || t === slug.replace(/s$/, '') ||
     t === slug.replace(/ies$/, 'y') || t.replace(/_/g, '') === slug.replace(/_/g, '')
   const candidates = [...ep.writeTables, ...ep.reads]
+  // ADR-014 Phase 3G. For a READ, the table the outer query selects FROM is
+  // evidence, not a guess — `primaryReadTable` is parsed at paren depth 0 so a
+  // scalar subquery cannot masquerade as the entity. It wins over the path-noun
+  // heuristic, which disagreed with the real FROM on twenty collections:
+  // `/ops/readiness` selects FROM projects and was reported as action_relations
+  // purely because `computeReadiness` reaches that table one service down.
   const primaryTable =
+    (!MUTATION.has(ep.method) && ep.primaryReadTable) ? ep.primaryReadTable :
     candidates.find(t => nameMatches(t) && hasProjectParent(t)) ??
     candidates.find(nameMatches) ??
     ep.writeTables.find(hasProjectParent) ?? projectTables[0] ??

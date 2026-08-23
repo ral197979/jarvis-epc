@@ -13,7 +13,8 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 import {
   upsertTimesheet, listTimesheets, submitTimesheet,
   approveTimesheet, rejectTimesheet, getWeeklySummary,
@@ -67,7 +68,16 @@ timesheetsRouter.get('/projects/:projectId/timesheets/summary', requireCapabilit
 timesheetsRouter.get('/team/members/:memberId/timesheets', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const timesheets = await listTimesheets(r.tenantId!, { memberId: p(req, 'memberId') })
+    // ADR-014 Phase 3G §6. The path id addresses a team member, which has no
+    // project parent; the TIMESHEETS beneath it do. `timesheets.project_id` is
+    // NOT NULL, so the resource is PROJECT_REQUIRED and hours from projects the
+    // caller cannot reach never enter the response — nor any total over them (§7).
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const timesheets = await listTimesheets(r.tenantId!, { memberId: p(req, 'memberId') }, {
+      sql:    collectionScopeSql(principal, 'timesheets', 't.project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'timesheets'),
+    })
     res.json({ timesheets })
   } catch (e) { res.status(500).json({ error: 'Failed to list timesheets' }) }
 })

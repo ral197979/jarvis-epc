@@ -121,9 +121,23 @@ export async function createMember(tenantId: string, input: CreateMemberInput): 
   return rowToMember(res.rows[0] as Record<string, unknown>)
 }
 
+/**
+ * ADR-014 Phase 3G — the collection authorization predicate for
+ * `project_assignments`, built by the ROUTE from the live principal and handed
+ * here as SQL plus its bound parameter. The service composes queries; it never
+ * decides authorization and never sees the principal.
+ *
+ * `$SCOPE_USER` is symbolic because each query below numbers its own
+ * parameters. `project_assignments` is PROJECT_REQUIRED, so the predicate is a
+ * plain membership test with no tenant-global branch.
+ */
+export interface AssignmentScope { sql: string; params: unknown[] }
+const NO_SCOPE: AssignmentScope = { sql: '', params: [] }
+
 export async function listMembers(
   tenantId: string,
   opts:     { status?: MemberStatus; search?: string } = {},
+  scope: AssignmentScope = NO_SCOPE,
 ): Promise<TeamMember[]> {
   const conditions = ['m.tenant_id = $1']
   const params: unknown[] = [tenantId]
@@ -148,14 +162,27 @@ export async function listMembers(
       ), 0)::int                                              AS total_allocation
     FROM team_members m
     LEFT JOIN project_assignments a ON a.member_id = m.id AND a.tenant_id = m.tenant_id
+      ${scope.sql.replace(/\$SCOPE_USER/g, `$${idx}`)}
     WHERE ${conditions.join(' AND ')}
     GROUP BY m.id
     ORDER BY m.last_name ASC, m.first_name ASC
-  `, params)
+  `, [...params, ...scope.params])
   return res.rows.map(r => rowToMember(r as Record<string, unknown>))
 }
 
-export async function getMember(tenantId: string, id: string): Promise<TeamMember | null> {
+/**
+ * ADR-014 Phase 3G §4/§22. The member is NOT hidden because they work on a
+ * project the caller cannot reach — the outer record keeps its own `team.view`
+ * authority. The scope predicate goes on the LEFT JOIN, so unauthorized
+ * assignments simply fail to join and `active_projects` / `total_allocation`
+ * describe only what the caller may see (§7). Jane stays visible; Jane's
+ * Project-B allocation does not.
+ */
+export async function getMember(
+  tenantId: string,
+  id:       string,
+  scope:    AssignmentScope = NO_SCOPE,
+): Promise<TeamMember | null> {
   const res = await tenantQuery(tenantId, `
     SELECT
       m.*,
@@ -169,9 +196,10 @@ export async function getMember(tenantId: string, id: string): Promise<TeamMembe
       ), 0)::int AS total_allocation
     FROM team_members m
     LEFT JOIN project_assignments a ON a.member_id = m.id AND a.tenant_id = m.tenant_id
+      ${scope.sql.replace(/\$SCOPE_USER/g, '$3')}
     WHERE m.tenant_id = $1 AND m.id = $2
     GROUP BY m.id
-  `, [tenantId, id])
+  `, [tenantId, id, ...scope.params])
   return res.rows.length ? rowToMember(res.rows[0] as Record<string, unknown>) : null
 }
 
@@ -236,17 +264,24 @@ export async function createAssignment(
   return rowToAssignment(res.rows[0] as Record<string, unknown>)
 }
 
+/**
+ * ADR-014 Phase 3G §5. The path id addresses a `team_members` row, which has no
+ * project parent — so `requireRecordScope('team_members')` would be a false
+ * guard (§9). The ROWS are what carry a project, and they are filtered here.
+ */
 export async function listAssignmentsByMember(
   tenantId: string,
   memberId: string,
+  scope:    AssignmentScope = NO_SCOPE,
 ): Promise<ProjectAssignment[]> {
   const res = await tenantQuery(tenantId, `
     SELECT a.*, p.name AS project_name
     FROM   project_assignments a
     JOIN   projects p ON p.id = a.project_id AND p.tenant_id = a.tenant_id
     WHERE  a.tenant_id = $1 AND a.member_id = $2
+    ${scope.sql.replace(/\$SCOPE_USER/g, '$3')}
     ORDER  BY a.start_date DESC
-  `, [tenantId, memberId])
+  `, [tenantId, memberId, ...scope.params])
   return res.rows.map(r => rowToAssignment(r as Record<string, unknown>))
 }
 

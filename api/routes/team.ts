@@ -17,7 +17,8 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { createMember, listMembers, getMember, updateMember, createAssignment, listAssignmentsByMember, listAssignmentsByProject, endAssignment, getTeamSummary, type MemberStatus } from '../services/team/teamService'
 import { requireCapability } from '../authz/requireCapability'
-import { requireProjectScope, requireRecordScope, requireBodyProjectScope } from '../authz/recordScope'
+import { requireProjectScope, requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -63,7 +64,18 @@ teamRouter.get('/team/members', requireCapability('team.view') as never, async (
 teamRouter.get('/team/members/:id', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const member = await getMember(r.tenantId!, p(req, 'id'))
+    // ADR-014 Phase 3G §4/§5. The member itself keeps its own `team.view`
+    // authority — a caller is not denied knowledge that Jane exists because
+    // Jane works on a project they cannot reach. What IS filtered are the
+    // project-bound rows beneath her. `project_assignments` is PROJECT_REQUIRED,
+    // so the predicate is a plain membership test.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'project_assignments', 'a.project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'project_assignments'),
+    }
+    const member = await getMember(r.tenantId!, p(req, 'id'), scope)
     if (!member) { res.status(404).json({ error: 'Member not found' }); return }
     res.json({ member })
   } catch (e) { res.status(500).json({ error: 'Failed to get member' }) }
@@ -80,7 +92,20 @@ teamRouter.patch('/team/members/:id', requireCapability('team.write') as never, 
 
 teamRouter.get('/team/members/:id/assignments', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
-  try { res.json({ assignments: await listAssignmentsByMember(r.tenantId!, p(req, 'id')) }) }
+  try {
+    // ADR-014 Phase 3G §4/§5. The member itself keeps its own `team.view`
+    // authority — a caller is not denied knowledge that Jane exists because
+    // Jane works on a project they cannot reach. What IS filtered are the
+    // project-bound rows beneath her. `project_assignments` is PROJECT_REQUIRED,
+    // so the predicate is a plain membership test.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'project_assignments', 'a.project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'project_assignments'),
+    }
+    res.json({ assignments: await listAssignmentsByMember(r.tenantId!, p(req, 'id'), scope) })
+  }
   catch (e) { res.status(500).json({ error: 'Failed to list assignments' }) }
 })
 

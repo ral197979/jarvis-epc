@@ -433,12 +433,26 @@ router.get('/folders', requireTenant() as never, requireCapability('docs.view') 
 
   if (project_id) { conds.push(`f.project_id=$1`); vals.push(project_id) }
 
+  // ADR-014 Phase 3G. `document_folders` is DUAL_PROJECT_OR_TENANT: migration
+  // 003 makes `project_id` nullable and files.ts creates folders with
+  // `project_id ?? null`, so a tenant-level folder is a designed state. The
+  // `doc_count` subquery carries the SAME predicate on the documents it counts
+  // — a folder the caller may see must not report how many documents it holds
+  // in a project they may not (§19).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const folderScope = collectionScopeSql(principal, 'document_folders', 'f.project_id', `$${vals.length + 1}`)
+  const docScope    = collectionScopeSql(principal, 'documents',        'd.project_id', `$${vals.length + 1}`)
+  const scopeVals   = collectionScopeParams(principal, 'document_folders')
+
   const data = await tenantQuery(tenantId, `
-    SELECT f.*, (SELECT COUNT(*) FROM documents d WHERE d.folder_id=f.id AND d.status='active') AS doc_count
+    SELECT f.*, (SELECT COUNT(*) FROM documents d
+                  WHERE d.folder_id=f.id AND d.status='active' ${docScope}) AS doc_count
     FROM document_folders f
     WHERE ${conds.join(' AND ')}
+    ${folderScope}
     ORDER BY f.path ASC
-  `, vals)
+  `, [...vals, ...scopeVals])
 
   res.json({ data: data.rows })
 })

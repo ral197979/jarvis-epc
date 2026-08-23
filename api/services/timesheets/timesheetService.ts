@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Timesheet Service (v10.16.0)
  *
@@ -123,9 +122,17 @@ export async function upsertTimesheet(
 
 // ─── List by project + week ───────────────────────────────────────────────────
 
+/**
+ * ADR-014 Phase 3G §6. `timesheets.project_id` is NOT NULL, so the resource is
+ * PROJECT_REQUIRED and every row needs live membership of its project. `scope`
+ * is built by the ROUTE from the live principal; the service composes SQL and
+ * decides nothing. `$SCOPE_USER` is symbolic because this query numbers its own
+ * parameters as it builds its filters.
+ */
 export async function listTimesheets(
   tenantId:  string,
   opts:      { projectId?: string; memberId?: string; weekStart?: string; status?: TimesheetStatus } = {},
+  scope:     { sql: string; params: unknown[] } = { sql: '', params: [] },
 ): Promise<Timesheet[]> {
   const conditions = ['t.tenant_id = $1']
   const params: unknown[] = [tenantId]
@@ -135,6 +142,8 @@ export async function listTimesheets(
   if (opts.memberId)  { conditions.push(`t.member_id  = $${idx++}`); params.push(opts.memberId) }
   if (opts.weekStart) { conditions.push(`t.week_start = $${idx++}`); params.push(opts.weekStart) }
   if (opts.status)    { conditions.push(`t.status     = $${idx++}`); params.push(opts.status) }
+
+  const scopeSql = scope.sql.replace(/\$SCOPE_USER/g, `$${idx}`)
 
   const res = await tenantQuery(tenantId, `
     SELECT
@@ -146,8 +155,9 @@ export async function listTimesheets(
     JOIN team_members m ON m.id = t.member_id AND m.tenant_id = t.tenant_id
     JOIN projects     p ON p.id = t.project_id AND p.tenant_id = t.tenant_id
     WHERE ${conditions.join(' AND ')}
+    ${scopeSql}
     ORDER BY t.week_start DESC, m.last_name ASC
-  `, params)
+  `, [...params, ...scope.params])
   return res.rows.map(r => rowToTs(r as Record<string, unknown>))
 }
 

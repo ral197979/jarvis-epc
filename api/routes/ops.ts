@@ -22,6 +22,8 @@ import { pollEvents } from '../realtime/wsGateway'
 import { publishActionEvent } from '../services/actions/actionEventPublisher'
 import { broadcastEvent } from '../realtime/eventBroadcaster'
 import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
+import { projectScopeSql } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 import { requireBodyProjectScope } from '../authz/recordScope'
 
 export const opsRouter = Router()
@@ -97,13 +99,32 @@ opsRouter.get('/readiness', requireAllCapabilities('project.view', 'quality.view
   const tenantId = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 
-  // Get all projects and compute readiness
+  // ADR-014 Phase 3G §15–§18. This route returns PROJECTS with a readiness score
+  // computed per project — its outer query selects FROM projects. Phase 3F
+  // reported `action_relations` as its row model, which was an artefact of
+  // following `computeReadiness` one service level down into
+  // `_fetchEntityMetrics`; the id the caller receives is a project id.
+  //
+  // So no `action_relations` scope policy is needed, and none is invented: the
+  // relation graph question §17 warned about does not arise, because the caller
+  // never receives a relation. This is the same membership predicate
+  // `GET /projects` has carried since Phase 3B, and it is applied BEFORE the
+  // LIMIT 20 so the page is twenty authorized projects rather than twenty tenant
+  // projects with holes cut in it. `?project_id=` narrows inside it and cannot
+  // widen it (§30).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const params: unknown[] = projectId ? [tenantId, projectId] : [tenantId]
+  const scope = projectScopeSql(principal, `$${params.length + 1}`)
+  if (scope) params.push(principal.id)
+
   const projectsRes = await tenantQuery(tenantId, `
-    SELECT id, name FROM projects
-    WHERE tenant_id = $1 ${projectId ? 'AND id = $2' : ''}
-      AND status NOT IN ('archived','cancelled')
+    SELECT p.id, p.name FROM projects p
+    WHERE p.tenant_id = $1 ${projectId ? 'AND p.id = $2' : ''}
+      AND p.status NOT IN ('archived','cancelled')
+      ${scope}
     LIMIT 20
-  `, projectId ? [tenantId, projectId] : [tenantId])
+  `, params)
 
   const readiness = await Promise.all(
     projectsRes.rows.map(async (p) => {

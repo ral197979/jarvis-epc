@@ -110,7 +110,11 @@ describe('every resource declares what a NULL project parent means', () => {
 
   it('reports the split this slice actually measured', () => {
     expect(required.length).toBe(44)
-    expect(dual.length).toBe(15)
+    // 15 at Phase 3E-R; Phase 3G added `document_folders` and `source_uploads`,
+    // both created with `project_id ?? null` behind requireBodyProjectScope —
+    // the same evidence shape that made `documents` and `commissioning_packs`
+    // dual.
+    expect(dual.length).toBe(17)
     expect(selfScoped.length).toBe(1)
     expect(global_.length, 'no resource is global-ONLY; the nullable ones are all dual').toBe(0)
   })
@@ -174,7 +178,7 @@ describe('declared semantics match the migrations, not an opinion', () => {
 describe('a tenant-global claim is argued from the repository', () => {
   it('gives every non-PROJECT_REQUIRED resource substantive evidence', () => {
     const claiming = [...dual, ...global_, ...selfScoped]
-    expect(claiming.length).toBe(16)
+    expect(claiming.length).toBe(18)
     for (const p of claiming) {
       expect(p.projectSemanticsEvidence, `${p.resource} claims ${p.projectSemantics} with no evidence`).toBeTruthy()
       expect(p.projectSemanticsEvidence!.length,

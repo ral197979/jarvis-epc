@@ -18,7 +18,8 @@ import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { stats as actionStats, markReviewed } from '../services/agentActions'
 
 import { requireCapability } from '../authz/requireCapability'
-import { requireRecordScope } from '../authz/recordScope'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -41,11 +42,20 @@ router.get('/_stats', requireCapability('ai.govern') as never, async (req: Req, 
   const now = new Date()
   const defaultFrom = new Date(now.getTime() - 24 * 3600 * 1000).toISOString()
 
+  // ADR-014 Phase 3G §22. `ai.govern` reaches the platform administrator as
+  // well as the Owner, and an administrator holds no tenant-wide project scope
+  // — so this rollup is not holder-neutral and the predicate really filters.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
   const rollup = await actionStats({
     tenantId,
     projectId: project_id,
     from: from ?? defaultFrom,
     to:   to   ?? now.toISOString(),
+    scope: {
+      sql:    collectionScopeSql(principal, 'agent_actions', 'project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'agent_actions'),
+    },
   })
   res.json({ data: rollup })
 })

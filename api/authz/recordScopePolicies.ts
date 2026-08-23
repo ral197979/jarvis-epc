@@ -713,6 +713,21 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     writeCapabilities: ['docs.write'],
   },
   {
+    resource: 'document_folders',
+    table: 'document_folders',
+    capabilities: ['docs.view'],
+    strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'ADR-014 Phase 3G. migration 003 declares `project_id UUID REFERENCES projects(id) ON DELETE CASCADE` — nullable, and CASCADE, so a project folder dies with its project while a project-less folder does not belong to one at all. files.ts:471 creates folders with `project_id ?? null`, and the same route is guarded by requireBodyProjectScope, which Phase 3D documents as treating the field as OPTIONAL on purpose and names `a tenant-level folder` as its example. A tenant-level folder is therefore a designed state, not an orphan — the same conclusion Phase 3E-R reached for the documents those folders hold.',
+    scopeKey: 'document_folders.project_id',
+    tenantRule: 'document_folders.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3G. docs.view is the capability files.ts already declares on the folder collection; Phase 3G decides where that existing authority applies, never who holds it.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'document_folders', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['docs.write'],
+  },
+  {
     resource: 'documents',
     table: 'documents',
     capabilities: ['docs.write'],
@@ -970,6 +985,21 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     reason: 'ADR-014 Phase 3D. Capabilities are the ones the 2 routes binding this table already declare — Phase 3D decides where an existing authority applies, never who holds it. Derivation matches migrations/schema-project-parent-map.json.',
     derivation: { kind: 'DIRECT_COLUMN', table: 'sensors', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
     writeCapabilities: ['construction.write'],
+  },
+  {
+    resource: 'source_uploads',
+    table: 'source_uploads',
+    capabilities: ['commissioning.view'],
+    strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'ADR-014 Phase 3G. migration 006 declares `project_id UUID REFERENCES projects(id) ON DELETE SET NULL` — nullable, and SET NULL rather than CASCADE, so an upload OUTLIVES the project it was filed against. commissioning.ts:90 inserts `projectId ?? null`, so an upload staged before a project is chosen is an intended state. The same file creates commissioning_packs with `projectId ?? null`, and Phase 3E-R already classified packs DUAL_PROJECT_OR_TENANT on that evidence; uploads are the staging input to that same workflow.',
+    scopeKey: 'source_uploads.project_id',
+    tenantRule: 'source_uploads.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3G. commissioning.view is the capability commissioning.ts already declares on the uploads collection.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'source_uploads', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['commissioning.write'],
   },
   {
     resource: 'subcontract_invoices',
@@ -1459,7 +1489,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'SELF_SCOPED_COLLECTION',
     reason: 'The `action` resource is SELF_SCOPED in the record-scope registry: ADR-014 Phase 2C-4A established an action as a PERSONAL record owned by its assignee. Filtering this collection by project membership would show a peer\'s queue to anyone sharing a project with them, which is why collectionScopeSql refuses to build a predicate for a SELF resource at all (§28).' },
   { endpoint: 'GET /api/v1/actions/analytics/overview', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'action_escalations', capabilities: ['personal.admin'],
+    rows: 'actions', capabilities: ['personal.admin'],
     disposition: 'SELF_SCOPED_COLLECTION',
     reason: 'The `action` resource is SELF_SCOPED in the record-scope registry: ADR-014 Phase 2C-4A established an action as a PERSONAL record owned by its assignee. Filtering this collection by project membership would show a peer\'s queue to anyone sharing a project with them, which is why collectionScopeSql refuses to build a predicate for a SELF resource at all (§28).' },
   { endpoint: 'GET /api/v1/actions/analytics/workload', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
@@ -1467,11 +1497,11 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'SELF_SCOPED_COLLECTION',
     reason: 'The `action` resource is SELF_SCOPED in the record-scope registry: ADR-014 Phase 2C-4A established an action as a PERSONAL record owned by its assignee. Filtering this collection by project membership would show a peer\'s queue to anyone sharing a project with them, which is why collectionScopeSql refuses to build a predicate for a SELF resource at all (§28).' },
   { endpoint: 'GET /api/v1/actions/my', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'action_escalations', capabilities: ['personal.view'],
+    rows: 'actions', capabilities: ['personal.view'],
     disposition: 'SELF_SCOPED_COLLECTION',
     reason: 'The `action` resource is SELF_SCOPED in the record-scope registry: ADR-014 Phase 2C-4A established an action as a PERSONAL record owned by its assignee. Filtering this collection by project membership would show a peer\'s queue to anyone sharing a project with them, which is why collectionScopeSql refuses to build a predicate for a SELF resource at all (§28).' },
   { endpoint: 'GET /api/v1/actions/overdue', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'action_escalations', capabilities: ['personal.admin'],
+    rows: 'actions', capabilities: ['personal.admin'],
     disposition: 'SELF_SCOPED_COLLECTION',
     reason: 'The `action` resource is SELF_SCOPED in the record-scope registry: ADR-014 Phase 2C-4A established an action as a PERSONAL record owned by its assignee. Filtering this collection by project membership would show a peer\'s queue to anyone sharing a project with them, which is why collectionScopeSql refuses to build a predicate for a SELF resource at all (§28).' },
   { endpoint: 'GET /api/v1/actions/summary', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
@@ -1500,8 +1530,8 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     reason: 'Tenant-level collection of project-bound rows; the registry-driven predicate is ANDed outside the caller\'s filters and before LIMIT, and the same predicate is applied to the COUNT. Enforced by collectionScopeSql.' },
   { endpoint: 'GET /api/v1/commissioning/uploads', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
     rows: 'source_uploads', capabilities: ['commissioning.view'],
-    disposition: 'DEFERRED_SCOPE_MODEL',
-    reason: 'The returned rows come from a table with no record-scope policy, so collectionScopeSql has no semantics to read and would fail closed. Giving it one is a policy decision about that resource, not a mechanical predicate — the same shape Phase 3E-R applied to the nullable-parent question (§39).' },
+    disposition: 'PROTECTED_PHASE3F',
+    reason: 'Tenant-level collection of project-bound rows; the registry-driven predicate is ANDed outside the caller\'s filters and before LIMIT, and the same predicate is applied to the COUNT. Enforced by collectionScopeSql.' },
   { endpoint: 'GET /api/v1/compliance-tasks', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
     rows: 'compliance_tasks', capabilities: ['safety.view'],
     disposition: 'PROTECTED_PHASE3F',
@@ -1515,15 +1545,15 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/copilot/portfolio', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'actions', capabilities: ['portfolio.view'],
+    rows: 'projects', capabilities: ['portfolio.view'],
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/copilot/projects/:projectId/coordination', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'action_relations', capabilities: ['assistant.use', 'construction.view', 'cost.view', 'engineering.view', 'project.view', 'schedule.view'],
+    rows: 'projects', capabilities: ['assistant.use', 'construction.view', 'cost.view', 'engineering.view', 'project.view', 'schedule.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/copilot/projects/:projectId/focus', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'actions', capabilities: ['assistant.use', 'construction.view', 'cost.view', 'project.view', 'quality.view', 'risk.view'],
+    rows: 'projects', capabilities: ['assistant.use', 'construction.view', 'cost.view', 'project.view', 'quality.view', 'risk.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/copilot/projects/:projectId/narrative-report', shape: 'PATH_PROJECT_COLLECTION',
@@ -1555,7 +1585,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/executive/portfolio-risk', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'actions', capabilities: ['portfolio.view'],
+    rows: 'projects', capabilities: ['portfolio.view'],
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/executive/sla-compliance', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
@@ -1572,8 +1602,8 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     reason: 'Tenant-level collection of project-bound rows; the registry-driven predicate is ANDed outside the caller\'s filters and before LIMIT, and the same predicate is applied to the COUNT. Enforced by collectionScopeSql.' },
   { endpoint: 'GET /api/v1/files/folders', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
     rows: 'document_folders', capabilities: ['docs.view'],
-    disposition: 'DEFERRED_SCOPE_MODEL',
-    reason: 'The returned rows come from a table with no record-scope policy, so collectionScopeSql has no semantics to read and would fail closed. Giving it one is a policy decision about that resource, not a mechanical predicate — the same shape Phase 3E-R applied to the nullable-parent question (§39).' },
+    disposition: 'PROTECTED_PHASE3F',
+    reason: 'Tenant-level collection of project-bound rows; the registry-driven predicate is ANDed outside the caller\'s filters and before LIMIT, and the same predicate is applied to the COUNT. Enforced by collectionScopeSql.' },
   { endpoint: 'GET /api/v1/knowledge-fixes', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
     rows: 'knowledge_fixes', capabilities: ['engineering.view'],
     disposition: 'PROTECTED_PHASE3F',
@@ -1599,7 +1629,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROJECT_AGGREGATE',
     reason: 'The returned resource is DUAL_PROJECT_OR_TENANT, but every declared capability on this route is Owner-only and the Owner is tenant-wide, so the predicate is holder-neutral today (§70). It becomes load-bearing the moment the capability is granted more widely, which is what the ratchet pins.' },
   { endpoint: 'GET /api/v1/ops/blockers', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'action_relations', capabilities: ['crossdomain.read'],
+    rows: 'actions', capabilities: ['crossdomain.read'],
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/ops/escalations', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
@@ -1611,11 +1641,11 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/ops/readiness', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'action_relations', capabilities: ['project.view', 'quality.view'],
-    disposition: 'DEFERRED_SCOPE_MODEL',
-    reason: 'Aggregates over action_relations, which has no record-scope policy. Unlike its four sibling /ops routes this one is reachable by more than the Owner, so the predicate would NOT be holder-neutral here — which is exactly why it needs a considered policy for the relation graph rather than a guessed one.' },
+    rows: 'projects', capabilities: ['project.view', 'quality.view'],
+    disposition: 'PROTECTED_PHASE3B',
+    reason: 'Closed by ADR-014 Phase 3B, which pushed the membership predicate into the query itself so COUNT, LIMIT and OFFSET describe the authorized set. Enforced by projectScopeSql.' },
   { endpoint: 'GET /api/v1/ops/recommendations', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
-    rows: 'action_relations', capabilities: ['crossdomain.read'],
+    rows: 'actions', capabilities: ['crossdomain.read'],
     disposition: 'PROJECT_AGGREGATE',
     reason: 'Cross-project portfolio aggregate whose every declared capability is Owner-only, and the Owner is tenant-wide by project.list.all. Adding the membership predicate is therefore HOLDER-NEUTRAL today: it would change no caller\'s result, because the only caller who can reach the route already reaches every project in the tenant (§70). Recorded rather than applied so the claim is auditable instead of silently skipped.' },
   { endpoint: 'GET /api/v1/portfolio/bottlenecks', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
@@ -1635,7 +1665,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/bid-packages/summary', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'bid_packages', capabilities: ['procurement.view'],
+    rows: 'subcontracts', capabilities: ['procurement.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/bim-issues', shape: 'PATH_PROJECT_COLLECTION',
@@ -1651,7 +1681,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/budget/rollup', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'budgets', capabilities: ['cost.view'],
+    rows: 'budget_rollup', capabilities: ['cost.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/calc-sessions', shape: 'PATH_PROJECT_COLLECTION',
@@ -1663,7 +1693,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/change-orders/summary', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'evm_actuals', capabilities: ['cost.view'],
+    rows: 'change_orders', capabilities: ['cost.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/commissioning-items', shape: 'PATH_PROJECT_COLLECTION',
@@ -1679,7 +1709,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/cost-control', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'change_orders', capabilities: ['cost.view'],
+    rows: 'evm_baselines', capabilities: ['cost.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/cost-entries', shape: 'PATH_PROJECT_COLLECTION',
@@ -1691,7 +1721,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/cost-intelligence', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'change_orders', capabilities: ['cost.view'],
+    rows: 'projects', capabilities: ['cost.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/coverage', shape: 'PATH_PROJECT_COLLECTION',
@@ -1719,7 +1749,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/evm/metrics', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'evm_actuals', capabilities: ['cost.view'],
+    rows: 'evm_wbs_entries', capabilities: ['cost.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/evm/scurve', shape: 'PATH_PROJECT_COLLECTION',
@@ -1727,7 +1757,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/field-assistant', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'inspections', capabilities: ['assistant.use', 'project.view', 'quality.view', 'schedule.view'],
+    rows: 'projects', capabilities: ['assistant.use', 'project.view', 'quality.view', 'schedule.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/inspection-templates', shape: 'PATH_PROJECT_COLLECTION',
@@ -1747,7 +1777,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/ncr-summary', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'corrective_actions', capabilities: ['quality.view'],
+    rows: 'projects', capabilities: ['quality.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/ncrs', shape: 'PATH_PROJECT_COLLECTION',
@@ -1771,7 +1801,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/quality-intelligence', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'inspections', capabilities: ['quality.view'],
+    rows: 'projects', capabilities: ['quality.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/projects/:projectId/risks', shape: 'PATH_PROJECT_COLLECTION',
@@ -1855,7 +1885,7 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3B',
     reason: 'Closed by ADR-014 Phase 3B, which pushed the membership predicate into the query itself so COUNT, LIMIT and OFFSET describe the authorized set. Enforced by projectScopeSql.' },
   { endpoint: 'GET /api/v1/schedule/:projectId/cpm', shape: 'PATH_PROJECT_COLLECTION',
-    rows: 'schedule_dependencies', capabilities: ['schedule.view'],
+    rows: 'schedule_tasks', capabilities: ['schedule.view'],
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Project named in the path; requireProjectScope refuses before the handler, and the handler\'s own query already constrains rows to that project. Enforced by requireProjectScope.' },
   { endpoint: 'GET /api/v1/schedule/:projectId/critical-path', shape: 'PATH_PROJECT_COLLECTION',
@@ -1887,6 +1917,104 @@ export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
     disposition: 'PROTECTED_PHASE3F',
     reason: 'Tenant-level collection of project-bound rows; the registry-driven predicate is ANDed outside the caller\'s filters and before LIMIT, and the same predicate is applied to the COUNT. Enforced by collectionScopeSql.' },
 ]
+
+// ─── Phase 3G: the unresolved collection data surfaces (§21, §22) ────────────
+
+/**
+ * A collection whose data target the extractor could not resolve, and what it
+ * turned out to be.
+ *
+ * `UNRESOLVED_DATA_ACCESS` means the route's project relationship is UNKNOWN,
+ * not absent — so each one is read by hand and given a verdict rather than
+ * being allowed to sit outside every denominator. Phase 3F left thirteen.
+ */
+export type UnresolvedCollectionDisposition =
+  | 'PROJECT_BOUND_COLLECTION'
+  | 'SELF_SCOPED'
+  | 'NON_PROJECT'
+  | 'TENANT_GLOBAL'
+  | 'SERVICE_OR_PLATFORM'
+  | 'DEFERRED_SCOPE_MODEL'
+
+export interface UnresolvedCollectionAudit {
+  endpoint:    string
+  capability:  string
+  /** What the route actually returns, read from the handler and its service. */
+  returns:     string
+  disposition: UnresolvedCollectionDisposition
+  reason:      string
+}
+
+/**
+ * All thirteen, each traced to its handler and one service level down.
+ * `COLLECTION_DATA_ACCESS_UNEXPLAINED` must stay 0.
+ */
+export const UNRESOLVED_COLLECTION_AUDIT: readonly UnresolvedCollectionAudit[] = [
+  { endpoint: 'GET /api/v1/agent-actions/_stats', capability: 'ai.govern',
+    returns: 'five COUNT rollups over agent_actions', disposition: 'PROJECT_BOUND_COLLECTION',
+    reason: 'RESOLVED AND CLOSED IN PHASE 3G. `stats()` issues five aggregates over agent_actions sharing one WHERE clause; the extractor could not resolve them because the service is reached through a renamed import (`stats as actionStats`). agent_actions is DUAL_PROJECT_OR_TENANT, and ai.govern reaches the platform administrator as well as the Owner — an administrator has no tenant-wide project scope, so this rollup was genuinely counting every project in the tenant for them. The predicate is applied to the shared WHERE, so all five aggregates move together.' },
+
+  { endpoint: 'GET /api/v1/admin/automation/handlers', capability: 'platform.admin',
+    returns: 'scheduler._handlers keys, in memory', disposition: 'SERVICE_OR_PLATFORM',
+    reason: '`listRegisteredHandlers()` returns `Array.from(_handlers.keys())` — a code registry of scheduler handler names. No SQL is issued at all, which is why no table resolved. Nothing tenant- or project-owned is disclosed.' },
+  { endpoint: 'GET /api/v1/agents', capability: 'ai.govern',
+    returns: 'AGENT_REGISTRY, in memory', disposition: 'SERVICE_OR_PLATFORM',
+    reason: '`getAllAgents()` returns `[...AGENT_REGISTRY]` — a static registration table compiled into the build. No SQL, no tenant data.' },
+  { endpoint: 'GET /api/v1/agents/capabilities', capability: 'ai.govern',
+    returns: '_byCapabilityId values, in memory', disposition: 'SERVICE_OR_PLATFORM',
+    reason: '`getAllCapabilities()` returns `Array.from(_byCapabilityId.values())` — the same static registry, indexed differently.' },
+  { endpoint: 'GET /api/v1/agents/objectives', capability: 'ai.govern',
+    returns: 'a string list, in memory', disposition: 'SERVICE_OR_PLATFORM',
+    reason: '`getAvailableObjectives()` returns a literal list of orchestrator objective names. No SQL.' },
+  { endpoint: 'GET /api/v1/mcp/tools', capability: 'platform.admin',
+    returns: 'the MCP tool registry, in memory', disposition: 'SERVICE_OR_PLATFORM',
+    reason: 'The MCP tool catalogue is assembled in code from the handlers the build registers; the route serialises that list. No SQL is issued, so no tenant or project row can appear in the response, which is why no table resolved.' },
+  { endpoint: 'GET /api/v1/mcp/ava/health', capability: 'platform.admin',
+    returns: 'a liveness probe', disposition: 'SERVICE_OR_PLATFORM',
+    reason: 'A liveness probe for the Ava MCP surface. It reports reachability and version only, issues no SQL, and returns no record of any kind — the absence of a resolved table is the correct answer here rather than an unknown.' },
+  { endpoint: 'GET /api/v1/ecosystem/benchmarks/readiness', capability: 'platform.admin',
+    returns: 'cross-tenant benchmark aggregates', disposition: 'SERVICE_OR_PLATFORM',
+    reason: 'A platform-administration surface above tenant scope, which is why it holds platform.admin rather than a domain capability. Project membership is not the governing model for a route that is deliberately not tenant-bounded.' },
+  { endpoint: 'GET /api/v1/ecosystem/benchmarks/tenant', capability: 'platform.admin',
+    returns: 'one tenant benchmark row', disposition: 'SERVICE_OR_PLATFORM',
+    reason: 'Same platform-administration surface, narrowed to a single tenant. No project-bound rows are returned.' },
+
+  { endpoint: 'GET /api/v1/audit/_meta/actions', capability: 'audit.view',
+    returns: 'the audit action enum', disposition: 'NON_PROJECT',
+    reason: 'A constant list of permitted audit action names, used to populate a filter control. It describes the schema, not any record.' },
+  { endpoint: 'GET /api/v1/commissioning/balance', capability: 'commissioning.view',
+    returns: 'SUM(delta) over billing_credits', disposition: 'TENANT_GLOBAL',
+    reason: '`_creditBalance()` sums `billing_credits WHERE tenant_id = $1`. billing_credits has no project column — a credit balance belongs to the tenant, not to a project — so there is nothing to scope and no cross-project disclosure.' },
+  { endpoint: 'GET /api/v1/portfolio/conflicts', capability: 'portfolio.view',
+    returns: 'timeline overlaps computed across projects', disposition: 'PROJECT_BOUND_COLLECTION',
+    reason: 'HOLDER-NEUTRAL, not unscoped. `detectPortfolioConflicts` compares peak periods ACROSS projects, so it is project-bound by construction; portfolio.view is Owner-only and the Owner is tenant-wide, so a membership predicate would change no caller result today. Held to that claim by the holder-neutrality assertion, which fails if portfolio.view is ever granted more widely.' },
+
+  { endpoint: 'GET /api/v1/ops/live-feed', capability: 'crossdomain.read',
+    returns: 'realtime_event_log rows', disposition: 'DEFERRED_SCOPE_MODEL',
+    reason: 'The event log carries `subscription_scope` plus a free-text `scope_id`, both chosen by the caller — a polymorphic pair with no foreign key to projects, structurally the same gap as operational_twins. Deriving a project parent needs a per-scope-kind policy, which is a data-model decision. crossdomain.read is Owner-only today, so nothing is presently exposed that the Owner could not already reach; the deferral is about the model, not the holder.' },
+]
+
+export interface UnresolvedCollectionCounters {
+  total: number; resolvedProjectBound: number; platform: number
+  tenantGlobal: number; nonProject: number; selfScoped: number
+  deferred: number; unexplained: number
+}
+
+/** Machine-derived, so the report cannot overstate the reconciliation. */
+export function unresolvedCollectionCounters(): UnresolvedCollectionCounters {
+  const by = (d: UnresolvedCollectionDisposition): number =>
+    UNRESOLVED_COLLECTION_AUDIT.filter(a => a.disposition === d).length
+  return {
+    total:                UNRESOLVED_COLLECTION_AUDIT.length,
+    resolvedProjectBound: by('PROJECT_BOUND_COLLECTION'),
+    platform:             by('SERVICE_OR_PLATFORM'),
+    tenantGlobal:         by('TENANT_GLOBAL'),
+    nonProject:           by('NON_PROJECT'),
+    selfScoped:           by('SELF_SCOPED'),
+    deferred:             by('DEFERRED_SCOPE_MODEL'),
+    unexplained:          UNRESOLVED_COLLECTION_AUDIT.filter(a => a.reason.length < 80).length,
+  }
+}
 
 export interface CollectionScopeCounters {
   candidates:   number
