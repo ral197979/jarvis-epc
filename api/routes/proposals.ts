@@ -154,7 +154,7 @@ proposalsRouter.post('/proposals/:id/items', requireCapability('crm.write') as n
 proposalsRouter.patch('/proposals/:id/items/:itemId', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const item = await updateProposalItem(r.tenantId!, p(req, 'itemId'), req.body)
+    const item = await updateProposalItem(r.tenantId!, p(req, 'itemId'), req.body, p(req, 'id'))
     if (!item) { res.status(404).json({ error: 'Item not found' }); return }
     res.json({ item })
   } catch (e) { res.status(500).json({ error: 'Failed to update proposal item' }) }
@@ -163,7 +163,8 @@ proposalsRouter.patch('/proposals/:id/items/:itemId', requireCapability('crm.wri
 proposalsRouter.delete('/proposals/:id/items/:itemId', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    await deleteProposalItem(r.tenantId!, p(req, 'itemId'))
+    const removed = await deleteProposalItem(r.tenantId!, p(req, 'itemId'), p(req, 'id'))
+    if (!removed) { res.status(404).json({ error: 'Item not found' }); return }
     res.status(204).end()
   } catch (e) { res.status(500).json({ error: 'Failed to delete proposal item' }) }
 })

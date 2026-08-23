@@ -280,10 +280,21 @@ export async function addProposalItem(
   return rowToItem(res.rows[0] as Record<string, unknown>)
 }
 
+/**
+ * Patch one line item, bound to the proposal whose path addressed it.
+ *
+ * ADR-014 Phase 3J §22/D27: `PATCH /proposals/:id/items/:itemId` previously
+ * located the item by id and tenant alone — `:id` was never read, so the parent
+ * segment was decoration and any proposal id in the path reached any item in
+ * the tenant. Proposals are tenant-level CRM records, so no caller crossed an
+ * authorization boundary today; the binding exists so the route means what its
+ * path says, and so it stays correct if proposals ever gain a project parent.
+ */
 export async function updateProposalItem(
-  tenantId: string,
-  itemId:   string,
-  patch:    Partial<{ description: string; quantity: number; unit: string; unitCost: number }>,
+  tenantId:   string,
+  itemId:     string,
+  patch:      Partial<{ description: string; quantity: number; unit: string; unitCost: number }>,
+  proposalId: string,
 ): Promise<ProposalItem | null> {
   const res = await tenantQuery(tenantId, `
     UPDATE proposal_items SET
@@ -291,13 +302,14 @@ export async function updateProposalItem(
       quantity    = COALESCE($4, quantity),
       unit        = COALESCE($5, unit),
       unit_cost   = COALESCE($6, unit_cost)
-    WHERE tenant_id = $1 AND id = $2
+    WHERE tenant_id = $1 AND id = $2 AND proposal_id = $7
     RETURNING *
   `, [tenantId, itemId,
       patch.description ?? null,
       patch.quantity    ?? null,
       patch.unit        ?? null,
-      patch.unitCost    ?? null])
+      patch.unitCost    ?? null,
+      proposalId])
   if (!res.rows.length) return null
   const item = rowToItem(res.rows[0] as Record<string, unknown>)
   await tenantQuery(tenantId, `
@@ -309,12 +321,16 @@ export async function updateProposalItem(
   return item
 }
 
-export async function deleteProposalItem(tenantId: string, itemId: string): Promise<void> {
+/** Delete one line item, bound to its parent proposal — see `updateProposalItem`. */
+export async function deleteProposalItem(
+  tenantId: string, itemId: string, proposalId: string,
+): Promise<boolean> {
   const res = await tenantQuery(tenantId, `
-    DELETE FROM proposal_items WHERE tenant_id=$1 AND id=$2 RETURNING proposal_id
-  `, [tenantId, itemId])
-  const proposalId = res.rows[0]?.['proposal_id'] as string | undefined
-  if (proposalId) {
+    DELETE FROM proposal_items
+     WHERE tenant_id=$1 AND id=$2 AND proposal_id=$3 RETURNING proposal_id
+  `, [tenantId, itemId, proposalId])
+  // Recompute the parent total only when a row was actually removed.
+  if ((res.rowCount ?? 0) > 0) {
     await tenantQuery(tenantId, `
       UPDATE proposals SET
         estimated_value = (SELECT COALESCE(SUM(total),0) FROM proposal_items WHERE tenant_id=$1 AND proposal_id=$2),
@@ -322,6 +338,7 @@ export async function deleteProposalItem(tenantId: string, itemId: string): Prom
       WHERE tenant_id=$1 AND id=$2
     `, [tenantId, proposalId])
   }
+  return (res.rowCount ?? 0) > 0
 }
 
 // ─── Pipeline summary ─────────────────────────────────────────────────────────

@@ -121,7 +121,7 @@ router.get('/temporal/:twinId/diff', requireCapability('crossdomain.read') as ne
   }
 })
 
-router.get('/temporal/:twinId/velocity', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+router.get('/temporal/:twinId/velocity', requireCapability('crossdomain.read') as never, requireTwinScope() as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const windowDays = req.query.windowDays ? Number(req.query.windowDays) : 7
@@ -132,7 +132,7 @@ router.get('/temporal/:twinId/velocity', requireCapability('crossdomain.read') a
   }
 })
 
-router.get('/temporal/:twinId/trend/:field', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+router.get('/temporal/:twinId/trend/:field', requireCapability('crossdomain.read') as never, requireTwinScope() as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const windowDays = req.query.windowDays ? Number(req.query.windowDays) : 30
