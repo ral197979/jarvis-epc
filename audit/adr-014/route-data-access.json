@@ -2019,7 +2019,7 @@
       "method": "GET",
       "path": "/api/v1/agents",
       "file": "api/routes/agents.ts",
-      "line": 21,
+      "line": 22,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2150,7 +2150,7 @@
       "method": "POST",
       "path": "/api/v1/agents/approvals/:id/reject",
       "file": "api/routes/agentApprovals.ts",
-      "line": 66,
+      "line": 71,
       "pathParams": [
         "id"
       ],
@@ -2188,7 +2188,7 @@
       "method": "POST",
       "path": "/api/v1/agents/approvals/expire",
       "file": "api/routes/agentApprovals.ts",
-      "line": 82,
+      "line": 92,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2224,7 +2224,7 @@
       "method": "GET",
       "path": "/api/v1/agents/capabilities",
       "file": "api/routes/agents.ts",
-      "line": 26,
+      "line": 27,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2248,7 +2248,7 @@
       "method": "POST",
       "path": "/api/v1/agents/execute",
       "file": "api/routes/agents.ts",
-      "line": 68,
+      "line": 69,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2272,7 +2272,7 @@
       "method": "GET",
       "path": "/api/v1/agents/executions",
       "file": "api/routes/agents.ts",
-      "line": 110,
+      "line": 111,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2300,7 +2300,7 @@
       "method": "GET",
       "path": "/api/v1/agents/executions/:id",
       "file": "api/routes/agents.ts",
-      "line": 123,
+      "line": 124,
       "pathParams": [
         "id"
       ],
@@ -2547,7 +2547,7 @@
       "method": "GET",
       "path": "/api/v1/agents/objectives",
       "file": "api/routes/agents.ts",
-      "line": 31,
+      "line": 32,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2571,7 +2571,7 @@
       "method": "POST",
       "path": "/api/v1/agents/plan",
       "file": "api/routes/agents.ts",
-      "line": 47,
+      "line": 48,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2595,7 +2595,7 @@
       "method": "POST",
       "path": "/api/v1/agents/readiness/assess",
       "file": "api/routes/agentReadiness.ts",
-      "line": 68,
+      "line": 69,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2631,7 +2631,7 @@
       "method": "POST",
       "path": "/api/v1/agents/readiness/coordinate",
       "file": "api/routes/agentReadiness.ts",
-      "line": 46,
+      "line": 47,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2653,7 +2653,7 @@
       "method": "GET",
       "path": "/api/v1/agents/readiness/plan/:scope/:id",
       "file": "api/routes/agentReadiness.ts",
-      "line": 28,
+      "line": 29,
       "pathParams": [
         "scope",
         "id"
@@ -2786,7 +2786,7 @@
       "method": "GET",
       "path": "/api/v1/agents/tasks",
       "file": "api/routes/agents.ts",
-      "line": 88,
+      "line": 89,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2814,7 +2814,7 @@
       "method": "GET",
       "path": "/api/v1/agents/tasks/:id",
       "file": "api/routes/agents.ts",
-      "line": 102,
+      "line": 103,
       "pathParams": [
         "id"
       ],
@@ -2844,22 +2844,14 @@
       "method": "GET",
       "path": "/api/v1/ai/recommendations",
       "file": "api/routes/aiGovernance.ts",
-      "line": 28,
+      "line": 30,
       "pathParams": [],
       "guards": [
         "requireAuth"
       ],
       "bodyProjectRefs": [],
       "mounted": true,
-      "writes": [
-        {
-          "op": "INSERT",
-          "table": "ai_approval_events",
-          "scopeColumns": [],
-          "viaFunction": "listPendingRecommendations",
-          "inFile": "api/services/ai/aiGovernance.ts"
-        }
-      ],
+      "writes": [],
       "reads": [
         "ai_recommendation_queue"
       ],
@@ -2867,9 +2859,7 @@
         "ai_recommendation_queue"
       ],
       "primaryReadTable": "ai_recommendation_queue",
-      "writeTables": [
-        "ai_approval_events"
-      ],
+      "writeTables": [],
       "delegatesTo": [
         "listPendingRecommendations"
       ],
@@ -2879,7 +2869,7 @@
       "method": "POST",
       "path": "/api/v1/ai/recommendations",
       "file": "api/routes/aiGovernance.ts",
-      "line": 36,
+      "line": 51,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2917,7 +2907,7 @@
       "method": "POST",
       "path": "/api/v1/ai/recommendations/:id/approve",
       "file": "api/routes/aiGovernance.ts",
-      "line": 67,
+      "line": 82,
       "pathParams": [
         "id"
       ],
@@ -2952,7 +2942,7 @@
       "method": "POST",
       "path": "/api/v1/ai/recommendations/:id/execute",
       "file": "api/routes/aiGovernance.ts",
-      "line": 84,
+      "line": 99,
       "pathParams": [
         "id"
       ],
@@ -2991,7 +2981,7 @@
       "method": "GET",
       "path": "/api/v1/ai/recommendations/:id/preview",
       "file": "api/routes/aiGovernance.ts",
-      "line": 56,
+      "line": 71,
       "pathParams": [
         "id"
       ],
@@ -3018,7 +3008,7 @@
       "method": "POST",
       "path": "/api/v1/ai/recommendations/:id/reject",
       "file": "api/routes/aiGovernance.ts",
-      "line": 75,
+      "line": 90,
       "pathParams": [
         "id"
       ],
@@ -3053,7 +3043,7 @@
       "method": "POST",
       "path": "/api/v1/ai/recommendations/expire",
       "file": "api/routes/aiGovernance.ts",
-      "line": 94,
+      "line": 109,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -14045,7 +14035,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/consensus",
       "file": "api/routes/optimization.ts",
-      "line": 97,
+      "line": 102,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14067,7 +14057,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/coordinate",
       "file": "api/routes/optimization.ts",
-      "line": 105,
+      "line": 110,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14089,7 +14079,7 @@
       "method": "GET",
       "path": "/api/v1/optimization/proposals",
       "file": "api/routes/optimization.ts",
-      "line": 50,
+      "line": 53,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14115,7 +14105,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/proposals",
       "file": "api/routes/optimization.ts",
-      "line": 43,
+      "line": 46,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14147,7 +14137,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/proposals/:id/apply",
       "file": "api/routes/optimization.ts",
-      "line": 70,
+      "line": 75,
       "pathParams": [
         "id"
       ],
@@ -14183,7 +14173,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/proposals/:id/approve",
       "file": "api/routes/optimization.ts",
-      "line": 62,
+      "line": 65,
       "pathParams": [
         "id"
       ],
@@ -14219,7 +14209,7 @@
       "method": "GET",
       "path": "/api/v1/optimization/proposals/summary",
       "file": "api/routes/optimization.ts",
-      "line": 78,
+      "line": 83,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14245,7 +14235,7 @@
       "method": "GET",
       "path": "/api/v1/optimization/resources",
       "file": "api/routes/optimization.ts",
-      "line": 27,
+      "line": 30,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14271,7 +14261,7 @@
       "method": "GET",
       "path": "/api/v1/optimization/resources/balance-plan",
       "file": "api/routes/optimization.ts",
-      "line": 34,
+      "line": 37,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14297,7 +14287,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/root-cause",
       "file": "api/routes/optimization.ts",
-      "line": 115,
+      "line": 120,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14328,7 +14318,7 @@
       "method": "POST",
       "path": "/api/v1/optimization/strategy",
       "file": "api/routes/optimization.ts",
-      "line": 87,
+      "line": 92,
       "pathParams": [],
       "guards": [
         "requireAuth",

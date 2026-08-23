@@ -1449,7 +1449,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/",
       "file": "api/routes/agents.ts",
-      "line": 21,
+      "line": 22,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -1541,7 +1541,7 @@
       "mountPrefix": "/api/v1/agents/approvals",
       "routePath": "/:id/reject",
       "file": "api/routes/agentApprovals.ts",
-      "line": 66,
+      "line": 71,
       "serverLine": 604,
       "pathParams": [
         "id"
@@ -1565,7 +1565,7 @@
       "mountPrefix": "/api/v1/agents/approvals",
       "routePath": "/expire",
       "file": "api/routes/agentApprovals.ts",
-      "line": 82,
+      "line": 92,
       "serverLine": 604,
       "pathParams": [],
       "guards": [
@@ -1587,7 +1587,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/capabilities",
       "file": "api/routes/agents.ts",
-      "line": 26,
+      "line": 27,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -1609,7 +1609,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/execute",
       "file": "api/routes/agents.ts",
-      "line": 68,
+      "line": 69,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -1621,7 +1621,9 @@
       "capabilities": [
         "ai.govern"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireBodyPolymorphicScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -1631,7 +1633,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/executions",
       "file": "api/routes/agents.ts",
-      "line": 110,
+      "line": 111,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -1653,7 +1655,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/executions/:id",
       "file": "api/routes/agents.ts",
-      "line": 123,
+      "line": 124,
       "serverLine": 603,
       "pathParams": [
         "id"
@@ -1821,7 +1823,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/objectives",
       "file": "api/routes/agents.ts",
-      "line": 31,
+      "line": 32,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -1843,7 +1845,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/plan",
       "file": "api/routes/agents.ts",
-      "line": 47,
+      "line": 48,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -1855,7 +1857,9 @@
       "capabilities": [
         "ai.govern"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireBodyPolymorphicScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -1865,7 +1869,7 @@
       "mountPrefix": "/api/v1/agents/readiness",
       "routePath": "/assess",
       "file": "api/routes/agentReadiness.ts",
-      "line": 68,
+      "line": 69,
       "serverLine": 607,
       "pathParams": [],
       "guards": [
@@ -1885,7 +1889,7 @@
       "mountPrefix": "/api/v1/agents/readiness",
       "routePath": "/coordinate",
       "file": "api/routes/agentReadiness.ts",
-      "line": 46,
+      "line": 47,
       "serverLine": 607,
       "pathParams": [],
       "guards": [
@@ -1895,7 +1899,9 @@
       "capabilities": [
         "ai.govern"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireBodyPolymorphicScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -1905,7 +1911,7 @@
       "mountPrefix": "/api/v1/agents/readiness",
       "routePath": "/plan/:scope/:id",
       "file": "api/routes/agentReadiness.ts",
-      "line": 28,
+      "line": 29,
       "serverLine": 607,
       "pathParams": [
         "scope",
@@ -1994,7 +2000,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/tasks",
       "file": "api/routes/agents.ts",
-      "line": 88,
+      "line": 89,
       "serverLine": 603,
       "pathParams": [],
       "guards": [
@@ -2016,7 +2022,7 @@
       "mountPrefix": "/api/v1/agents",
       "routePath": "/tasks/:id",
       "file": "api/routes/agents.ts",
-      "line": 102,
+      "line": 103,
       "serverLine": 603,
       "pathParams": [
         "id"
@@ -2040,7 +2046,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations",
       "file": "api/routes/aiGovernance.ts",
-      "line": 28,
+      "line": 30,
       "serverLine": 595,
       "pathParams": [],
       "guards": [
@@ -2059,7 +2065,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations",
       "file": "api/routes/aiGovernance.ts",
-      "line": 36,
+      "line": 51,
       "serverLine": 595,
       "pathParams": [],
       "guards": [
@@ -2078,7 +2084,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations/:id/approve",
       "file": "api/routes/aiGovernance.ts",
-      "line": 67,
+      "line": 82,
       "serverLine": 595,
       "pathParams": [
         "id"
@@ -2099,7 +2105,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations/:id/execute",
       "file": "api/routes/aiGovernance.ts",
-      "line": 84,
+      "line": 99,
       "serverLine": 595,
       "pathParams": [
         "id"
@@ -2120,7 +2126,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations/:id/preview",
       "file": "api/routes/aiGovernance.ts",
-      "line": 56,
+      "line": 71,
       "serverLine": 595,
       "pathParams": [
         "id"
@@ -2141,7 +2147,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations/:id/reject",
       "file": "api/routes/aiGovernance.ts",
-      "line": 75,
+      "line": 90,
       "serverLine": 595,
       "pathParams": [
         "id"
@@ -2162,7 +2168,7 @@
       "mountPrefix": "/api/v1/ai",
       "routePath": "/recommendations/expire",
       "file": "api/routes/aiGovernance.ts",
-      "line": 94,
+      "line": 109,
       "serverLine": 595,
       "pathParams": [],
       "guards": [
@@ -4327,7 +4333,9 @@
       "capabilities": [
         "ai.govern"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9656,7 +9664,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/consensus",
       "file": "api/routes/optimization.ts",
-      "line": 97,
+      "line": 102,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9676,7 +9684,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/coordinate",
       "file": "api/routes/optimization.ts",
-      "line": 105,
+      "line": 110,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9696,7 +9704,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/proposals",
       "file": "api/routes/optimization.ts",
-      "line": 50,
+      "line": 53,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9716,7 +9724,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/proposals",
       "file": "api/routes/optimization.ts",
-      "line": 43,
+      "line": 46,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9736,7 +9744,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/proposals/:id/apply",
       "file": "api/routes/optimization.ts",
-      "line": 70,
+      "line": 75,
       "serverLine": 612,
       "pathParams": [
         "id"
@@ -9758,7 +9766,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/proposals/:id/approve",
       "file": "api/routes/optimization.ts",
-      "line": 62,
+      "line": 65,
       "serverLine": 612,
       "pathParams": [
         "id"
@@ -9780,7 +9788,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/proposals/summary",
       "file": "api/routes/optimization.ts",
-      "line": 78,
+      "line": 83,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9800,7 +9808,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/resources",
       "file": "api/routes/optimization.ts",
-      "line": 27,
+      "line": 30,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9820,7 +9828,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/resources/balance-plan",
       "file": "api/routes/optimization.ts",
-      "line": 34,
+      "line": 37,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9840,7 +9848,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/root-cause",
       "file": "api/routes/optimization.ts",
-      "line": 115,
+      "line": 120,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
@@ -9860,7 +9868,7 @@
       "mountPrefix": "/api/v1/optimization",
       "routePath": "/strategy",
       "file": "api/routes/optimization.ts",
-      "line": 87,
+      "line": 92,
       "serverLine": 612,
       "pathParams": [],
       "guards": [
