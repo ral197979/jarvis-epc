@@ -6,6 +6,7 @@ import { enqueueTask, latestTaskForScope } from '../services/agents/agentTaskQue
 import { orchestrate } from '../services/agents/agentOrchestrator'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireBodyPolymorphicScope } from '../authz/recordScope'
 type R = Request & AuthenticatedRequest & TenantRequest
 
 export const agentReadinessRouter = Router()
@@ -43,7 +44,7 @@ agentReadinessRouter.get('/plan/:scope/:id', requireCapability('crossdomain.read
 })
 
 // POST /api/v1/agents/readiness/coordinate
-agentReadinessRouter.post('/coordinate', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
+agentReadinessRouter.post('/coordinate', requireCapability('ai.govern') as never, requireBodyPolymorphicScope('scopeType', 'scopeId') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const { scopeType, scopeId } = req.body as Record<string, string>

@@ -80,6 +80,9 @@ const RECORD_SCOPE_CALLS = [
   'requireTwinScope(',
   'requirePolymorphicScope(',
   'polymorphicCollectionScopeSql(',
+  // ADR-014 Phase 3I: the body-selected polymorphic form, for the AI-governance
+  // routes that name their target in the payload.
+  'requireBodyPolymorphicScope(',
   // ADR-014 Phase 3B: the guard form, for a route whose PATH names the project
   // it operates on. Roughly fifty project-child collections share that shape,
   // so the rule is expressed once as middleware rather than as fifty copies of

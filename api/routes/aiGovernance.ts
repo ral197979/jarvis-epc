@@ -8,6 +8,8 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { requireCapability } from '../authz/requireCapability'
+import { roleHasCapability } from '../authz/capabilities'
+import { resolveCurrentUser } from '../authz/currentUser'
 import {
   listPendingRecommendations,
   queueRecommendation,
@@ -28,7 +30,20 @@ aiGovernanceRouter.use(auth)
 aiGovernanceRouter.get('/recommendations', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as AiReq
   const limit = Math.min(Number(req.query['limit'] ?? 50), 200)
-  const recs = await listPendingRecommendations(r.tenantId!, limit)
+  // ADR-014 Phase 3I §14/§29/§30. `ai.govern` runs the approval queue; it is not
+  // business-data authority (D26). The business columns of a recommendation are
+  // the ones GET /recommendations/:id/preview already gates behind
+  // `crossdomain.read`, so the list gates the same five the same way — omitting
+  // the keys entirely rather than nulling them. The platform administrator
+  // keeps the whole governance workflow and loses only the payload it never had
+  // the authority to read.
+  // The LIVE role, not the token claim: `resolveCurrentUser` reads `users.role`
+  // on every request, which is what makes a revoked role take effect without a
+  // token refresh (§36). Reading `req.auth.role` here would have reintroduced
+  // exactly the stale-capability path the rest of the phase forbids.
+  const principal = await resolveCurrentUser(r as never)
+  const full = !!principal && roleHasCapability(principal.role, 'crossdomain.read')
+  const recs = await listPendingRecommendations(r.tenantId!, limit, full)
   res.json({ data: recs })
 })
 

@@ -15,9 +15,13 @@ interface Recommendation {
   confidence_score:   number
   impact_score:       number
   urgency_score:      number
-  reason:             string
-  data_signals:       string[]
-  affected_entities:  { entity_type: string; entity_id: string; impact: string }[]
+  // ADR-014 Phase 3I: the server omits these three unless the caller holds
+  // `crossdomain.read`. A platform administrator runs the approval queue with
+  // `ai.govern` and legitimately does not receive the business payload, so
+  // every read of them here is optional.
+  reason?:            string
+  data_signals?:      string[]
+  affected_entities?: { entity_type: string; entity_id: string; impact: string }[]
   approval_required:  boolean
   status:             string
   expires_at:         string
@@ -146,7 +150,11 @@ export function AIApprovalCenter({ onApprove, onReject }: AIApprovalCenterProps)
           </div>
 
           {/* Reason */}
-          <div style={{ fontSize: 12, color: '#374151', marginBottom: 8 }}>{rec.reason}</div>
+          <div style={{ fontSize: 12, color: '#374151', marginBottom: 8 }}>
+            {rec.reason ?? <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>
+              Rationale requires cross-domain read access
+            </span>}
+          </div>
 
           {/* Score bars */}
           <div style={{ marginBottom: 8 }}>
@@ -164,19 +172,26 @@ export function AIApprovalCenter({ onApprove, onReject }: AIApprovalCenterProps)
 
           {expanded === rec.id && (
             <div style={{ background: '#f9fafb', borderRadius: 6, padding: '6px 10px', marginBottom: 8 }}>
-              {rec.data_signals.map((s, i) => (
-                <div key={i} style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>• {s}</div>
-              ))}
-              {rec.affected_entities.length > 0 && (
-                <div style={{ marginTop: 6 }}>
-                  <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 4 }}>Affected:</div>
-                  {rec.affected_entities.map((e, i) => (
-                    <div key={i} style={{ fontSize: 11, color: '#374151' }}>
-                      {e.entity_type}: {e.entity_id.slice(0, 8)}… — {e.impact}
-                    </div>
-                  ))}
+              {rec.data_signals === undefined && rec.affected_entities === undefined ? (
+                <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+                  Data signals and affected records require cross-domain read access.
+                  Approval, rejection and expiry remain available.
                 </div>
-              )}
+              ) : (<>
+                {(rec.data_signals ?? []).map((s, i) => (
+                  <div key={i} style={{ fontSize: 11, color: '#6b7280', marginBottom: 2 }}>• {s}</div>
+                ))}
+                {(rec.affected_entities ?? []).length > 0 && (
+                  <div style={{ marginTop: 6 }}>
+                    <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 4 }}>Affected:</div>
+                    {(rec.affected_entities ?? []).map((e, i) => (
+                      <div key={i} style={{ fontSize: 11, color: '#374151' }}>
+                        {e.entity_type}: {e.entity_id.slice(0, 8)}… — {e.impact}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>)}
             </div>
           )}
 

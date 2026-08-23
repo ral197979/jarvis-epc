@@ -21,6 +21,9 @@ import {
 
 const router = Router()
 const tid = (req: Request): string => (req as unknown as { tenantId: string }).tenantId
+/** The live authenticated principal — ADR-014 Phase 3I §24, never a body field. */
+const uid = (req: Request): string | undefined =>
+  (req as unknown as { auth?: { sub?: string } }).auth?.sub
 
 // ─── Resource analysis ────────────────────────────────────────────────────────
 
@@ -61,7 +64,9 @@ router.get('/proposals', requireCapability('crossdomain.read') as never, async (
 
 router.post('/proposals/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
-    const { approvedBy } = req.body
+    // ADR-014 Phase 3I §24: the approver is the live principal, not a body field.
+    const approvedBy = uid(req)
+    if (!approvedBy) return res.status(401).json({ error: 'unauthenticated' })
     const proposal = await approveOptimization(tid(req), req.params.id as string, approvedBy)
     res.json(proposal)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }

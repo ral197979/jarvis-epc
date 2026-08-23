@@ -240,6 +240,10 @@ const RECORD_SCOPE_CALLS = [
   // chosen (kind, id) pair, is authorized against the entity it selects rather
   // than against the row carrying the selector.
   'requireTwinScope(', 'requirePolymorphicScope(', 'polymorphicCollectionScopeSql(',
+  // ADR-014 Phase 3I: the body-selected polymorphic form. The AI-governance
+  // routes name their target as `{ scope, scopeId }` in the payload, which is
+  // the same question against the same registry — only the selector moves.
+  'requireBodyPolymorphicScope(',
 ]
 const recordScopeCallsIn = fragment =>
   RECORD_SCOPE_CALLS.filter(c => fragment.includes(c)).map(c => c.slice(0, -1)).sort()

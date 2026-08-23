@@ -271,15 +271,35 @@ describe('the canonical project-scope source is the one the resolver uses', () =
     // never carries authority. Any OTHER use of req.body in this module — a
     // tenant, a role, a memberOf claim, an early return — would be caller-
     // supplied authorization and must not appear.
+    // ADR-014 Phase 3I added a SECOND body reader — `requireBodyPolymorphicScope`,
+    // for the AI-governance routes that name their target as `{ scope, scopeId }`
+    // in the payload. The invariant under test was never "exactly one function";
+    // it is "every function that reads the body VERIFIES what it read". So the
+    // count is pinned to the known readers and each is required to re-derive its
+    // answer from the database rather than believe the caller.
     const bodyReaders = resolver.split('export function').filter(f => f.includes('req.body'))
-    expect(bodyReaders.length, 'only one function may read the body for scope').toBe(1)
-    expect(bodyReaders[0], 'that function is the body-selected project guard')
-      .toMatch(/requireBodyProjectScope/)
-    expect(bodyReaders[0], 'and what it reads is verified, not believed')
+    expect(bodyReaders.length, 'the body may be read for scope only by known guards').toBe(2)
+
+    const projectReader = bodyReaders.find(f => /requireBodyProjectScope/.test(f))
+    const polyReader    = bodyReaders.find(f => /requireBodyPolymorphicScope/.test(f))
+    expect(projectReader, 'the body-selected project guard still reads the body').toBeTruthy()
+    expect(polyReader, 'the body-selected polymorphic guard is the only addition').toBeTruthy()
+
+    expect(projectReader, 'and what it reads is verified, not believed')
       .toMatch(/canAccessProject\(/)
-    for (const claim of ['memberOf', 'authorized', 'allowedProjects', 'scope']) {
-      expect(bodyReaders[0], `a caller-supplied ${claim} is never authorization evidence`)
-        .not.toMatch(new RegExp(`body\\[?['"\`]?${claim}`))
+    // The polymorphic guard verifies twice over: the KIND is looked up in the
+    // trusted Phase-3H registry (a caller cannot name a table), and the
+    // IDENTIFIER is resolved against the database by the canonical resolver.
+    expect(polyReader, 'the kind is resolved through the trusted registry')
+      .toMatch(/twinScopePolicy\(/)
+    expect(polyReader, 'and the identifier is verified, not believed')
+      .toMatch(/resolvePolymorphicScope\(/)
+    // Neither may short-circuit on something the caller asserted about itself.
+    for (const reader of bodyReaders) {
+      for (const claim of ['memberOf', 'authorized', 'allowedProjects', 'tenantId', 'role']) {
+        expect(reader, `a caller-supplied ${claim} is never authorization evidence`)
+          .not.toMatch(new RegExp(`body\\[?['"\`]?${claim}`))
+      }
     }
     // `requireProjectScope` is an express guard and legitimately reads the route
     // PARAMETER, which is server-controlled routing, not caller-supplied scope.
@@ -414,7 +434,7 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // must not imply full coverage. What remains is the aggregate surface whose
     // capabilities are Owner-only today, and three collections whose returned
     // rows have no record-scope policy at all.
-    expect(scoped).toBe(321)
+    expect(scoped).toBe(325)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only

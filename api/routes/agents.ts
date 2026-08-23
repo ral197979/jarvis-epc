@@ -7,6 +7,7 @@ import { orchestrate, getAvailableObjectives } from '../services/agents/agentOrc
 import { listExecutions, getExecution, getExecutionEvents, getDecisionTraces } from '../services/agents/agentExecutionLedger'
 import { listTasks, getTask } from '../services/agents/agentTaskQueue'
 import { requireCapability } from '../authz/requireCapability'
+import { requireBodyPolymorphicScope } from '../authz/recordScope'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -44,7 +45,7 @@ agentsRouter.get('/objectives', requireCapability('ai.govern') as never, (_req: 
 // required, because the server ignores it — demanding a field that has no
 // effect would misdescribe the contract — and a body that still sends one is
 // accepted with the value discarded.
-agentsRouter.post('/plan', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
+agentsRouter.post('/plan', requireCapability('ai.govern') as never, requireBodyPolymorphicScope('scope', 'scopeId') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { objective, scope, scopeId, context } = req.body
@@ -65,7 +66,7 @@ agentsRouter.post('/plan', requireCapability('ai.govern') as never, async (req: 
 })
 
 // POST /api/v1/agents/execute — execute an objective
-agentsRouter.post('/execute', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
+agentsRouter.post('/execute', requireCapability('ai.govern') as never, requireBodyPolymorphicScope('scope', 'scopeId') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
     const { objective, scope, scopeId, context } = req.body

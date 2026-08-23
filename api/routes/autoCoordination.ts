@@ -35,7 +35,7 @@ router.get('/projects/:projectId/coordination/recommendations', requireAllCapabi
   } catch (err) { res.status(500).json({ error: 'Failed to list recommendations', detail: (err as Error).message }) }
 })
 
-router.post('/coordination/recommendations/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
+router.post('/coordination/recommendations/:id/approve', requireCapability('ai.govern') as never, requireRecordScope('coordination_recommendations') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await approveRecommendation(r.tenantId!, String(req.params.id), r.auth?.sub ?? null)

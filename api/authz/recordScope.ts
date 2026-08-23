@@ -757,6 +757,49 @@ export function requirePolymorphicScope(kindParam: string, idParam: string): Req
 }
 
 /**
+ * The same decision as `requirePolymorphicScope`, for a selector the caller
+ * supplies in the BODY rather than the path (ADR-014 Phase 3I §16, §24).
+ *
+ * The AI-governance surface asks for a target this way — `POST /agents/plan`,
+ * `POST /agents/execute` and `POST /agents/readiness/coordinate` all take
+ * `{ scope, scopeId }` or `{ scopeType, scopeId }` and hand them straight to
+ * the orchestrator, which writes them into the task payload the agent then
+ * acts on. Before Phase 3I nothing authorized that pair, so `ai.govern` alone
+ * chose which project an autonomous agent would work on.
+ *
+ * The selector is not the authority (D24): it names WHAT to authorize, and the
+ * Phase-3H registry decides whether this principal may. Deliberately the SAME
+ * registry — §41 forbids an AI-specific parent rule, so `project` means here
+ * exactly what it means to a twin, and an unmodelled kind (`global`) denies
+ * rather than defaulting to tenant-wide.
+ *
+ * A missing selector is left to the handler's own 400, so this guard never
+ * converts a validation error into an authorization one.
+ */
+export function requireBodyPolymorphicScope(kindField: string, idField: string): RequestHandler {
+  return async (req, res, next): Promise<void> => {
+    const body = (req.body ?? {}) as Record<string, unknown>
+    const kind = body[kindField]
+    const identifier = body[idField]
+    if (kind === undefined || identifier === undefined) { next(); return }
+
+    const principal = await resolveCurrentUser(req as AuthorizedRequest)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+    const policy = twinScopePolicy(typeof kind === 'string' ? kind : '')
+    const decision = await resolvePolymorphicScope(
+      principal, policy, typeof identifier === 'string' ? identifier : undefined,
+    )
+
+    if (decision === 'UNSUPPORTED_KIND') {
+      res.status(400).json({ error: 'unsupported_scope_type' }); return
+    }
+    if (decision !== 'ADMIT') { res.status(404).json({ error: 'not_found' }); return }
+    next()
+  }
+}
+
+/**
  * The authorization predicate for a COLLECTION of rows carrying a polymorphic
  * scope key (ADR-014 Phase 3H §18, §50).
  *

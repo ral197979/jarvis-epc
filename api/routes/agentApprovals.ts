@@ -46,9 +46,14 @@ agentApprovalsRouter.get('/:id', requireCapability('ai.govern') as never, async 
 agentApprovalsRouter.post('/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { reviewedBy, notes } = req.body
+    const { notes } = req.body
+    // ADR-014 Phase 3I §24/§25: the reviewer is the live authenticated
+    // principal, never a body field. `reviewed_by` is the human-in-the-loop
+    // record of record for an AI decision; accepting it from the caller let
+    // any ai.govern holder attribute their own verdict to someone else.
+    const reviewedBy = r.auth?.sub
     if (!reviewedBy) {
-      return res.status(400).json({ error: 'reviewedBy required' })
+      return res.status(401).json({ error: 'unauthenticated' })
     }
 
     const approval = await approveAction(p(req, 'id'), r.tenantId!, reviewedBy, notes)
@@ -66,9 +71,14 @@ agentApprovalsRouter.post('/:id/approve', requireCapability('ai.govern') as neve
 agentApprovalsRouter.post('/:id/reject', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { reviewedBy, notes } = req.body
+    const { notes } = req.body
+    // ADR-014 Phase 3I §24/§25: the reviewer is the live authenticated
+    // principal, never a body field. `reviewed_by` is the human-in-the-loop
+    // record of record for an AI decision; accepting it from the caller let
+    // any ai.govern holder attribute their own verdict to someone else.
+    const reviewedBy = r.auth?.sub
     if (!reviewedBy) {
-      return res.status(400).json({ error: 'reviewedBy required' })
+      return res.status(401).json({ error: 'unauthenticated' })
     }
 
     const approval = await rejectAction(p(req, 'id'), r.tenantId!, reviewedBy, notes)
