@@ -1359,7 +1359,7 @@
       "mountPrefix": "/api/v1/agent-actions",
       "routePath": "/",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 55,
+      "line": 65,
       "serverLine": 556,
       "pathParams": [],
       "guards": [
@@ -1379,7 +1379,7 @@
       "mountPrefix": "/api/v1/agent-actions",
       "routePath": "/_stats",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 36,
+      "line": 37,
       "serverLine": 556,
       "pathParams": [],
       "guards": [
@@ -1389,7 +1389,9 @@
       "capabilities": [
         "ai.govern"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -1399,7 +1401,7 @@
       "mountPrefix": "/api/v1/agent-actions",
       "routePath": "/:id",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 100,
+      "line": 110,
       "serverLine": 556,
       "pathParams": [
         "id"
@@ -1423,7 +1425,7 @@
       "mountPrefix": "/api/v1/agent-actions",
       "routePath": "/:id/review",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 115,
+      "line": 125,
       "serverLine": 556,
       "pathParams": [
         "id"
@@ -3812,7 +3814,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/balance",
       "file": "api/routes/commissioning.ts",
-      "line": 120,
+      "line": 132,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -3902,7 +3904,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/credits",
       "file": "api/routes/commissioning.ts",
-      "line": 137,
+      "line": 149,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -3922,7 +3924,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/finalize",
       "file": "api/routes/commissioning.ts",
-      "line": 356,
+      "line": 368,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -3942,7 +3944,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/generate-draft",
       "file": "api/routes/commissioning.ts",
-      "line": 161,
+      "line": 173,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -3966,7 +3968,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/jobs",
       "file": "api/routes/commissioning.ts",
-      "line": 395,
+      "line": 407,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -3986,7 +3988,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/packs",
       "file": "api/routes/commissioning.ts",
-      "line": 232,
+      "line": 244,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -4008,7 +4010,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/packs/:id",
       "file": "api/routes/commissioning.ts",
-      "line": 292,
+      "line": 304,
       "serverLine": 547,
       "pathParams": [
         "id"
@@ -4032,7 +4034,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/packs/:id/download/:format",
       "file": "api/routes/commissioning.ts",
-      "line": 427,
+      "line": 439,
       "serverLine": 547,
       "pathParams": [
         "id",
@@ -4057,7 +4059,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/packs/:id/review",
       "file": "api/routes/commissioning.ts",
-      "line": 326,
+      "line": 338,
       "serverLine": 547,
       "pathParams": [
         "id"
@@ -4081,7 +4083,7 @@
       "mountPrefix": "/api/v1/commissioning",
       "routePath": "/packs/manual",
       "file": "api/routes/commissioning.ts",
-      "line": 207,
+      "line": 219,
       "serverLine": 547,
       "pathParams": [],
       "guards": [
@@ -4115,7 +4117,9 @@
       "capabilities": [
         "commissioning.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7620,7 +7624,9 @@
       "capabilities": [
         "docs.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -7630,7 +7636,7 @@
       "mountPrefix": "/api/v1/files",
       "routePath": "/folders",
       "file": "api/routes/files.ts",
-      "line": 448,
+      "line": 462,
       "serverLine": 539,
       "pathParams": [],
       "guards": [
@@ -9421,7 +9427,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/blockers",
       "file": "api/routes/ops.ts",
-      "line": 145,
+      "line": 166,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9441,7 +9447,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/escalate",
       "file": "api/routes/ops.ts",
-      "line": 211,
+      "line": 232,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9461,7 +9467,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/escalations",
       "file": "api/routes/ops.ts",
-      "line": 120,
+      "line": 141,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9481,7 +9487,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/freeze",
       "file": "api/routes/ops.ts",
-      "line": 247,
+      "line": 268,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9501,7 +9507,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/incident",
       "file": "api/routes/ops.ts",
-      "line": 309,
+      "line": 330,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9525,7 +9531,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/live-feed",
       "file": "api/routes/ops.ts",
-      "line": 81,
+      "line": 83,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9545,7 +9551,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/overview",
       "file": "api/routes/ops.ts",
-      "line": 31,
+      "line": 33,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9565,7 +9571,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/readiness",
       "file": "api/routes/ops.ts",
-      "line": 96,
+      "line": 98,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9576,7 +9582,9 @@
         "project.view",
         "quality.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "projectScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -9586,7 +9594,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/reassign",
       "file": "api/routes/ops.ts",
-      "line": 170,
+      "line": 191,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9606,7 +9614,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/recommendations",
       "file": "api/routes/ops.ts",
-      "line": 334,
+      "line": 355,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -9626,7 +9634,7 @@
       "mountPrefix": "/api/v1/ops",
       "routePath": "/unfreeze",
       "file": "api/routes/ops.ts",
-      "line": 281,
+      "line": 302,
       "serverLine": 590,
       "pathParams": [],
       "guards": [
@@ -12509,7 +12517,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/team",
       "file": "api/routes/team.ts",
-      "line": 97,
+      "line": 122,
       "serverLine": 627,
       "pathParams": [
         "projectId"
@@ -12557,7 +12565,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 47,
+      "line": 48,
       "serverLine": 630,
       "pathParams": [
         "projectId"
@@ -12581,7 +12589,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 37,
+      "line": 38,
       "serverLine": 630,
       "pathParams": [
         "projectId"
@@ -12605,7 +12613,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/timesheets/summary",
       "file": "api/routes/timesheets.ts",
-      "line": 59,
+      "line": 60,
       "serverLine": 630,
       "pathParams": [
         "projectId"
@@ -15142,7 +15150,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/assignments",
       "file": "api/routes/team.ts",
-      "line": 87,
+      "line": 112,
       "serverLine": 627,
       "pathParams": [],
       "guards": [
@@ -15166,7 +15174,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/assignments/:id/end",
       "file": "api/routes/team.ts",
-      "line": 103,
+      "line": 128,
       "serverLine": 627,
       "pathParams": [
         "id"
@@ -15190,7 +15198,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/members",
       "file": "api/routes/team.ts",
-      "line": 52,
+      "line": 53,
       "serverLine": 627,
       "pathParams": [],
       "guards": [
@@ -15210,7 +15218,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/members",
       "file": "api/routes/team.ts",
-      "line": 42,
+      "line": 43,
       "serverLine": 627,
       "pathParams": [],
       "guards": [
@@ -15230,7 +15238,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 63,
+      "line": 64,
       "serverLine": 627,
       "pathParams": [
         "id"
@@ -15242,7 +15250,9 @@
       "capabilities": [
         "team.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15252,7 +15262,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 72,
+      "line": 84,
       "serverLine": 627,
       "pathParams": [
         "id"
@@ -15274,7 +15284,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/members/:id/assignments",
       "file": "api/routes/team.ts",
-      "line": 81,
+      "line": 93,
       "serverLine": 627,
       "pathParams": [
         "id"
@@ -15286,7 +15296,9 @@
       "capabilities": [
         "team.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15296,7 +15308,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/members/:memberId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 67,
+      "line": 68,
       "serverLine": 630,
       "pathParams": [
         "memberId"
@@ -15308,7 +15320,9 @@
       "capabilities": [
         "team.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15318,7 +15332,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/team/summary",
       "file": "api/routes/team.ts",
-      "line": 36,
+      "line": 37,
       "serverLine": 627,
       "pathParams": [],
       "guards": [
@@ -15613,7 +15627,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/timesheets/:id/approve",
       "file": "api/routes/timesheets.ts",
-      "line": 84,
+      "line": 94,
       "serverLine": 630,
       "pathParams": [
         "id"
@@ -15637,7 +15651,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/timesheets/:id/reject",
       "file": "api/routes/timesheets.ts",
-      "line": 93,
+      "line": 103,
       "serverLine": 630,
       "pathParams": [
         "id"
@@ -15661,7 +15675,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/timesheets/:id/submit",
       "file": "api/routes/timesheets.ts",
-      "line": 75,
+      "line": 85,
       "serverLine": 630,
       "pathParams": [
         "id"

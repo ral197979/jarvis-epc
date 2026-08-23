@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `3eee4e5cd7f5542ddd57551fd457c1ff0acf1d89`.**
+**Generated from checked-in source at `dd734a627f517da21107adf2de97a7d62ea0b472`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
@@ -13,7 +13,7 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 > read from source: the capability guard in force on each route, and whether the
 > handler calls the canonical record-scope layer. At this commit
 > `729` endpoints carry a capability guard and
-> `308` enforce record scope.
+> `315` enforce record scope.
 
 ## 1. Join against the Phase-2 census
 
@@ -46,11 +46,11 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 | Disposition | Endpoints | Of which mutations |
 |---|---|---|
 | `TENANT_GLOBAL` | 253 | 137 |
-| `PROJECT_CHILD_RECORD_ID` | 187 | 127 |
+| `PROJECT_CHILD_RECORD_ID` | 184 | 127 |
 | `PROJECT_CHILD_PATH_PROJECT` | 104 | 39 |
 | `PROJECT_CHILD_TENANT_COLLECTION` | 45 | 0 |
 | `PLATFORM_GLOBAL` | 40 | 18 |
-| `NO_PROJECT_PARENT` | 36 | 29 |
+| `NO_PROJECT_PARENT` | 39 | 29 |
 | `SERVICE_BOUNDARY` | 31 | 17 |
 | `UNRESOLVED_DATA_ACCESS` | 31 | 13 |
 | `SELF_SCOPED` | 16 | 9 |
@@ -85,14 +85,14 @@ close, now measured rather than asserted.
 |---|---|---|
 | `READ_COLLECTION` | 108 | 0 |
 | `MUTATION_CREATE` | 84 | 7 |
-| `READ_DIRECT_ID` | 63 | 0 |
+| `READ_DIRECT_ID` | 60 | 0 |
 | `MUTATION_UPDATE` | 44 | 0 |
 | `MUTATION_CONSEQUENTIAL` | 31 | 0 |
 | `MUTATION_DELETE` | 23 | 1 |
 
 ## 4. HOB §9 — direct-ID read inventory
 
-63 project-bound direct-ID reads, of
+60 project-bound direct-ID reads, of
 132 direct-ID reads overall. The three surfaces HOB §8 names as
 mandatory Phase-3C candidates are all present, and every method on those paths is
 confirmed unscoped:
@@ -108,7 +108,7 @@ confirmed unscoped:
 | POST | `/api/v1/punch-lists/:id/items` | `actions` | DIRECT_COLUMN | **no** |
 
 HOB §9 asks whether more identical bypasses exist beyond those three. They do:
-**63** project-bound direct-ID reads in total, none of which scope by
+**60** project-bound direct-ID reads in total, none of which scope by
 project. The full list is in `scope-classification.json`; the first 20:
 
 | Method | Path | Table | Guards |
@@ -118,7 +118,7 @@ project. The full list is in `scope-classification.json`; the first 20:
 | GET | `/api/v1/actions/:id/timeline` | `action_events` | requireAuth + requireTenant |
 | GET | `/api/v1/agent-actions/:id` | `agent_actions` | requireAuth + requireTenant |
 | GET | `/api/v1/ask/chunks/:id` | `knowledge_chunks` | requireAuth + requireTenant |
-| GET | `/api/v1/ask/sessions/:id` | `chat_messages` | requireAuth + requireTenant |
+| GET | `/api/v1/ask/sessions/:id` | `chat_sessions` | requireAuth + requireTenant |
 | GET | `/api/v1/bid-packages/:id` | `bid_packages` | requireAuth + requireTenant |
 | GET | `/api/v1/bid-packages/:id/submissions` | `bid_submissions` | requireAuth + requireTenant |
 | GET | `/api/v1/bim-models/:id` | `bim_models` | requireAuth + requireTenant |

@@ -5,9 +5,9 @@
     "DISPOSITIONS": {
       "SERVICE_BOUNDARY": 31,
       "TENANT_GLOBAL": 253,
-      "NO_PROJECT_PARENT": 36,
+      "NO_PROJECT_PARENT": 39,
       "PROJECT_CHILD_TENANT_COLLECTION": 45,
-      "PROJECT_CHILD_RECORD_ID": 187,
+      "PROJECT_CHILD_RECORD_ID": 184,
       "UNRESOLVED_DATA_ACCESS": 31,
       "SELF_SCOPED": 16,
       "PROJECT_CHILD_BODY_PROJECT": 13,
@@ -20,10 +20,10 @@
       "PUBLIC_UNAUTHENTICATED": 1
     },
     "UNEXPLAINED": 0,
-    "PROJECT_BOUND_TOTAL": 353,
+    "PROJECT_BOUND_TOTAL": 350,
     "PROJECT_BOUND_BY_OPERATION": {
       "READ_COLLECTION": 108,
-      "READ_DIRECT_ID": 63,
+      "READ_DIRECT_ID": 60,
       "MUTATION_UPDATE": 44,
       "MUTATION_CREATE": 84,
       "MUTATION_DELETE": 23,
@@ -52,7 +52,7 @@
     },
     "DIRECT_ID_READS": {
       "total": 132,
-      "projectBound": 63
+      "projectBound": 60
     },
     "READ_COLLECTIONS": {
       "total": 225,
@@ -65,23 +65,23 @@
       "unguarded": 36
     },
     "RECORD_SCOPE": {
-      "candidates": 353,
-      "protected": 306,
-      "deferred": 47,
+      "candidates": 350,
+      "protected": 311,
+      "deferred": 39,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 308,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 315,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "READ_DIRECT_ID": 53,
+      "READ_DIRECT_ID": 55,
       "MUTATION_CREATE": 78,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
       "MUTATION_UPDATE": 43,
-      "READ_COLLECTION": 79
+      "READ_COLLECTION": 82
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
-      "READ_COLLECTION": 29,
-      "READ_DIRECT_ID": 10,
+      "READ_COLLECTION": 26,
+      "READ_DIRECT_ID": 5,
       "MUTATION_UPDATE": 1,
       "MUTATION_CREATE": 6,
       "MUTATION_DELETE": 1
@@ -220,7 +220,7 @@
       "line": 386,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -254,7 +254,7 @@
       "line": 418,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -322,7 +322,7 @@
       "line": 712,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -361,7 +361,7 @@
       "line": 683,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -402,7 +402,7 @@
       "line": 770,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -445,7 +445,7 @@
       "line": 784,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -488,7 +488,7 @@
       "line": 746,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -539,19 +539,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "action_escalations",
+      "primaryTable": "actions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -578,14 +573,12 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "actions",
+      "primaryTable": "action_analytics_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -751,19 +744,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "action_escalations",
+      "primaryTable": "actions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -790,19 +778,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "action_escalations",
+      "primaryTable": "actions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -829,19 +812,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "action_escalations",
+      "primaryTable": "actions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -856,7 +834,7 @@
       "line": 722,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -2310,7 +2288,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 55,
+      "line": 65,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -2344,7 +2322,7 @@
       "method": "GET",
       "path": "/api/v1/agent-actions/_stats",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 36,
+      "line": 37,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -2357,8 +2335,10 @@
         "ai.govern"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": null,
       "writeTables": [],
       "writeScopeColumns": [],
@@ -2374,10 +2354,10 @@
       "method": "GET",
       "path": "/api/v1/agent-actions/:id",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 100,
+      "line": 110,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -2410,10 +2390,10 @@
       "method": "POST",
       "path": "/api/v1/agent-actions/:id/review",
       "file": "api/routes/agentActionsRoutes.ts",
-      "line": 115,
+      "line": 125,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -2780,7 +2760,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "agent_decision_traces",
+      "primaryTable": "agent_executions",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -3355,7 +3335,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "ai_approval_events",
+      "primaryTable": "ai_recommendation_queue",
       "writeTables": [
         "ai_approval_events"
       ],
@@ -3625,7 +3605,7 @@
       "line": 211,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -3700,7 +3680,7 @@
       "line": 196,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -3741,7 +3721,7 @@
       "line": 141,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -3753,19 +3733,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "chat_messages",
+      "primaryTable": "chat_sessions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "session_id",
-            "table": "chat_sessions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -4051,7 +4026,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "audit_integrity_snapshots",
+      "primaryTable": "realtime_event_log",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -4354,7 +4329,7 @@
       "line": 88,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4390,7 +4365,7 @@
       "line": 115,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4430,7 +4405,7 @@
       "line": 106,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4470,7 +4445,7 @@
       "line": 97,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4510,7 +4485,7 @@
       "line": 126,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4551,7 +4526,7 @@
       "line": 134,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4594,7 +4569,7 @@
       "line": 144,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4637,7 +4612,7 @@
       "line": 189,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4677,7 +4652,7 @@
       "line": 103,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4717,7 +4692,7 @@
       "line": 69,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4753,7 +4728,7 @@
       "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4793,7 +4768,7 @@
       "line": 118,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -4913,7 +4888,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "bim_element_links",
+      "primaryTable": "bim_elements",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -4967,7 +4942,7 @@
       "line": 71,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5208,7 +5183,7 @@
       "line": 145,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5253,7 +5228,7 @@
       "line": 125,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5298,7 +5273,7 @@
       "line": 67,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5338,7 +5313,7 @@
       "line": 87,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5379,7 +5354,7 @@
       "line": 100,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5422,7 +5397,7 @@
       "line": 129,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5462,7 +5437,7 @@
       "line": 95,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5498,7 +5473,7 @@
       "line": 112,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5538,7 +5513,7 @@
       "line": 89,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5578,7 +5553,7 @@
       "line": 100,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5618,7 +5593,7 @@
       "line": 93,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5654,7 +5629,7 @@
       "line": 106,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5694,7 +5669,7 @@
       "line": 135,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5734,7 +5709,7 @@
       "line": 147,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5774,7 +5749,7 @@
       "line": 119,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5814,7 +5789,7 @@
       "line": 172,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5855,7 +5830,7 @@
       "line": 182,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5898,7 +5873,7 @@
       "line": 196,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -5943,7 +5918,7 @@
       "line": 159,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6019,7 +5994,7 @@
       "line": 92,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6131,7 +6106,7 @@
       "line": 187,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6171,7 +6146,7 @@
       "line": 159,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6245,7 +6220,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/balance",
       "file": "api/routes/commissioning.ts",
-      "line": 120,
+      "line": 132,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -6314,7 +6289,7 @@
       "line": 111,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6354,7 +6329,7 @@
       "line": 87,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6387,7 +6362,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/credits",
       "file": "api/routes/commissioning.ts",
-      "line": 137,
+      "line": 149,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -6421,7 +6396,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/finalize",
       "file": "api/routes/commissioning.ts",
-      "line": 356,
+      "line": 368,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -6457,7 +6432,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/generate-draft",
       "file": "api/routes/commissioning.ts",
-      "line": 161,
+      "line": 173,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -6495,7 +6470,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/jobs",
       "file": "api/routes/commissioning.ts",
-      "line": 395,
+      "line": 407,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -6527,7 +6502,7 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs",
       "file": "api/routes/commissioning.ts",
-      "line": 232,
+      "line": 244,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -6563,10 +6538,10 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs/:id",
       "file": "api/routes/commissioning.ts",
-      "line": 292,
+      "line": 304,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6599,10 +6574,10 @@
       "method": "GET",
       "path": "/api/v1/commissioning/packs/:id/download/:format",
       "file": "api/routes/commissioning.ts",
-      "line": 427,
+      "line": 439,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6635,10 +6610,10 @@
       "method": "PATCH",
       "path": "/api/v1/commissioning/packs/:id/review",
       "file": "api/routes/commissioning.ts",
-      "line": 326,
+      "line": 338,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6675,7 +6650,7 @@
       "method": "POST",
       "path": "/api/v1/commissioning/packs/manual",
       "file": "api/routes/commissioning.ts",
-      "line": 207,
+      "line": 219,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -6728,8 +6703,10 @@
         "commissioning.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "source_uploads",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -6743,7 +6720,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
@@ -6865,7 +6842,7 @@
       "line": 240,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6905,7 +6882,7 @@
       "line": 98,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6941,7 +6918,7 @@
       "line": 160,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -6981,7 +6958,7 @@
       "line": 197,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7021,7 +6998,7 @@
       "line": 219,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7097,7 +7074,7 @@
       "line": 48,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7225,14 +7202,13 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "actions",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -7266,19 +7242,13 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "action_relations",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "source_action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -7312,14 +7282,13 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "actions",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -7476,7 +7445,7 @@
       "line": 98,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7516,7 +7485,7 @@
       "line": 80,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7552,7 +7521,7 @@
       "line": 89,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7592,7 +7561,7 @@
       "line": 107,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7633,7 +7602,7 @@
       "line": 116,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7705,7 +7674,7 @@
       "line": 143,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7745,7 +7714,7 @@
       "line": 103,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7781,7 +7750,7 @@
       "line": 117,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7821,7 +7790,7 @@
       "line": 169,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7861,7 +7830,7 @@
       "line": 155,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7937,7 +7906,7 @@
       "line": 84,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -7977,7 +7946,7 @@
       "line": 116,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -8017,7 +7986,7 @@
       "line": 83,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -8053,7 +8022,7 @@
       "line": 96,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -8093,7 +8062,7 @@
       "line": 166,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -8134,7 +8103,7 @@
       "line": 185,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -8177,7 +8146,7 @@
       "line": 129,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -8218,7 +8187,7 @@
       "line": 142,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -9305,7 +9274,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "playbook_versions",
+      "primaryTable": "marketplace_playbooks",
       "writeTables": [
         "playbook_versions"
       ],
@@ -10402,7 +10371,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "tenant_feature_flags",
+      "primaryTable": "tenant_subscriptions",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -10725,7 +10694,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "tenant_feature_flags",
+      "primaryTable": "tenant_subscriptions",
       "writeTables": [
         "tenant_feature_flags"
       ],
@@ -11342,7 +11311,7 @@
       "line": 243,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -11378,7 +11347,7 @@
       "line": 269,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -11418,7 +11387,7 @@
       "line": 254,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -11608,7 +11577,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "evidence_assets",
+      "primaryTable": "evidence_links",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -11696,7 +11665,7 @@
       "line": 78,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -11913,14 +11882,13 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "actions",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -12170,7 +12138,7 @@
       "line": 232,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12250,7 +12218,7 @@
       "line": 411,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12290,7 +12258,7 @@
       "line": 364,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12326,7 +12294,7 @@
       "line": 387,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12405,8 +12373,10 @@
         "docs.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "document_folders",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -12420,13 +12390,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/files/folders",
       "file": "api/routes/files.ts",
-      "line": 448,
+      "line": 462,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -12469,7 +12439,7 @@
       "line": 279,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12655,7 +12625,7 @@
       "line": 219,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12691,7 +12661,7 @@
       "line": 239,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -12731,7 +12701,7 @@
       "line": 266,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13354,7 +13324,7 @@
       "line": 228,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13394,7 +13364,7 @@
       "line": 164,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13430,7 +13400,7 @@
       "line": 174,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13470,7 +13440,7 @@
       "line": 209,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13819,7 +13789,7 @@
       "line": 481,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13859,7 +13829,7 @@
       "line": 273,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13895,7 +13865,7 @@
       "line": 288,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13936,7 +13906,7 @@
       "line": 376,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -13972,7 +13942,7 @@
       "line": 338,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14008,7 +13978,7 @@
       "line": 318,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14052,7 +14022,7 @@
       "line": 227,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14097,7 +14067,7 @@
       "line": 203,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14433,7 +14403,7 @@
       "line": 73,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14469,7 +14439,7 @@
       "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14509,7 +14479,7 @@
       "line": 148,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14585,7 +14555,7 @@
       "line": 111,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14626,7 +14596,7 @@
       "line": 119,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14669,7 +14639,7 @@
       "line": 138,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14714,7 +14684,7 @@
       "line": 129,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14759,7 +14729,7 @@
       "line": 100,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14799,7 +14769,7 @@
       "line": 91,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14916,7 +14886,7 @@
       "line": 69,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -14998,7 +14968,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "actions",
+      "primaryTable": "rfis",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "DIRECT_COLUMN",
@@ -15020,7 +14990,7 @@
       "line": 50,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -15060,7 +15030,7 @@
       "line": 72,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -15096,7 +15066,7 @@
       "line": 78,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -15134,7 +15104,7 @@
       "line": 63,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -15186,7 +15156,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "notifications",
+      "primaryTable": "notification_deliveries",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -15397,7 +15367,7 @@
       "method": "GET",
       "path": "/api/v1/ops/blockers",
       "file": "api/routes/ops.ts",
-      "line": 145,
+      "line": 166,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -15412,19 +15382,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "action_relations",
+      "primaryTable": "actions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "source_action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -15436,7 +15401,7 @@
       "method": "POST",
       "path": "/api/v1/ops/escalate",
       "file": "api/routes/ops.ts",
-      "line": 211,
+      "line": 232,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15475,7 +15440,7 @@
       "method": "GET",
       "path": "/api/v1/ops/escalations",
       "file": "api/routes/ops.ts",
-      "line": 120,
+      "line": 141,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -15509,7 +15474,7 @@
       "method": "POST",
       "path": "/api/v1/ops/freeze",
       "file": "api/routes/ops.ts",
-      "line": 247,
+      "line": 268,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15553,7 +15518,7 @@
       "method": "POST",
       "path": "/api/v1/ops/incident",
       "file": "api/routes/ops.ts",
-      "line": 309,
+      "line": 330,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -15593,7 +15558,7 @@
       "method": "GET",
       "path": "/api/v1/ops/live-feed",
       "file": "api/routes/ops.ts",
-      "line": 81,
+      "line": 83,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -15623,7 +15588,7 @@
       "method": "GET",
       "path": "/api/v1/ops/overview",
       "file": "api/routes/ops.ts",
-      "line": 31,
+      "line": 33,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -15662,7 +15627,7 @@
       "method": "GET",
       "path": "/api/v1/ops/readiness",
       "file": "api/routes/ops.ts",
-      "line": 96,
+      "line": 98,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -15676,33 +15641,29 @@
         "quality.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
-      "primaryTable": "action_relations",
+      "recordScopeCalls": [
+        "projectScopeSql"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "source_action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "POST",
       "path": "/api/v1/ops/reassign",
       "file": "api/routes/ops.ts",
-      "line": 170,
+      "line": 191,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -15741,7 +15702,7 @@
       "method": "GET",
       "path": "/api/v1/ops/recommendations",
       "file": "api/routes/ops.ts",
-      "line": 334,
+      "line": 355,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -15756,19 +15717,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "action_relations",
+      "primaryTable": "actions",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "source_action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -15780,7 +15736,7 @@
       "method": "POST",
       "path": "/api/v1/ops/unfreeze",
       "file": "api/routes/ops.ts",
-      "line": 281,
+      "line": 302,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -16182,7 +16138,7 @@
       "line": 91,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -16218,7 +16174,7 @@
       "line": 147,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -16258,7 +16214,7 @@
       "line": 100,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -16301,7 +16257,7 @@
       "line": 126,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -16452,7 +16408,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "governance_policies",
+      "primaryTable": "policy_audit_log",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -16537,7 +16493,7 @@
       "line": 127,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -16721,16 +16677,14 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "actions",
+      "primaryTable": "operational_forecasts",
       "writeTables": [
         "operational_forecasts"
       ],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -16789,14 +16743,12 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "deficiencies",
+      "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -16842,9 +16794,9 @@
       "file": "api/routes/portfolio.ts",
       "line": 26,
       "operationType": "READ_DIRECT_ID",
-      "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
-      "projectBound": true,
+      "disposition": "NO_PROJECT_PARENT",
+      "dispositionReason": "tables resolved, and none of them reaches a project",
+      "projectBound": false,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -16855,22 +16807,20 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "actions",
+      "primaryTable": "operational_forecasts",
       "writeTables": [
         "operational_forecasts"
       ],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
     },
     {
       "method": "GET",
@@ -16912,7 +16862,7 @@
       "line": 35,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -17070,13 +17020,14 @@
         "canAccessProject"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "projects",
+      "primaryTable": "submittals",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "PROJECT_ROOT",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "PROJECT_ROOT",
-        "column": "id"
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -17489,7 +17440,7 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "bid_packages",
+      "primaryTable": "subcontracts",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "DIRECT_COLUMN",
@@ -17748,15 +17699,11 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "budgets",
+      "primaryTable": "budget_rollup",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
-      "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
-      },
+      "projectScopeStrategy": "UNKNOWN_TABLE",
+      "projectParent": null,
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
@@ -17936,7 +17883,7 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "evm_actuals",
+      "primaryTable": "change_orders",
       "writeTables": [
         "evm_actuals"
       ],
@@ -18129,7 +18076,7 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "change_orders",
+      "primaryTable": "evm_baselines",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "DIRECT_COLUMN",
@@ -18275,14 +18222,13 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "change_orders",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -18680,7 +18626,7 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "evm_actuals",
+      "primaryTable": "evm_wbs_entries",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "DIRECT_COLUMN",
@@ -18831,14 +18777,13 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "inspections",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -19126,14 +19071,13 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "corrective_actions",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -19538,14 +19482,13 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "inspections",
+      "primaryTable": "projects",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "PROJECT_ROOT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "PROJECT_ROOT",
+        "column": "id"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -20309,7 +20252,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/team",
       "file": "api/routes/team.ts",
-      "line": 97,
+      "line": 122,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20381,7 +20324,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 47,
+      "line": 48,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20417,7 +20360,7 @@
       "method": "PUT",
       "path": "/api/v1/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 37,
+      "line": 38,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -20455,7 +20398,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/timesheets/summary",
       "file": "api/routes/timesheets.ts",
-      "line": 59,
+      "line": 60,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -21030,7 +20973,7 @@
       "line": 310,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21070,7 +21013,7 @@
       "line": 252,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21110,7 +21053,7 @@
       "line": 292,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21150,7 +21093,7 @@
       "line": 274,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21190,7 +21133,7 @@
       "line": 140,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21230,7 +21173,7 @@
       "line": 93,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21266,7 +21209,7 @@
       "line": 118,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21306,7 +21249,7 @@
       "line": 153,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21342,7 +21285,7 @@
       "line": 186,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21453,7 +21396,7 @@
       "line": 212,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21489,7 +21432,7 @@
       "line": 248,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21529,7 +21472,7 @@
       "line": 270,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21582,13 +21525,12 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "projects",
+      "primaryTable": "readiness_scores",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "PROJECT_ROOT",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "PROJECT_ROOT",
-        "column": "id"
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -21603,7 +21545,7 @@
       "line": 23,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21676,7 +21618,7 @@
       "line": 67,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21691,21 +21633,16 @@
         "requireRecordScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "action_relations",
+      "primaryTable": "actions",
       "writeTables": [
         "readiness_scores"
       ],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "source_action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -21720,7 +21657,7 @@
       "line": 49,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21759,7 +21696,7 @@
       "line": 50,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21867,7 +21804,7 @@
       "line": 21,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21882,19 +21819,14 @@
         "requireRecordScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "action_relations",
+      "primaryTable": "rfis",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "source_action_id",
-            "table": "actions",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -21909,7 +21841,7 @@
       "line": 369,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21949,7 +21881,7 @@
       "line": 65,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -21985,7 +21917,7 @@
       "line": 74,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22023,7 +21955,7 @@
       "line": 83,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22263,7 +22195,7 @@
       "line": 108,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth"
@@ -22307,7 +22239,7 @@
       "line": 77,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22347,7 +22279,7 @@
       "line": 48,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22387,7 +22319,7 @@
       "line": 226,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22432,7 +22364,7 @@
       "line": 236,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22477,7 +22409,7 @@
       "line": 217,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22692,7 +22624,7 @@
       "line": 74,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -22898,19 +22830,14 @@
         "requireProjectScope"
       ],
       "enforcesRecordScope": true,
-      "primaryTable": "schedule_dependencies",
+      "primaryTable": "schedule_tasks",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "FK_PATH",
+      "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
-        "strategy": "FK_PATH",
-        "path": [
-          {
-            "via": "predecessor_id",
-            "table": "schedule_tasks",
-            "column": "project_id"
-          }
-        ]
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -23182,7 +23109,7 @@
       "line": 175,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23227,7 +23154,7 @@
       "line": 110,
       "operationType": "MUTATION_DELETE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23267,7 +23194,7 @@
       "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23445,7 +23372,7 @@
       "line": 144,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23481,7 +23408,7 @@
       "line": 162,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23522,7 +23449,7 @@
       "line": 153,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23562,7 +23489,7 @@
       "line": 244,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23603,7 +23530,7 @@
       "line": 182,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23812,7 +23739,7 @@
       "line": 175,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23848,7 +23775,7 @@
       "line": 209,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23889,7 +23816,7 @@
       "line": 197,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -23932,7 +23859,7 @@
       "line": 184,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24045,7 +23972,7 @@
       "line": 455,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24085,7 +24012,7 @@
       "line": 21,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24121,7 +24048,7 @@
       "line": 489,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24161,7 +24088,7 @@
       "line": 125,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24402,7 +24329,7 @@
       "line": 87,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24442,7 +24369,7 @@
       "line": 103,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24480,7 +24407,7 @@
       "line": 148,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24518,7 +24445,7 @@
       "line": 175,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24555,7 +24482,7 @@
       "method": "POST",
       "path": "/api/v1/team/assignments",
       "file": "api/routes/team.ts",
-      "line": 87,
+      "line": 112,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -24595,10 +24522,10 @@
       "method": "POST",
       "path": "/api/v1/team/assignments/:id/end",
       "file": "api/routes/team.ts",
-      "line": 103,
+      "line": 128,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24635,7 +24562,7 @@
       "method": "GET",
       "path": "/api/v1/team/members",
       "file": "api/routes/team.ts",
-      "line": 52,
+      "line": 53,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24650,14 +24577,12 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "project_assignments",
+      "primaryTable": "team_members",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -24669,7 +24594,7 @@
       "method": "POST",
       "path": "/api/v1/team/members",
       "file": "api/routes/team.ts",
-      "line": 42,
+      "line": 43,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -24703,11 +24628,11 @@
       "method": "GET",
       "path": "/api/v1/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 63,
+      "line": 64,
       "operationType": "READ_DIRECT_ID",
-      "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
-      "projectBound": true,
+      "disposition": "NO_PROJECT_PARENT",
+      "dispositionReason": "tables resolved, and none of them reaches a project",
+      "projectBound": false,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -24716,28 +24641,28 @@
         "team.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
-      "primaryTable": "project_assignments",
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "team_members",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
     },
     {
       "method": "PATCH",
       "path": "/api/v1/team/members/:id",
       "file": "api/routes/team.ts",
-      "line": 72,
+      "line": 84,
       "operationType": "MUTATION_UPDATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -24773,10 +24698,10 @@
       "method": "GET",
       "path": "/api/v1/team/members/:id/assignments",
       "file": "api/routes/team.ts",
-      "line": 81,
+      "line": 93,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24786,8 +24711,10 @@
         "team.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "project_assignments",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -24801,16 +24728,16 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/team/members/:memberId/timesheets",
       "file": "api/routes/timesheets.ts",
-      "line": 67,
+      "line": 68,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -24820,8 +24747,10 @@
         "team.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "timesheets",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -24835,13 +24764,13 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "PROTECTED_PHASE3"
     },
     {
       "method": "GET",
       "path": "/api/v1/team/summary",
       "file": "api/routes/team.ts",
-      "line": 36,
+      "line": 37,
       "operationType": "READ_COLLECTION",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -24856,14 +24785,12 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "project_assignments",
+      "primaryTable": "team_members",
       "writeTables": [],
       "writeScopeColumns": [],
-      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
-        "strategy": "DIRECT_COLUMN",
-        "column": "project_id",
-        "nullable": null
+        "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": false,
@@ -24990,7 +24917,7 @@
       "hasCapability": true,
       "recordScopeCalls": [],
       "enforcesRecordScope": false,
-      "primaryTable": "tenants",
+      "primaryTable": "users",
       "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
@@ -25184,7 +25111,7 @@
       "line": 90,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25220,7 +25147,7 @@
       "line": 98,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25296,7 +25223,7 @@
       "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25333,10 +25260,10 @@
       "method": "POST",
       "path": "/api/v1/timesheets/:id/approve",
       "file": "api/routes/timesheets.ts",
-      "line": 84,
+      "line": 94,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25375,10 +25302,10 @@
       "method": "POST",
       "path": "/api/v1/timesheets/:id/reject",
       "file": "api/routes/timesheets.ts",
-      "line": 93,
+      "line": 103,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25415,10 +25342,10 @@
       "method": "POST",
       "path": "/api/v1/timesheets/:id/submit",
       "file": "api/routes/timesheets.ts",
-      "line": 75,
+      "line": 85,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25532,7 +25459,7 @@
       "line": 109,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25568,7 +25495,7 @@
       "line": 145,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25609,7 +25536,7 @@
       "line": 130,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25650,7 +25577,7 @@
       "line": 120,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25727,7 +25654,7 @@
       "line": 40,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -25767,7 +25694,7 @@
       "line": 51,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
       "projectBound": true,
       "functionalAuthority": [
         "requireAuth",
@@ -26530,9 +26457,9 @@
       "file": "api/routes/procurement.ts",
       "line": 77,
       "operationType": "READ_DIRECT_ID",
-      "disposition": "PROJECT_CHILD_RECORD_ID",
-      "dispositionReason": "child record addressed by its own id; the record's table reaches a project",
-      "projectBound": true,
+      "disposition": "NO_PROJECT_PARENT",
+      "dispositionReason": "tables resolved, and none of them reaches a project",
+      "projectBound": false,
       "functionalAuthority": [
         "requireAuth",
         "requireTenant"
@@ -26554,7 +26481,7 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL",
-      "status": "CANDIDATE_PHASE3C"
+      "status": "OUT_OF_PHASE3C_NO_PROJECT_PARENT"
     },
     {
       "method": "PATCH",
