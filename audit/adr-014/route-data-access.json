@@ -4160,7 +4160,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/ava-estimate",
       "file": "api/routes/estimating.ts",
-      "line": 285,
+      "line": 286,
       "pathParams": [
         "modelId"
       ],
@@ -4279,14 +4279,20 @@
         {
           "op": "INSERT",
           "table": "bim_element_links",
-          "scopeColumns": [],
+          "scopeColumns": [
+            "tenant_id"
+          ],
           "viaFunction": "linkElementToEntity",
           "inFile": "api/services/bim/bimElementService.ts"
         }
       ],
-      "reads": [],
-      "readsFrom": [],
-      "primaryReadTable": null,
+      "reads": [
+        "bim_elements"
+      ],
+      "readsFrom": [
+        "bim_elements"
+      ],
+      "primaryReadTable": "bim_elements",
       "writeTables": [
         "bim_element_links"
       ],
@@ -4407,7 +4413,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/quantity-summary",
       "file": "api/routes/estimating.ts",
-      "line": 155,
+      "line": 156,
       "pathParams": [
         "modelId"
       ],
@@ -4435,7 +4441,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 192,
+      "line": 193,
       "pathParams": [
         "modelId"
       ],
@@ -4463,7 +4469,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 167,
+      "line": 168,
       "pathParams": [
         "modelId"
       ],
@@ -4497,7 +4503,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff/auto",
       "file": "api/routes/estimating.ts",
-      "line": 181,
+      "line": 182,
       "pathParams": [
         "modelId"
       ],
@@ -6595,7 +6601,7 @@
       "method": "GET",
       "path": "/api/v1/cost-items/search",
       "file": "api/routes/estimating.ts",
-      "line": 204,
+      "line": 205,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9964,7 +9970,7 @@
       "method": "GET",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 232,
+      "line": 233,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9990,7 +9996,7 @@
       "method": "POST",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 220,
+      "line": 221,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10022,7 +10028,7 @@
       "method": "GET",
       "path": "/api/v1/estimates/:id",
       "file": "api/routes/estimating.ts",
-      "line": 243,
+      "line": 244,
       "pathParams": [
         "id"
       ],
@@ -10052,7 +10058,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/approve",
       "file": "api/routes/estimating.ts",
-      "line": 269,
+      "line": 270,
       "pathParams": [
         "id"
       ],
@@ -10084,7 +10090,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/lines",
       "file": "api/routes/estimating.ts",
-      "line": 254,
+      "line": 255,
       "pathParams": [
         "id"
       ],
@@ -23145,7 +23151,7 @@
       "method": "GET",
       "path": "/api/v1/twins",
       "file": "api/routes/twin.ts",
-      "line": 32,
+      "line": 33,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -23172,7 +23178,7 @@
       "method": "POST",
       "path": "/api/v1/twins",
       "file": "api/routes/twin.ts",
-      "line": 22,
+      "line": 23,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -23204,7 +23210,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId",
       "file": "api/routes/twin.ts",
-      "line": 49,
+      "line": 50,
       "pathParams": [
         "twinId"
       ],
@@ -23232,7 +23238,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/events",
       "file": "api/routes/twin.ts",
-      "line": 127,
+      "line": 128,
       "pathParams": [
         "twinId"
       ],
@@ -23266,7 +23272,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/impact",
       "file": "api/routes/twin.ts",
-      "line": 256,
+      "line": 257,
       "pathParams": [
         "twinId"
       ],
@@ -23297,7 +23303,7 @@
       "method": "DELETE",
       "path": "/api/v1/twins/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 214,
+      "line": 215,
       "pathParams": [
         "twinId"
       ],
@@ -23333,7 +23339,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 200,
+      "line": 201,
       "pathParams": [
         "twinId"
       ],
@@ -23362,7 +23368,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 190,
+      "line": 191,
       "pathParams": [
         "twinId"
       ],
@@ -23396,7 +23402,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/risk-propagation",
       "file": "api/routes/twin.ts",
-      "line": 267,
+      "line": 268,
       "pathParams": [
         "twinId"
       ],
@@ -23427,7 +23433,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/snapshots",
       "file": "api/routes/twin.ts",
-      "line": 140,
+      "line": 141,
       "pathParams": [
         "twinId"
       ],
@@ -23455,7 +23461,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/snapshots",
       "file": "api/routes/twin.ts",
-      "line": 176,
+      "line": 177,
       "pathParams": [
         "twinId"
       ],
@@ -23493,7 +23499,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/snapshots/:snapshotId",
       "file": "api/routes/twin.ts",
-      "line": 165,
+      "line": 166,
       "pathParams": [
         "twinId",
         "snapshotId"
@@ -23523,7 +23529,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/snapshots/latest",
       "file": "api/routes/twin.ts",
-      "line": 154,
+      "line": 155,
       "pathParams": [
         "twinId"
       ],
@@ -23551,7 +23557,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/state",
       "file": "api/routes/twin.ts",
-      "line": 93,
+      "line": 94,
       "pathParams": [
         "twinId"
       ],
@@ -23579,7 +23585,7 @@
       "method": "PATCH",
       "path": "/api/v1/twins/:twinId/status",
       "file": "api/routes/twin.ts",
-      "line": 81,
+      "line": 82,
       "pathParams": [
         "twinId"
       ],
@@ -23615,7 +23621,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/sync",
       "file": "api/routes/twin.ts",
-      "line": 104,
+      "line": 105,
       "pathParams": [
         "twinId"
       ],
@@ -23666,7 +23672,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/traverse",
       "file": "api/routes/twin.ts",
-      "line": 244,
+      "line": 245,
       "pathParams": [
         "twinId"
       ],
@@ -23697,7 +23703,7 @@
       "method": "GET",
       "path": "/api/v1/twins/entity/:entityType/:entityId",
       "file": "api/routes/twin.ts",
-      "line": 60,
+      "line": 61,
       "pathParams": [
         "entityType",
         "entityId"
@@ -23726,7 +23732,7 @@
       "method": "GET",
       "path": "/api/v1/twins/graph/overview",
       "file": "api/routes/twin.ts",
-      "line": 227,
+      "line": 228,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -23755,7 +23761,7 @@
       "method": "POST",
       "path": "/api/v1/twins/register-sync",
       "file": "api/routes/twin.ts",
-      "line": 114,
+      "line": 115,
       "pathParams": [],
       "guards": [
         "requireAuth",

@@ -2959,7 +2959,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/bim-models/:modelId/ava-estimate",
       "file": "api/routes/estimating.ts",
-      "line": 285,
+      "line": 286,
       "serverLine": 615,
       "pathParams": [
         "modelId"
@@ -2997,7 +2997,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3020,7 +3022,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3043,7 +3047,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3089,7 +3095,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3111,7 +3119,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3121,7 +3131,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/bim-models/:modelId/quantity-summary",
       "file": "api/routes/estimating.ts",
-      "line": 155,
+      "line": 156,
       "serverLine": 615,
       "pathParams": [
         "modelId"
@@ -3133,7 +3143,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3143,7 +3155,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 192,
+      "line": 193,
       "serverLine": 615,
       "pathParams": [
         "modelId"
@@ -3155,7 +3167,9 @@
       "capabilities": [
         "engineering.view"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3165,7 +3179,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 167,
+      "line": 168,
       "serverLine": 615,
       "pathParams": [
         "modelId"
@@ -3177,7 +3191,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -3187,7 +3203,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/bim-models/:modelId/takeoff/auto",
       "file": "api/routes/estimating.ts",
-      "line": 181,
+      "line": 182,
       "serverLine": 615,
       "pathParams": [
         "modelId"
@@ -3199,7 +3215,9 @@
       "capabilities": [
         "engineering.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -4713,7 +4731,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/cost-items/search",
       "file": "api/routes/estimating.ts",
-      "line": 204,
+      "line": 205,
       "serverLine": 615,
       "pathParams": [],
       "guards": [
@@ -6937,7 +6955,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 232,
+      "line": 233,
       "serverLine": 615,
       "pathParams": [],
       "guards": [
@@ -6957,7 +6975,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 220,
+      "line": 221,
       "serverLine": 615,
       "pathParams": [],
       "guards": [
@@ -6977,7 +6995,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/estimates/:id",
       "file": "api/routes/estimating.ts",
-      "line": 243,
+      "line": 244,
       "serverLine": 615,
       "pathParams": [
         "id"
@@ -7001,7 +7019,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/estimates/:id/approve",
       "file": "api/routes/estimating.ts",
-      "line": 269,
+      "line": 270,
       "serverLine": 615,
       "pathParams": [
         "id"
@@ -7025,7 +7043,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/estimates/:id/lines",
       "file": "api/routes/estimating.ts",
-      "line": 254,
+      "line": 255,
       "serverLine": 615,
       "pathParams": [
         "id"
@@ -14120,7 +14138,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -14142,7 +14162,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15927,7 +15949,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/",
       "file": "api/routes/twin.ts",
-      "line": 32,
+      "line": 33,
       "serverLine": 608,
       "pathParams": [],
       "guards": [
@@ -15947,7 +15969,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/",
       "file": "api/routes/twin.ts",
-      "line": 22,
+      "line": 23,
       "serverLine": 608,
       "pathParams": [],
       "guards": [
@@ -15967,7 +15989,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId",
       "file": "api/routes/twin.ts",
-      "line": 49,
+      "line": 50,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -15979,7 +16001,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -15989,7 +16013,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/events",
       "file": "api/routes/twin.ts",
-      "line": 127,
+      "line": 128,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16001,7 +16025,9 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16011,7 +16037,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/impact",
       "file": "api/routes/twin.ts",
-      "line": 256,
+      "line": 257,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16023,7 +16049,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16033,7 +16061,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 214,
+      "line": 215,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16045,7 +16073,9 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16055,7 +16085,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 200,
+      "line": 201,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16067,7 +16097,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16077,7 +16109,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 190,
+      "line": 191,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16089,7 +16121,9 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16099,7 +16133,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/risk-propagation",
       "file": "api/routes/twin.ts",
-      "line": 267,
+      "line": 268,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16111,7 +16145,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16121,7 +16157,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/snapshots",
       "file": "api/routes/twin.ts",
-      "line": 140,
+      "line": 141,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16133,7 +16169,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16143,7 +16181,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/snapshots",
       "file": "api/routes/twin.ts",
-      "line": 176,
+      "line": 177,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16155,7 +16193,9 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16165,7 +16205,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/snapshots/:snapshotId",
       "file": "api/routes/twin.ts",
-      "line": 165,
+      "line": 166,
       "serverLine": 608,
       "pathParams": [
         "twinId",
@@ -16178,7 +16218,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16188,7 +16230,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/snapshots/latest",
       "file": "api/routes/twin.ts",
-      "line": 154,
+      "line": 155,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16200,7 +16242,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16210,7 +16254,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/state",
       "file": "api/routes/twin.ts",
-      "line": 93,
+      "line": 94,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16222,7 +16266,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16232,7 +16278,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/status",
       "file": "api/routes/twin.ts",
-      "line": 81,
+      "line": 82,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16244,7 +16290,9 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16254,7 +16302,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/sync",
       "file": "api/routes/twin.ts",
-      "line": 104,
+      "line": 105,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16266,7 +16314,9 @@
       "capabilities": [
         "crossdomain.write"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16276,7 +16326,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/:twinId/traverse",
       "file": "api/routes/twin.ts",
-      "line": 244,
+      "line": 245,
       "serverLine": 608,
       "pathParams": [
         "twinId"
@@ -16288,7 +16338,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16298,7 +16350,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/entity/:entityType/:entityId",
       "file": "api/routes/twin.ts",
-      "line": 60,
+      "line": 61,
       "serverLine": 608,
       "pathParams": [
         "entityType",
@@ -16311,7 +16363,9 @@
       "capabilities": [
         "crossdomain.read"
       ],
-      "recordScopeCalls": [],
+      "recordScopeCalls": [
+        "requirePolymorphicScope"
+      ],
       "bodyProjectRefs": [],
       "mounted": true
     },
@@ -16321,7 +16375,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/graph/overview",
       "file": "api/routes/twin.ts",
-      "line": 227,
+      "line": 228,
       "serverLine": 608,
       "pathParams": [],
       "guards": [
@@ -16341,7 +16395,7 @@
       "mountPrefix": "/api/v1/twins",
       "routePath": "/register-sync",
       "file": "api/routes/twin.ts",
-      "line": 114,
+      "line": 115,
       "serverLine": 608,
       "pathParams": [],
       "guards": [

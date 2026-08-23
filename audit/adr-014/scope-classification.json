@@ -70,7 +70,7 @@
       "deferred": 38,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 325,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 352,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
       "READ_DIRECT_ID": 56,
       "MUTATION_CREATE": 78,
@@ -4805,7 +4805,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/ava-estimate",
       "file": "api/routes/estimating.ts",
-      "line": 285,
+      "line": 286,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_BODY_PROJECT",
       "dispositionReason": "project selected by a project id in the request body (HOB §16)",
@@ -4858,8 +4858,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_elements",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -4890,8 +4892,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_elements",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -4922,19 +4926,23 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_element_links",
       "writeTables": [
         "bim_element_links"
       ],
-      "writeScopeColumns": [],
+      "writeScopeColumns": [
+        "tenant_id"
+      ],
       "projectScopeStrategy": "NO_PROJECT_PARENT",
       "projectParent": {
         "strategy": "NO_PROJECT_PARENT"
       },
       "sqlScopesByProject": false,
-      "sqlScopesByTenant": false,
+      "sqlScopesByTenant": true,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
       "status": "OUT_OF_PHASE3C_TENANT_GLOBAL"
@@ -4997,8 +5005,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ifc_parse_jobs",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5029,8 +5039,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "ifc_parse_jobs",
       "writeTables": [
         "ifc_parse_jobs"
@@ -5050,7 +5062,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/quantity-summary",
       "file": "api/routes/estimating.ts",
-      "line": 155,
+      "line": 156,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5063,8 +5075,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "bim_elements",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5082,7 +5096,7 @@
       "method": "GET",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 192,
+      "line": 193,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5095,8 +5109,10 @@
         "engineering.view"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "takeoff_items",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -5114,7 +5130,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
-      "line": 167,
+      "line": 168,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5127,8 +5143,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "takeoff_items",
       "writeTables": [
         "takeoff_items"
@@ -5148,7 +5166,7 @@
       "method": "POST",
       "path": "/api/v1/bim-models/:modelId/takeoff/auto",
       "file": "api/routes/estimating.ts",
-      "line": 181,
+      "line": 182,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -5161,8 +5179,10 @@
         "engineering.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "takeoff_items",
       "writeTables": [
         "takeoff_items"
@@ -7645,7 +7665,7 @@
       "method": "GET",
       "path": "/api/v1/cost-items/search",
       "file": "api/routes/estimating.ts",
-      "line": 204,
+      "line": 205,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -11244,7 +11264,7 @@
       "method": "GET",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 232,
+      "line": 233,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
       "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
@@ -11278,7 +11298,7 @@
       "method": "POST",
       "path": "/api/v1/estimates",
       "file": "api/routes/estimating.ts",
-      "line": 220,
+      "line": 221,
       "operationType": "MUTATION_CREATE",
       "disposition": "NO_PROJECT_PARENT",
       "dispositionReason": "tables resolved, and none of them reaches a project",
@@ -11314,7 +11334,7 @@
       "method": "GET",
       "path": "/api/v1/estimates/:id",
       "file": "api/routes/estimating.ts",
-      "line": 243,
+      "line": 244,
       "operationType": "READ_DIRECT_ID",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -11350,7 +11370,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/approve",
       "file": "api/routes/estimating.ts",
-      "line": 269,
+      "line": 270,
       "operationType": "MUTATION_CONSEQUENTIAL",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -11390,7 +11410,7 @@
       "method": "POST",
       "path": "/api/v1/estimates/:id/lines",
       "file": "api/routes/estimating.ts",
-      "line": 254,
+      "line": 255,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -22780,8 +22800,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_state_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -22812,8 +22834,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_state_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -25749,7 +25773,7 @@
       "method": "GET",
       "path": "/api/v1/twins",
       "file": "api/routes/twin.ts",
-      "line": 32,
+      "line": 33,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25781,7 +25805,7 @@
       "method": "POST",
       "path": "/api/v1/twins",
       "file": "api/routes/twin.ts",
-      "line": 22,
+      "line": 23,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25815,7 +25839,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId",
       "file": "api/routes/twin.ts",
-      "line": 49,
+      "line": 50,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25828,8 +25852,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -25847,7 +25873,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/events",
       "file": "api/routes/twin.ts",
-      "line": 127,
+      "line": 128,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25860,8 +25886,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_event_links",
       "writeTables": [
         "twin_event_links"
@@ -25881,7 +25909,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/impact",
       "file": "api/routes/twin.ts",
-      "line": 256,
+      "line": 257,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25894,8 +25922,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -25913,7 +25943,7 @@
       "method": "DELETE",
       "path": "/api/v1/twins/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 214,
+      "line": 215,
       "operationType": "MUTATION_DELETE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25926,8 +25956,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_relationships",
       "writeTables": [
         "twin_relationships"
@@ -25949,7 +25981,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 200,
+      "line": 201,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25962,8 +25994,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_relationships",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -25981,7 +26015,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/relationships",
       "file": "api/routes/twin.ts",
-      "line": 190,
+      "line": 191,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -25994,8 +26028,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "kg_relationships",
       "writeTables": [
         "kg_relationships"
@@ -26015,7 +26051,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/risk-propagation",
       "file": "api/routes/twin.ts",
-      "line": 267,
+      "line": 268,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26028,8 +26064,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26047,7 +26085,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/snapshots",
       "file": "api/routes/twin.ts",
-      "line": 140,
+      "line": 141,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26060,8 +26098,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_state_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26079,7 +26119,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/snapshots",
       "file": "api/routes/twin.ts",
-      "line": 176,
+      "line": 177,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26092,8 +26132,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_state_snapshots",
       "writeTables": [
         "twin_state_snapshots"
@@ -26113,7 +26155,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/snapshots/:snapshotId",
       "file": "api/routes/twin.ts",
-      "line": 165,
+      "line": 166,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26126,8 +26168,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_state_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26145,7 +26189,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/snapshots/latest",
       "file": "api/routes/twin.ts",
-      "line": 154,
+      "line": 155,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26158,8 +26202,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "twin_state_snapshots",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26177,7 +26223,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/state",
       "file": "api/routes/twin.ts",
-      "line": 93,
+      "line": 94,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26190,8 +26236,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26209,7 +26257,7 @@
       "method": "PATCH",
       "path": "/api/v1/twins/:twinId/status",
       "file": "api/routes/twin.ts",
-      "line": 81,
+      "line": 82,
       "operationType": "MUTATION_UPDATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26222,8 +26270,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [
         "operational_twins"
@@ -26245,7 +26295,7 @@
       "method": "POST",
       "path": "/api/v1/twins/:twinId/sync",
       "file": "api/routes/twin.ts",
-      "line": 104,
+      "line": 105,
       "operationType": "MUTATION_CREATE",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26258,8 +26308,10 @@
         "crossdomain.write"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [
         "operational_twins"
@@ -26281,7 +26333,7 @@
       "method": "GET",
       "path": "/api/v1/twins/:twinId/traverse",
       "file": "api/routes/twin.ts",
-      "line": 244,
+      "line": 245,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26294,8 +26346,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requireTwinScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26313,7 +26367,7 @@
       "method": "GET",
       "path": "/api/v1/twins/entity/:entityType/:entityId",
       "file": "api/routes/twin.ts",
-      "line": 60,
+      "line": 61,
       "operationType": "READ_DIRECT_ID",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26326,8 +26380,10 @@
         "crossdomain.read"
       ],
       "hasCapability": true,
-      "recordScopeCalls": [],
-      "enforcesRecordScope": false,
+      "recordScopeCalls": [
+        "requirePolymorphicScope"
+      ],
+      "enforcesRecordScope": true,
       "primaryTable": "operational_twins",
       "writeTables": [],
       "writeScopeColumns": [],
@@ -26345,7 +26401,7 @@
       "method": "GET",
       "path": "/api/v1/twins/graph/overview",
       "file": "api/routes/twin.ts",
-      "line": 227,
+      "line": 228,
       "operationType": "READ_COLLECTION",
       "disposition": "TENANT_GLOBAL",
       "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
@@ -26377,7 +26433,7 @@
       "method": "POST",
       "path": "/api/v1/twins/register-sync",
       "file": "api/routes/twin.ts",
-      "line": 114,
+      "line": 115,
       "operationType": "MUTATION_CREATE",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
