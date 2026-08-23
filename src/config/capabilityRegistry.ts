@@ -398,13 +398,18 @@ export const CAPABILITIES: Capability[] = [
   {
     id: 'directory', name: 'Directory', route: 'directory', navigationSection: 'procurement',
     component: 'src/components/DirectoryView.tsx',
-    status: 'BROKEN_OR_DEAD', verification: 'audit',
+    status: 'PARTIAL', verification: 'audit',
     llmUsed: false, deterministicRulesUsed: false, predictiveModelUsed: false,
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
-    backendLocation: 'expects props never passed by ContentRouter',
+    backendLocation: 'api/routes/procurement.ts vendorsRouter (mounted /api/v1/vendors) + purchaseOrdersRouter (/api/v1/purchase-orders); no customers backend exists',
     productionSuitable: false, engineerReviewRequired: false,
-    honestyIssue: 'Renders permanently empty regardless of backend health: DirectoryView destructures vendors/customers/POs/contracts/invoices from props, but ContentRouter\'s sharedProps only passes {policy,biz,onNavigate,onAudit,onToast}. Unwired (P0-11, still open on main).',
-    limitations: ['Data props never wired; always empty. Not fixed by PR #18.'],
+    honestyIssue: 'P0-11 repaired 2026-08-23: DirectoryView now fetches GET /api/v1/vendors and GET /api/v1/purchase-orders itself when no data props are supplied (the routed case — ContentRouter\'s sharedProps passes only {policy,biz,onNavigate,onAudit,onToast}), so the Vendors tab is live and has loading / permission-denied / error / empty states. Props still take precedence, so embedders and the accessibility suite are unchanged. STILL PARTIAL because the CUSTOMERS half has no backend at all — no migration creates a customers table, no route serves one, and the contracts table (002_epc_core) has no reader — so that tab states the gap rather than reporting an empty domain, and the Active Customers KPI shows an em dash rather than 0. Not browser-verified.',
+    limitations: [
+      'Customers tab has no backend: no customers table in any migration and no customer route on the API. The tab states this rather than listing rows.',
+      'Customer detail (contracts / invoices) is unreachable for the same reason; the contracts table exists but no route reads it.',
+      'Vendor project badges are derived from that vendor\'s purchase orders — vendors has no project column.',
+      'Not verified in a browser; covered by component tests against the real API row shapes.',
+    ],
     evidence: ['Confirmed on current main: ContentRouter.tsx sharedProps (5 keys) vs DirectoryView.tsx destructure; INDEPENDENT_AUDIT P0-11'],
   },
 
