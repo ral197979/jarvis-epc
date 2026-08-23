@@ -99,10 +99,15 @@ export const CAPABILITIES: Capability[] = [
     status: 'PARTIAL', verification: 'code',
     llmUsed: false, deterministicRulesUsed: true, predictiveModelUsed: false,
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
-    backendLocation: 'api/routes/actions.ts (mounted, but ActionItemsView never calls it)',
+    backendLocation: 'api/routes/actions.ts — GET /api/v1/actions (personal.admin) with fallback to GET /api/v1/actions/my (personal.view)',
     productionSuitable: false, engineerReviewRequired: false,
-    honestyIssue: 'Downgraded from VERIFIED_NATIVE (independent review 2026-07-21): the routed component ActionItemsView.tsx makes zero backend calls — its only source is useBizStore(selectActionItems), a collection store.ts:235-238 documents as never hydrated. A real actions backend (api/routes/actions.ts) exists but this route does not reach it. Same defect the registry grades engineering-hub PARTIAL for.',
-    limitations: ['Route renders from the non-hydrated biz store, not the backend. SLA/escalation rule logic exists server-side but is unreached from this view.'],
+    honestyIssue: 'Wired 2026-08-23: ActionItemsView now reads the backend when the biz store is empty (the routed case — store.ts documents selectActionItems as never hydrated). It tries GET /api/v1/actions (personal.admin, Owner-only per ADR-014 D11) and falls back to GET /api/v1/actions/my (personal.view) on 403, and states which of the two registers is being shown. Migration-029 status values (open/in_progress/completed/cancelled) are translated into the component vocabulary, with cancelled kept out of the Resolved count because it is finished but not done. A store that holds dispatched rows still takes precedence. STILL PARTIAL: read-only — status transitions, SLA rules, delegations, relationships and the timeline all exist server-side and are not reachable from this view; the Add button remains policy-gated UI with no create call. Not browser-verified.',
+    limitations: [
+      'Read-only. PATCH /actions/:id, SLA rules, delegations, relationships and the timeline are implemented and authorized server-side but unreachable from this view.',
+      'The Add action button is policy-gated UI with no create call behind it.',
+      'Non-Owner roles see only their own assigned actions, because personal.admin is Owner-only (ADR-014 D11). The view says so.',
+      'Not verified in a browser; covered by component tests against the real API row shapes.',
+    ],
     evidence: ['ActionItemsView.tsx:203 useBizStore(selectActionItems); store.ts:235-238 non-hydrated collections; independent review 2026-07-21'],
   },
   {

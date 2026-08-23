@@ -14,7 +14,7 @@
  * Zero dependency on JarvisCore globals.
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   useBizStore,
   selectActionItems,
@@ -57,10 +57,141 @@ const STAGES = [
 ]
 
 const PRIORITY_COLOR: Record<string, string> = {
-  high:   'var(--jarvis-red)',
-  medium: 'var(--jarvis-amb)',
-  med:    'var(--jarvis-amb)',
-  low:    'var(--jarvis-ts)',
+  critical: 'var(--jarvis-red)',
+  high:     'var(--jarvis-red)',
+  medium:   'var(--jarvis-amb)',
+  med:      'var(--jarvis-amb)',
+  low:      'var(--jarvis-ts)',
+}
+
+/**
+ * Which statuses mean "off the desk".
+ *
+ * The legacy store vocabulary is `resolved` / `verified`; the `actions` table
+ * (migration 029) constrains status to `open|in_progress|completed|cancelled`.
+ * Both are listed because both sources feed this register.
+ *
+ * `cancelled` belongs here and NOT under `resolved`: it is finished, but it was
+ * not done. Folding it into `resolved` would inflate the Resolved KPI with work
+ * nobody completed, so it keeps its own label and simply leaves the open list.
+ */
+const CLOSED_STATUSES = new Set(['resolved', 'verified', 'completed', 'cancelled'])
+
+// ─── Live data ────────────────────────────────────────────────────────────────
+//
+// The routed component made ZERO backend calls. Its only source was
+// `useBizStore(selectActionItems)`, a collection store.ts documents as never
+// hydrated — so the Action Center rendered "No action items" on every session
+// while `api/routes/actions.ts` sat mounted and fully authorized beside it.
+//
+// The store still wins when it holds rows: some in-app flows dispatch
+// `actions.addAction`, and a caller who has put items there means them. When it
+// is empty — the routed case — the register reads the API instead of asserting
+// that there is no work.
+//
+// Two scopes, because the API has two and they are not interchangeable:
+//   GET /actions      personal.admin — every action in the tenant (Owner only)
+//   GET /actions/my   personal.view  — the caller's own assigned actions
+// The admin route is tried first and a 403 falls back, so each caller sees
+// exactly what they are entitled to and is TOLD which of the two they got.
+
+/** `actions.status` values, from the migration-029 CHECK constraint. */
+const API_STATUSES = ['open', 'in_progress', 'completed', 'cancelled'] as const
+
+/** API status → the vocabulary this component's stages and filters already use. */
+const STATUS_FROM_API: Record<string, string> = {
+  open:        'open',
+  in_progress: 'in-progress',
+  completed:   'resolved',
+  cancelled:   'cancelled',
+}
+
+interface ActionApiRow {
+  id: string
+  title?: string; description?: string
+  status?: string; priority?: string
+  action_type?: string; source_module?: string; source_id?: string
+  project_code?: string; project_name?: string
+  assigned_user_email?: string; assigned_to_role?: string
+  due_at?: string | null; created_at?: string | null
+  [key: string]: unknown
+}
+
+/** API row → the shape this component already renders. Nothing is invented. */
+function toActionItem(row: ActionApiRow, selfLabel?: string): ActionItem {
+  return {
+    id:       row.id,
+    subject:  row.title,
+    project:  row.project_code ?? row.project_name,
+    priority: row.priority,
+    // `/actions/my` does not join users — every row is the caller by definition,
+    // so it is labelled rather than left blank.
+    assigned: row.assigned_user_email ?? row.assigned_to_role ?? selfLabel,
+    due:      row.due_at ? String(row.due_at).slice(0, 10) : undefined,
+    category: row.action_type ?? row.source_module,
+    status:   STATUS_FROM_API[String(row.status ?? '')] ?? row.status,
+    notes:    row.description,
+    ref_id:   row.source_id,
+    created:  row.created_at ? String(row.created_at).slice(0, 10) : undefined,
+  }
+}
+
+type ActionsScope = 'tenant' | 'self'
+interface ActionsData {
+  items: ActionItem[]
+  state: 'loading' | 'ready' | 'error'
+  scope?: ActionsScope
+  detail?: string
+}
+
+function useActionItems(enabled: boolean): ActionsData {
+  const [data, setData] = useState<ActionsData>({ items: [], state: enabled ? 'loading' : 'ready' })
+
+  useEffect(() => {
+    if (!enabled) return
+    let live = true
+    void (async () => {
+      try {
+        const all = await fetch('/api/v1/actions?limit=200')
+        if (!live) return
+
+        if (all.ok) {
+          const body = await all.json() as { data?: ActionApiRow[] }
+          if (!live) return
+          setData({ items: (body.data ?? []).map(r => toActionItem(r)), state: 'ready', scope: 'tenant' })
+          return
+        }
+        // 401/403 is not a failure here — it is the ordinary case for every
+        // role but Owner, and the personal register is what they should see.
+        if (all.status !== 401 && all.status !== 403) {
+          setData({ items: [], state: 'error', detail: `Request failed (${all.status}).` })
+          return
+        }
+
+        // `/actions/my` filters on ONE status per call, so the four the table
+        // groups are fetched together. A status that refuses is skipped rather
+        // than failing the register.
+        const perStatus = await Promise.all(API_STATUSES.map(async st => {
+          const r = await fetch(`/api/v1/actions/my?status=${st}&limit=200`)
+          if (!r.ok) return []
+          const b = await r.json() as { data?: ActionApiRow[] }
+          return b.data ?? []
+        }))
+        if (!live) return
+        setData({
+          items: perStatus.flat().map(r => toActionItem(r, 'You')),
+          state: 'ready',
+          scope: 'self',
+        })
+      } catch (err) {
+        if (!live) return
+        setData({ items: [], state: 'error', detail: err instanceof Error ? err.message : String(err) })
+      }
+    })()
+    return () => { live = false }
+  }, [enabled])
+
+  return data
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────────
@@ -200,7 +331,13 @@ function ItemsTable({
 
 // ─── ActionItemsView ──────────────────────────────────────────────────────────
 export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onAudit, onToast: _onToast }: ActionItemsViewProps) {
-  const allItems = useBizStore(selectActionItems) as ActionItem[]
+  const storeItems = useBizStore(selectActionItems) as ActionItem[]
+  // The store is a legacy in-app source that some flows still dispatch into.
+  // When it holds nothing — the routed case, since nothing hydrates it — read
+  // the API rather than assert that there is no work.
+  const live     = storeItems.length === 0
+  const fetched  = useActionItems(live)
+  const allItems = live ? fetched.items : storeItems
 
   const [statusFilter,   setStatusFilter]   = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
@@ -232,24 +369,42 @@ export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onA
     })
   }, [allItems, statusFilter, priorityFilter, projectFilter, assigneeFilter, categoryFilter, search])
 
-  const openItems     = filtered.filter(i => i.status !== 'resolved' && i.status !== 'verified')
-  const resolvedItems = filtered.filter(i => i.status === 'resolved' || i.status === 'verified')
+  const openItems     = filtered.filter(i => !CLOSED_STATUSES.has(i.status ?? ''))
+  const resolvedItems = filtered.filter(i =>  CLOSED_STATUSES.has(i.status ?? ''))
 
   const today       = new Date().toISOString().slice(0, 10)
   const kpiOpen     = allItems.filter(i => i.status === 'open').length
   const kpiHigh     = allItems.filter(i => (i.priority === 'high') && i.status === 'open').length
   const kpiOverdue  = allItems.filter(i => i.status === 'open' && i.due && i.due < today).length
+  // Deliberately not CLOSED_STATUSES: a cancelled action left the open list but
+  // nobody resolved it, and counting it here would overstate completed work.
   const kpiResolved = allItems.filter(i => i.status === 'resolved' || i.status === 'verified').length
 
   if (selected) {
     return <ItemDetail item={selected} onBack={() => setSelected(null)} />
   }
 
+  if (live && fetched.state === 'loading') {
+    return <div className="jarvis-empty" role="status"><span>Loading action items…</span></div>
+  }
+
+  if (live && fetched.state === 'error') {
+    return (
+      <div className="jarvis-empty" role="alert">
+        <span className="jarvis-empty-icon">⚠️</span>
+        <h3 className="jarvis-heading">Could not load action items</h3>
+        <p className="jarvis-muted">{fetched.detail ?? 'Request failed.'}</p>
+      </div>
+    )
+  }
+
   if (allItems.length === 0) {
     return (
       <div className="jarvis-empty" role="status">
         <span className="jarvis-empty-icon">✅</span>
-        <h3 className="jarvis-heading">No action items</h3>
+        <h3 className="jarvis-heading">
+          {live && fetched.scope === 'self' ? 'No action items assigned to you' : 'No action items'}
+        </h3>
         <p className="jarvis-muted">Action items created across all modules appear here</p>
       </div>
     )
@@ -257,6 +412,14 @@ export function ActionItemsView({ policy, onNavigate: _onNavigate, onAudit: _onA
 
   return (
     <div role="main" aria-label="Action Items">
+      {/* Which register this is. A personal view that looks tenant-wide is the
+          more dangerous of the two mistakes, so the narrower scope says so. */}
+      {live && fetched.scope === 'self' && (
+        <p className="jarvis-small" role="note" style={{ color: 'var(--jarvis-ts)', marginBottom: 10 }}>
+          Showing action items assigned to you. A tenant-wide register requires the personal.admin capability.
+        </p>
+      )}
+
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 10, marginBottom: 16 }}>
         <KpiCard label="Total"         value={allItems.length} />
