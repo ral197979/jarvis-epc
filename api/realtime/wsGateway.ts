@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — WebSocket Gateway (v4.35.0)
  * ──────────────────────────────────────────────────
@@ -123,6 +122,8 @@ export async function pollEvents(
   scope:     SubscriptionScope = 'tenant',
   scopeId?:  string,
   limit      = 50,
+  /** ADR-014 Phase 3H: the route-built per-scope authorization predicate. */
+  authScope: { sql: string; params: unknown[] } = { sql: '', params: [] },
 ) {
-  return replayEvents(tenantId, scope, scopeId, lastSeq, limit)
+  return replayEvents(tenantId, scope, scopeId, lastSeq, limit, authScope)
 }

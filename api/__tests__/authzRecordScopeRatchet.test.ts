@@ -414,7 +414,7 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // must not imply full coverage. What remains is the aggregate surface whose
     // capabilities are Owner-only today, and three collections whose returned
     // rows have no record-scope policy at all.
-    expect(scoped).toBe(315)
+    expect(scoped).toBe(321)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only

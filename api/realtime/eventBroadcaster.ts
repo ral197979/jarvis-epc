@@ -126,7 +126,21 @@ export async function replayEvents(
   scopeId:          string | undefined,
   sinceSequence:    number,
   limit             = 100,
+  /**
+   * ADR-014 Phase 3H. The per-scope-class authorization predicate the ROUTE
+   * built from the live principal, plus its bound parameter. The broadcaster
+   * composes SQL and never decides authorization — it does not see the
+   * principal. `$SCOPE_USER` is symbolic because this query numbers its own
+   * parameters.
+   *
+   * Applied INSIDE the query and therefore before ORDER BY and LIMIT (§19): a
+   * page must be the newest authorized events, never the newest tenant events
+   * with the unauthorized ones cut out afterwards, which would both shorten
+   * pages and leak how many events the caller cannot see.
+   */
+  authScope: { sql: string; params: unknown[] } = { sql: '', params: [] },
 ): Promise<RealtimeEvent[]> {
+  const scopeSql = authScope.sql.replace(/\$SCOPE_USER/g, '$6')
   const res = await pool.query(`
     SELECT id, event_type, payload, subscription_scope, scope_id,
            sequence_number, correlation_id, published_at
@@ -135,9 +149,10 @@ export async function replayEvents(
       AND subscription_scope = $2
       AND ($3::varchar IS NULL OR scope_id = $3)
       AND sequence_number > $4
+      ${scopeSql}
     ORDER BY sequence_number ASC
     LIMIT $5
-  `, [tenantId, scope, scopeId ?? null, sinceSequence, limit])
+  `, [tenantId, scope, scopeId ?? null, sinceSequence, limit, ...authScope.params])
 
   return res.rows.map(r => ({
     id:                 String(r.id),

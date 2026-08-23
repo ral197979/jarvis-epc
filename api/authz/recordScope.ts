@@ -56,6 +56,7 @@ import { tenantQuery } from '../db/pool'
 import { resolveCurrentUser, type CurrentUser, type AuthorizedRequest } from './currentUser'
 import { roleHasCapability } from './capabilities'
 import { policyFor, type ProjectDerivation, type ProjectSemantics } from './recordScopePolicies'
+import { twinScopePolicy, type PolymorphicScopePolicy } from './polymorphicScopePolicies'
 
 /**
  * What a principal may reach.
@@ -556,4 +557,263 @@ export async function filterByParentProject<T>(
     const pid = projectIdOf(i)
     return isProjectId(pid) && allowed.has(pid)
   })
+}
+
+// ─── Polymorphic scope keys (ADR-014 Phase 3H) ───────────────────────────────
+
+/**
+ * What a polymorphic scope decision can be.
+ *
+ * Distinguished from a bare boolean so a caller can answer an unsupported KIND
+ * differently from an out-of-scope OBJECT. §14 requires exactly that: an
+ * unsupported selector is a bad request, while a valid selector naming an
+ * object the caller cannot reach must be indistinguishable from one that does
+ * not exist.
+ */
+export type PolymorphicDecision =
+  | 'ADMIT'
+  /** The kind is not supported, or has no policy — a selector error. */
+  | 'UNSUPPORTED_KIND'
+  /** The identifier is malformed for its declared shape. */
+  | 'INVALID_IDENTIFIER'
+  /** Supported and well-formed, but not reachable — absent, other tenant, or out of scope. */
+  | 'DENIED'
+
+/**
+ * Authorize a polymorphic (kind, id) pair against its declared policy.
+ *
+ * The selector says WHAT to authorize; this decides WHETHER it is authorized
+ * (ADR-014 Phase 3H D24). Nothing here trusts the caller: the kind must be in
+ * the registry, the identifier must match the declared shape, and every table,
+ * column and join comes from the policy — never from the request (§11). The
+ * identifier is always a bound parameter.
+ *
+ * Each class reuses machinery that already exists rather than restating it:
+ *
+ *   PROJECT_SCOPED   `resolveParentProjectId` + `canAccessProject`, the same
+ *                    membership rule and the same live active window as every
+ *                    other record-scoped route
+ *   TENANT_GLOBAL    existence inside the caller's tenant, which is the whole
+ *                    of the scope for an entity that belongs to no project
+ *   SELF_SCOPED      the owning-principal column, with `personal.admin` as the
+ *                    tenant-wide administrative authority — deliberately NOT
+ *                    project membership
+ *   DENY_UNSUPPORTED refuses, so an enum value with no entity, no producer or
+ *                    no agreed meaning cannot become tenant-wide by default
+ *
+ * A failed lookup returns `DENIED`, never an implicit grant — the rule
+ * `filterAccessibleProjectIds` and `resolveCurrentUser` already apply.
+ */
+export async function resolvePolymorphicScope(
+  principal: CurrentUser,
+  policy: PolymorphicScopePolicy | null,
+  identifier: string | undefined,
+): Promise<PolymorphicDecision> {
+  if (!policy || policy.class === 'DENY_UNSUPPORTED') return 'UNSUPPORTED_KIND'
+
+  if (policy.idShape === 'NONE') {
+    // A whole-tenant subscription carries no subject; the tenant predicate the
+    // caller's query already applies is the entire scope.
+    return policy.class === 'TENANT_GLOBAL' ? 'ADMIT' : 'DENIED'
+  }
+  if (!isProjectId(identifier)) return 'INVALID_IDENTIFIER'
+
+  const r = policy.resolver
+  if (!r) return 'UNSUPPORTED_KIND'
+
+  switch (policy.class) {
+    case 'PROJECT_SCOPED': {
+      // The identifier may BE the project (`entity_type=project`), or name a
+      // record whose project the record-scope registry knows how to resolve.
+      const projectId = r.identifierIsProject
+        ? identifier
+        : await resolveParentProjectId(
+            principal,
+            policyFor(r.recordResource ?? '')?.derivation ?? { kind: 'DIRECT_COLUMN', table: r.table, idColumn: r.idColumn, tenantColumn: r.tenantColumn, projectColumn: 'project_id' },
+            identifier,
+          )
+      if (!projectId) return 'DENIED'
+      return await canAccessProject(principal, projectId) ? 'ADMIT' : 'DENIED'
+    }
+
+    case 'TENANT_GLOBAL': {
+      // Tenant-BOUNDED, never application-global: the same entity id in another
+      // tenant must not resolve here.
+      try {
+        const res = await tenantQuery<{ id: string }>(
+          principal.tenantId,
+          `SELECT r.${r.idColumn} AS id FROM ${r.table} r
+            WHERE r.${r.idColumn} = $1
+              AND r.${r.tenantColumn} = current_setting('app.current_tenant_id', true)::uuid`,
+          [identifier],
+        )
+        return res.rows[0] ? 'ADMIT' : 'DENIED'
+      } catch { return 'DENIED' }
+    }
+
+    case 'SELF_SCOPED': {
+      if (!r.ownerColumn) return 'UNSUPPORTED_KIND'
+      try {
+        const res = await tenantQuery<{ owner: string | null }>(
+          principal.tenantId,
+          `SELECT r.${r.ownerColumn} AS owner FROM ${r.table} r
+            WHERE r.${r.idColumn} = $1
+              AND r.${r.tenantColumn} = current_setting('app.current_tenant_id', true)::uuid`,
+          [identifier],
+        )
+        const row = res.rows[0]
+        if (!row) return 'DENIED'
+        if (row.owner != null && row.owner === principal.id) return 'ADMIT'
+        // The tenant-wide personal authority, the same one the Personal Inbox
+        // uses. Project membership is deliberately not consulted.
+        return roleHasCapability(principal.role, 'personal.admin') ? 'ADMIT' : 'DENIED'
+      } catch { return 'DENIED' }
+    }
+
+    case 'PLATFORM_GLOBAL':
+      // Reserved. Nothing declares it today, and the ratchet holds that.
+      return 'ADMIT'
+
+    default:
+      return 'UNSUPPORTED_KIND'
+  }
+}
+
+/**
+ * Express guard for a route whose path carries an `operational_twins` id.
+ *
+ * A twin row proves only that some object was mirrored inside this tenant. It
+ * is NOT authorization for the object it mirrors (§12): the twin carries the
+ * selector, and the underlying entity carries the authority. So the twin is
+ * resolved first, purely to learn `(entity_type, entity_id)`, and the decision
+ * is then made against that entity's own policy.
+ *
+ * The twin lookup is deliberately narrow — it selects the selector pair and
+ * nothing else — because §46 requires the decision to be made before any
+ * scenario, timeline, diff or historian query runs. Being middleware, a refusal
+ * happens before the handler, so no sensitive payload is loaded and no derived
+ * cache is written.
+ *
+ * Refusals are 404, and the cases are indistinguishable: absent twin, other
+ * tenant, unsupported entity kind, and out-of-scope entity all answer the same
+ * way, so the route cannot be used to confirm that a twin id exists.
+ */
+export function requireTwinScope(param = 'twinId'): RequestHandler {
+  return async (req, res, next): Promise<void> => {
+    const notFound = (): void => { res.status(404).json({ error: 'not_found' }) }
+
+    const principal = await resolveCurrentUser(req as AuthorizedRequest)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+    const twinId = (req.params as Record<string, string | undefined>)[param]
+    if (!isProjectId(twinId)) { notFound(); return }
+
+    let kind: string | undefined
+    let entityId: string | undefined
+    try {
+      const res2 = await tenantQuery<{ entity_type: string; entity_id: string }>(
+        principal.tenantId,
+        `SELECT t.entity_type, t.entity_id FROM operational_twins t
+          WHERE t.id = $1
+            AND t.tenant_id = current_setting('app.current_tenant_id', true)::uuid`,
+        [twinId],
+      )
+      kind = res2.rows[0]?.entity_type
+      entityId = res2.rows[0]?.entity_id
+    } catch { notFound(); return }
+    if (!kind) { notFound(); return }
+
+    const decision = await resolvePolymorphicScope(principal, twinScopePolicy(kind), entityId)
+    if (decision !== 'ADMIT') { notFound(); return }
+    next()
+  }
+}
+
+/**
+ * Express guard for a route where the CALLER supplies both the scope kind and
+ * the identifier in the path (§14).
+ *
+ * The two refusals are deliberately different. An unsupported `scopeType` is a
+ * malformed selector and answers 400 — it discloses nothing, because the set of
+ * supported kinds is a published enum rather than tenant data. A supported kind
+ * naming an object the caller cannot reach answers 404, indistinguishable from
+ * one that does not exist, so existence is never confirmed.
+ */
+export function requirePolymorphicScope(kindParam: string, idParam: string): RequestHandler {
+  return async (req, res, next): Promise<void> => {
+    const principal = await resolveCurrentUser(req as AuthorizedRequest)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+
+    const params = req.params as Record<string, string | undefined>
+    const policy = twinScopePolicy(params[kindParam] ?? '')
+    const decision = await resolvePolymorphicScope(principal, policy, params[idParam])
+
+    if (decision === 'UNSUPPORTED_KIND') {
+      res.status(400).json({ error: 'unsupported_scope_type' }); return
+    }
+    if (decision !== 'ADMIT') { res.status(404).json({ error: 'not_found' }); return }
+    next()
+  }
+}
+
+/**
+ * The authorization predicate for a COLLECTION of rows carrying a polymorphic
+ * scope key (ADR-014 Phase 3H §18, §50).
+ *
+ * A single guard cannot serve `/ops/live-feed`: the route returns many rows and
+ * the decision is per row, so the policy has to become SQL. What it must NOT
+ * become is a lookup per event — §51 — so this emits ONE predicate per scope
+ * class and the query applies it once:
+ *
+ *   TENANT_GLOBAL     ''            the tenant predicate is the whole scope
+ *   SELF_SCOPED       one EXISTS    against the owning table, or '' for the
+ *                                   tenant-wide personal authority
+ *   PROJECT_SCOPED    one EXISTS    joining the entity to live membership
+ *   DENY_UNSUPPORTED  'AND FALSE'   a kind with no agreed meaning returns
+ *                                   nothing rather than everything
+ *
+ * `scopeIdColumn` and every table and column below come from the policy, never
+ * from the request (§11). The comparison is made on `::text` deliberately: the
+ * scope key is a free-text column, and casting it to `uuid` would raise on a
+ * malformed value instead of simply not matching.
+ */
+export function polymorphicCollectionScopeSql(
+  principal: CurrentUser,
+  policy: PolymorphicScopePolicy | null,
+  scopeIdColumn: string,
+  userParam: string,
+): string {
+  if (!policy || policy.class === 'DENY_UNSUPPORTED') return 'AND FALSE'
+  if (policy.class === 'TENANT_GLOBAL' || policy.class === 'PLATFORM_GLOBAL') return ''
+
+  const r = policy.resolver
+  if (!r) return 'AND FALSE'
+
+  if (policy.class === 'SELF_SCOPED') {
+    if (!r.ownerColumn) return 'AND FALSE'
+    // `personal.admin` is the tenant-wide personal authority the Personal Inbox
+    // already uses. Project membership is deliberately never consulted here.
+    if (roleHasCapability(principal.role, 'personal.admin')) return ''
+    return `AND EXISTS (
+              SELECT 1 FROM ${r.table} o
+               WHERE o.${r.idColumn}::text = ${scopeIdColumn}
+                 AND o.${r.tenantColumn} = current_setting('app.current_tenant_id', true)::uuid
+                 AND o.${r.ownerColumn} = ${userParam})`
+  }
+
+  // PROJECT_SCOPED. Nothing declares it for the realtime log today, but a
+  // producer added later must get a correct predicate rather than a gap.
+  if (reachesWholeTenant(principal)) return ''
+  const projectExpr = r.identifierIsProject
+    ? `${scopeIdColumn}::uuid`
+    : `(SELECT o.project_id FROM ${r.table} o
+         WHERE o.${r.idColumn}::text = ${scopeIdColumn}
+           AND o.${r.tenantColumn} = current_setting('app.current_tenant_id', true)::uuid)`
+  return `AND EXISTS (
+            SELECT 1 FROM project_members m
+             WHERE m.project_id = ${projectExpr}
+               AND m.user_id   = ${userParam}
+               AND m.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+               AND m.active_from <= NOW()
+               AND (m.active_to IS NULL OR m.active_to > NOW()))`
 }

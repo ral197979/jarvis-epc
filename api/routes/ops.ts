@@ -22,7 +22,8 @@ import { pollEvents } from '../realtime/wsGateway'
 import { publishActionEvent } from '../services/actions/actionEventPublisher'
 import { broadcastEvent } from '../realtime/eventBroadcaster'
 import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
-import { projectScopeSql } from '../authz/recordScope'
+import { projectScopeSql, polymorphicCollectionScopeSql } from '../authz/recordScope'
+import { realtimeScopePolicy } from '../authz/polymorphicScopePolicies'
 import { resolveCurrentUser } from '../authz/currentUser'
 import { requireBodyProjectScope } from '../authz/recordScope'
 
@@ -86,9 +87,29 @@ opsRouter.get('/live-feed', requireCapability('crossdomain.read') as never, asyn
   const scope    = (req.query['scope'] as string) ?? 'tenant'
   const scopeId  = req.query['scope_id'] as string | undefined
 
+  // ADR-014 Phase 3H §17–§20. The caller chooses `scope`, so the selector is
+  // validated against the registry before anything is read, and the class it
+  // names decides the predicate: tenant events need only the tenant boundary,
+  // action and escalation events follow the OWNERSHIP of the action they are
+  // about, and a scope with no agreed meaning returns nothing rather than
+  // everything. The predicate goes inside the query, so the page is the newest
+  // AUTHORIZED events and `count` describes that set — a post-filtered page
+  // would both come up short and reveal how many events were hidden.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const policy = realtimeScopePolicy(scope)
+  if (!policy || policy.class === 'DENY_UNSUPPORTED') {
+    res.status(400).json({ error: 'unsupported_scope_type' }); return
+  }
+  const authScope = {
+    sql:    polymorphicCollectionScopeSql(principal, policy, 'scope_id', '$SCOPE_USER'),
+    params: [] as unknown[],
+  }
+  if (authScope.sql.includes('$SCOPE_USER')) authScope.params.push(principal.id)
+
   const events = await pollEvents(
     tenantId, isNaN(lastSeq) ? 0 : lastSeq,
-    scope as never, scopeId,
+    scope as never, scopeId, undefined, authScope,
   )
   res.json({ data: events, meta: { count: events.length } })
 })

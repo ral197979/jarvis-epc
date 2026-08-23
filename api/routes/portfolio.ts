@@ -8,6 +8,7 @@ import { detectAnomalies, listAnomalies, resolveAnomaly, markFalsePositive } fro
 import { generateMaintenanceRecommendations, computeAssetHealth } from '../services/twin/maintenanceForecastEngine'
 import { summarizeAnomalies } from '../services/twin/anomalyClassificationService'
 import { requireCapability } from '../authz/requireCapability'
+import { requirePolymorphicScope } from '../authz/recordScope'
 
 const router = Router()
 
@@ -23,7 +24,7 @@ router.get('/readiness', requireCapability('portfolio.view') as never, async (re
   }
 })
 
-router.get('/readiness/:scopeType/:scopeId', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
+router.get('/readiness/:scopeType/:scopeId', requireCapability('portfolio.view') as never, requirePolymorphicScope('scopeType', 'scopeId') as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const scopeType = req.params.scopeType as string

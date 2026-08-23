@@ -286,20 +286,23 @@ describe('the direct-ID inventory reconciles with nothing unexplained', () => {
 
   it('reports the corrected candidate set', () => {
     expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(60)
-    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(55)
+    // 55 after Phase 3G; Phase 3H closed the twin projection route, which is the
+    // last project-bound direct-ID read that was open for a MODEL reason.
+    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(56)
   })
 
-  it('leaves open only surfaces already classified SELF or twin-model', () => {
+  it('leaves open only SELF surfaces, whose guard is narrower than membership', () => {
     // §30: a newly discovered DERIVABLE known-id bypass would have to be closed
-    // here. There is none — every remaining one is a personal record whose
-    // ownership rule is narrower than project membership, or the twin gap.
+    // here. There was none, and Phase 3H then closed the twin projection route
+    // that had been open for a model reason — so what remains is four personal
+    // records, each already carrying an ownership rule stricter than project
+    // membership. Deliberately open, not merely unclosed.
     const open = direct.filter(r => !r.enforcesRecordScope).map(r => r.path).sort()
     expect(open).toEqual([
       '/api/v1/actions/:id',
       '/api/v1/actions/:id/relationships',
       '/api/v1/actions/:id/timeline',
       '/api/v1/ask/sessions/:id',
-      '/api/v1/scenarios/projection/:twinId',
     ])
   })
 
@@ -315,8 +318,12 @@ describe('the direct-ID inventory reconciles with nothing unexplained', () => {
     expect(policyFor('action')!.projectSemantics).toBe('SELF_SCOPED')
   })
 
-  it('carries the twin-keyed read forward without inventing a parent (§32)', () => {
-    expect(policyFor('operational_twins'), 'no twin policy may be invented here').toBeNull()
+  it('still puts no operational_twins entry in the RECORD-scope registry (§32)', () => {
+    // Phase 3H gave the twins a policy — in the POLYMORPHIC registry, keyed on
+    // the entity a twin selects. The record-scope registry resolves a parent
+    // through a declared foreign key, and `operational_twins` still has none,
+    // so an entry here would still be an invention.
+    expect(policyFor('operational_twins')).toBeNull()
   })
 })
 

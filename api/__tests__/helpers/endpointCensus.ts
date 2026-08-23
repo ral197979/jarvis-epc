@@ -73,6 +73,13 @@ const RECORD_SCOPE_CALLS = [
   // DUAL_PROJECT_OR_TENANT collection keeps its tenant-global rows instead of
   // losing them to a membership test they can never satisfy.
   'collectionScopeSql(',
+  // ADR-014 Phase 3H: the polymorphic scope-key guards. `operational_twins` and
+  // `realtime_event_log` authorize against a kind plus a free-text id with no
+  // foreign key, so the entity the selector names carries the authority — these
+  // are the calls that ask it.
+  'requireTwinScope(',
+  'requirePolymorphicScope(',
+  'polymorphicCollectionScopeSql(',
   // ADR-014 Phase 3B: the guard form, for a route whose PATH names the project
   // it operates on. Roughly fifty project-child collections share that shape,
   // so the rule is expressed once as middleware rather than as fifty copies of

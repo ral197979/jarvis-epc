@@ -236,6 +236,10 @@ const RECORD_SCOPE_CALLS = [
   // is NOT scope — it only decides whether to bind the principal id — so only
   // the predicate builder counts as enforcement.
   'collectionScopeSql(',
+  // ADR-014 Phase 3H: the polymorphic scope-key guards. A twin, or a caller-
+  // chosen (kind, id) pair, is authorized against the entity it selects rather
+  // than against the row carrying the selector.
+  'requireTwinScope(', 'requirePolymorphicScope(', 'polymorphicCollectionScopeSql(',
 ]
 const recordScopeCallsIn = fragment =>
   RECORD_SCOPE_CALLS.filter(c => fragment.includes(c)).map(c => c.slice(0, -1)).sort()

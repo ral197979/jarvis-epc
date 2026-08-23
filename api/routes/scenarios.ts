@@ -7,6 +7,7 @@ import { projectTwinTimeline } from '../services/twin/timelineProjectionService'
 import { getStateAt, replayRange, diffStates, computeStateVelocity, getScoreTrend } from '../services/twin/temporalStateEngine'
 
 import { requireCapability } from '../authz/requireCapability'
+import { requireTwinScope } from '../authz/recordScope'
 const router = Router()
 
 // ─── Scenarios ────────────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ router.post('/:scenarioId/cancel', requireCapability('crossdomain.write') as nev
 
 // ─── Timeline projection ──────────────────────────────────────────────────────
 
-router.get('/projection/:twinId', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+router.get('/projection/:twinId', requireCapability('crossdomain.read') as never, requireTwinScope() as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const horizonDays = req.query.horizonDays ? Number(req.query.horizonDays) : 30
@@ -84,7 +85,7 @@ router.get('/projection/:twinId', requireCapability('crossdomain.read') as never
 
 // ─── Temporal queries ─────────────────────────────────────────────────────────
 
-router.get('/temporal/:twinId/at', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+router.get('/temporal/:twinId/at', requireCapability('crossdomain.read') as never, requireTwinScope() as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     if (!req.query.ts) return res.status(400).json({ error: 'ts query param required' })
@@ -96,7 +97,7 @@ router.get('/temporal/:twinId/at', requireCapability('crossdomain.read') as neve
   }
 })
 
-router.get('/temporal/:twinId/replay', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+router.get('/temporal/:twinId/replay', requireCapability('crossdomain.read') as never, requireTwinScope() as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { from, to } = req.query
@@ -108,7 +109,7 @@ router.get('/temporal/:twinId/replay', requireCapability('crossdomain.read') as 
   }
 })
 
-router.get('/temporal/:twinId/diff', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
+router.get('/temporal/:twinId/diff', requireCapability('crossdomain.read') as never, requireTwinScope() as never, async (req: Request, res: Response) => {
   try {
     const tenantId: string = (req as unknown as { tenantId: string }).tenantId
     const { from, to } = req.query
