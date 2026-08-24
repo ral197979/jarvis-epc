@@ -1,7 +1,7 @@
 /**
  * Denver Engineering — CRMView  ·  CRM Overview (pipeline summary + quick stats)
  */
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useBizStore, selectLeads, selectCustomers, selectProposals } from '../modules/biz/store'
 import { KpiCard } from './KpiCard'
 import { StatusBadge } from './StatusBadge'
@@ -13,11 +13,76 @@ export interface CRMViewProps { policy?: Partial<PolicyConfig>; onAudit?: (e: un
 const STAGES = ['prospect','qualified','proposal','negotiation','won','lost']
 function fmt(n: number) { if (n >= 1_000_000) return `$${(n/1_000_000).toFixed(1)}M`; if (n >= 1_000) return `$${(n/1_000).toFixed(0)}K`; return `$${n.toFixed(0)}` }
 
+// ─── What this screen's three domains actually have behind them ──────────────
+//
+// The three collections it reads are not the same kind of thing, and the
+// repairs differ accordingly:
+//
+//   proposals   REAL API — GET /api/v1/proposals (crm.view), migration 062,
+//               full lifecycle (submit/won/lost). Wired below: store wins when
+//               it holds rows, otherwise the API answers.
+//   leads       TABLE WITHOUT AN API — migration 002 creates crm_leads with RLS
+//               and triggers, but no route anywhere reads it. Nothing to fetch;
+//               the screen says so instead of asserting an empty pipeline.
+//   customers   NOTHING — no table in any migration, no route. Same conclusion
+//               the Directory reached; the KPI shows an em dash, not a zero.
+//
+// LEADS_API / CUSTOMERS_API are the recorded facts, not switches to flip: turn
+// one on only when the backend it names exists.
+const LEADS_API     = false  // crm_leads exists (002_epc_core.sql:408) — no route reads it
+const CUSTOMERS_API = false  // no customers table, no route (verified 2026-08-23)
+
+/** Rows as GET /api/v1/proposals returns them — note the envelope is `{ proposals }`. */
+interface ProposalApiRow {
+  id: string
+  title?: string; client_name?: string
+  status?: string                       // draft | submitted | won | lost | no_bid
+  estimated_value?: string | number | null
+  [key: string]: unknown
+}
+
+/** A proposal still in play: not yet decided. */
+const OPEN_PROPOSAL_STATUSES = new Set(['draft', 'submitted'])
+
+interface ProposalsData {
+  rows:  ProposalApiRow[]
+  state: 'loading' | 'ready' | 'forbidden' | 'error'
+}
+
+function useProposals(enabled: boolean): ProposalsData {
+  const [data, setData] = useState<ProposalsData>({ rows: [], state: enabled ? 'loading' : 'ready' })
+  useEffect(() => {
+    if (!enabled) return
+    let live = true
+    void (async () => {
+      try {
+        const res = await fetch('/api/v1/proposals?limit=200')
+        if (!live) return
+        if (res.status === 401 || res.status === 403) { setData({ rows: [], state: 'forbidden' }); return }
+        if (!res.ok) { setData({ rows: [], state: 'error' }); return }
+        const body = await res.json() as { proposals?: ProposalApiRow[] }
+        if (!live) return
+        setData({ rows: body.proposals ?? [], state: 'ready' })
+      } catch {
+        if (!live) return
+        setData({ rows: [], state: 'error' })
+      }
+    })()
+    return () => { live = false }
+  }, [enabled])
+  return data
+}
+
 export function CRMView({ policy, onAudit, onToast, onNavigate: _onNavigate }: CRMViewProps) {
-  const leads     = useBizStore(selectLeads)
-  const customers = useBizStore(selectCustomers)
-  const proposals = useBizStore(selectProposals)
-  const [tab, setTab] = useState<'overview'|'leads'>('overview')
+  const leads          = useBizStore(selectLeads)
+  const customers      = useBizStore(selectCustomers)
+  const storeProposals = useBizStore(selectProposals)
+  const [tab, setTab]  = useState<'overview'|'leads'>('overview')
+
+  // Store wins when it holds rows — same precedence as the other repaired
+  // registers. Only the routed, nothing-dispatched case reads the API.
+  const proposalsLive = storeProposals.length === 0
+  const fetched       = useProposals(proposalsLive)
 
   const openLeads  = leads.filter(l => l['status'] !== 'won' && l['status'] !== 'lost')
   const wonLeads   = leads.filter(l => l['status'] === 'won')
@@ -46,11 +111,37 @@ export function CRMView({ policy, onAudit, onToast, onNavigate: _onNavigate }: C
             <KpiCard label="Pipeline Value"  value={fmt(totalValue)}     color="var(--jarvis-blue)" />
             <KpiCard label="Won Value"        value={fmt(wonValue)}       color="var(--jarvis-grn)" sub={`${wonLeads.length} won`} />
             <KpiCard label="Win Rate"         value={`${winRate}%`}       color={Number(winRate) >= 30 ? 'var(--jarvis-grn)' : 'var(--jarvis-amb)'} />
-            <KpiCard label="Customers"        value={customers.length}    color="var(--jarvis-pur)" />
-            <KpiCard label="Proposals"        value={proposals.length}    color="var(--jarvis-amb)" sub={`${proposals.filter(p => p['status'] === 'open').length} open`} />
+            {/* No customers backend exists, so an empty store means UNSTORED,
+                not zero. Same rule as the Directory's Active Customers card. */}
+            <KpiCard label="Customers"
+              value={!CUSTOMERS_API && customers.length === 0 ? '—' : customers.length}
+              color="var(--jarvis-pur)" />
+            {proposalsLive ? (
+              <KpiCard label="Proposals"
+                value={fetched.state === 'ready' ? fetched.rows.length : '—'}
+                color="var(--jarvis-amb)"
+                sub={
+                  fetched.state === 'ready'     ? `${fetched.rows.filter(r => OPEN_PROPOSAL_STATUSES.has(String(r.status))).length} open` :
+                  fetched.state === 'loading'   ? 'loading…' :
+                  fetched.state === 'forbidden' ? 'requires crm.view' :
+                  'load failed'
+                } />
+            ) : (
+              <KpiCard label="Proposals" value={storeProposals.length} color="var(--jarvis-amb)"
+                sub={`${storeProposals.filter(p => p['status'] === 'open').length} open`} />
+            )}
           </div>
 
           <h4 className="jarvis-label" style={{ marginBottom: 12 }}>Sales Pipeline</h4>
+          {/* Six zero columns would claim an empty pipeline. The crm_leads
+              table exists (migration 002) but no route serves it, so with an
+              empty store this screen cannot know the pipeline — and says so. */}
+          {!LEADS_API && leads.length === 0 && (
+            <p className="jarvis-small" role="note" style={{ color: 'var(--jarvis-ts)', marginBottom: 10 }}>
+              Lead data is not available — the crm_leads table has no API yet, so
+              this pipeline reflects only leads entered in this session.
+            </p>
+          )}
           <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             {pipeline.map(({ stage, count, value }) => (
               <div key={stage} className="jarvis-card" style={{ flex: 1, padding: '12px 10px', textAlign: 'center' }}>
