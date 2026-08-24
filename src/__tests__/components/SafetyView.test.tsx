@@ -353,10 +353,17 @@ describe('SafetyView — toolbox tab', () => {
     expect(screen.getAllByText('Attendees').length).toBeGreaterThan(0)
   })
 
-  it('shows "No toolbox talks" when empty', () => {
+  it('says toolbox talks are not stored yet, rather than reporting none', () => {
+    // "No toolbox talks recorded" was a claim about DATA. Migration 077 creates
+    // safety_observations and safety_incidents and nothing else — there is no
+    // toolbox_talks table and no route — so the only true statement is that the
+    // domain is not stored. An empty register on a site that has never been able
+    // to file a talk reads as "nobody held one", which is a different and
+    // worse claim.
     render(<SafetyView {...defaultProps({ toolboxTalks: [] })} />)
     fireEvent.click(screen.getByRole('tab', { name: /Toolbox/i }))
-    expect(screen.getByText(/No toolbox talks recorded/i)).toBeDefined()
+    expect(screen.getByText(/Toolbox talks are not stored yet/i)).toBeDefined()
+    expect(screen.getByText(/no table and no API route/i)).toBeDefined()
   })
 })
 

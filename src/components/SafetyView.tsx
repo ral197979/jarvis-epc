@@ -14,16 +14,118 @@
  * All state from Zustand selectors, all mutations through createDispatch.
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   useBizStore,
   selectIncidents,
+  selectProjects,
   selectDaysSinceLastIncident,
   selectRecordableRate,
 } from '../modules/biz/store'
 import { type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
+
+// ─── Which of these tabs actually has a backend ───────────────────────────────
+//
+// Migration 077 creates exactly two safety tables — `safety_observations` and
+// `safety_incidents` — and `api/routes/safety.ts` serves incidents at
+// `GET /projects/:projectId/safety/incidents` behind `safety.view` +
+// requireProjectScope. There is no `jhas`, `permits` or `toolbox_talks` table in
+// any migration and no route for them.
+//
+// So this screen is genuinely two different things wearing one tab bar, and it
+// has to say which is which. Incidents read live; the other three tabs state
+// that the domain is not stored yet rather than rendering an empty table, which
+// would claim there are no JHAs on a site that has never been able to file one.
+const SAFETY_BACKED: Record<string, boolean> = {
+  incidents: true,
+  jhas:      false,
+  permits:   false,
+  toolbox:   false,
+}
+
+/** Rows as `GET /projects/:projectId/safety/incidents` returns them (migration 077). */
+interface IncidentApiRow {
+  id: string
+  type?: string; severity?: string; status?: string
+  location?: string; discipline?: string; description?: string
+  incident_date?: string | null
+  root_cause?: string | null; corrective_action?: string | null
+  [key: string]: unknown
+}
+
+/** API row → the shape this view already renders. Nothing is invented. */
+function toIncident(row: IncidentApiRow): Incident {
+  return {
+    id:                row.id,
+    description:       row.description,
+    type:              row.type,
+    date:              row.incident_date ? String(row.incident_date).slice(0, 10) : undefined,
+    location:          row.location,
+    severity:          row.severity,
+    status:            row.status,
+    root_cause:        row.root_cause ?? undefined,
+    corrective_action: row.corrective_action ?? undefined,
+    // `recordable` and `lti` have no column in migration 077. They are left
+    // undefined rather than defaulted, so the table shows "—" instead of
+    // asserting that an incident is not recordable when nobody recorded it.
+  }
+}
+
+type SafetyLoad = 'idle' | 'loading' | 'ready' | 'forbidden' | 'error'
+interface IncidentsData { rows: Incident[]; state: SafetyLoad; detail?: string }
+
+/**
+ * Incidents for one project.
+ *
+ * Project-scoped because the endpoint is: `requireProjectScope` means the caller
+ * must hold live membership of the project named in the path, so there is no
+ * tenant-wide incident list to fetch and the screen has to choose a project.
+ *
+ * 403 is its own state — `safety.view` is a real capability that plenty of roles
+ * do not hold, and "you may not see this" is a different fact from "no incidents".
+ */
+function useSafetyIncidents(projectId: string, enabled: boolean): IncidentsData {
+  const [data, setData] = useState<IncidentsData>({ rows: [], state: 'idle' })
+
+  useEffect(() => {
+    if (!enabled || !projectId) { setData({ rows: [], state: 'idle' }); return }
+    let live = true
+    setData({ rows: [], state: 'loading' })
+    void (async () => {
+      try {
+        const res = await fetch(`/api/v1/projects/${projectId}/safety/incidents`)
+        if (!live) return
+        if (res.status === 401 || res.status === 403) { setData({ rows: [], state: 'forbidden' }); return }
+        if (!res.ok) { setData({ rows: [], state: 'error', detail: `Request failed (${res.status}).` }); return }
+        const body = await res.json() as { data?: IncidentApiRow[] }
+        if (!live) return
+        setData({ rows: (body.data ?? []).map(toIncident), state: 'ready' })
+      } catch (err) {
+        if (!live) return
+        setData({ rows: [], state: 'error', detail: err instanceof Error ? err.message : String(err) })
+      }
+    })()
+    return () => { live = false }
+  }, [projectId, enabled])
+
+  return data
+}
+
+/** The empty state for a tab whose domain has no table and no route. */
+function NoBackendTab({ what }: { what: string }): React.ReactElement {
+  return (
+    <div className="jarvis-empty" role="status">
+      <span className="jarvis-empty-icon">🚧</span>
+      <span>{what} are not stored yet</span>
+      <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4, maxWidth: 460, textAlign: 'center' }}>
+        This domain has no backend — no table and no API route. Incidents are live;
+        this tab is a placeholder rather than an empty register.
+      </span>
+    </div>
+  )
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Incident {
@@ -482,10 +584,23 @@ export function SafetyView({
   const storeJHAs      = useBizStore(s => s.biz.jhas     ?? []) as JHA[]
   const storePermits   = useBizStore(s => s.biz.permits  ?? []) as Permit[]
 
-  const incidents   = incidentsProp ?? storeIncidents
   const jhas        = jhasProp     ?? storeJHAs
   const permits     = permitsProp  ?? storePermits
   const toolboxTalks = toolboxProp ?? []
+
+  // Props win, then the store, then the API — the same precedence the other
+  // repaired registers use. A caller who supplied incidents means them, and a
+  // store that holds dispatched rows is a legacy in-app source; only when both
+  // are silent does this screen go and ask.
+  const projects = useBizStore(selectProjects) as { id: string; name?: string; code?: string }[]
+  const live     = incidentsProp === undefined && storeIncidents.length === 0
+  const [projectId, setProjectId] = useState<string>('')
+  useEffect(() => {
+    if (live && projects?.length && !projectId) setProjectId(String(projects[0]!.id))
+  }, [live, projects, projectId])
+
+  const fetched   = useSafetyIncidents(projectId, live)
+  const incidents = incidentsProp ?? (storeIncidents.length ? storeIncidents : fetched.rows)
 
   const [activeTab,      setActiveTab]   = useState<SafetyTab>('dashboard')
   const [selectedInc,    setSelectedInc] = useState<Incident | null>(null)
@@ -571,7 +686,53 @@ export function SafetyView({
         />
       )}
 
-      {activeTab === 'incidents' && (
+      {activeTab === 'incidents' && live && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <label className="jarvis-small" htmlFor="safety-project">Project</label>
+          <select
+            id="safety-project"
+            className="jarvis-select"
+            aria-label="Filter incidents by project"
+            value={projectId}
+            onChange={e => setProjectId(e.target.value)}
+          >
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.code ?? p.name ?? p.id}</option>
+            ))}
+          </select>
+          {/* Incidents are project-scoped at the API (requireProjectScope), so
+              there is no tenant-wide list to show and the screen must pick one. */}
+          <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)' }}>
+            Incidents are recorded per project.
+          </span>
+        </div>
+      )}
+
+      {activeTab === 'incidents' && live && !projectId ? (
+        <div className="jarvis-empty" role="status">
+          <span className="jarvis-empty-icon">📋</span>
+          <span>No project selected</span>
+          <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4 }}>
+            Incidents are recorded against a project, and no project is available.
+          </span>
+        </div>
+      ) : activeTab === 'incidents' && live && fetched.state === 'loading' ? (
+        <div className="jarvis-empty" role="status"><span>Loading incidents…</span></div>
+      ) : activeTab === 'incidents' && live && fetched.state === 'forbidden' ? (
+        <div className="jarvis-empty" role="status">
+          <span className="jarvis-empty-icon">🔒</span>
+          <span>You do not have access to this project&apos;s incidents</span>
+          <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4 }}>
+            This view requires the safety.view capability and membership of the project.
+          </span>
+        </div>
+      ) : activeTab === 'incidents' && live && fetched.state === 'error' ? (
+        <div className="jarvis-empty" role="alert">
+          <span className="jarvis-empty-icon">⚠️</span>
+          <span>Could not load incidents</span>
+          <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4 }}>{fetched.detail ?? 'Request failed.'}</span>
+        </div>
+      ) : activeTab === 'incidents' && (
         <SafetyTable<Incident>
           rows={incidents}
           ariaLabel="Incidents"
@@ -593,7 +754,10 @@ export function SafetyView({
         />
       )}
 
-      {activeTab === 'jhas' && (
+      {activeTab === 'jhas' && !SAFETY_BACKED['jhas'] && jhas.length === 0 && (
+        <NoBackendTab what="Job Hazard Analyses" />
+      )}
+      {activeTab === 'jhas' && (SAFETY_BACKED['jhas'] || jhas.length > 0) && (
         <SafetyTable<JHA>
           rows={jhas}
           ariaLabel="Job Hazard Analyses"
@@ -609,7 +773,10 @@ export function SafetyView({
         />
       )}
 
-      {activeTab === 'permits' && (
+      {activeTab === 'permits' && !SAFETY_BACKED['permits'] && permits.length === 0 && (
+        <NoBackendTab what="Work permits" />
+      )}
+      {activeTab === 'permits' && (SAFETY_BACKED['permits'] || permits.length > 0) && (
         <SafetyTable<Permit>
           rows={permits}
           ariaLabel="Work Permits"
@@ -626,7 +793,10 @@ export function SafetyView({
         />
       )}
 
-      {activeTab === 'toolbox' && (
+      {activeTab === 'toolbox' && !SAFETY_BACKED['toolbox'] && toolboxTalks.length === 0 && (
+        <NoBackendTab what="Toolbox talks" />
+      )}
+      {activeTab === 'toolbox' && (SAFETY_BACKED['toolbox'] || toolboxTalks.length > 0) && (
         <ToolboxTab talks={toolboxTalks} />
       )}
     </div>
