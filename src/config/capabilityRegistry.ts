@@ -331,10 +331,15 @@ export const CAPABILITIES: Capability[] = [
     status: 'PARTIAL', verification: 'code',
     llmUsed: false, deterministicRulesUsed: true, predictiveModelUsed: false,
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
-    backendLocation: 'useBizStore aggregation (mostly non-hydrated)',
+    backendLocation: 'GET /api/v1/projects, /files/documents, /purchase-orders, /actions (tenant-wide, live); incidents/punch/EVM are project-scoped; contracts/leads/invoices/rfqs have no route',
     productionSuitable: false, engineerReviewRequired: false,
-    honestyIssue: 'Cross-domain dashboard aggregating useBizStore collections; most are never hydrated from backend, so tiles read empty on a fresh session. Also appears in the sidebar Engineering section but not the engineering lifecycle stepper (a reference tool, not a stage — see workflows.ts).',
-    limitations: ['Aggregates non-hydrated store collections.'],
+    honestyIssue: 'Wired 2026-08-24. Eight tiles over ten collections that do NOT share a backend story, so each tile now states which of three kinds it is. Four are tenant-wide and read live: projects (project.view), documents (docs.view), purchase orders (procurement.view), actions (personal.admin). Three are real but PROJECT-SCOPED — incidents, punch items and EVM metrics all take a project in the path, so no cross-project total exists to fetch and those tiles say \'pick a project\'. Four have no route at all — contracts and leads are tables without routes, invoices has no table, rfqs has no table whatsoever — and those tiles show a dash rather than a zero. The Projects tile was also MISLABELLED: it was computed from contracts (no route) while /api/v1/projects existed the whole time. Tiles degrade independently, so one refused domain no longer blanks the other seven, and a tile never raises its red alert on a number it could not read. STILL PARTIAL: the project-scoped third of the hub is unreachable from here by design — surfacing it needs a project selector, which would make this a different screen. Not browser-verified.',
+    limitations: [
+      'Safety incidents, punch items and EVM are project-scoped and not aggregated here; the tiles say a project must be picked.',
+      'Contracts and leads have tables but no routes; invoices and RFQs have no tables. Those four tiles show a dash.',
+      'Read-only summary — the tiles drill through by tab, not to a filtered record set.',
+      'Not verified in a browser.',
+    ],
     evidence: ['HubView.tsx reads useBizStore selectors; workflows.ts engineering-flow comment'],
   },
   {
