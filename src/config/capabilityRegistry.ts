@@ -688,8 +688,13 @@ export const CAPABILITIES: Capability[] = [
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
     backendLocation: 'useBizStore (FinanceView: Summary/Invoices/Expenses/Journal)',
     productionSuitable: false, engineerReviewRequired: false,
-    honestyIssue: 'Nav label "Portfolio" maps to FinanceView (invoices/expenses/journal), store-backed and non-hydrated.',
-    limitations: ['Store-backed finance tabs; label/route mismatch with content.'],
+    honestyIssue: 'Corrected 2026-08-24. Nav label \'Portfolio\' maps to FinanceView, whose three collections (invoices/expenses/journal) have NO backend at all — no migration creates those tables and no route serves them. The only invoice table in the schema is subcontract_invoices (migration 059), a project-scoped payable nested under GET /api/v1/subcontracts/:id/invoices: a different domain and not a ledger. Previously it rendered six financial KPIs as $0, which reads as a company that billed nothing rather than a screen that is not built; unstored totals now read as an em dash. The Add Invoice/Expense controls do write, but only into the session store, so a real entry is lost on refresh — the controls are kept as a scratchpad and the screen now states up front that nothing is saved. NOT a wiring job: connecting this needs an accounting backend built first.',
+    limitations: [
+      'No accounting backend exists. Figures are session-local only and are lost on refresh; the screen says so.',
+      'Add Invoice / Add Expense persist nothing durable — retained as a session scratchpad, not a ledger.',
+      'subcontract_invoices (migration 059) is a separate project-scoped payable domain and is not surfaced here.',
+      'Not verified in a browser.',
+    ],
     evidence: ['ContentRouter TAB_MAP portfolio→FinanceView; FinanceView.tsx header'],
   },
 
