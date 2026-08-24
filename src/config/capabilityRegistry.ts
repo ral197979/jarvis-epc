@@ -792,7 +792,7 @@ export const CAPABILITIES: Capability[] = [
       'PRODUCT-SCOPE GAP — leads: crm_leads is a table with no route. Blocks Pipeline (Weighted) and the pipeline funnel.',
       'PRODUCT-SCOPE GAP — contracts: the contracts table has no route. Blocks Active Contracts. Not substitutable with projects (different domain).',
       'PRODUCT-SCOPE GAP — accounting/AR: no invoices table exists. Blocks Revenue Collected and AR Outstanding.',
-      'PRODUCT-SCOPE GAP — safety measurement: no recordable flag on incidents and no exposure-hours source. Blocks TRIR, which must not be computed from an invented denominator.',
+      'Safety TRIR: CLOSED 2026-08-24 (migration 087 + GET /api/v1/safety/trir). The rate shows only when every incident in the period is classified and measured exposure hours cover it; otherwise the card states the reason. No UI arithmetic remains.',
       'A fresh session is empty. Demonstration data is opt-in (?demo=1) and disclosed by a shell banner while loaded.',
       'Not verified in a browser.',
     ],

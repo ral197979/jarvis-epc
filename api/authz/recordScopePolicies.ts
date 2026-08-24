@@ -903,6 +903,21 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     approveCapabilities: ['risk.approve'],
   },
   {
+    resource: 'safety_exposure_hours',
+    table: 'safety_exposure_hours',
+    capabilities: ['safety.view'],
+    strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'ADR-014 Phase 3L. Migration 087 declares `project_id UUID REFERENCES projects(id) ON DELETE CASCADE` — nullable, and the nullability is load-bearing rather than incidental: a NULL row measures the WHOLE TENANT for its period, which is the denominator the executive TRIR uses, while a non-null row measures that project. Both are designed states. The two levels are never summed together — a tenant rate reads tenant rows and a project rate reads that project\'s rows — because totalling project rows into a tenant figure would silently omit any project that never filed its hours, shrinking the denominator and overstating safety performance.',
+    scopeKey: 'safety_exposure_hours.project_id',
+    tenantRule: 'safety_exposure_hours.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3L. safety.view is the capability the reads already declare; writing project hours needs safety.write and writing TENANT hours needs safety.approve, because a tenant figure is the denominator of a published compliance metric.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'safety_exposure_hours', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['safety.write'],
+  },
+  {
     resource: 'safety_incidents',
     table: 'safety_incidents',
     capabilities: ['safety.write'],
@@ -1484,6 +1499,24 @@ export interface CollectionScopeAdoption {
  * Phase-3F ratchet.
  */
 export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
+  // ── ADR-014 Phase 3L — the TRIR surface ──────────────────────────────────
+  // The two project-scoped reads carry requireProjectScope, the same guard
+  // every other `/projects/:projectId/...` collection uses. The tenant rate has
+  // no project in its path by design and restricts its numerator to the
+  // caller's reachable projects via resolveProjectScope — the same resolver,
+  // returning a set rather than one record's position.
+  { endpoint: 'GET /api/v1/projects/:projectId/safety/exposure-hours', shape: 'PATH_PROJECT_COLLECTION',
+    rows: 'safety_exposure_hours', capabilities: ['safety.view'],
+    disposition: 'PROTECTED_PHASE3B',
+    reason: 'Project-path collection guarded by requireProjectScope; the query binds to the project in the path, and tenant-wide exposure rows (project_id IS NULL) are a different scope level that this route never returns.' },
+  { endpoint: 'GET /api/v1/projects/:projectId/safety/trir', shape: 'PATH_PROJECT_COLLECTION',
+    rows: 'safety_incidents', capabilities: ['safety.view'],
+    disposition: 'PROTECTED_PHASE3B',
+    reason: 'Project-path aggregate guarded by requireProjectScope. Both halves of the rate are confined to the project in the path: incidents by project_id, exposure hours by the same, and the two scope levels are never mixed.' },
+  { endpoint: 'GET /api/v1/safety/trir', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
+    rows: 'safety_incidents', capabilities: ['safety.view'],
+    disposition: 'PROTECTED_PHASE3B',
+    reason: 'Tenant-level aggregate over project-bound rows. resolveProjectScope yields the caller\'s reachable project set and the numerator is restricted to it with `project_id = ANY(...)`; an Owner resolves to ALL_IN_TENANT and passes null, which the route distinguishes explicitly from an empty set so that "no memberships" can never read as "unrestricted".' },
   { endpoint: 'GET /api/v1/actions', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
     rows: 'actions', capabilities: ['personal.admin'],
     disposition: 'SELF_SCOPED_COLLECTION',
@@ -1950,6 +1983,10 @@ export interface UnresolvedCollectionAudit {
  * `COLLECTION_DATA_ACCESS_UNEXPLAINED` must stay 0.
  */
 export const UNRESOLVED_COLLECTION_AUDIT: readonly UnresolvedCollectionAudit[] = [
+  { endpoint: 'GET /api/v1/safety/exposure-hours', capability: 'safety.view',
+    returns: 'safety_exposure_hours rows whose project_id IS NULL', disposition: 'TENANT_GLOBAL',
+    reason: 'ADR-014 Phase 3L. The table resolved as unknown because the handler delegates to `listExposureHours` one level away. The rows are deliberately TENANT-scoped: a NULL project_id means the record measures the whole tenant for its period, which is the denominator the executive TRIR uses. This route returns only those rows — the `project_id IS NULL` predicate is in the service, not a caller filter — so it never discloses a project\'s hours, and the project-scoped sibling at /projects/:projectId/safety/exposure-hours carries requireProjectScope for those. The rows carry no project to scope against, and the tenant predicate is on the statement.' },
+
   { endpoint: 'GET /api/v1/agent-actions/_stats', capability: 'ai.govern',
     returns: 'five COUNT rollups over agent_actions', disposition: 'PROJECT_BOUND_COLLECTION',
     reason: 'RESOLVED AND CLOSED IN PHASE 3G. `stats()` issues five aggregates over agent_actions sharing one WHERE clause; the extractor could not resolve them because the service is reached through a renamed import (`stats as actionStats`). agent_actions is DUAL_PROJECT_OR_TENANT, and ai.govern reaches the platform administrator as well as the Owner — an administrator has no tenant-wide project scope, so this rollup was genuinely counting every project in the tenant for them. The predicate is applied to the shared WHERE, so all five aggregates move together.' },

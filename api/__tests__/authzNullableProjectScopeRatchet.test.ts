@@ -114,7 +114,7 @@ describe('every resource declares what a NULL project parent means', () => {
     // both created with `project_id ?? null` behind requireBodyProjectScope —
     // the same evidence shape that made `documents` and `commissioning_packs`
     // dual.
-    expect(dual.length).toBe(17)
+    expect(dual.length).toBe(18)
     expect(selfScoped.length).toBe(1)
     expect(global_.length, 'no resource is global-ONLY; the nullable ones are all dual').toBe(0)
   })
@@ -178,7 +178,7 @@ describe('declared semantics match the migrations, not an opinion', () => {
 describe('a tenant-global claim is argued from the repository', () => {
   it('gives every non-PROJECT_REQUIRED resource substantive evidence', () => {
     const claiming = [...dual, ...global_, ...selfScoped]
-    expect(claiming.length).toBe(18)
+    expect(claiming.length).toBe(19)
     for (const p of claiming) {
       expect(p.projectSemanticsEvidence, `${p.resource} claims ${p.projectSemantics} with no evidence`).toBeTruthy()
       expect(p.projectSemanticsEvidence!.length,

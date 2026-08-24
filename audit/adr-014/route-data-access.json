@@ -1,11 +1,11 @@
 {
   "generatedFrom": "api/routes/*.ts + api/services/**/*.ts",
   "counts": {
-    "endpoints": 766,
+    "endpoints": 773,
     "resolvedHandlerSql": 251,
-    "resolvedViaService": 457,
-    "unresolved": 58,
-    "serviceFunctionsIndexed": 1621
+    "resolvedViaService": 460,
+    "unresolved": 62,
+    "serviceFunctionsIndexed": 1626
   },
   "endpoints": [
     {
@@ -17467,9 +17467,53 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/projects/:projectId/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 193,
+      "pathParams": [
+        "projectId"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [],
+      "resolvedVia": "UNRESOLVED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/projects/:projectId/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 197,
+      "pathParams": [
+        "projectId"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [],
+      "resolvedVia": "UNRESOLVED"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 61,
+      "line": 72,
       "pathParams": [
         "projectId"
       ],
@@ -17497,7 +17541,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 67,
+      "line": 78,
       "pathParams": [
         "projectId"
       ],
@@ -17531,7 +17575,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/intelligence",
       "file": "api/routes/safety.ts",
-      "line": 90,
+      "line": 101,
       "pathParams": [
         "projectId"
       ],
@@ -17563,7 +17607,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 32,
+      "line": 43,
       "pathParams": [
         "projectId"
       ],
@@ -17591,7 +17635,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 38,
+      "line": 49,
       "pathParams": [
         "projectId"
       ],
@@ -17618,6 +17662,36 @@
       ],
       "delegatesTo": [
         "createObservation"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:projectId/safety/trir",
+      "file": "api/routes/safety.ts",
+      "line": 214,
+      "pathParams": [
+        "projectId"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "safety_exposure_hours",
+        "safety_incidents"
+      ],
+      "readsFrom": [
+        "safety_incidents",
+        "safety_exposure_hours"
+      ],
+      "primaryReadTable": "safety_incidents",
+      "writeTables": [],
+      "delegatesTo": [
+        "computeTrir"
       ],
       "resolvedVia": "SERVICE"
     },
@@ -20041,10 +20115,50 @@
       "resolvedVia": "SERVICE"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 204,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [],
+      "resolvedVia": "UNRESOLVED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 208,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [],
+      "resolvedVia": "UNRESOLVED"
+    },
+    {
       "method": "PATCH",
       "path": "/api/v1/safety/incidents/:id",
       "file": "api/routes/safety.ts",
-      "line": 77,
+      "line": 88,
       "pathParams": [
         "id"
       ],
@@ -20078,9 +20192,45 @@
     },
     {
       "method": "PATCH",
+      "path": "/api/v1/safety/incidents/:id/recordable",
+      "file": "api/routes/safety.ts",
+      "line": 128,
+      "pathParams": [
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [
+        {
+          "op": "UPDATE",
+          "table": "safety_incidents",
+          "scopeColumns": [
+            "tenant_id"
+          ],
+          "viaFunction": "classifyIncidentRecordable",
+          "inFile": "api/services/safety/trirService.ts"
+        }
+      ],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [
+        "safety_incidents"
+      ],
+      "delegatesTo": [
+        "classifyIncidentRecordable"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "PATCH",
       "path": "/api/v1/safety/observations/:id",
       "file": "api/routes/safety.ts",
-      "line": 48,
+      "line": 59,
       "pathParams": [
         "id"
       ],
@@ -20109,6 +20259,34 @@
       ],
       "delegatesTo": [
         "updateObservationStatus"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/safety/trir",
+      "file": "api/routes/safety.ts",
+      "line": 238,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "safety_exposure_hours",
+        "safety_incidents"
+      ],
+      "readsFrom": [
+        "safety_incidents",
+        "safety_exposure_hours"
+      ],
+      "primaryReadTable": "safety_incidents",
+      "writeTables": [],
+      "delegatesTo": [
+        "computeTrir"
       ],
       "resolvedVia": "SERVICE"
     },

@@ -1,13 +1,13 @@
 {
   "generatedFrom": "api/db/migrations/*.sql",
   "counts": {
-    "tables": 235,
-    "migrationFiles": 86,
-    "directProjectColumn": 70,
+    "tables": 236,
+    "migrationFiles": 87,
+    "directProjectColumn": 71,
     "fkPathToProject": 23,
     "noProjectParent": 141,
     "projectRoot": 1,
-    "withTenantColumn": 223
+    "withTenantColumn": 224
   },
   "tables": [
     {
@@ -2278,6 +2278,20 @@
       ]
     },
     {
+      "table": "safety_exposure_hours",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 11,
+      "sources": [
+        "087_safety_recordability_and_exposure.sql"
+      ]
+    },
+    {
       "table": "safety_incidents",
       "idColumn": "id",
       "tenantColumn": "tenant_id",
@@ -2286,9 +2300,10 @@
         "column": "project_id",
         "nullable": null
       },
-      "columns": 15,
+      "columns": 16,
       "sources": [
-        "077_safety.sql"
+        "077_safety.sql",
+        "087_safety_recordability_and_exposure.sql"
       ]
     },
     {

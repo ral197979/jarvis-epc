@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `e398e79996cf42cd54f35fc5850812e497e309d5`.**
+**Generated from checked-in source at `21f4ba76f28eb3888593d2310b29c6cd19418b01`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
@@ -12,12 +12,12 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 > Functional authorization (ADR-014 Phase 2) and record scope (Phase 3) are both
 > read from source: the capability guard in force on each route, and whether the
 > handler calls the canonical record-scope layer. At this commit
-> `730` endpoints carry a capability guard and
-> `354` enforce record scope.
+> `737` endpoints carry a capability guard and
+> `359` enforce record scope.
 
 ## 1. Join against the Phase-2 census
 
-The extractor derives **766 endpoint rows** from the mounted
+The extractor derives **773 endpoint rows** from the mounted
 route surface. The canonical census in
 `api/__tests__/helpers/endpointCensus.ts` derives 747, scanning `api/routes/`
 only. The difference is `api/auth/saml/samlRoutes.ts` — nine routes that
@@ -31,13 +31,13 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 
 | Source | Value |
 |---|---|
-| Endpoints (mounted) | 764 |
+| Endpoints (mounted) | 771 |
 | Endpoints (declared but never mounted) | 2 |
 | Route files | 100 |
 | `app.use` mounts parsed | 106 |
 | Extraction anomalies | 0 |
-| Tables parsed from migrations | 235 |
-| Service functions indexed | 1621 |
+| Tables parsed from migrations | 236 |
+| Service functions indexed | 1626 |
 
 ## 2. HOB §5 — every endpoint has exactly one project-scope disposition
 
@@ -46,13 +46,13 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 | Disposition | Endpoints | Of which mutations |
 |---|---|---|
 | `TENANT_GLOBAL` | 253 | 137 |
-| `PROJECT_CHILD_RECORD_ID` | 186 | 127 |
-| `PROJECT_CHILD_PATH_PROJECT` | 104 | 39 |
-| `PROJECT_CHILD_TENANT_COLLECTION` | 45 | 0 |
+| `PROJECT_CHILD_RECORD_ID` | 187 | 128 |
+| `PROJECT_CHILD_PATH_PROJECT` | 107 | 40 |
+| `PROJECT_CHILD_TENANT_COLLECTION` | 46 | 0 |
 | `PLATFORM_GLOBAL` | 40 | 18 |
 | `NO_PROJECT_PARENT` | 39 | 29 |
+| `UNRESOLVED_DATA_ACCESS` | 32 | 14 |
 | `SERVICE_BOUNDARY` | 31 | 17 |
-| `UNRESOLVED_DATA_ACCESS` | 30 | 13 |
 | `SELF_SCOPED` | 16 | 9 |
 | `PROJECT_CHILD_BODY_PROJECT` | 13 | 13 |
 | `PROJECT_ROOT_EXISTING` | 4 | 3 |
@@ -65,28 +65,28 @@ Dispositions are assigned by an ordered rule list in
 `scripts/adr014/classify-scope.mjs`; each registry entry records the rule that
 fired in `dispositionReason`, so a verdict can be argued with.
 
-`UNRESOLVED_DATA_ACCESS` (30) is deliberately **not**
+`UNRESOLVED_DATA_ACCESS` (32) is deliberately **not**
 folded into `NO_PROJECT_PARENT`: for these routes no table could be resolved, so
 their project relationship is *unknown*, not *absent*. Per HOB §64 they are
 deferred for a scope model, not closed.
 
 ## 3. The headline finding
 
-**174 of the 182 project-bound mutations carry no project
+**176 of the 184 project-bound mutations carry no project
 predicate anywhere in their SQL.** They are constrained by `tenant_id` alone.
 
-Combined with the guard census — 733
-of 766 endpoints are authenticate-only, with no role or capability
+Combined with the guard census — 740
+of 773 endpoints are authenticate-only, with no role or capability
 gate — any authenticated member of a tenant can mutate project records in
 projects they have no relationship to. This is the gap ADR-014 Phase 3C exists to
 close, now measured rather than asserted.
 
 | Operation | Project-bound | With a project predicate in SQL |
 |---|---|---|
-| `READ_COLLECTION` | 108 | 0 |
-| `MUTATION_CREATE` | 84 | 7 |
+| `READ_COLLECTION` | 111 | 0 |
+| `MUTATION_CREATE` | 85 | 7 |
 | `READ_DIRECT_ID` | 62 | 0 |
-| `MUTATION_UPDATE` | 44 | 0 |
+| `MUTATION_UPDATE` | 45 | 0 |
 | `MUTATION_CONSEQUENTIAL` | 31 | 0 |
 | `MUTATION_DELETE` | 23 | 1 |
 
@@ -183,11 +183,11 @@ be joined against the real registry (HOB §7) rather than used in its place.
 | Strategy | Tables | Meaning |
 |---|---|---|
 | `PROJECT_ROOT` | 1 | the `projects` table itself |
-| `DIRECT_COLUMN` | 70 | has `project_id` — one lookup resolves the parent |
+| `DIRECT_COLUMN` | 71 | has `project_id` — one lookup resolves the parent |
 | `FK_PATH` | 23 | reaches a project by walking foreign keys (e.g. `drawing_markups` → `drawings` → `project_id`) |
 | `NO_PROJECT_PARENT` | 141 | tenant-level configuration, registries, platform tables |
 
-223 of 235 tables carry `tenant_id`. This map is the data
+224 of 236 tables carry `tenant_id`. This map is the data
 HOB §12 requires so parent resolution lives in one policy table instead of
 ad-hoc `SELECT project_id FROM …` in every router.
 
@@ -241,14 +241,14 @@ server, or contacts a database.
    `api/routes/procurement.ts` declare four), and resolving guards reached
    through local aliases and middleware factories.
 2. `extract-schema-map.mjs` — `CREATE TABLE` / `ALTER TABLE … ADD COLUMN` /
-   `ADD … FOREIGN KEY` across all 86 migrations, then FK-walks to a
+   `ADD … FOREIGN KEY` across all 87 migrations, then FK-walks to a
    project parent.
 3. `extract-route-data-access.mjs` — SQL in each handler, plus one level of
-   service delegation (1621 indexed functions), recording the
+   service delegation (1626 indexed functions), recording the
    WHERE-clause scoping columns of every write.
 
-**Stated limits.** Table resolution reaches 708 of
-766 endpoints; the remaining 58 are marked `UNRESOLVED`
+**Stated limits.** Table resolution reaches 711 of
+773 endpoints; the remaining 62 are marked `UNRESOLVED`
 and, where no other rule fires, land in `UNRESOLVED_DATA_ACCESS` rather than
 being assumed project-free. Service delegation is followed one level only.
 `primaryTable` is a heuristic — the first written table reaching a project —

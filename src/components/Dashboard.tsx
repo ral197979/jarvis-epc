@@ -140,6 +140,9 @@ export interface BizSnapshot {
 //     Documents         GET /api/v1/files/documents   docs.view
 //     Recent activity   GET /api/v1/audit             audit.view
 //
+//   DERIVABLE as of Phase 3L
+//     Safety (TRIR)     GET /api/v1/safety/trir        safety.view
+//
 //   NOT DERIVABLE — no backend exists
 //     Pipeline (Weighted)   `crm_leads` is a table with no route
 //     Active Contracts      `contracts` is a table with no route. NOT
@@ -153,12 +156,20 @@ export interface BizSnapshot {
 //     Safety (TRIR)         see below — the worst of them.
 //
 // TRIR deserves naming. It was `(recordable × 200,000) / (200,000 × toolbox
-// talks)`. `safety_incidents` has no `recordable` column, so the numerator
+// talks)`. `safety_incidents` had no `recordable` column, so the numerator
 // counted nothing; `toolbox_talks` has no table at all, so the denominator was
-// invented outright. TRIR is a regulated OSHA metric, and a fabricated one on
-// an executive dashboard is a compliance claim about a workplace. It is now
-// blank with its reason, and it stays blank until incidents record
-// recordability and someone records exposure hours.
+// invented outright and clamped to a minimum of one, which meant the card
+// ALWAYS produced a plausible rate.
+//
+// Phase 3L built the domain: migration 087 adds a nullable `recordable`
+// classification (NULL means undetermined and is never inferred) and a
+// `safety_exposure_hours` table of MEASURED hours with a period, a scope, a
+// stated source and a recorder. `GET /api/v1/safety/trir` is now the ONLY
+// source of this number on this screen — there is deliberately no local
+// arithmetic left to fall back to, so there is no execution path by which an
+// incomplete basis can still produce a figure. The API returns `trir: null`
+// with a machine-readable reason whenever either half is incomplete, and this
+// card renders the reason.
 
 /** What a KPI shows when no backend can tell it the answer. */
 const NO_DATA = '—'
@@ -173,16 +184,46 @@ interface AuditRow {
   [k: string]: unknown
 }
 
+/**
+ * The TRIR envelope, exactly as `GET /api/v1/safety/trir` returns it.
+ *
+ * `trir` is null whenever the basis is incomplete, and `reason`/`detail` say
+ * why. This component never computes the rate and never substitutes a value for
+ * null — the API is the only arithmetic.
+ */
+interface TrirPayload {
+  trir: number | null
+  reason?: string
+  detail?: string
+  recordableIncidents: number | null
+  unclassifiedIncidents: number
+  totalIncidents: number
+  exposureHours: number | null
+  uncoveredDays: number
+}
+
 interface LiveDashboard {
   pos:      { rows: PoRow[];    state: FeedState }
   docs:     { rows: DocRow[];   state: FeedState }
   activity: { rows: AuditRow[]; state: FeedState }
+  trir:     { data: TrirPayload | null; state: FeedState }
 }
 
 const IDLE_FEED: LiveDashboard = {
   pos:      { rows: [], state: 'ok' },
   docs:     { rows: [], state: 'ok' },
   activity: { rows: [], state: 'ok' },
+  trir:     { data: null, state: 'ok' },
+}
+
+/**
+ * The reporting window the Safety KPI asks about: the calendar year to date.
+ * Stated explicitly because a rate is meaningless without its period, and
+ * because the API refuses rather than guessing when hours do not cover it.
+ */
+export function trirPeriod(now: Date): { start: string; end: string } {
+  const y = now.getUTCFullYear()
+  return { start: `${y}-01-01`, end: now.toISOString().slice(0, 10) }
 }
 
 /** One feed. Degrades on its own so a domain the caller may not read does not blank the rest. */
@@ -200,19 +241,31 @@ async function feed<T>(url: string): Promise<{ rows: T[]; state: FeedState }> {
 function useLiveDashboard(enabled: boolean): LiveDashboard {
   const [data, setData] = useState<LiveDashboard>(
     enabled
-      ? { pos: { rows: [], state: 'loading' }, docs: { rows: [], state: 'loading' }, activity: { rows: [], state: 'loading' } }
+      ? { pos: { rows: [], state: 'loading' }, docs: { rows: [], state: 'loading' },
+          activity: { rows: [], state: 'loading' }, trir: { data: null, state: 'loading' } }
       : IDLE_FEED,
   )
   useEffect(() => {
     if (!enabled) return
     let live = true
     void (async () => {
-      const [pos, docs, activity] = await Promise.all([
+      const period = trirPeriod(new Date())
+      const [pos, docs, activity, trir] = await Promise.all([
         feed<PoRow>('/api/v1/purchase-orders?limit=200'),
         feed<DocRow>('/api/v1/files/documents?limit=200'),
         feed<AuditRow>('/api/v1/audit?limit=10'),
+        // Returns an object rather than a row array, so it does not go through
+        // `feed`. Same degradation rule: a refusal blanks this card only.
+        (async (): Promise<LiveDashboard['trir']> => {
+          try {
+            const res = await fetch(`/api/v1/safety/trir?period_start=${period.start}&period_end=${period.end}`)
+            if (!res.ok) return { data: null, state: 'unavailable' }
+            const body = await res.json() as { data?: TrirPayload }
+            return body.data ? { data: body.data, state: 'ok' } : { data: null, state: 'unavailable' }
+          } catch { return { data: null, state: 'unavailable' } }
+        })(),
       ])
-      if (live) setData({ pos, docs, activity })
+      if (live) setData({ pos, docs, activity, trir })
     })()
     return () => { live = false }
   }, [enabled])
@@ -463,7 +516,10 @@ function ActivityItem({ entry }: ActivityItemProps) {
 export default function Dashboard({ biz, onNavigate }: DashboardProps) {
   const {
     leads = [], contracts = [], invoices = [], purchase_orders = [],
-    documents = [], incidents = [], jhas = [], toolbox_talks = [],
+    documents = [], incidents = [],
+    // `jhas` and `toolbox_talks` are destructured no longer: they existed only
+    // to feed the fabricated TRIR, and neither has a table behind it.
+
     evm_projects = [], activity_log = [],
   } = (biz || {}) as typeof biz
 
@@ -512,19 +568,38 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
     documents.filter(d => d.status === 'approved' || d.status === 'final').length,
   [documents])
 
-  const recordableIncidents = useMemo(() =>
-    incidents.filter(i => i.recordable).length,
-  [incidents])
-
-  const totalExposureHours = useMemo(() =>
-    Math.max(200_000 * toolbox_talks.length, 1),
-  [toolbox_talks])
-
-  const trir = useMemo(() =>
-    (recordableIncidents * 200_000) / totalExposureHours,
-  [recordableIncidents, totalExposureHours])
+  // The local TRIR computation is DELETED, not merely unwired.
+  //
+  //   recordableIncidents = incidents.filter(i => i.recordable).length
+  //   totalExposureHours  = Math.max(200_000 * toolbox_talks.length, 1)
+  //   trir                = recordableIncidents * 200_000 / totalExposureHours
+  //
+  // `incidents[].recordable` was never a field the API returned and
+  // `toolbox_talks` has no table, so the numerator counted nothing and the
+  // denominator was invented — and the `Math.max(…, 1)` guaranteed a finite,
+  // plausible-looking answer for every possible input. Leaving it here unused
+  // would leave a path back: the rate now has exactly one source, and this
+  // comment is what remains of the other one.
 
   const funnelData = useMemo(() => buildFunnelData(leads), [leads])
+
+  // ── Safety (TRIR) ──
+  // Rendered from the API envelope alone. `live` is not consulted for the
+  // VALUE: even a caller who supplied a biz snapshot gets the API's answer or
+  // nothing, because a snapshot cannot carry a recordability determination or a
+  // measured exposure hour, and inventing one from `incidents.length` is the
+  // defect this replaced.
+  const trirPayload = api.trir.data
+  const trirValue =
+    api.trir.state === 'loading'          ? '…'
+    : typeof trirPayload?.trir === 'number' ? trirPayload.trir.toFixed(1)
+    : NO_DATA
+  const trirSub =
+    api.trir.state === 'loading'     ? 'loading…'
+    : api.trir.state === 'unavailable' ? 'unavailable'
+    : typeof trirPayload?.trir === 'number'
+        ? `${trirPayload.recordableIncidents ?? 0} recordable`
+        : (trirPayload?.detail ?? 'needs recordable classification + exposure hours')
 
   // "Add your first lead" is wrong when the tenant HAS procurement and document
   // activity — it just has no leads, because there is nowhere to put them.
@@ -608,23 +683,24 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
                 : api.docs.state === 'loading' ? 'loading…' : 'unavailable')
             : `${approvedDocs} approved`}
         />
-        {/* TRIR was (recordable × 200,000) / (200,000 × toolbox talks).
-            `safety_incidents` has no `recordable` column so the numerator
-            counted nothing, and `toolbox_talks` has no table so the denominator
-            was invented. TRIR is a regulated OSHA metric — a fabricated one on
-            an executive dashboard is a compliance claim about a workplace. */}
+        {/* The rate comes from GET /api/v1/safety/trir and nowhere else. There
+            is no local arithmetic to fall back to, so there is no path by which
+            an incomplete basis can still produce a figure: the API returns null
+            with a reason, and this renders the reason. `warn` fires only on a
+            real number — an alarm raised on an unknown rate is a false alarm
+            about a workplace. */}
         <KPICard
           label="Safety (TRIR)"
-          value={live ? NO_DATA : trir.toFixed(1)}
-          sub={live ? 'needs recordable + exposure hours' : `${jhas.length} JHAs`}
-          warn={!live && trir > 1}
+          value={trirValue}
+          sub={trirSub}
+          warn={typeof api.trir.data?.trir === 'number' && api.trir.data.trir > 1}
         />
       </div>
 
       {/* ── Empty state ──────────────────────────────────────────────────────── */}
       {isEmpty && (
         <EmptyState message={live
-          ? 'No procurement or document activity yet. Pipeline, contracts, revenue and TRIR need backends that do not exist yet.'
+          ? 'No procurement or document activity yet. Safety TRIR needs recordable classifications and measured exposure hours; pipeline, contracts and revenue need backends that do not exist yet.'
           : 'Welcome to JARVIS. Start by adding your first lead or contract.'} />
       )}
 

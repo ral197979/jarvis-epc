@@ -436,7 +436,10 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // rows have no record-scope policy at all.
     // Phase 3K takes it to 354: the download token, plus the repaired
     // inline viewer route, which is new surface that arrives already scoped.
-    expect(scoped).toBe(354)
+    // Phase 3L takes it to 359 with the TRIR surface — recordability
+    // classification, two project exposure-hours routes, and the two rate
+    // routes. All five arrive scoped; none is a reclassification.
+    expect(scoped).toBe(359)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only
@@ -446,7 +449,8 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // endpoint. Conservation is the property — the total may only move when
     // surface is genuinely added or removed, never by an endpoint slipping
     // out of both classes.
-    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(731)
+    // Phase 3L: +7 for the TRIR surface (five scoped, two capability-only).
+    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(738)
   })
 })
 

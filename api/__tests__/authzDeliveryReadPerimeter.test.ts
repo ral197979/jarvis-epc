@@ -223,10 +223,16 @@ describe('project-delivery read ratchet', () => {
     // at a path that was never registered. The total moves only because the API
     // grew, not because anything moved out of the classification; the two
     // assertions above still hold that every candidate is classified once.
+    //
+    // 229 from 2026-08-24: the TRIR surface adds four reads — project and
+    // tenant exposure hours, and the project and tenant rate. Genuinely new
+    // API, not a reclassification; the two assertions above still hold that
+    // every candidate is classified exactly once.
     const closed = PROJECT_DELIVERY_READS.length + MIXED_PAYLOAD_DELIVERY_READS.length
-    expect(closed + DEFERRED_DELIVERY_READS.length).toBe(225)
-    // 108 → 109 for the same one route; the deferral count is unchanged.
-    expect(closed).toBe(109)
+    expect(closed + DEFERRED_DELIVERY_READS.length).toBe(229)
+    // 108 → 109 for the viewer route, then → 113 for the four TRIR reads. The
+    // deferral count is unchanged throughout: nothing moved into deferral.
+    expect(closed).toBe(113)
   })
 
   it('recognises a disposable unprotected delivery read', () => {

@@ -105,6 +105,7 @@ export const NESTED_ROUTE_FAMILIES: readonly NestedFamily[] = [
     ['/api/v1/purchase-orders/:id',          'purchase_orders'],
     ['/api/v1/readiness/project/:id',        'projects'],
     ['/api/v1/rfis/:id',                     'rfis'],
+    ['/api/v1/safety/incidents/:id',         'safety_incidents'],
     ['/api/v1/risks/:id',                    'risks'],
     ['/api/v1/sc-invoices/:id',              'subcontract_invoices'],
     ['/api/v1/schedule/:projectId',          'projects'],

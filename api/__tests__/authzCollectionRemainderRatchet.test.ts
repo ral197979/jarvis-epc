@@ -119,8 +119,8 @@ describe('every collection row model now has a scope policy', () => {
     const c = collectionScopeCounters()
     expect(c.deferred, 'Phase 3F deferred three; Phase 3G must leave none').toBe(0)
     expect(c.unexplained).toBe(0)
-    expect(c.candidates).toBe(108)
-    expect(c.protected_).toBe(82)
+    expect(c.candidates).toBe(111)
+    expect(c.protected_).toBe(85)
   })
 
   it('gives document_folders and source_uploads dual semantics, with evidence', () => {
@@ -181,7 +181,7 @@ describe('every collection row model now has a scope policy', () => {
 describe('every unresolved collection data surface has a verdict', () => {
   it('covers all thirteen, with nothing unexplained', () => {
     const c = unresolvedCollectionCounters()
-    expect(c.total, 'Phase 3F left thirteen').toBe(13)
+    expect(c.total, 'Phase 3F left thirteen').toBe(14)
     expect(c.resolvedProjectBound + c.platform + c.tenantGlobal + c.nonProject
          + c.selfScoped + c.deferred).toBe(c.total)
     expect(c.unexplained, 'a verdict without an argument is a gap wearing a label').toBe(0)
@@ -191,7 +191,7 @@ describe('every unresolved collection data surface has a verdict', () => {
     const unresolved = new Set(registry.registry
       .filter(r => r.disposition === 'UNRESOLVED_DATA_ACCESS' && r.operationType === 'READ_COLLECTION')
       .map(r => `${r.method} ${r.path}`))
-    expect(unresolved.size).toBe(13)
+    expect(unresolved.size).toBe(14)
     for (const a of UNRESOLVED_COLLECTION_AUDIT) {
       expect(unresolved.has(a.endpoint), `${a.endpoint} is not an unresolved collection`).toBe(true)
     }
@@ -275,8 +275,9 @@ describe('direct-ID project-boundness comes from the path-addressed resource', (
 
   it('leaves the mutation surface exactly where Phase 3D certified it', () => {
     const mut = registry.registry.filter(r => r.projectBound && r.operationType.startsWith('MUTATION'))
-    expect(mut.length, 'the classifier change must not move the mutation denominator').toBe(182)
-    expect(mut.filter(r => r.enforcesRecordScope).length).toBe(174)
+    // Phase 3L: +2 for the exposure-hours writes (project and tenant).
+    expect(mut.length, 'the classifier change must not move the mutation denominator').toBe(184)
+    expect(mut.filter(r => r.enforcesRecordScope).length).toBe(176)
   })
 })
 

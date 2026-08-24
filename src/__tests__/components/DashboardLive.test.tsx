@@ -52,11 +52,20 @@ const denied = () => ({ ok: false, status: 403, json: async () => ({ error: 'for
 let fetchMock: ReturnType<typeof vi.fn>
 const kpi = (name: string) => screen.getByRole('group', { name })
 
-function allOk(): void {
+/** The API's refusal envelope: a null rate with a machine-readable reason. */
+const TRIR_UNAVAILABLE = {
+  trir: null, reason: 'unclassified_incidents',
+  detail: 'Some incidents in this period have no recordability determination.',
+  recordableIncidents: null, unclassifiedIncidents: 3, totalIncidents: 5,
+  exposureHours: null, uncoveredDays: 0,
+}
+
+function allOk(trir: unknown = TRIR_UNAVAILABLE): void {
   fetchMock.mockImplementation(async (url: string) => {
     if (url.startsWith('/api/v1/purchase-orders')) return ok(PO_ROWS)
     if (url.startsWith('/api/v1/files/documents')) return ok(DOC_ROWS)
     if (url.startsWith('/api/v1/audit'))           return ok(AUDIT_ROWS)
+    if (url.startsWith('/api/v1/safety/trir'))     return ok(trir)
     throw new Error(`unexpected fetch: ${url}`)
   })
 }
@@ -170,19 +179,60 @@ describe('a KPI with no backend shows no number', () => {
 
 // ─── 3. TRIR specifically ────────────────────────────────────────────────────
 
-describe('TRIR is not fabricated', () => {
-  it('shows no rate, and says what it would need', async () => {
+describe('TRIR comes from the API, or not at all', () => {
+  it('renders the reason the API gave for refusing', async () => {
     render(<Dashboard biz={EMPTY_BIZ} />)
     await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('—'))
-    expect(kpi('Safety (TRIR)').textContent).toContain('recordable')
-    expect(kpi('Safety (TRIR)').textContent).toContain('exposure hours')
+    expect(kpi('Safety (TRIR)').textContent).toContain('recordability determination')
   })
 
-  it('never prints a computed rate like 0.0', async () => {
+  it('never prints a computed rate like 0.0 when the basis is incomplete', async () => {
     // The old code always produced a number, because the invented denominator
     // was clamped to at least 1. `0.0` on a safety metric reads as "no
-    // recordable incidents", which nothing in this system can establish.
+    // recordable incidents", which an incomplete classification cannot establish.
     render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('—'))
+    expect(kpi('Safety (TRIR)').textContent).not.toMatch(/\d+\.\d/)
+  })
+
+  it('shows the rate when the API returns one', async () => {
+    allOk({ trir: 2.5, recordableIncidents: 5, unclassifiedIncidents: 0,
+            totalIncidents: 5, exposureHours: 400000, uncoveredDays: 0 })
+    render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('2.5'))
+    expect(kpi('Safety (TRIR)').textContent).toContain('5 recordable')
+  })
+
+  it('shows an earned zero, which is a real determination', async () => {
+    // Every incident was examined and none was recordable. This is the one
+    // case where 0.0 is truthful, and it must not be suppressed.
+    allOk({ trir: 0, recordableIncidents: 0, unclassifiedIncidents: 0,
+            totalIncidents: 4, exposureHours: 200000, uncoveredDays: 0 })
+    render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('0.0'))
+  })
+
+  it('asks for a calendar-year-to-date period', async () => {
+    render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('—'))
+    const url = fetchMock.mock.calls.map(c => String(c[0])).find(u => u.includes('/safety/trir'))!
+    expect(url).toMatch(/period_start=\d{4}-01-01/)
+    expect(url).toMatch(/period_end=\d{4}-\d{2}-\d{2}/)
+  })
+
+  it('blanks the card when the endpoint itself is refused', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url.startsWith('/api/v1/safety/trir') ? denied() : ok(PO_ROWS))
+    render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('unavailable'))
+    expect(kpi('Safety (TRIR)').textContent).not.toMatch(/\d+\.\d/)
+  })
+
+  it('ignores a biz snapshot for this card, which cannot carry a determination', async () => {
+    // A caller-supplied snapshot has incidents but no recordability and no
+    // measured hours. The card must still come from the API.
+    allOk()
+    render(<Dashboard biz={{ ...EMPTY_BIZ as object, incidents: [{ id: 'i1', recordable: true }] } as never} />)
     await waitFor(() => expect(kpi('Safety (TRIR)').textContent).toContain('—'))
     expect(kpi('Safety (TRIR)').textContent).not.toMatch(/\d+\.\d/)
   })

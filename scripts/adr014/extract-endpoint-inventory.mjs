@@ -248,6 +248,11 @@ const RECORD_SCOPE_CALLS = [
   // whose record id is not in `req.params` — the download token carries it.
   // Same function, same ladder as `requireRecordScope`; only the lookup moves.
   'authorizeRecordScope(',
+  // ADR-014 Phase 3L: the caller's reachable project SET, for a tenant-wide
+  // aggregate that has no project in its path. `/safety/trir` restricts its
+  // numerator to these ids — same registry, same resolver, only the shape of
+  // the answer differs (a set rather than one record's position).
+  'resolveProjectScope(',
 ]
 const recordScopeCallsIn = fragment =>
   RECORD_SCOPE_CALLS.filter(c => fragment.includes(c)).map(c => c.slice(0, -1)).sort()

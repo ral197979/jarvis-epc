@@ -1,11 +1,11 @@
 {
   "generatedFrom": "checked-in source (api/server.ts + api/routes/*.ts)",
   "counts": {
-    "endpoints": 766,
-    "mounted": 764,
+    "endpoints": 773,
+    "mounted": 771,
     "unmounted": 2,
-    "reads": 358,
-    "mutations": 408,
+    "reads": 362,
+    "mutations": 411,
     "routeFiles": 100,
     "mounts": 106
   },
@@ -12162,11 +12162,59 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/projects/:projectId/safety/exposure-hours",
+      "mountPrefix": "/api/v1",
+      "routePath": "/projects/:projectId/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 193,
+      "serverLine": 568,
+      "pathParams": [
+        "projectId"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/projects/:projectId/safety/exposure-hours",
+      "mountPrefix": "/api/v1",
+      "routePath": "/projects/:projectId/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 197,
+      "serverLine": 568,
+      "pathParams": [
+        "projectId"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.write"
+      ],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 61,
+      "line": 72,
       "serverLine": 568,
       "pathParams": [
         "projectId"
@@ -12190,7 +12238,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 67,
+      "line": 78,
       "serverLine": 568,
       "pathParams": [
         "projectId"
@@ -12214,7 +12262,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/safety/intelligence",
       "file": "api/routes/safety.ts",
-      "line": 90,
+      "line": 101,
       "serverLine": 568,
       "pathParams": [
         "projectId"
@@ -12238,7 +12286,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 32,
+      "line": 43,
       "serverLine": 568,
       "pathParams": [
         "projectId"
@@ -12262,7 +12310,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 38,
+      "line": 49,
       "serverLine": 568,
       "pathParams": [
         "projectId"
@@ -12273,6 +12321,30 @@
       ],
       "capabilities": [
         "safety.write"
+      ],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:projectId/safety/trir",
+      "mountPrefix": "/api/v1",
+      "routePath": "/projects/:projectId/safety/trir",
+      "file": "api/routes/safety.ts",
+      "line": 214,
+      "serverLine": 568,
+      "pathParams": [
+        "projectId"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
       ],
       "recordScopeCalls": [
         "requireProjectScope"
@@ -13825,12 +13897,76 @@
       "mounted": true
     },
     {
+      "method": "GET",
+      "path": "/api/v1/safety/exposure-hours",
+      "mountPrefix": "/api/v1",
+      "routePath": "/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 204,
+      "serverLine": 568,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "recordScopeCalls": [],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/safety/exposure-hours",
+      "mountPrefix": "/api/v1",
+      "routePath": "/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 208,
+      "serverLine": 568,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.approve"
+      ],
+      "recordScopeCalls": [],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
       "method": "PATCH",
       "path": "/api/v1/safety/incidents/:id",
       "mountPrefix": "/api/v1",
       "routePath": "/safety/incidents/:id",
       "file": "api/routes/safety.ts",
-      "line": 77,
+      "line": 88,
+      "serverLine": 568,
+      "pathParams": [
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.write"
+      ],
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/safety/incidents/:id/recordable",
+      "mountPrefix": "/api/v1",
+      "routePath": "/safety/incidents/:id/recordable",
+      "file": "api/routes/safety.ts",
+      "line": 128,
       "serverLine": 568,
       "pathParams": [
         "id"
@@ -13854,7 +13990,7 @@
       "mountPrefix": "/api/v1",
       "routePath": "/safety/observations/:id",
       "file": "api/routes/safety.ts",
-      "line": 48,
+      "line": 59,
       "serverLine": 568,
       "pathParams": [
         "id"
@@ -13868,6 +14004,28 @@
       ],
       "recordScopeCalls": [
         "requireRecordScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/safety/trir",
+      "mountPrefix": "/api/v1",
+      "routePath": "/safety/trir",
+      "file": "api/routes/safety.ts",
+      "line": 238,
+      "serverLine": 568,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "recordScopeCalls": [
+        "resolveProjectScope"
       ],
       "bodyProjectRefs": [],
       "mounted": true

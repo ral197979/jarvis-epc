@@ -391,7 +391,9 @@ describe('prior read perimeters are untouched', () => {
     expect(kept).toBe(all.length)
     // 108 → 109 on 2026-08-23 with `GET /files/documents/:id/content`, the
     // in-app viewer route. New surface on `docs.view`, not a reclassification.
-    expect(all.length).toBe(109)
+    expect(all.length).// 113 from 2026-08-24: the four TRIR reads (project and tenant exposure
+    // hours, project and tenant rate). New API surface, not a reclassification.
+    toBe(113)
   })
 
   it('registers no endpoint in two gates at once', () => {

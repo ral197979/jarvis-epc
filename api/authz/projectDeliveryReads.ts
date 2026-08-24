@@ -162,6 +162,15 @@ export const PROJECT_DELIVERY_READS: readonly DeliveryRead[] = [
   { file: 'safety.ts', router: 'router', method: 'GET', path: '/projects/:projectId/safety/incidents', domain: 'safety', capability: 'safety.view' },
   { file: 'safety.ts', router: 'router', method: 'GET', path: '/projects/:projectId/safety/intelligence', domain: 'safety', capability: 'safety.view' },
   { file: 'safety.ts', router: 'router', method: 'GET', path: '/projects/:projectId/safety/observations', domain: 'safety', capability: 'safety.view' },
+  // ADR-014 Phase 3L — the TRIR surface. The two project-scoped reads carry
+  // requireProjectScope like their siblings. The two tenant-wide reads have no
+  // project in the path by design: exposure hours recorded at tenant level are
+  // the denominator of a tenant-level rate, and `/safety/trir` restricts its
+  // numerator to the caller's reachable projects via resolveProjectScope.
+  { file: 'safety.ts', router: 'router', method: 'GET', path: '/projects/:projectId/safety/exposure-hours', domain: 'safety', capability: 'safety.view' },
+  { file: 'safety.ts', router: 'router', method: 'GET', path: '/projects/:projectId/safety/trir', domain: 'safety', capability: 'safety.view' },
+  { file: 'safety.ts', router: 'router', method: 'GET', path: '/safety/exposure-hours', domain: 'safety', capability: 'safety.view' },
+  { file: 'safety.ts', router: 'router', method: 'GET', path: '/safety/trir', domain: 'safety', capability: 'safety.view' },
 
   // ── procurement → procurement.view ───────────────────
   { file: 'subcontracts.ts', router: 'subcontractsRouter', method: 'GET', path: '/bid-packages/:id', domain: 'procurement', capability: 'procurement.view' },

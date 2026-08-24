@@ -88,6 +88,9 @@ const RECORD_SCOPE_CALLS = [
   // inside the token, so the guard form cannot be used and the ladder is
   // called directly instead.
   'authorizeRecordScope(',
+  // ADR-014 Phase 3L: the caller's reachable project set, for a tenant-wide
+  // aggregate with no project in its path (`/safety/trir`).
+  'resolveProjectScope(',
   // ADR-014 Phase 3B: the guard form, for a route whose PATH names the project
   // it operates on. Roughly fifty project-child collections share that shape,
   // so the rule is expressed once as middleware rather than as fifty copies of

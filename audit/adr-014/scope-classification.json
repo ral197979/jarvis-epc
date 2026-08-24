@@ -1,17 +1,17 @@
 {
   "generatedFrom": "endpoint-inventory + route-data-access + schema-project-parent-map",
   "counters": {
-    "TOTAL_API_ENDPOINTS": 766,
+    "TOTAL_API_ENDPOINTS": 773,
     "DISPOSITIONS": {
       "SERVICE_BOUNDARY": 31,
       "TENANT_GLOBAL": 253,
       "NO_PROJECT_PARENT": 39,
-      "PROJECT_CHILD_TENANT_COLLECTION": 45,
-      "PROJECT_CHILD_RECORD_ID": 186,
-      "UNRESOLVED_DATA_ACCESS": 30,
+      "PROJECT_CHILD_TENANT_COLLECTION": 46,
+      "PROJECT_CHILD_RECORD_ID": 187,
+      "UNRESOLVED_DATA_ACCESS": 32,
       "SELF_SCOPED": 16,
       "PROJECT_CHILD_BODY_PROJECT": 13,
-      "PROJECT_CHILD_PATH_PROJECT": 104,
+      "PROJECT_CHILD_PATH_PROJECT": 107,
       "CROSSDOMAIN": 1,
       "PLATFORM_GLOBAL": 40,
       "PROJECT_CREATE_NO_EXISTING_SCOPE": 1,
@@ -20,64 +20,64 @@
       "PUBLIC_UNAUTHENTICATED": 1
     },
     "UNEXPLAINED": 0,
-    "PROJECT_BOUND_TOTAL": 352,
+    "PROJECT_BOUND_TOTAL": 357,
     "PROJECT_BOUND_BY_OPERATION": {
-      "READ_COLLECTION": 108,
+      "READ_COLLECTION": 111,
       "READ_DIRECT_ID": 62,
-      "MUTATION_UPDATE": 44,
-      "MUTATION_CREATE": 84,
+      "MUTATION_UPDATE": 45,
+      "MUTATION_CREATE": 85,
       "MUTATION_DELETE": 23,
       "MUTATION_CONSEQUENTIAL": 31
     },
     "MUTATIONS": {
-      "total": 408,
-      "projectBound": 182,
+      "total": 411,
+      "projectBound": 184,
       "byDisposition": {
         "SERVICE_BOUNDARY": 17,
         "TENANT_GLOBAL": 137,
         "NO_PROJECT_PARENT": 29,
-        "PROJECT_CHILD_RECORD_ID": 127,
+        "PROJECT_CHILD_RECORD_ID": 128,
         "SELF_SCOPED": 9,
-        "UNRESOLVED_DATA_ACCESS": 13,
+        "UNRESOLVED_DATA_ACCESS": 14,
         "PROJECT_CHILD_BODY_PROJECT": 13,
         "CROSSDOMAIN": 1,
         "PLATFORM_GLOBAL": 18,
         "PROJECT_CREATE_NO_EXISTING_SCOPE": 1,
         "PROJECT_ROOT_EXISTING": 3,
-        "PROJECT_CHILD_PATH_PROJECT": 39,
+        "PROJECT_CHILD_PATH_PROJECT": 40,
         "DEAD_OR_UNMOUNTED": 1
       },
       "consequentialProjectBound": 31,
-      "projectBoundWithNoProjectPredicateInSql": 174
+      "projectBoundWithNoProjectPredicateInSql": 176
     },
     "DIRECT_ID_READS": {
       "total": 133,
       "projectBound": 62
     },
     "READ_COLLECTIONS": {
-      "total": 225,
-      "projectBound": 108
+      "total": 229,
+      "projectBound": 111
     },
     "SELF_SCOPED": 16,
-    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 30,
+    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 32,
     "FUNCTIONAL_CAPABILITY": {
-      "guarded": 730,
+      "guarded": 737,
       "unguarded": 36
     },
     "RECORD_SCOPE": {
-      "candidates": 352,
-      "protected": 314,
+      "candidates": 357,
+      "protected": 319,
       "deferred": 38,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 354,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 359,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
       "READ_DIRECT_ID": 58,
-      "MUTATION_CREATE": 78,
+      "MUTATION_CREATE": 79,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
-      "MUTATION_UPDATE": 43,
-      "READ_COLLECTION": 82
+      "MUTATION_UPDATE": 44,
+      "READ_COLLECTION": 85
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
       "READ_COLLECTION": 26,
@@ -19689,9 +19689,73 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/projects/:projectId/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 193,
+      "operationType": "READ_COLLECTION",
+      "disposition": "PROJECT_CHILD_PATH_PROJECT",
+      "dispositionReason": "project identified directly by a path parameter",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": null,
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "NO_TABLE_RESOLVED",
+      "projectParent": null,
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "UNRESOLVED",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/projects/:projectId/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 197,
+      "operationType": "MUTATION_CREATE",
+      "disposition": "PROJECT_CHILD_PATH_PROJECT",
+      "dispositionReason": "project identified directly by a path parameter",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.write"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": null,
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "NO_TABLE_RESOLVED",
+      "projectParent": null,
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "UNRESOLVED",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 61,
+      "line": 72,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19727,7 +19791,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
-      "line": 67,
+      "line": 78,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19765,7 +19829,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/intelligence",
       "file": "api/routes/safety.ts",
-      "line": 90,
+      "line": 101,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19800,7 +19864,7 @@
       "method": "GET",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 32,
+      "line": 43,
       "operationType": "READ_COLLECTION",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19836,7 +19900,7 @@
       "method": "POST",
       "path": "/api/v1/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
-      "line": 38,
+      "line": 49,
       "operationType": "MUTATION_CREATE",
       "disposition": "PROJECT_CHILD_PATH_PROJECT",
       "dispositionReason": "project identified directly by a path parameter",
@@ -19857,6 +19921,42 @@
       "writeTables": [
         "safety_observations"
       ],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/:projectId/safety/trir",
+      "file": "api/routes/safety.ts",
+      "line": 214,
+      "operationType": "READ_COLLECTION",
+      "disposition": "PROJECT_CHILD_PATH_PROJECT",
+      "dispositionReason": "project identified directly by a path parameter",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "safety_incidents",
+      "writeTables": [],
       "writeScopeColumns": [],
       "projectScopeStrategy": "DIRECT_COLUMN",
       "projectParent": {
@@ -22311,10 +22411,110 @@
       "status": "CANDIDATE_PHASE3C"
     },
     {
+      "method": "GET",
+      "path": "/api/v1/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 204,
+      "operationType": "READ_COLLECTION",
+      "disposition": "UNRESOLVED_DATA_ACCESS",
+      "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
+      "projectBound": false,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [],
+      "enforcesRecordScope": false,
+      "primaryTable": null,
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "NO_TABLE_RESOLVED",
+      "projectParent": null,
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "UNRESOLVED",
+      "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/safety/exposure-hours",
+      "file": "api/routes/safety.ts",
+      "line": 208,
+      "operationType": "MUTATION_CREATE",
+      "disposition": "UNRESOLVED_DATA_ACCESS",
+      "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
+      "projectBound": false,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.approve"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [],
+      "enforcesRecordScope": false,
+      "primaryTable": null,
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "NO_TABLE_RESOLVED",
+      "projectParent": null,
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "UNRESOLVED",
+      "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
+    },
+    {
       "method": "PATCH",
       "path": "/api/v1/safety/incidents/:id",
       "file": "api/routes/safety.ts",
-      "line": 77,
+      "line": 88,
+      "operationType": "MUTATION_UPDATE",
+      "disposition": "PROJECT_CHILD_RECORD_ID",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.write"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "safety_incidents",
+      "writeTables": [
+        "safety_incidents"
+      ],
+      "writeScopeColumns": [
+        "tenant_id"
+      ],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": true,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/safety/incidents/:id/recordable",
+      "file": "api/routes/safety.ts",
+      "line": 128,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -22354,7 +22554,7 @@
       "method": "PATCH",
       "path": "/api/v1/safety/observations/:id",
       "file": "api/routes/safety.ts",
-      "line": 48,
+      "line": 59,
       "operationType": "MUTATION_UPDATE",
       "disposition": "PROJECT_CHILD_RECORD_ID",
       "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
@@ -22386,6 +22586,42 @@
       },
       "sqlScopesByProject": false,
       "sqlScopesByTenant": true,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/safety/trir",
+      "file": "api/routes/safety.ts",
+      "line": 238,
+      "operationType": "READ_COLLECTION",
+      "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
+      "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "safety.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "resolveProjectScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "safety_incidents",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "SERVICE",
       "status": "PROTECTED_PHASE3"
