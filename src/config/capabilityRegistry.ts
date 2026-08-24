@@ -787,8 +787,12 @@ export const CAPABILITIES: Capability[] = [
     engineeringCalculation: false, calculationValidated: false, drawingGeneration: false,
     backendLocation: 'useBizStore aggregation',
     productionSuitable: false, engineerReviewRequired: false,
-    honestyIssue: 'Executive KPI dashboard aggregating non-hydrated store collections.',
-    limitations: ['Store-backed KPI tiles.'],
+    honestyIssue: 'Corrected 2026-08-24 — the previous entry (\'aggregating non-hydrated store collections\') was backwards. These screens do not render EMPTY. JarvisCore initialises its biz state from DEFAULT_BIZ_STATE, the shipped Lusaka WTP / Maputo PM sample, and passes it to ContentRouter; the only things that ever replace it are a persisted bizState blob and a user-uploaded backup, and no domain API is consulted anywhere in that path. So a fresh session renders a $425,000 active contract for \'US DOS\', $63,750 of invoices and two open safety incidents, styled exactly like real figures. Overstating is worse than understating: an empty screen is obviously empty, whereas nothing here distinguished the sample project from the reader\'s own operations. The seed now carries a __demoSeed marker that survives persist/restore, and ContentRouter shows a Demonstration data banner above every view while it is present. NOT FIXED by that banner: the dashboard still has no live data path — wiring it means deciding which domain APIs feed it, which is a product decision, not a mechanical repair.',
+    limitations: [
+      'No live data path: biz state comes from the demo seed, a persisted blob, or a user backup — never from a domain API.',
+      'Figures are demonstration data. Disclosed by a shell banner rather than removed, because whether to ship a demo seed at all is a product decision.',
+      'Not verified in a browser.',
+    ],
     evidence: ['Dashboard.tsx header'],
   },
 

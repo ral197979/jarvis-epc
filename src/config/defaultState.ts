@@ -19,6 +19,8 @@
 type IsoDate = string   // YYYY-MM-DD
 
 interface BizState {
+  /** Present only on the shipped demo seed; see DEMO_SEED_MARKER. */
+  __demoSeed?:        true
   company:            { name: string; type: string }
   leads:              Lead[]
   contracts:          Contract[]
@@ -78,8 +80,32 @@ interface Manpower      { month: string; [k: string]: unknown }
 interface Project       { id: string; [k: string]: unknown }
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
+//
+// This is DEMONSTRATION data — a Lusaka WTP / Maputo PM scenario, as the file
+// header has always said. What was not obvious is where it ends up: JarvisCore
+// initialises its `biz` state from here, hands it to ContentRouter, and every
+// store-backed view renders it. The only things that ever replace it are a
+// persisted `bizState` blob and a user-uploaded backup — no domain API is
+// consulted anywhere in that path.
+//
+// So on a fresh session the Dashboard does not render empty. It renders a
+// $425,000 active contract for "US DOS", $63,750 of invoices and two open
+// safety incidents, in exactly the styling real figures would use, for a tenant
+// that has none of them. That is a stronger claim than any empty state, and the
+// reader has no way to tell.
+//
+// `__demoSeed` marks it so the shell can say so. It is deliberately part of the
+// data rather than a separate flag: it survives being persisted and restored,
+// which is precisely when the provenance would otherwise be lost.
+export const DEMO_SEED_MARKER = '__demoSeed' as const
+
+/** True when this state still descends from the shipped demo seed. */
+export function isDemoSeed(biz: unknown): boolean {
+  return Boolean((biz as Record<string, unknown> | null | undefined)?.[DEMO_SEED_MARKER])
+}
 
 export const DEFAULT_BIZ_STATE: BizState = {
+  [DEMO_SEED_MARKER]: true,
   company:  { name: '', type: '' },
 
   leads: [{

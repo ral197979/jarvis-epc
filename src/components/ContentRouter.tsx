@@ -12,6 +12,7 @@
 
 import React, { Suspense, lazy } from 'react'
 import type { PolicyConfig } from '../modules/biz/dispatch'
+import { isDemoSeed } from '../config/defaultState'
 import { useAppStore }       from '../modules/store/appSlice'
 import { ViewErrorBoundary } from './ErrorBoundary'
 import WorkflowContextBar    from './shell/WorkflowContextBar'
@@ -300,6 +301,24 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
       aria-label={`${activeTab} view`}
       style={{ flex: 1, overflow: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}
     >
+      {/* Every store-backed view downstream renders whatever is in `biz`, and on
+          a fresh session that is the shipped Lusaka/Maputo DEMO seed — a
+          $425,000 contract, $63,750 of invoices, two open incidents — styled
+          exactly like real figures. Nothing in the load path consults a domain
+          API: `biz` is replaced only by a persisted blob or a user's backup.
+          The banner sits here rather than in any one view because it is true of
+          all of them, and it is the shell that knows. */}
+      {isDemoSeed(biz) && (
+        <div role="status" style={{
+          padding: '6px 12px', fontSize: 11, lineHeight: 1.5,
+          background: 'color-mix(in srgb, var(--jarvis-amb) 14%, transparent)',
+          borderBottom: '1px solid var(--jarvis-amb)', color: 'var(--jarvis-tx)',
+        }}>
+          <strong>Demonstration data.</strong>{' '}
+          Figures on these screens come from the built-in sample project, not
+          from your organisation&rsquo;s records.
+        </div>
+      )}
       <WorkflowContextBar activeTab={activeTab} onNavigate={onNavigate} />
       {(() => { const flow = flowForTab(activeTab); return flow ? <GuidedFlow flow={flow} activeTab={activeTab} onNavigate={onNavigate} /> : null })()}
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
