@@ -67,11 +67,19 @@ export default defineConfig({
     },
   ],
 
-  // Start the preview server before tests
+  // Start the preview server before tests.
+  //
+  // The port is pinned HERE rather than inherited from `npm run preview`.
+  // vite.config.js sets `preview.port: 4000` while this file has always waited
+  // on 4173, so the two disagreed and the webServer could never come up — the
+  // suite failed with "Timed out waiting 120000ms" before running a single
+  // test. Passing the port explicitly keeps this file self-consistent, and
+  // --strictPort makes a clash fail loudly instead of silently landing on
+  // another port and timing out the same way.
   webServer: {
-    command: 'npm run build && npm run preview',
+    command: 'npm run build && npx vite preview --port 4173 --strictPort',
     url:     'http://localhost:4173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 })

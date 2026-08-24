@@ -174,8 +174,12 @@ function Zi(i) {
 }
 
 // Phase 18d: $i() seed state extracted to src/config/defaultState.ts
-import { DEFAULT_BIZ_STATE as _defaultBizState } from "../config/defaultState";
-function $i() { return _defaultBizState; }
+// 2026-08-24: a fresh session now starts EMPTY. The Lusaka/Maputo sample is
+// preserved for demos and tests but loads only on an explicit opt-in (?demo=1),
+// because nothing in this load path consults a domain API — an unasked-for
+// sample was indistinguishable from the tenant's own figures.
+import { getInitialBizState as _initialBizState } from "../config/defaultState";
+function $i() { return _initialBizState(); }
 // Phase 18c: System prompt extracted to src/config/systemPrompt.ts
 import { JARVIS_SYSTEM_PROMPT as en } from "../config/systemPrompt";
 
