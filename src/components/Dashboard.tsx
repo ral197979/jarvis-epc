@@ -26,7 +26,7 @@
  *   - Accessible: region/group roles, aria-labels on all interactive elements
  */
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -121,6 +121,102 @@ export interface BizSnapshot {
   notifications?:  unknown[]
   action_items?:   unknown[]
   proposals?:      unknown[]
+}
+
+// ─── The live-data contract ──────────────────────────────────────────────────
+//
+// Every KPI below was computed from `biz`, which reaches this component as a
+// prop and is never fed by a domain API — it comes from the store, a persisted
+// blob, or (until it was made opt-in) the shipped demo sample.
+//
+// Each KPI was matched against the APIs that ALREADY exist. Three can be
+// derived truthfully and are fetched here. The rest cannot, and say so rather
+// than showing a zero — each is a genuine product-scope gap, recorded in the
+// capability registry, not something to be papered over by inventing an
+// endpoint to feed a widget:
+//
+//   DERIVABLE, wired below
+//     Procurement       GET /api/v1/purchase-orders   procurement.view
+//     Documents         GET /api/v1/files/documents   docs.view
+//     Recent activity   GET /api/v1/audit             audit.view
+//
+//   NOT DERIVABLE — no backend exists
+//     Pipeline (Weighted)   `crm_leads` is a table with no route
+//     Active Contracts      `contracts` is a table with no route. NOT
+//                           substitutable with /api/v1/projects: contracts
+//                           carry vendor_id and are vendor commitments, while
+//                           projects are the delivery entity. Swapping them
+//                           would relabel a domain, which is the same mistake
+//                           the Hub's Projects tile already made.
+//     Revenue Collected     no invoices table. `subcontract_invoices` is
+//     AR Outstanding        project-scoped accounts PAYABLE, not receivable.
+//     Safety (TRIR)         see below — the worst of them.
+//
+// TRIR deserves naming. It was `(recordable × 200,000) / (200,000 × toolbox
+// talks)`. `safety_incidents` has no `recordable` column, so the numerator
+// counted nothing; `toolbox_talks` has no table at all, so the denominator was
+// invented outright. TRIR is a regulated OSHA metric, and a fabricated one on
+// an executive dashboard is a compliance claim about a workplace. It is now
+// blank with its reason, and it stays blank until incidents record
+// recordability and someone records exposure hours.
+
+/** What a KPI shows when no backend can tell it the answer. */
+const NO_DATA = '—'
+
+type FeedState = 'ok' | 'loading' | 'unavailable'
+
+interface PoRow  { status?: string; total_amount?: string | number | null; [k: string]: unknown }
+interface DocRow { status?: string; [k: string]: unknown }
+interface AuditRow {
+  id?: string; action?: string; resource?: string; resource_id?: string
+  user_name?: string; user_email?: string; created_at?: string
+  [k: string]: unknown
+}
+
+interface LiveDashboard {
+  pos:      { rows: PoRow[];    state: FeedState }
+  docs:     { rows: DocRow[];   state: FeedState }
+  activity: { rows: AuditRow[]; state: FeedState }
+}
+
+const IDLE_FEED: LiveDashboard = {
+  pos:      { rows: [], state: 'ok' },
+  docs:     { rows: [], state: 'ok' },
+  activity: { rows: [], state: 'ok' },
+}
+
+/** One feed. Degrades on its own so a domain the caller may not read does not blank the rest. */
+async function feed<T>(url: string): Promise<{ rows: T[]; state: FeedState }> {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) return { rows: [], state: 'unavailable' }
+    const body = await res.json() as { data?: T[] }
+    return { rows: body.data ?? [], state: 'ok' }
+  } catch {
+    return { rows: [], state: 'unavailable' }
+  }
+}
+
+function useLiveDashboard(enabled: boolean): LiveDashboard {
+  const [data, setData] = useState<LiveDashboard>(
+    enabled
+      ? { pos: { rows: [], state: 'loading' }, docs: { rows: [], state: 'loading' }, activity: { rows: [], state: 'loading' } }
+      : IDLE_FEED,
+  )
+  useEffect(() => {
+    if (!enabled) return
+    let live = true
+    void (async () => {
+      const [pos, docs, activity] = await Promise.all([
+        feed<PoRow>('/api/v1/purchase-orders?limit=200'),
+        feed<DocRow>('/api/v1/files/documents?limit=200'),
+        feed<AuditRow>('/api/v1/audit?limit=10'),
+      ])
+      if (live) setData({ pos, docs, activity })
+    })()
+    return () => { live = false }
+  }, [enabled])
+  return data
 }
 
 export interface DashboardProps {
@@ -371,6 +467,18 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
     evm_projects = [], activity_log = [],
   } = (biz || {}) as typeof biz
 
+  // Live only when nothing was handed in. A caller that supplied rows means
+  // them — the precedence every other repaired register in this app uses.
+  const anyStored = leads.length + contracts.length + invoices.length +
+                    purchase_orders.length + documents.length + incidents.length +
+                    activity_log.length > 0
+  const live = !anyStored
+  const api  = useLiveDashboard(live)
+
+  const livePos   = api.pos.rows.filter(p => !['cancelled', 'closed'].includes(String(p.status ?? '')))
+  const liveDocs  = api.docs.rows.filter(d => d.status !== 'deleted')
+  const livePoTotal = api.pos.rows.reduce((t, p) => t + Number(p.total_amount ?? 0), 0)
+
   // ── KPI computations ────────────────────────────────────────────────────────
   const weightedPipeline = useMemo(() =>
     leads.reduce((sum, l) => sum + (l.estimated_value ?? 0) * (l.probability ?? 0) / 100, 0),
@@ -418,11 +526,23 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
 
   const funnelData = useMemo(() => buildFunnelData(leads), [leads])
 
-  const isEmpty = leads.length === 0 && contracts.length === 0
+  // "Add your first lead" is wrong when the tenant HAS procurement and document
+  // activity — it just has no leads, because there is nowhere to put them.
+  const isEmpty = leads.length === 0 && contracts.length === 0 &&
+                  livePos.length === 0 && liveDocs.length === 0
 
-  const recentActivity = useMemo(() =>
-    [...activity_log].reverse().slice(0, 10),
-  [activity_log])
+  const recentActivity = useMemo(() => {
+    if (!live) return [...activity_log].reverse().slice(0, 10)
+    // audit_log rows → the shape this component already renders. `action` and
+    // `resource` are what the table stores; there is no free-text detail field,
+    // so the actor is used rather than inventing prose.
+    return api.activity.rows.slice(0, 10).map(r => ({
+      id:     r.id,
+      ts:     r.created_at,
+      action: [r.action, r.resource].filter(Boolean).join(' '),
+      detail: r.user_name ?? r.user_email ?? '',
+    }))
+  }, [live, activity_log, api.activity.rows])
 
   return (
     <div role="main" aria-label="Executive Dashboard">
@@ -438,47 +558,74 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
         role="region"
         aria-label="Key Performance Indicators"
       >
+        {/* No leads route exists, so with nothing handed in this KPI cannot be
+            computed. A weighted pipeline of $0 is a sales claim, not a blank. */}
         <KPICard
           label="Pipeline (Weighted)"
-          value={formatCurrency(weightedPipeline)}
-          sub={`${leads.length} lead${leads.length !== 1 ? 's' : ''}`}
+          value={live ? NO_DATA : formatCurrency(weightedPipeline)}
+          sub={live ? 'no leads backend' : `${leads.length} lead${leads.length !== 1 ? 's' : ''}`}
         />
+        {/* `contracts` is a table with no route. Deliberately NOT substituted
+            with /api/v1/projects: contracts carry vendor_id and are vendor
+            commitments; projects are the delivery entity. */}
         <KPICard
           label="Active Contracts"
-          value={activeContracts.length}
-          sub={formatCurrency(activeContractValue)}
+          value={live ? NO_DATA : activeContracts.length}
+          sub={live ? 'no contracts backend' : formatCurrency(activeContractValue)}
         />
         <KPICard
           label="Revenue Collected"
-          value={formatCurrency(revenueCollected)}
+          value={live ? NO_DATA : formatCurrency(revenueCollected)}
+          sub={live ? 'no accounting backend' : undefined}
         />
         <KPICard
           label="AR Outstanding"
-          value={formatCurrency(arOutstanding)}
-          sub={`${openInvoices} open`}
-          warn={arOutstanding > 0}
+          value={live ? NO_DATA : formatCurrency(arOutstanding)}
+          sub={live ? 'no accounting backend' : `${openInvoices} open`}
+          warn={!live && arOutstanding > 0}
         />
         <KPICard
           label="Procurement"
-          value={`${purchase_orders.length} POs`}
-          sub={formatCurrency(procurementTotal)}
+          value={live
+            ? (api.pos.state === 'ok' ? `${livePos.length} POs` : NO_DATA)
+            : `${purchase_orders.length} POs`}
+          sub={live
+            ? (api.pos.state === 'ok' ? formatCurrency(livePoTotal)
+              : api.pos.state === 'loading' ? 'loading…' : 'unavailable')
+            : formatCurrency(procurementTotal)}
         />
+        {/* Documents count is derivable; "approved" is NOT — `file_status` is
+            uploading|active|deleted and the schema has no approval concept, so
+            the sub-line reports what the API can actually answer. */}
         <KPICard
           label="Documents"
-          value={documents.length}
-          sub={`${approvedDocs} approved`}
+          value={live
+            ? (api.docs.state === 'ok' ? liveDocs.length : NO_DATA)
+            : documents.length}
+          sub={live
+            ? (api.docs.state === 'ok'
+                ? `${liveDocs.filter(d => d.status === 'active').length} active`
+                : api.docs.state === 'loading' ? 'loading…' : 'unavailable')
+            : `${approvedDocs} approved`}
         />
+        {/* TRIR was (recordable × 200,000) / (200,000 × toolbox talks).
+            `safety_incidents` has no `recordable` column so the numerator
+            counted nothing, and `toolbox_talks` has no table so the denominator
+            was invented. TRIR is a regulated OSHA metric — a fabricated one on
+            an executive dashboard is a compliance claim about a workplace. */}
         <KPICard
           label="Safety (TRIR)"
-          value={trir.toFixed(1)}
-          sub={`${jhas.length} JHAs`}
-          warn={trir > 1}
+          value={live ? NO_DATA : trir.toFixed(1)}
+          sub={live ? 'needs recordable + exposure hours' : `${jhas.length} JHAs`}
+          warn={!live && trir > 1}
         />
       </div>
 
       {/* ── Empty state ──────────────────────────────────────────────────────── */}
       {isEmpty && (
-        <EmptyState message="Welcome to JARVIS. Start by adding your first lead or contract." />
+        <EmptyState message={live
+          ? 'No procurement or document activity yet. Pipeline, contracts, revenue and TRIR need backends that do not exist yet.'
+          : 'Welcome to JARVIS. Start by adding your first lead or contract.'} />
       )}
 
       {/* ── Charts + EVM ────────────────────────────────────────────────────── */}

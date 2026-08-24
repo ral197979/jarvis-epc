@@ -86,9 +86,20 @@ describe('Dashboard — renders without crashing', () => {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 describe('Dashboard — empty state', () => {
-  it('shows welcome message when no leads or contracts', () => {
+  it('names the missing backends rather than telling you to add a lead', async () => {
+    // "Start by adding your first lead or contract" is wrong advice: there is
+    // no leads route and no contracts route, so there is nowhere to add one.
+    // With nothing handed in, the dashboard asks the APIs that DO exist and
+    // reports what is genuinely missing.
     render(<Dashboard biz={emptyBiz()} />)
-    expect(screen.getByText(/welcome to jarvis/i)).toBeDefined()
+    expect(await screen.findByText(/no procurement or document activity/i)).toBeDefined()
+    expect(screen.getByText(/backends that do not exist yet/i)).toBeDefined()
+  })
+
+  it('still welcomes a caller who supplied data of their own', () => {
+    // A populated snapshot is a caller assertion; the original copy applies.
+    render(<Dashboard biz={{ ...emptyBiz(), leads: [{ id: 'L1', status: 'won' }] } as never} />)
+    expect(screen.queryByText(/no procurement or document activity/i)).toBeNull()
   })
 
   it('does not show charts section when empty', () => {
