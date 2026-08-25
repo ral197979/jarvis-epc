@@ -109,7 +109,7 @@ describe('every resource declares what a NULL project parent means', () => {
   })
 
   it('reports the split this slice actually measured', () => {
-    expect(required.length).toBe(44)
+    expect(required.length).toBe(45)
     // 15 at Phase 3E-R; Phase 3G added `document_folders` and `source_uploads`,
     // both created with `project_id ?? null` behind requireBodyProjectScope —
     // the same evidence shape that made `documents` and `commissioning_packs`

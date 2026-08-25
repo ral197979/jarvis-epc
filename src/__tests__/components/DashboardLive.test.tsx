@@ -60,12 +60,16 @@ const TRIR_UNAVAILABLE = {
   exposureHours: null, uncoveredDays: 0,
 }
 
-function allOk(trir: unknown = TRIR_UNAVAILABLE): void {
+/** The contracts summary envelope. No writer exists yet, hence `writable:false`. */
+const CONTRACTS_EMPTY = { active: 0, activeValue: 0, total: 0, byStatus: {}, writable: false }
+
+function allOk(trir: unknown = TRIR_UNAVAILABLE, contracts: unknown = CONTRACTS_EMPTY): void {
   fetchMock.mockImplementation(async (url: string) => {
-    if (url.startsWith('/api/v1/purchase-orders')) return ok(PO_ROWS)
-    if (url.startsWith('/api/v1/files/documents')) return ok(DOC_ROWS)
-    if (url.startsWith('/api/v1/audit'))           return ok(AUDIT_ROWS)
-    if (url.startsWith('/api/v1/safety/trir'))     return ok(trir)
+    if (url.startsWith('/api/v1/purchase-orders'))   return ok(PO_ROWS)
+    if (url.startsWith('/api/v1/files/documents'))   return ok(DOC_ROWS)
+    if (url.startsWith('/api/v1/audit'))             return ok(AUDIT_ROWS)
+    if (url.startsWith('/api/v1/safety/trir'))       return ok(trir)
+    if (url.startsWith('/api/v1/contracts/summary')) return ok(contracts)
     throw new Error(`unexpected fetch: ${url}`)
   })
 }
@@ -115,8 +119,9 @@ describe('the three derivable KPIs read real endpoints', () => {
     expect(urls.some(u => u.startsWith('/api/v1/purchase-orders'))).toBe(true)
     expect(urls.some(u => u.startsWith('/api/v1/files/documents'))).toBe(true)
     expect(urls.some(u => u.startsWith('/api/v1/audit'))).toBe(true)
-    // Nothing is invented to feed a widget.
-    expect(urls.some(u => /lead|invoice|contract/i.test(u))).toBe(false)
+    expect(urls.some(u => u.startsWith('/api/v1/contracts/summary'))).toBe(true)
+    // Nothing is invented to feed a widget: leads and accounting have no API.
+    expect(urls.some(u => /lead|invoice/i.test(u))).toBe(false)
   })
 
   it('degrades one feed without blanking the others', async () => {
@@ -149,15 +154,43 @@ describe('a KPI with no backend shows no number', () => {
     expect(kpi('Pipeline (Weighted)').textContent).not.toContain('$0')
   })
 
-  it('blanks active contracts without substituting projects for them', async () => {
+  it('ignores a snapshot full of "active" contracts when the API is unavailable', async () => {
+    // The fallback this forbids: `biz.contracts` is a store array with a
+    // free-text status, not the persisted contract_status enum, and nothing
+    // keeps the two in step. A snapshot row must never be counted as a
+    // governed contract — under ?demo=1 that would be the Lusaka sample.
+    fetchMock.mockImplementation(async (url: string) =>
+      url.startsWith('/api/v1/contracts/summary') ? denied() : ok(PO_ROWS))
+    render(<Dashboard biz={{ ...EMPTY_BIZ as object, contracts: [
+      { id: 'c1', project: 'Lusaka WTP', status: 'active', value: 425000 },
+      { id: 'c2', project: 'Maputo PM',  status: 'active', value: 120000 },
+    ] } as never} />)
+    await waitFor(() => expect(kpi('Active Contracts').textContent).toContain('—'))
+    expect(kpi('Active Contracts').textContent).not.toContain('2')
+  })
+
+  it('shows the API count even when a snapshot disagrees with it', async () => {
+    allOk(TRIR_UNAVAILABLE, { active: 1, activeValue: 50_000, total: 1,
+                              byStatus: { active: 1 }, writable: true })
+    render(<Dashboard biz={{ ...EMPTY_BIZ as object, contracts: [
+      { id: 'c1', status: 'active' }, { id: 'c2', status: 'active' }, { id: 'c3', status: 'active' },
+    ] } as never} />)
+    await waitFor(() => expect(kpi('Active Contracts').textContent).toContain('1'))
+    expect(kpi('Active Contracts').textContent).not.toContain('3')
+  })
+
+  it('counts active contracts from the contracts API, never from projects', async () => {
     // /api/v1/projects exists, but contracts carry vendor_id and are vendor
     // commitments while projects are the delivery entity. Swapping them would
     // relabel a domain — the same mistake the Hub's Projects tile made.
+    allOk(TRIR_UNAVAILABLE, { active: 3, activeValue: 1_200_000, total: 5,
+                              byStatus: { active: 3, draft: 1, closed: 1 }, writable: true })
     render(<Dashboard biz={EMPTY_BIZ} />)
-    await waitFor(() => expect(kpi('Active Contracts').textContent).toContain('—'))
-    expect(kpi('Active Contracts').textContent).toContain('no contracts backend')
+    await waitFor(() => expect(kpi('Active Contracts').textContent).toContain('3'))
     const urls = fetchMock.mock.calls.map(c => String(c[0]))
+    expect(urls.some(u => u.startsWith('/api/v1/contracts/summary'))).toBe(true)
     expect(urls.some(u => u.startsWith('/api/v1/projects'))).toBe(false)
+    expect(urls.some(u => /subcontract/i.test(u))).toBe(false)
   })
 
   it('blanks both accounting KPIs', async () => {
@@ -241,9 +274,16 @@ describe('TRIR comes from the API, or not at all', () => {
 // ─── 4. A caller who supplies data is still authoritative ────────────────────
 
 describe('supplied data is never overridden by a fetch', () => {
-  it('uses the snapshot and makes no request', async () => {
+  it('uses the snapshot for snapshot-derived cards and asks for none of them', async () => {
     render(<Dashboard biz={{ ...EMPTY_BIZ as object, leads: [{ id: 'L1', estimated_value: 100000, probability: 50, status: 'qualified' }] } as never} />)
     await waitFor(() => expect(kpi('Pipeline (Weighted)').textContent).toContain('50K'))
-    expect(fetchMock).not.toHaveBeenCalled()
+    const urls = fetchMock.mock.calls.map(c => String(c[0]))
+    // The snapshot-derived feeds are not requested…
+    expect(urls.some(u => /purchase-orders|files\/documents|audit/.test(u))).toBe(false)
+    // …but TRIR and contracts are API-only and always are: a snapshot carries
+    // no recordability determination and no persisted contract_status, so
+    // suppressing them would blank two governed metrics on someone else's data.
+    expect(urls.some(u => u.startsWith('/api/v1/safety/trir'))).toBe(true)
+    expect(urls.some(u => u.startsWith('/api/v1/contracts/summary'))).toBe(true)
   })
 })

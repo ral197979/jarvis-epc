@@ -142,15 +142,11 @@ export interface BizSnapshot {
 //
 //   DERIVABLE as of Phase 3L
 //     Safety (TRIR)     GET /api/v1/safety/trir        safety.view
+//   DERIVABLE as of Phase 3M
+//     Active Contracts  GET /api/v1/contracts/summary  procurement.view
 //
 //   NOT DERIVABLE — no backend exists
 //     Pipeline (Weighted)   `crm_leads` is a table with no route
-//     Active Contracts      `contracts` is a table with no route. NOT
-//                           substitutable with /api/v1/projects: contracts
-//                           carry vendor_id and are vendor commitments, while
-//                           projects are the delivery entity. Swapping them
-//                           would relabel a domain, which is the same mistake
-//                           the Hub's Projects tile already made.
 //     Revenue Collected     no invoices table. `subcontract_invoices` is
 //     AR Outstanding        project-scoped accounts PAYABLE, not receivable.
 //     Safety (TRIR)         see below — the worst of them.
@@ -178,6 +174,23 @@ type FeedState = 'ok' | 'loading' | 'unavailable'
 
 interface PoRow  { status?: string; total_amount?: string | number | null; [k: string]: unknown }
 interface DocRow { status?: string; [k: string]: unknown }
+/** Does this payload really carry a contract summary? */
+function isContractSummary(v: unknown): v is ContractSummaryPayload {
+  const o = v as ContractSummaryPayload | null | undefined
+  return !!o && typeof o.active === 'number' && typeof o.activeValue === 'number'
+      && typeof o.total === 'number'
+}
+
+/** `GET /api/v1/contracts/summary`. `active` counts persisted status = 'active'. */
+interface ContractSummaryPayload {
+  active: number
+  activeValue: number
+  total: number
+  byStatus: Record<string, number>
+  /** False while no API route can create a contract — see the service header. */
+  writable: boolean
+}
+
 interface AuditRow {
   id?: string; action?: string; resource?: string; resource_id?: string
   user_name?: string; user_email?: string; created_at?: string
@@ -207,6 +220,7 @@ interface LiveDashboard {
   docs:     { rows: DocRow[];   state: FeedState }
   activity: { rows: AuditRow[]; state: FeedState }
   trir:     { data: TrirPayload | null; state: FeedState }
+  contracts:{ data: ContractSummaryPayload | null; state: FeedState }
 }
 
 const IDLE_FEED: LiveDashboard = {
@@ -214,6 +228,7 @@ const IDLE_FEED: LiveDashboard = {
   docs:     { rows: [], state: 'ok' },
   activity: { rows: [], state: 'ok' },
   trir:     { data: null, state: 'ok' },
+  contracts:{ data: null, state: 'ok' },
 }
 
 /**
@@ -238,22 +253,33 @@ async function feed<T>(url: string): Promise<{ rows: T[]; state: FeedState }> {
   }
 }
 
+/**
+ * `enabled` governs the SNAPSHOT-DERIVED feeds only.
+ *
+ * Two cards are API-only by design and always fetch: Safety (TRIR) and Active
+ * Contracts. Neither can be derived from a `biz` snapshot — a snapshot carries
+ * no recordability determination, no measured exposure hour, and a free-text
+ * `status` that is not the persisted `contract_status` enum. Gating them on
+ * `enabled` would mean a caller who supplied unrelated data (or loaded the
+ * demo sample) silently blanked two governed metrics.
+ */
 function useLiveDashboard(enabled: boolean): LiveDashboard {
   const [data, setData] = useState<LiveDashboard>(
-    enabled
+    true
       ? { pos: { rows: [], state: 'loading' }, docs: { rows: [], state: 'loading' },
-          activity: { rows: [], state: 'loading' }, trir: { data: null, state: 'loading' } }
+          activity: { rows: [], state: 'loading' }, trir: { data: null, state: 'loading' },
+          contracts: { data: null, state: 'loading' } }
       : IDLE_FEED,
   )
   useEffect(() => {
-    if (!enabled) return
     let live = true
     void (async () => {
       const period = trirPeriod(new Date())
-      const [pos, docs, activity, trir] = await Promise.all([
-        feed<PoRow>('/api/v1/purchase-orders?limit=200'),
-        feed<DocRow>('/api/v1/files/documents?limit=200'),
-        feed<AuditRow>('/api/v1/audit?limit=10'),
+      const idle = <T,>(): { rows: T[]; state: FeedState } => ({ rows: [], state: 'ok' })
+      const [pos, docs, activity, trir, contracts] = await Promise.all([
+        enabled ? feed<PoRow>('/api/v1/purchase-orders?limit=200')   : idle<PoRow>(),
+        enabled ? feed<DocRow>('/api/v1/files/documents?limit=200')  : idle<DocRow>(),
+        enabled ? feed<AuditRow>('/api/v1/audit?limit=10')           : idle<AuditRow>(),
         // Returns an object rather than a row array, so it does not go through
         // `feed`. Same degradation rule: a refusal blanks this card only.
         (async (): Promise<LiveDashboard['trir']> => {
@@ -264,8 +290,23 @@ function useLiveDashboard(enabled: boolean): LiveDashboard {
             return body.data ? { data: body.data, state: 'ok' } : { data: null, state: 'unavailable' }
           } catch { return { data: null, state: 'unavailable' } }
         })(),
+        // Same envelope shape as TRIR: an object, not a row array.
+        (async (): Promise<LiveDashboard['contracts']> => {
+          try {
+            const res = await fetch('/api/v1/contracts/summary')
+            if (!res.ok) return { data: null, state: 'unavailable' }
+            const body = await res.json() as { data?: unknown }
+            // Validated, not trusted. A payload of the wrong shape is treated
+            // as unavailable rather than rendered: reading `.activeValue` off
+            // whatever arrived is how a changed endpoint takes down the whole
+            // dashboard, and an unknown shape is not a contract count.
+            return isContractSummary(body.data)
+              ? { data: body.data, state: 'ok' }
+              : { data: null, state: 'unavailable' }
+          } catch { return { data: null, state: 'unavailable' } }
+        })(),
       ])
-      if (live) setData({ pos, docs, activity, trir })
+      if (live) setData({ pos, docs, activity, trir, contracts })
     })()
     return () => { live = false }
   }, [enabled])
@@ -540,13 +581,15 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
     leads.reduce((sum, l) => sum + (l.estimated_value ?? 0) * (l.probability ?? 0) / 100, 0),
   [leads])
 
-  const activeContracts = useMemo(() =>
-    contracts.filter(c => c.status === 'active'),
-  [contracts])
-
-  const activeContractValue = useMemo(() =>
-    activeContracts.reduce((sum, c) => sum + (c.value ?? 0), 0),
-  [activeContracts])
+  // The local contract count is DELETED, not merely unwired:
+  //
+  //   activeContracts     = contracts.filter(c => c.status === 'active')
+  //   activeContractValue = activeContracts.reduce(…, c.value)
+  //
+  // `biz.contracts` is a store array with a free-text `status`; it is not the
+  // persisted `contract_status` enum and nothing keeps the two in step. Leaving
+  // it here would leave a path by which a sample row could count as a governed
+  // contract. GET /api/v1/contracts/summary is the only source.
 
   const revenueCollected = useMemo(() =>
     invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + (i.amount ?? 0), 0),
@@ -601,6 +644,29 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
         ? `${trirPayload.recordableIncidents ?? 0} recordable`
         : (trirPayload?.detail ?? 'needs recordable classification + exposure hours')
 
+  // ── Active Contracts ──
+  // Rendered from the API envelope alone, for the same reason as TRIR: a biz
+  // snapshot cannot carry a persisted contract_status, and counting its
+  // `contracts` array would resurrect the substitution this closed.
+  //
+  // `writable: false` is reported by the API because no route can create a
+  // contract yet. A bare `0` would read as "this organisation has no active
+  // contracts"; the truth is that none can be recorded. The count stays
+  // truthful and the sub-line carries the caveat.
+  const contractsPayload = api.contracts.data
+  const contractsValue =
+    api.contracts.state === 'loading'     ? '…'
+    : api.contracts.state === 'unavailable' ? NO_DATA
+    : contractsPayload ? contractsPayload.active
+    : NO_DATA
+  const contractsSub =
+    api.contracts.state === 'loading'     ? 'loading…'
+    : api.contracts.state === 'unavailable' ? 'unavailable'
+    : !contractsPayload                     ? 'unavailable'
+    : contractsPayload.total === 0 && !contractsPayload.writable
+        ? 'no contracts recorded yet'
+        : formatCurrency(contractsPayload.activeValue)
+
   // "Add your first lead" is wrong when the tenant HAS procurement and document
   // activity — it just has no leads, because there is nowhere to put them.
   const isEmpty = leads.length === 0 && contracts.length === 0 &&
@@ -640,13 +706,15 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
           value={live ? NO_DATA : formatCurrency(weightedPipeline)}
           sub={live ? 'no leads backend' : `${leads.length} lead${leads.length !== 1 ? 's' : ''}`}
         />
-        {/* `contracts` is a table with no route. Deliberately NOT substituted
-            with /api/v1/projects: contracts carry vendor_id and are vendor
-            commitments; projects are the delivery entity. */}
+        {/* Reads GET /api/v1/contracts/summary and nothing else — no local
+            count, no biz fallback. `active` is the persisted contract_status
+            enum member, never inferred from dates, projects or POs, and
+            /api/v1/projects is never consulted: a project is the delivery
+            entity, a contract is a commitment to a vendor. */}
         <KPICard
           label="Active Contracts"
-          value={live ? NO_DATA : activeContracts.length}
-          sub={live ? 'no contracts backend' : formatCurrency(activeContractValue)}
+          value={contractsValue}
+          sub={contractsSub}
         />
         <KPICard
           label="Revenue Collected"
@@ -700,7 +768,7 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
       {/* ── Empty state ──────────────────────────────────────────────────────── */}
       {isEmpty && (
         <EmptyState message={live
-          ? 'No procurement or document activity yet. Safety TRIR needs recordable classifications and measured exposure hours; pipeline, contracts and revenue need backends that do not exist yet.'
+          ? 'No procurement, document or contract activity yet. Safety TRIR needs recordable classifications and measured exposure hours; pipeline and revenue need backends that do not exist yet.'
           : 'Welcome to JARVIS. Start by adding your first lead or contract.'} />
       )}
 
@@ -761,9 +829,14 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
           role="region"
           aria-label="Recent records"
         >
-          {/* Contracts */}
+          {/* Snapshot rows, NOT the governed contracts domain. This panel can
+              only render when a caller supplied `biz.contracts` — under ?demo=1
+              that is the sample project, disclosed by the shell banner. Titled
+              so it cannot be read as the governed Active Contracts count above,
+              which comes from GET /api/v1/contracts/summary and never from
+              here. */}
           {contracts.length > 0 && (
-            <SectionCard title="Contracts" onMore={() => onNavigate?.('projects')}>
+            <SectionCard title="Contracts (loaded snapshot)" onMore={() => onNavigate?.('projects')}>
               {contracts.slice(-6).map((c, idx) => (
                 <div
                   key={c.id ?? idx}

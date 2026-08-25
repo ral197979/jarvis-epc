@@ -92,14 +92,14 @@ describe('Dashboard — empty state', () => {
     // With nothing handed in, the dashboard asks the APIs that DO exist and
     // reports what is genuinely missing.
     render(<Dashboard biz={emptyBiz()} />)
-    expect(await screen.findByText(/no procurement or document activity/i)).toBeDefined()
+    expect(await screen.findByText(/no procurement, document or contract activity/i)).toBeDefined()
     expect(screen.getByText(/backends that do not exist yet/i)).toBeDefined()
   })
 
   it('still welcomes a caller who supplied data of their own', () => {
     // A populated snapshot is a caller assertion; the original copy applies.
     render(<Dashboard biz={{ ...emptyBiz(), leads: [{ id: 'L1', status: 'won' }] } as never} />)
-    expect(screen.queryByText(/no procurement or document activity/i)).toBeNull()
+    expect(screen.queryByText(/no procurement, document or contract activity/i)).toBeNull()
   })
 
   it('does not show charts section when empty', () => {

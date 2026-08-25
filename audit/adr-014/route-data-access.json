@@ -1,11 +1,11 @@
 {
   "generatedFrom": "api/routes/*.ts + api/services/**/*.ts",
   "counts": {
-    "endpoints": 773,
+    "endpoints": 776,
     "resolvedHandlerSql": 251,
-    "resolvedViaService": 460,
+    "resolvedViaService": 463,
     "unresolved": 62,
-    "serviceFunctionsIndexed": 1626
+    "serviceFunctionsIndexed": 1629
   },
   "endpoints": [
     {
@@ -6058,6 +6058,90 @@
       ],
       "delegatesTo": [],
       "resolvedVia": "HANDLER_SQL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contracts",
+      "file": "api/routes/contracts.ts",
+      "line": 68,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "contracts",
+        "projects",
+        "vendors"
+      ],
+      "readsFrom": [
+        "contracts"
+      ],
+      "primaryReadTable": "contracts",
+      "writeTables": [],
+      "delegatesTo": [
+        "listContracts"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contracts/:id",
+      "file": "api/routes/contracts.ts",
+      "line": 94,
+      "pathParams": [
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "contracts",
+        "projects",
+        "vendors"
+      ],
+      "readsFrom": [
+        "contracts"
+      ],
+      "primaryReadTable": "contracts",
+      "writeTables": [],
+      "delegatesTo": [
+        "getContract"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/contracts/summary",
+      "file": "api/routes/contracts.ts",
+      "line": 52,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "contracts"
+      ],
+      "readsFrom": [
+        "contracts"
+      ],
+      "primaryReadTable": "contracts",
+      "writeTables": [],
+      "delegatesTo": [
+        "contractSummary"
+      ],
+      "resolvedVia": "SERVICE"
     },
     {
       "method": "POST",

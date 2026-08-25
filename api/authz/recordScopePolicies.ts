@@ -903,6 +903,19 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     approveCapabilities: ['risk.approve'],
   },
   {
+    resource: 'contracts',
+    table: 'contracts',
+    capabilities: ['procurement.view'],
+    strategy: 'PARENT_PROJECT',
+    projectSemantics: 'PROJECT_REQUIRED',
+    projectParentMutation: 'IMMUTABLE',
+    scopeKey: 'contracts.project_id',
+    tenantRule: 'contracts.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3M. `contracts` (migration 002) is a VENDOR COMMITMENT — vendor_id NOT NULL, delivered on a project — and is not interchangeable with `projects`, which is the delivery entity, nor with `subcontracts` (migration 059), which is a different table with a different lifecycle enum. procurement.view is the capability its read surface declares; there are no write routes because the audit found no writer anywhere in the API.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'contracts', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['procurement.write'],
+  },
+  {
     resource: 'safety_exposure_hours',
     table: 'safety_exposure_hours',
     capabilities: ['safety.view'],
@@ -1499,6 +1512,23 @@ export interface CollectionScopeAdoption {
  * Phase-3F ratchet.
  */
 export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
+  // ── ADR-014 Phase 3M — the contracts read surface ────────────────────────
+  // Both collections apply the registry-driven predicate through
+  // `collectionScopeSql` inside `contractService`, one level below the route.
+  // The census reads route bodies and cannot see through that delegation, so
+  // the inventory reports them unscoped; the predicate is nonetheless ANDed
+  // outside any caller filter and before LIMIT, and `contracts.project_id` is
+  // NOT NULL so every row has a project to test. The behaviour tests in
+  // contractsDomain.test.ts assert the predicate on the emitted SQL.
+  { endpoint: 'GET /api/v1/contracts', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
+    rows: 'contracts', capabilities: ['procurement.view'],
+    disposition: 'PROTECTED_PHASE3F',
+    reason: 'Tenant-level collection of project-bound rows. collectionScopeSql builds the predicate from the `contracts` policy (PROJECT_REQUIRED) inside contractService.listContracts; it is ANDed outside the caller\'s status/project filters and applied before LIMIT, so a filter can only narrow the authorized set. An unrecognised status is rejected 400 rather than dropped, because silently ignoring a filter returns every row to a caller who asked for one state.' },
+  { endpoint: 'GET /api/v1/contracts/summary', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
+    rows: 'contracts', capabilities: ['procurement.view'],
+    disposition: 'PROTECTED_PHASE3F',
+    reason: 'The dashboard aggregate. Same predicate, same registry, applied to the grouped COUNT so the totals describe the authorized set rather than the tenant. Reads `contracts` alone — never projects, purchase_orders or subcontracts — so a project cannot be counted as a vendor commitment.' },
+
   // ── ADR-014 Phase 3L — the TRIR surface ──────────────────────────────────
   // The two project-scoped reads carry requireProjectScope, the same guard
   // every other `/projects/:projectId/...` collection uses. The tenant rate has

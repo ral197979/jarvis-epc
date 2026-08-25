@@ -326,7 +326,7 @@ describe('the Phase-2 classification stays closed and adoption is not overclaime
     // `GET /files/documents/:id/content`, which arrives already scoped.
     // Phase 3L adds five: the TRIR surface — recordability classification, the
     // two project exposure-hours routes, and the two rate routes.
-    expect(scoped, 'Phase 3L scoped 359 endpoints').toBe(359)
+    expect(scoped, 'Phase 3M scoped 362 endpoints').toBe(362)
     expect(endpoints.length, 'out of ~747').toBeGreaterThan(700)
     // Phase 3B asserted adoption was under 10%, which measured how little had
     // been done rather than guarding a property — it necessarily fails as the
