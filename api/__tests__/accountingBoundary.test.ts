@@ -73,6 +73,7 @@ import { requireTenant } from '../middleware/tenant'
 import { accountingBoundaryRouter } from '../routes/accountingBoundary'
 import {
   ACCOUNTING_CONTRACT_VERSION, ACCOUNTING_PROVIDERS, buildIdempotencyKey,
+  EMITTING_STATE, REQUIRES_CUSTOMER_MAPPING,
 } from '../services/integration/accounting/accountingContract'
 
 const app = (() => {
@@ -87,7 +88,11 @@ const sqlOf = (a: unknown[]): string => a.find((x): x is string => typeof x === 
 const statements = (): string[] => mockQuery.mock.calls.map(c => sqlOf(c)).filter(Boolean)
 const wrote = (): boolean => statements().some(s => /\b(INSERT|UPDATE|DELETE)\b/i.test(s))
 
+/** The governed ISO-4217 declaration. Null means nobody has declared one. */
+let CURRENCY: string | null = 'USD'
+
 beforeEach(() => {
+  CURRENCY = 'USD'
   MEMBERS = [{ projectId: PROJECT_A, userId: PM_A, active: true }]
   RECORD_PROJECT = PROJECT_A
   setCaller({ id: OWNER_A, tenantId: TENANT_A, role: 'owner' })
@@ -140,6 +145,11 @@ beforeEach(() => {
     if (/FROM vendors\b/i.test(sql) && !/JOIN/i.test(sql)) {
       return { rows: [{ id: VENDOR, name: 'PipePro', code: 'PIPE', email: 'ap@pipepro.test', country: 'US', status: 'approved' }], rowCount: 1 }
     }
+    if (/FROM accounting_currency_declarations/i.test(sql)) {
+      return CURRENCY
+        ? { rows: [{ currency: CURRENCY, declared_by: null, declared_at: '2026-08-20T00:00:00Z', note: null }], rowCount: 1 }
+        : { rows: [], rowCount: 0 }
+    }
     if (/FROM purchase_orders po/i.test(sql)) {
       return { rows: [{
         id: PO, po_number: 'PO-1001', status: 'issued', title: 'Valves',
@@ -175,12 +185,88 @@ describe('the contract states what Denver will never hold', () => {
     expect(res.body.data.providers).toContain('quickbooks')
   })
 
-  it('reports the open product decisions instead of resolving them', async () => {
+  it('reports only decisions that are genuinely still open', async () => {
     const res = await request(app).get('/api/v1/integrations/accounting/contract')
     const ids = (res.body.data.openDecisions as { id: string }[]).map(d => d.id)
-    expect(ids).toContain('customer-entity')
-    expect(ids).toContain('emission-trigger')
-    expect(ids).toContain('tax-treatment')
+    // Reconciliation is deliberately undesigned, and no provider has published
+    // a receiving contract. Both are real, and saying so is the point.
+    expect(ids).toContain('settlement-reconciliation')
+    expect(ids).toContain('provider-receiving-contract')
+  })
+
+  it('does not publish as OPEN a decision the implementation has already made', async () => {
+    // The failure this prevents: `/contract` is what an integrator reads
+    // instead of the source, so a decision listed as open while the code
+    // enforces an answer is the endpoint lying about the boundary. Both of
+    // these were settled and left in the open list by an earlier slice.
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    const open = (res.body.data.openDecisions as { id: string }[]).map(d => d.id)
+    const settled = (res.body.data.settledDecisions as { id: string }[]).map(d => d.id)
+
+    for (const id of ['customer-entity', 'emission-trigger']) {
+      expect(settled, `${id} is enforced in code and must be published as settled`).toContain(id)
+      expect(open, `${id} must no longer be published as open`).not.toContain(id)
+    }
+  })
+
+  it('publishes an emission policy that matches what the code actually enforces', async () => {
+    // A structural check rather than a restatement: the endpoint's emission
+    // policy is read back against the module the service gates on, so the two
+    // cannot drift the way the decision registers did.
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    expect(res.body.data.emissionPolicy.emittingState).toEqual(EMITTING_STATE)
+    expect(res.body.data.emissionPolicy.requiresCustomerMapping).toEqual([...REQUIRES_CUSTOMER_MAPPING])
+    // And the settled entries name the code that enforces them.
+    const settled = res.body.data.settledDecisions as { id: string; enforcedBy: string }[]
+    expect(settled.find(d => d.id === 'emission-trigger')!.enforcedBy).toMatch(/EMITTING_STATE/)
+    expect(settled.find(d => d.id === 'customer-entity')!.enforcedBy).toMatch(/accounting_party_links|REQUIRES_CUSTOMER_MAPPING/)
+  })
+
+  it('publishes the decisions it has SETTLED, with what enforces each', async () => {
+    // An integrator needs to know what Denver has settled as much as what it
+    // has not, and a decision recorded only in a commit message is one nobody
+    // downstream can read.
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    const settled = res.body.data.settledDecisions as { id: string; decision: string; enforcedBy: string }[]
+    const ids = settled.map(d => d.id)
+    for (const id of ['tax-treatment', 'durable-document-link', 'currency-policy', 'settlement-lifecycle']) {
+      expect(ids, `${id} must be published as settled`).toContain(id)
+    }
+    // A decision with nothing enforcing it is a preference.
+    for (const d of settled) expect(d.enforcedBy, `${d.id} names no enforcement`).toBeTruthy()
+
+    // Nothing may be in both registers at once.
+    const open = (res.body.data.openDecisions as { id: string }[]).map(d => d.id)
+    for (const id of ids) expect(open, `${id} is both open and settled`).not.toContain(id)
+  })
+
+  it('states the tax position as UNKNOWN rather than omitting the subject', async () => {
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    expect(res.body.data.taxPolicy.known).toBe(false)
+    expect(res.body.data.taxPolicy.reason).toMatch(/Absent is not zero/i)
+  })
+
+  it('declares that Denver\'s own identity is authoritative, and a deep link is not', async () => {
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    const identity = res.body.data.identityPolicy
+    expect(identity.authoritative).toEqual(['denverId', 'idempotencyKey'])
+    expect(identity.presentationalOnly).toContain('externalUrl')
+  })
+
+  it('declares the currency policy, with no fallback anywhere in it', async () => {
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    const policy = res.body.data.currencyPolicy
+    expect(policy.required).toEqual(expect.arrayContaining(['receivable_application', 'payable_invoice', 'commitment']))
+    expect(policy.required).not.toContain('vendor')
+    expect(policy.note).toMatch(/no USD fallback/i)
+  })
+
+  it('says plainly that no provider adapter is deployed yet', async () => {
+    // The transport is complete and has nothing to send through it, because no
+    // provider has published a receiving contract. Saying so is the point.
+    const res = await request(app).get('/api/v1/integrations/accounting/contract')
+    expect(res.body.data.transport.registeredProviders).toEqual([])
+    expect(res.body.data.providers).toContain('billbox')
   })
 
   it('asks for settlement as a status, never as a ledger entry', async () => {
@@ -236,9 +322,28 @@ describe('an outbound document carries Denver facts, not accounting ones', () =>
       .not.toBe(buildIdempotencyKey('payable_invoice', PAYABLE, 'submitted'))
   })
 
-  it('projects a commitment with its currency, never converting it', async () => {
+  it('projects a commitment in its GOVERNED currency, never converting it', async () => {
     const res = await outbound('commitment', PO)
     expect(res.body.data.detail.total).toEqual({ amount: '45000.00', currency: 'USD' })
+    expect(res.body.data.currency).toBe('USD')
+    expect(res.body.data.currencyBasis).toBe('declared')
+  })
+
+  it('shows a money-bearing projection as UNDECLARED when nobody has declared', async () => {
+    // The preview must be as honest as the emission. Rendering 'USD' here would
+    // be the fallback the decision forbids, one screen removed.
+    CURRENCY = null
+    const res = await outbound('commitment', PO)
+    expect(res.body.data.currency).toBeNull()
+    expect(res.body.data.currencyBasis).toBe('undeclared')
+    expect(res.body.data.detail.total.currency).toBeNull()
+  })
+
+  it('reads no DEFAULT-bearing currency column to fill the gap', async () => {
+    CURRENCY = null
+    await outbound('commitment', PO)
+    // purchase_orders.currency and projects.currency are both DEFAULT 'USD'.
+    for (const s of statements()) expect(s).not.toMatch(/\bpo\.currency\b|\bp\.currency\b/i)
   })
 
   it('projects a vendor as a party with no accounting classification', async () => {

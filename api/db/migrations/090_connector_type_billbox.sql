@@ -1,0 +1,31 @@
+-- Denver Engineering — let the connector enum represent every declared provider
+-- ─────────────────────────────────────────────────────────────────────────────
+-- The contradiction this closes
+-- ─────────────────────────────
+-- `ACCOUNTING_PROVIDERS` declares two providers behind the accounting boundary,
+-- `quickbooks` and `billbox`, and `/contract` publishes both. The
+-- `connector_type` enum (migration 044) had only `quickbooks`, so a BillBox
+-- connector row could not be inserted at all — which meant `resolveConnectorId`
+-- could never find one and EVERY BillBox emission would refuse with
+-- `provider_not_configured`, no matter how correct the document was.
+--
+-- The unit suite could not see this: it mocks the connector lookup, so it
+-- returned a row for a provider the database cannot store. It took a live
+-- integration path to surface it, which is the reason that path exists.
+--
+-- THIS IS NOT A BILLBOX ADAPTER, and it is not a BillBox integration. It adds
+-- one enum label so the schema can represent a provider the contract already
+-- names. No adapter is deployed, nothing is registered, and a connector row of
+-- this type still sends nothing until BillBox publishes a receiving contract
+-- and an adapter is written against it.
+--
+-- The enum stays a closed list on purpose. A provider is a deliberate,
+-- reviewable addition — an open TEXT column would let a typo create a silent
+-- second connector that never drains, and would remove the one place where
+-- "which external systems may Denver push commercial facts to" is written down.
+--
+-- `ADD VALUE IF NOT EXISTS` is idempotent, and PostgreSQL 12+ permits it inside
+-- the transaction the migration runner opens, provided the new label is not
+-- USED in that same transaction. Nothing here uses it.
+
+ALTER TYPE connector_type ADD VALUE IF NOT EXISTS 'billbox';

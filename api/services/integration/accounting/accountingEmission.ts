@@ -25,7 +25,7 @@ import { tenantQuery } from '../../../db/pool'
 import { enqueueIntegrationJob, completeIntegrationJob, failIntegrationJob } from '../connectorFramework'
 import {
   EMITTING_STATE, NON_EMITTING_STATE_REASON, REQUIRES_CUSTOMER_MAPPING,
-  ACCOUNTING_CONTRACT_VERSION,
+  ACCOUNTING_CONTRACT_VERSION, isMoneyBearing,
   type AccountingDocumentType, type AccountingProviderId,
   type EmissionOutcome, type AccountingDocument, type AccountingAck,
 } from './accountingContract'
@@ -89,13 +89,30 @@ export async function upsertPartyLink(
   }
 }
 
-/** The connector row that represents a provider for this tenant. */
+/**
+ * The connector row that represents a provider for this tenant.
+ *
+ * ONLY an `active` connector may receive an emission, and that is a
+ * fail-closed choice rather than a strict reading of the enum.
+ *
+ * `connector_status` is (active, inactive, error, configuring, paused) and it
+ * DEFAULTS to `configuring` — a freshly created connector has been described
+ * but not switched on. An earlier form of this query said `status <> 'disabled'`,
+ * a value the enum does not contain: PostgreSQL rejected the comparison outright,
+ * so every emission raised `invalid input value for enum connector_status` and
+ * surfaced as a 500. The mocked suite could not see it, because a mock returns a
+ * row without evaluating the predicate. The live path is what found it.
+ *
+ * Listing the one permitted state, rather than excluding the bad ones, is what
+ * stops that recurring: a new status added to the enum tomorrow is refused by
+ * default instead of silently becoming emittable.
+ */
 async function resolveConnectorId(tenantId: string, provider: AccountingProviderId): Promise<string | null> {
   const res = await tenantQuery<{ id: string }>(tenantId, `
     SELECT id FROM integration_connectors
      WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
        AND connector_type = $1
-       AND status <> 'disabled'
+       AND status = 'active'
      ORDER BY created_at ASC
      LIMIT 1
   `, [provider])
@@ -132,7 +149,34 @@ export async function emitAccountingDocument(
     }
   }
 
-  // ── 2. A validated customer mapping, for receivables ──
+  // ── 2. A governed currency, for anything carrying money ──
+  //
+  // Checked BEFORE the customer mapping, deliberately. Currency applies to
+  // every money-bearing type and governs what every amount on the document
+  // MEANS; the mapping applies to receivables alone and only decides who is
+  // billed. Reporting the narrower problem first would send someone to map a
+  // customer for a document that still could not be emitted afterwards.
+  //
+  // OWNER DECISION, 2026-08-25: an explicit ISO-4217 declaration or nothing.
+  // No USD fallback, no provider default, no tenant default. Denver's own
+  // `projects.currency` and `purchase_orders.currency` are `DEFAULT 'USD'`, so
+  // a value in either is indistinguishable from one nobody set — reading it
+  // would be inferring a fallback and reporting it as a fact.
+  //
+  // Refusing is recoverable in one governance step. A receivable posted in the
+  // wrong currency is a misstatement in someone else's books, and Denver has no
+  // way to retract it.
+  if (isMoneyBearing(type) && doc.currencyBasis !== 'declared') {
+    return {
+      emitted: false, reason: 'currency_not_declared',
+      detail: doc.projectId
+        ? 'No ISO-4217 currency is declared for this project. Declare one before emitting; Denver will not default to USD or let the provider assume.'
+        : 'This money-bearing document has no project, so no currency declaration can be resolved.',
+      sourceState: doc.sourceState,
+    }
+  }
+
+  // ── 3. A validated customer mapping, for receivables ──
   let party: PartyLink | null = null
   if (REQUIRES_CUSTOMER_MAPPING.includes(type)) {
     if (!doc.projectId) {
@@ -150,16 +194,16 @@ export async function emitAccountingDocument(
     }
   }
 
-  // ── 3. A configured provider ──
+  // ── 4. A configured provider ──
   const connectorId = await resolveConnectorId(tenantId, provider)
   if (!connectorId) {
     return {
       emitted: false, reason: 'provider_not_configured',
-      detail: `No enabled ${provider} connector exists for this tenant.`,
+      detail: `No ACTIVE ${provider} connector exists for this tenant. A connector that is still configuring, paused, inactive or in error does not receive emissions.`,
     }
   }
 
-  // ── 4. The outbox ──
+  // ── 5. The outbox ──
   // The resolved external id travels WITH the document, so the adapter never
   // has to look a customer up and cannot substitute a different one.
   const payload: Record<string, unknown> = {

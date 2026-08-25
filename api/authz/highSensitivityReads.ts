@@ -229,6 +229,10 @@ export const RECLASSIFIED_NOT_HIGH_SENSITIVITY_READS: readonly ReclassifiedRead[
     reason: 'ADR-014 Phase 3P. Returns what happened to ONE document at the integration boundary — job status, attempts, the provider acknowledgement and any settlement status. It discloses no commercial figure of its own beyond what the acknowledgement carries, and it is scoped twice: cost.view, plus authorizeRecordScope against the resource that backs the document type, so a caller cannot read the integration history of a document they could not open.',
   },
   {
+    file: 'accountingBoundary.ts', method: 'GET', path: '/currency/:projectId',
+    reason: 'ADR-014 Phase 3Q. Returns the ISO-4217 code a project\'s emitted commercial documents are denominated in, plus who declared it and when. A currency is a UNIT, not an amount: it discloses no figure, no lifecycle state and no counterparty, and knowing a project bills in EUR reveals nothing about what it bills. It is guarded by cost.view and requireProjectScope, so it is reachable only for a project the caller can already open — and a caller who can open the project can already see its amounts through the cost routes, which is strictly more than this returns. Registered rather than left unclassified because the absence of a declaration is itself meaningful: it says the project cannot emit, which is operational rather than commercial.',
+  },
+  {
     file: 'accountingBoundary.ts', method: 'GET', path: '/contract',
     reason: 'ADR-014 Phase 3O. Returns the accounting integration CONTRACT — version, provider list, document types, the acknowledgement shape, the not-in-scope list and the open product decisions. It is a static description of the boundary and reads no tenant data at all: there is no query in the handler. Guarded by platform.integrations because it describes integration configuration, not because it discloses anything.',
   },

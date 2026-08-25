@@ -88,6 +88,40 @@ export const ACTION_CAPABILITIES = [
   'crm.write',
   'crm.approve',            // proposal won / lost / no-bid — commits a commercial outcome
 
+  // ── accounting boundary (provider-neutral emission) ─────────────────────────
+  // Owner-only, and deliberately NOT `cost.approve`.
+  //
+  // Emission was previously guarded by `cost.approve`, which conflated two
+  // different authorities. `cost.approve` is Denver-internal commercial
+  // authority: it approves a change order, an estimate, an invoice, a pay
+  // application. Emission is an EXTERNAL act — it puts a figure into somebody
+  // else's books, in a system Denver does not control and cannot retract from.
+  //
+  // Reusing `cost.approve` meant the two could never be delegated apart. The
+  // day a controller is granted authority to push receivables to the accounting
+  // system, that grant would have silently carried the authority to approve
+  // change orders and pay applications inside Denver. ADR-014 materiality test:
+  // these are materially distinct, so they get distinct capabilities.
+  //
+  // They are split by DIRECTION OF MONEY rather than pooled into one
+  // `accounting.emit`, for the same reason. Pushing a receivable (money Denver
+  // is owed) and pushing a payable (money Denver owes) are not one authority,
+  // and a future delegation of one must not hand over the other.
+  //
+  // HOLDERS ARE UNCHANGED TODAY. Every one of these is granted to `owner`
+  // alone, exactly as `cost.approve` was, so this narrows nothing and broadens
+  // nothing at this commit. It only makes the semantics correct so that a later
+  // delegation can be made without collateral authority.
+  'accounting.receivables.emit',   // push an approved pay application: money in
+  'accounting.payables.emit',      // push an approved subcontract invoice: money out
+  'accounting.commitments.emit',   // push an approved PO/subcontract: encumbrance
+  'accounting.masterdata.emit',    // push a vendor master record: no money moves
+  // Declaring the ISO-4217 currency a project's money is denominated in.
+  // Separate from emission on purpose: the currency governs what every future
+  // emission for that project MEANS, so authority to send one document must not
+  // carry authority to redenominate the project.
+  'accounting.currency.declare',
+
   // ── procurement ─────────────────────────────────────────────────────────────
   'procurement.write',
   'procurement.approve',    // bid package issue/close, subcontract invoice approval

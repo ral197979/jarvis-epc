@@ -326,7 +326,14 @@ describe('the Phase-2 classification stays closed and adoption is not overclaime
     // `GET /files/documents/:id/content`, which arrives already scoped.
     // Phase 3L adds five: the TRIR surface — recordability classification, the
     // two project exposure-hours routes, and the two rate routes.
-    expect(scoped, 'Phase 3P scoped 370 endpoints').toBe(370)
+    // Phase 3Q adds four at the accounting boundary. Three are emission: the
+    // single `POST /emit/:type/:id` became one literal route per document type
+    // so each could name its own capability as a string literal, and three of
+    // the four resolve record scope (a vendor has no project parent). One is
+    // the governed-currency declaration, whose read and write are both
+    // project-scoped. No endpoint gained scope it did not already enforce —
+    // the emission guard was always there, it is now legible per route.
+    expect(scoped, 'Phase 3Q scoped 374 endpoints').toBe(374)
     expect(endpoints.length, 'out of ~747').toBeGreaterThan(700)
     // Phase 3B asserted adoption was under 10%, which measured how little had
     // been done rather than guarding a property — it necessarily fails as the

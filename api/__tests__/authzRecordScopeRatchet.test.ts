@@ -439,7 +439,13 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // Phase 3L takes it to 359 with the TRIR surface — recordability
     // classification, two project exposure-hours routes, and the two rate
     // routes. All five arrive scoped; none is a reclassification.
-    expect(scoped).toBe(370)
+    // Phase 3Q takes it to 374 at the accounting boundary: the emission route
+    // split into one literal route per document type so each names its own
+    // capability as a literal (three of the four are project-scoped; a vendor
+    // has no project parent), plus the project-scoped read and write of the
+    // governed currency declaration. All four arrive scoped; none is a
+    // reclassification of an endpoint that was previously unscoped.
+    expect(scoped).toBe(374)
     // Conservation, not a ratio. Phase 3C asserted that capability-only was the
     // overwhelming majority, which is an assertion designed to fail as the
     // rollout succeeds. What must hold at every point is that an endpoint only
@@ -450,7 +456,11 @@ describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
     // surface is genuinely added or removed, never by an endpoint slipping
     // out of both classes.
     // Phase 3L: +7 for the TRIR surface (five scoped, two capability-only).
-    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(750)
+    // Phase 3Q: +5 at the accounting boundary — three from splitting one
+    // emission route into four literal per-type routes, and the two governed
+    // currency routes. Four of the five are scoped, one (vendor emission) is
+    // capability-only because vendors have no project parent.
+    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(755)
   })
 })
 

@@ -48,6 +48,8 @@ const setCaller = (c: Caller): void => { caller = c; (globalThis as Record<strin
 /** World state the fixture answers from. */
 let PAYAPP_STATUS = 'approved'
 let PARTY_LINK: { external_customer_id: string; external_customer_label: string | null } | null = null
+/** The governed ISO-4217 declaration. Null means nobody has declared one. */
+let CURRENCY: string | null = 'USD'
 let CONNECTOR_ID: string | null = 'conn-billbox'
 let ENQUEUE_RETURNS: string | null = 'job-1'
 let JOB_ROWS: Record<string, unknown>[] = []
@@ -71,7 +73,13 @@ vi.mock('../middleware/tenant', () => ({
 import { requireAuth } from '../auth'
 import { requireTenant } from '../middleware/tenant'
 import { accountingBoundaryRouter } from '../routes/accountingBoundary'
-import { EMITTING_STATE, NON_EMITTING_STATE_REASON } from '../services/integration/accounting/accountingContract'
+import {
+  EMITTING_STATE, NON_EMITTING_STATE_REASON, ACCOUNTING_CONTRACT_VERSION,
+  EMISSION_CAPABILITY, CURRENCY_DECLARATION_CAPABILITY, PARTY_MAPPING_CAPABILITY,
+  MONEY_BEARING_DOCUMENT_TYPES,
+  TAX_UNKNOWN_REASON,
+} from '../services/integration/accounting/accountingContract'
+import { USER_ROLES, SERVER_ROLE_CAPS } from '../authz/capabilities'
 
 const app = (() => {
   const a = express()
@@ -88,6 +96,7 @@ const statements = (): string[] => mockQuery.mock.calls.map(c => sqlOf(c)).filte
 beforeEach(() => {
   PAYAPP_STATUS = 'approved'
   PARTY_LINK = { external_customer_id: 'BB-CUST-42', external_customer_label: 'Denver Water Authority' }
+  CURRENCY = 'USD'
   CONNECTOR_ID = 'conn-billbox'
   ENQUEUE_RETURNS = 'job-1'
   JOB_ROWS = []
@@ -131,6 +140,16 @@ beforeEach(() => {
         vendor_code: 'PIPE', vendor_email: null, vendor_country: 'US',
       }], rowCount: 1 }
     }
+    if (/FROM accounting_currency_declarations/i.test(sql)) {
+      if (caller.tenantId !== TENANT_A) return empty
+      return CURRENCY
+        ? { rows: [{ currency: CURRENCY, declared_by: OWNER_A, declared_at: '2026-08-20T00:00:00Z', note: null }], rowCount: 1 }
+        : empty
+    }
+    if (/INSERT INTO accounting_currency_declarations/i.test(sql)) {
+      CURRENCY = String(params[1])
+      return { rows: [{ currency: CURRENCY, declared_by: OWNER_A, declared_at: '2026-08-25T00:00:00Z', note: params[3] ?? null }], rowCount: 1 }
+    }
     if (/FROM accounting_party_links/i.test(sql)) {
       return PARTY_LINK ? { rows: [PARTY_LINK], rowCount: 1 } : empty
     }
@@ -153,6 +172,7 @@ beforeEach(() => {
 
 const emit = (type: string, id: string, provider = 'billbox') =>
   request(app).post(`/api/v1/integrations/accounting/emit/${type}/${id}`).send({ provider })
+
 
 // ─── 1. Only approved documents emit ─────────────────────────────────────────
 
@@ -245,13 +265,109 @@ describe('a receivable will not post to a guessed customer', () => {
   })
 })
 
+// ─── 2b. A money-bearing document needs a governed currency ──────────────────
+
+describe('emission refuses to guess what currency the money is in', () => {
+  it('refuses a receivable whose project has no declaration', async () => {
+    CURRENCY = null
+    const res = await emit('receivable_application', PAYAPP)
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('currency_not_declared')
+    expect(enqueued, 'nothing may be queued').toHaveLength(0)
+  })
+
+  it('refuses a payable and a commitment on the same rule', async () => {
+    CURRENCY = null
+    const res = await emit('payable_invoice', PAYABLE)
+    expect(res.status).toBe(409)
+    expect(res.body.error).toBe('currency_not_declared')
+    expect(enqueued).toHaveLength(0)
+  })
+
+  it('never falls back to USD, and says so in the refusal', async () => {
+    CURRENCY = null
+    const res = await emit('receivable_application', PAYAPP)
+    expect(res.body.detail).toMatch(/will not default to USD|not default to USD/i)
+    // The refusal must not be a rendered default either.
+    expect(res.body).not.toHaveProperty('currency')
+  })
+
+  it('reads the governed declaration, not projects.currency', async () => {
+    await emit('receivable_application', PAYAPP)
+    const lookup = statements().find(s => /accounting_currency_declarations/i.test(s))
+    expect(lookup, 'the governed declaration must be consulted').toBeTruthy()
+    // `projects.currency` and `purchase_orders.currency` are DEFAULT 'USD', so
+    // a value in either cannot be told apart from one nobody set.
+    for (const s of statements()) {
+      expect(s).not.toMatch(/\bp\.currency\b|\bpo\.currency\b/i)
+    }
+    expect(lookup).toMatch(/tenant_id = current_setting/i)
+  })
+
+  it('stamps the declared currency onto every amount it sends', async () => {
+    CURRENCY = 'EUR'
+    await emit('payable_invoice', PAYABLE)
+    const d = (enqueued[0]!.payload as Record<string, unknown>)['document'] as Record<string, unknown>
+    expect(d['currency']).toBe('EUR')
+    expect(d['currencyBasis']).toBe('declared')
+    const detail = d['detail'] as Record<string, { currency: string }>
+    // The envelope and the lines must agree, or the document is unactionable.
+    for (const k of ['gross', 'retention', 'net']) {
+      expect(detail[k]!.currency, `${k} must carry the governed currency`).toBe('EUR')
+    }
+  })
+
+  it('reports the missing currency BEFORE the missing customer mapping', async () => {
+    // Order matters because it decides which refusal a person acts on. Currency
+    // applies to every money-bearing type and governs what each amount MEANS;
+    // the mapping applies to receivables alone and only decides who is billed.
+    // Reporting the narrower problem first would send someone to map a customer
+    // for a document that still could not be emitted afterwards.
+    CURRENCY = null
+    PARTY_LINK = null
+    const res = await emit('receivable_application', PAYAPP)
+    expect(res.body.error).toBe('currency_not_declared')
+    expect(enqueued).toHaveLength(0)
+  })
+
+  it('does not demand a currency for a vendor, which moves no money', () => {
+    expect(MONEY_BEARING_DOCUMENT_TYPES).not.toContain('vendor')
+    expect(MONEY_BEARING_DOCUMENT_TYPES).toEqual(
+      expect.arrayContaining(['payable_invoice', 'receivable_application', 'commitment']))
+  })
+})
+
+// ─── 2c. Tax is stated as unknown, never inferred ────────────────────────────
+
+describe('Denver states its tax position rather than staying silent', () => {
+  it('carries an explicit UNKNOWN on a money-bearing document', async () => {
+    await emit('payable_invoice', PAYABLE)
+    const d = (enqueued[0]!.payload as Record<string, unknown>)['document'] as Record<string, unknown>
+    const tax = d['tax'] as Record<string, unknown>
+    // Present and unknown — not omitted. Silence would invite a provider to
+    // read "no tax applies", which Denver has no basis to assert.
+    expect(tax).toBeTruthy()
+    expect(tax['known']).toBe(false)
+    expect(String(tax['reason'])).toBe(TAX_UNKNOWN_REASON)
+    expect(String(tax['reason'])).toMatch(/Absent is not zero/i)
+  })
+
+  it('never emits a derived tax amount or rate', async () => {
+    await emit('payable_invoice', PAYABLE)
+    const body = JSON.stringify(enqueued[0]!.payload)
+    for (const forbidden of ['taxAmount', 'taxRate', 'taxCode', 'vatNumber']) {
+      expect(body, `Denver must not invent ${forbidden}`).not.toContain(forbidden)
+    }
+  })
+})
+
 // ─── 3. The outbox, reused rather than rebuilt ───────────────────────────────
 
 describe('emission goes through the existing outbox', () => {
   it('enqueues onto integration_jobs with the document idempotency key', async () => {
     await emit('receivable_application', PAYAPP)
     expect(enqueued[0]!.idempotencyKey)
-      .toBe(`accounting:1.0.0:receivable_application:${PAYAPP}:approved`)
+      .toBe(`accounting:${ACCOUNTING_CONTRACT_VERSION}:receivable_application:${PAYAPP}:approved`)
   })
 
   it('reports already_emitted when the outbox dedupes a repeat', async () => {
@@ -261,6 +377,19 @@ describe('emission goes through the existing outbox', () => {
     const res = await emit('receivable_application', PAYAPP)
     expect(res.status).toBe(409)
     expect(res.body.error).toBe('already_emitted')
+  })
+
+  it('selects only an ACTIVE connector, by naming the state rather than excluding one', async () => {
+    // Both halves of this are regressions the live path caught. The predicate
+    // was `status <> 'disabled'`, a label `connector_status` does not contain,
+    // so PostgreSQL rejected the comparison and EVERY emission 500'd — a mock
+    // cannot see that, because it returns a row without evaluating the SQL.
+    // Naming the one permitted state also means a status added to the enum
+    // later is refused by default instead of silently becoming emittable.
+    await emit('receivable_application', PAYAPP)
+    const lookup = statements().find(s => /FROM integration_connectors/i.test(s))!
+    expect(lookup).toMatch(/status\s*=\s*'active'/i)
+    expect(lookup, 'excluding a state is what broke; name the allowed one').not.toMatch(/status\s*<>/i)
   })
 
   it('refuses when no connector is configured for the provider', async () => {
@@ -325,37 +454,91 @@ describe('the path is provider-neutral', () => {
 describe('emitting is a commercial authorization', () => {
   // STRUCTURAL LIMITATION, stated once and asserted at the source instead.
   //
-  // `cost.view` and `cost.approve` are BOTH Owner-only in this registry, and an
-  // Owner is tenant-wide. So no principal exists who holds one and not the
-  // other, and none who passes the capability gate can fail project scope —
-  // which makes both guards impossible to exercise end-to-end today. They are
-  // not decoration: emitting is the act of putting a figure into someone's
-  // books, and record scope is what stops it being done for a project the
-  // caller cannot open. Capability HOLDERS are deliberately unchanged (ADR-014
-  // phases decide where authority applies, never who holds it), so the
-  // declarations are pinned in the source the way the nullable-scope ratchet
-  // pins its resolver.
-  it('declares cost.approve on emission and on choosing the billing customer', async () => {
+  // Every capability this route uses is Owner-only in this registry, and an
+  // Owner is tenant-wide. So no principal exists who holds one and not another,
+  // and none who passes the capability gate can fail project scope — which makes
+  // both guards impossible to exercise end-to-end today. They are not
+  // decoration: emitting is the act of putting a figure into someone's books,
+  // and record scope is what stops it being done for a project the caller cannot
+  // open. Capability HOLDERS are deliberately unchanged (ADR-014 phases decide
+  // where authority applies, never who holds it), so the declarations are pinned
+  // in the source the way the nullable-scope ratchet pins its resolver.
+  it('emits under a dedicated accounting capability, never cost.approve', async () => {
     const fs = await import('node:fs')
     const src = fs.readFileSync('api/routes/accountingBoundary.ts', 'utf8')
-    expect(src).toMatch(/post\('\/emit\/:type\/:id',\s*requireCapability\('cost\.approve'\)/)
-    expect(src).toMatch(/put\('\/party\/:projectId\/:provider',\s*requireCapability\('cost\.approve'\)/)
+
+    // Each type is registered under a LITERAL path segment with a LITERAL
+    // capability. The literal is not cosmetic: the ADR-014 endpoint census
+    // parses `requireCapability('...')` out of this file to prove every
+    // mutation is guarded, and a capability resolved at runtime would be
+    // invisible to it — a guard that could be dropped with nothing failing.
+    for (const [type, capability] of Object.entries(EMISSION_CAPABILITY)) {
+      const re = new RegExp(`post\\('/emit/${type}/:id',\\s*requireCapability\\('${capability.replace(/\./g, '\\.')}'\\)`)
+      expect(src, `${type} must be guarded by ${capability}, as a literal`).toMatch(re)
+    }
+    expect(src).toMatch(new RegExp(`put\\('/party/:projectId/:provider',\\s*requireCapability\\('${PARTY_MAPPING_CAPABILITY.replace(/\./g, '\\.')}'\\)`))
+    expect(src).toMatch(new RegExp(`put\\('/currency/:projectId',\\s*requireCapability\\('${CURRENCY_DECLARATION_CAPABILITY.replace(/\./g, '\\.')}'\\)`))
+
     // Reading is a lower bar than authorising.
     expect(src).toMatch(/get\('\/status\/:type\/:id',\s*requireCapability\('cost\.view'\)/)
+    // The regression this slice exists to prevent: emission must never again be
+    // bound to Denver-internal commercial approval.
+    expect(src).not.toMatch(/requireCapability\('cost\.approve'\)/)
+  })
+
+  it('gives each document type its own capability, all Owner-only', () => {
+    expect(EMISSION_CAPABILITY.receivable_application).toBe('accounting.receivables.emit')
+    expect(EMISSION_CAPABILITY.payable_invoice).toBe('accounting.payables.emit')
+    // Money in and money out are not one authority.
+    expect(EMISSION_CAPABILITY.receivable_application).not.toBe(EMISSION_CAPABILITY.payable_invoice)
+
+    for (const cap of Object.values(EMISSION_CAPABILITY)) {
+      const holders = USER_ROLES.filter(r => (SERVER_ROLE_CAPS[r] as readonly string[]).includes(cap))
+      // Owner-only, exactly as cost.approve was: this commit narrows nothing and
+      // broadens nothing, it only makes later delegation possible without
+      // collateral authority.
+      expect(holders, `${cap} must stay Owner-only`).toEqual(['owner'])
+    }
+    expect(USER_ROLES.filter(r => (SERVER_ROLE_CAPS[r] as readonly string[]).includes(CURRENCY_DECLARATION_CAPABILITY)))
+      .toEqual(['owner'])
+  })
+
+  it('does not let an accounting capability imply cost approval, or the reverse', () => {
+    // The accident this replaces: granting somebody the authority to push
+    // receivables must not hand them change-order approval inside Denver.
+    for (const cap of [...Object.values(EMISSION_CAPABILITY), CURRENCY_DECLARATION_CAPABILITY]) {
+      expect(cap).not.toBe('cost.approve')
+      expect(cap.startsWith('accounting.'), `${cap} must live in its own family`).toBe(true)
+    }
   })
 
   it('resolves record scope before emitting, not after', async () => {
     const fs = await import('node:fs')
     const src = fs.readFileSync('api/routes/accountingBoundary.ts', 'utf8')
-    const emitHandler = /post\('\/emit\/:type\/:id'[\s\S]*?\n\}\)/.exec(src)?.[0] ?? ''
-    expect(emitHandler, 'the emit handler was not found').toContain('emitAccountingDocument')
-    const scopeAt = emitHandler.indexOf('authorizeRecordScope')
-    const emitAt  = emitHandler.indexOf('emitAccountingDocument')
-    expect(scopeAt, 'emission must resolve record scope').toBeGreaterThan(-1)
-    expect(scopeAt, 'scope must be resolved BEFORE the document is emitted').toBeLessThan(emitAt)
+    // Scope is resolved INLINE in each route rather than behind a shared
+    // helper, so the ADR-014 census can see it per endpoint. That makes it
+    // repetitive and makes it checkable — assert it for every type, in the
+    // right order, so a fifth type cannot arrive with the check missing or
+    // running after the emission.
+    for (const type of Object.keys(EMISSION_CAPABILITY)) {
+      const route = new RegExp(`post\\('/emit/${type}/:id'[\\s\\S]*?\\n\\}\\)`).exec(src)?.[0] ?? ''
+      expect(route, `the ${type} emission route was not found`).toContain('emitAfterGuards')
+
+      if (type === 'vendor') {
+        // Vendors are tenant master data with no project parent and no scope
+        // policy, so there is nothing to resolve against — asserted, not
+        // assumed, so a later slice cannot drop a real check and call it this.
+        expect(route).not.toContain('authorizeRecordScope')
+        continue
+      }
+      const scopeAt = route.indexOf('authorizeRecordScope')
+      const emitAt  = route.indexOf('emitAfterGuards')
+      expect(scopeAt, `${type} must resolve record scope`).toBeGreaterThan(-1)
+      expect(scopeAt, `${type}: scope must be resolved BEFORE the document is emitted`).toBeLessThan(emitAt)
+    }
   })
 
-  it('refuses a caller without cost.approve', async () => {
+  it('refuses a caller without the emission capability', async () => {
     setCaller({ id: OWNER_A, tenantId: TENANT_A, role: 'project_manager' })
     const res = await emit('receivable_application', PAYAPP)
     expect(res.status).toBe(403)
@@ -435,7 +618,7 @@ describe('the party mapping holds an identifier and nothing else', () => {
     expect(res.body.error).toBe('external_customer_id_required')
   })
 
-  it('requires cost.approve to choose which customer a project bills to', async () => {
+  it('requires the receivable capability to choose which customer a project bills to', async () => {
     setCaller({ id: OWNER_A, tenantId: TENANT_A, role: 'project_manager' })
     const res = await request(app)
       .put(`/api/v1/integrations/accounting/party/${PROJECT_A}/billbox`)
