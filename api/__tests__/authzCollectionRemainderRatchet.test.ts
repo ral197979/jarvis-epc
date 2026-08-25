@@ -276,8 +276,8 @@ describe('direct-ID project-boundness comes from the path-addressed resource', (
   it('leaves the mutation surface exactly where Phase 3D certified it', () => {
     const mut = registry.registry.filter(r => r.projectBound && r.operationType.startsWith('MUTATION'))
     // Phase 3L: +2 for the exposure-hours writes (project and tenant).
-    expect(mut.length, 'the classifier change must not move the mutation denominator').toBe(184)
-    expect(mut.filter(r => r.enforcesRecordScope).length).toBe(176)
+    expect(mut.length, 'the classifier change must not move the mutation denominator').toBe(185)
+    expect(mut.filter(r => r.enforcesRecordScope).length).toBe(177)
   })
 })
 
@@ -293,11 +293,11 @@ describe('the direct-ID inventory reconciles with nothing unexplained', () => {
     // the numerator moves with it: the route arrives already scoped.
     // 62 with the repaired viewer route, which is also a project-bound
     // direct-ID read and is scoped from the moment it exists.
-    expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(64)
+    expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(65)
     // 55 after Phase 3G; Phase 3H closed the twin projection route, which is the
     // last project-bound direct-ID read that was open for a MODEL reason.
     // Phase 3M: +1 for GET /api/v1/contracts/:id, which arrives already scoped.
-    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(60)
+    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(61)
   })
 
   it('leaves open only SELF surfaces, whose guard is narrower than membership', () => {

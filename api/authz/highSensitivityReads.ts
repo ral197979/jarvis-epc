@@ -221,6 +221,14 @@ export interface ReclassifiedRead {
  */
 export const RECLASSIFIED_NOT_HIGH_SENSITIVITY_READS: readonly ReclassifiedRead[] = [
   {
+    file: 'accountingBoundary.ts', method: 'GET', path: '/party/:projectId/:provider',
+    reason: 'ADR-014 Phase 3P. Returns one external customer IDENTIFIER for a project in one accounting system, plus a descriptive label. It is integration mapping, not commercial data: no amount, no lifecycle, no counterparty master record — the identifier is opaque to Denver and meaningless without access to the provider. Guarded by cost.view and requireProjectScope, so it is reachable only for a project the caller can already open.',
+  },
+  {
+    file: 'accountingBoundary.ts', method: 'GET', path: '/status/:type/:id',
+    reason: 'ADR-014 Phase 3P. Returns what happened to ONE document at the integration boundary — job status, attempts, the provider acknowledgement and any settlement status. It discloses no commercial figure of its own beyond what the acknowledgement carries, and it is scoped twice: cost.view, plus authorizeRecordScope against the resource that backs the document type, so a caller cannot read the integration history of a document they could not open.',
+  },
+  {
     file: 'accountingBoundary.ts', method: 'GET', path: '/contract',
     reason: 'ADR-014 Phase 3O. Returns the accounting integration CONTRACT — version, provider list, document types, the acknowledgement shape, the not-in-scope list and the open product decisions. It is a static description of the boundary and reads no tenant data at all: there is no query in the handler. Guarded by platform.integrations because it describes integration configuration, not because it discloses anything.',
   },

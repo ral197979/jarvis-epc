@@ -1,11 +1,11 @@
 {
   "generatedFrom": "checked-in source (api/server.ts + api/routes/*.ts)",
   "counts": {
-    "endpoints": 781,
-    "mounted": 779,
+    "endpoints": 785,
+    "mounted": 783,
     "unmounted": 2,
-    "reads": 370,
-    "mutations": 411,
+    "reads": 372,
+    "mutations": 413,
     "routeFiles": 103,
     "mounts": 109
   },
@@ -8092,7 +8092,7 @@
       "mountPrefix": "/api/v1/integrations/accounting",
       "routePath": "/contract",
       "file": "api/routes/accountingBoundary.ts",
-      "line": 51,
+      "line": 60,
       "serverLine": 625,
       "pathParams": [],
       "guards": [
@@ -8107,12 +8107,112 @@
       "mounted": true
     },
     {
+      "method": "POST",
+      "path": "/api/v1/integrations/accounting/emit/:type/:id",
+      "mountPrefix": "/api/v1/integrations/accounting",
+      "routePath": "/emit/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 175,
+      "serverLine": 625,
+      "pathParams": [
+        "type",
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.approve"
+      ],
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
       "method": "GET",
       "path": "/api/v1/integrations/accounting/outbound/:type/:id",
       "mountPrefix": "/api/v1/integrations/accounting",
       "routePath": "/outbound/:type/:id",
       "file": "api/routes/accountingBoundary.ts",
-      "line": 82,
+      "line": 96,
+      "serverLine": 625,
+      "pathParams": [
+        "type",
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.view"
+      ],
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/party/:projectId/:provider",
+      "mountPrefix": "/api/v1/integrations/accounting",
+      "routePath": "/party/:projectId/:provider",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 137,
+      "serverLine": 625,
+      "pathParams": [
+        "projectId",
+        "provider"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.view"
+      ],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/integrations/accounting/party/:projectId/:provider",
+      "mountPrefix": "/api/v1/integrations/accounting",
+      "routePath": "/party/:projectId/:provider",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 149,
+      "serverLine": 625,
+      "pathParams": [
+        "projectId",
+        "provider"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.approve"
+      ],
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/status/:type/:id",
+      "mountPrefix": "/api/v1/integrations/accounting",
+      "routePath": "/status/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 210,
       "serverLine": 625,
       "pathParams": [
         "type",

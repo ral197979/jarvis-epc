@@ -123,7 +123,16 @@ export const NESTED_ROUTE_FAMILIES: readonly NestedFamily[] = [
     evidence: 'Parent resolved through the canonical record-scope registry; the child query binds to that parent id.',
   })),
 
-  // ─── Accounting boundary (Phase 3O) ────────────────────────────────────────
+  // ─── Accounting boundary (Phase 3O / 3P) ───────────────────────────────────
+  { prefix: '/api/v1/integrations/accounting/party/:projectId', parent: 'projects',
+    disposition: 'PARENT_SCOPED_AND_BOUND',
+    evidence: 'The dynamic segment IS a project id and the route carries requireProjectScope; the mapping row is keyed on that project and the tenant predicate is on the statement.' },
+  { prefix: '/api/v1/integrations/accounting/emit/:type', parent: 'accounting_document_type',
+    disposition: 'CONTEXT_ONLY_PARENT',
+    evidence: 'Same shape as the outbound route: `:type` selects which Denver resource backs the document and is validated against a closed set, and authorization is resolved with authorizeRecordScope against THAT resource using the `:id` that follows. Emission additionally refuses on state and on a missing customer mapping, but those are fact-level preconditions rather than authorization.' },
+  { prefix: '/api/v1/integrations/accounting/status/:type', parent: 'accounting_document_type',
+    disposition: 'CONTEXT_ONLY_PARENT',
+    evidence: 'Reads the outbox for one document. `:type` selects the backing resource and is validated; scope is resolved against that resource for the `:id`, so a caller cannot read the integration history of a document they could not open.' },
   { prefix: '/api/v1/integrations/accounting/outbound/:type', parent: 'accounting_document_type',
     disposition: 'CONTEXT_ONLY_PARENT',
     evidence: 'The dynamic `:type` segment is not a record id — it selects which Denver resource backs the document (DOCUMENT_SOURCE_RESOURCE) and is validated against a closed set before use. Authorization is resolved against the RESOURCE it names, using authorizeRecordScope on the `:id` that follows, so the parent segment carries no authority of its own and cannot be used to reach anything.' },

@@ -1,15 +1,29 @@
 {
   "generatedFrom": "api/db/migrations/*.sql",
   "counts": {
-    "tables": 236,
-    "migrationFiles": 87,
-    "directProjectColumn": 71,
+    "tables": 237,
+    "migrationFiles": 88,
+    "directProjectColumn": 72,
     "fkPathToProject": 23,
     "noProjectParent": 141,
     "projectRoot": 1,
-    "withTenantColumn": 224
+    "withTenantColumn": 225
   },
   "tables": [
+    {
+      "table": "accounting_party_links",
+      "idColumn": "id",
+      "tenantColumn": "tenant_id",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "columns": 9,
+      "sources": [
+        "088_accounting_party_links.sql"
+      ]
+    },
     {
       "table": "action_analytics_snapshots",
       "idColumn": "id",

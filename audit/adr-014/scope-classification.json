@@ -1,17 +1,17 @@
 {
   "generatedFrom": "endpoint-inventory + route-data-access + schema-project-parent-map",
   "counters": {
-    "TOTAL_API_ENDPOINTS": 781,
+    "TOTAL_API_ENDPOINTS": 785,
     "DISPOSITIONS": {
       "SERVICE_BOUNDARY": 31,
-      "TENANT_GLOBAL": 253,
+      "TENANT_GLOBAL": 254,
       "NO_PROJECT_PARENT": 39,
       "PROJECT_CHILD_TENANT_COLLECTION": 50,
       "PROJECT_CHILD_RECORD_ID": 189,
-      "UNRESOLVED_DATA_ACCESS": 34,
+      "UNRESOLVED_DATA_ACCESS": 35,
       "SELF_SCOPED": 16,
       "PROJECT_CHILD_BODY_PROJECT": 13,
-      "PROJECT_CHILD_PATH_PROJECT": 107,
+      "PROJECT_CHILD_PATH_PROJECT": 109,
       "CROSSDOMAIN": 1,
       "PLATFORM_GLOBAL": 40,
       "PROJECT_CREATE_NO_EXISTING_SCOPE": 1,
@@ -20,63 +20,63 @@
       "PUBLIC_UNAUTHENTICATED": 1
     },
     "UNEXPLAINED": 0,
-    "PROJECT_BOUND_TOTAL": 363,
+    "PROJECT_BOUND_TOTAL": 365,
     "PROJECT_BOUND_BY_OPERATION": {
       "READ_COLLECTION": 115,
-      "READ_DIRECT_ID": 64,
-      "MUTATION_UPDATE": 45,
+      "READ_DIRECT_ID": 65,
+      "MUTATION_UPDATE": 46,
       "MUTATION_CREATE": 85,
       "MUTATION_DELETE": 23,
       "MUTATION_CONSEQUENTIAL": 31
     },
     "MUTATIONS": {
-      "total": 411,
-      "projectBound": 184,
+      "total": 413,
+      "projectBound": 185,
       "byDisposition": {
         "SERVICE_BOUNDARY": 17,
         "TENANT_GLOBAL": 137,
         "NO_PROJECT_PARENT": 29,
         "PROJECT_CHILD_RECORD_ID": 128,
         "SELF_SCOPED": 9,
-        "UNRESOLVED_DATA_ACCESS": 14,
+        "UNRESOLVED_DATA_ACCESS": 15,
         "PROJECT_CHILD_BODY_PROJECT": 13,
         "CROSSDOMAIN": 1,
         "PLATFORM_GLOBAL": 18,
+        "PROJECT_CHILD_PATH_PROJECT": 41,
         "PROJECT_CREATE_NO_EXISTING_SCOPE": 1,
         "PROJECT_ROOT_EXISTING": 3,
-        "PROJECT_CHILD_PATH_PROJECT": 40,
         "DEAD_OR_UNMOUNTED": 1
       },
       "consequentialProjectBound": 31,
-      "projectBoundWithNoProjectPredicateInSql": 176
+      "projectBoundWithNoProjectPredicateInSql": 177
     },
     "DIRECT_ID_READS": {
-      "total": 136,
-      "projectBound": 64
+      "total": 138,
+      "projectBound": 65
     },
     "READ_COLLECTIONS": {
       "total": 234,
       "projectBound": 115
     },
     "SELF_SCOPED": 16,
-    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 34,
+    "DEFERRED_SCOPE_MODEL_UNRESOLVED": 35,
     "FUNCTIONAL_CAPABILITY": {
-      "guarded": 745,
+      "guarded": 749,
       "unguarded": 36
     },
     "RECORD_SCOPE": {
-      "candidates": 363,
-      "protected": 325,
+      "candidates": 365,
+      "protected": 327,
       "deferred": 38,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 366,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 370,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "READ_DIRECT_ID": 60,
+      "READ_DIRECT_ID": 61,
       "MUTATION_CREATE": 79,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
-      "MUTATION_UPDATE": 44,
+      "MUTATION_UPDATE": 45,
       "READ_COLLECTION": 89
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
@@ -13122,7 +13122,7 @@
       "method": "GET",
       "path": "/api/v1/integrations/accounting/contract",
       "file": "api/routes/accountingBoundary.ts",
-      "line": 51,
+      "line": 60,
       "operationType": "READ_COLLECTION",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -13149,10 +13149,42 @@
       "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/integrations/accounting/emit/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 175,
+      "operationType": "MUTATION_CREATE",
+      "disposition": "UNRESOLVED_DATA_ACCESS",
+      "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
+      "projectBound": false,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.approve"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": null,
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "NO_TABLE_RESOLVED",
+      "projectParent": null,
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "UNRESOLVED",
+      "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/integrations/accounting/outbound/:type/:id",
       "file": "api/routes/accountingBoundary.ts",
-      "line": 82,
+      "line": 96,
       "operationType": "READ_DIRECT_ID",
       "disposition": "UNRESOLVED_DATA_ACCESS",
       "dispositionReason": "no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required",
@@ -13179,6 +13211,114 @@
       "bodyProjectRefs": [],
       "tableResolution": "UNRESOLVED",
       "status": "OUT_OF_PHASE3C_UNRESOLVED_DATA_ACCESS"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/party/:projectId/:provider",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 137,
+      "operationType": "READ_DIRECT_ID",
+      "disposition": "PROJECT_CHILD_PATH_PROJECT",
+      "dispositionReason": "project identified directly by a path parameter",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "accounting_party_links",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/integrations/accounting/party/:projectId/:provider",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 149,
+      "operationType": "MUTATION_UPDATE",
+      "disposition": "PROJECT_CHILD_PATH_PROJECT",
+      "dispositionReason": "project identified directly by a path parameter",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.approve"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireProjectScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "accounting_party_links",
+      "writeTables": [
+        "accounting_party_links"
+      ],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/status/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 210,
+      "operationType": "READ_DIRECT_ID",
+      "disposition": "TENANT_GLOBAL",
+      "dispositionReason": "every table this route touches has no project parent — tenant-level configuration or registry",
+      "projectBound": false,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "integration_jobs",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "NO_PROJECT_PARENT",
+      "projectParent": {
+        "strategy": "NO_PROJECT_PARENT"
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "OUT_OF_PHASE3C_TENANT_GLOBAL"
     },
     {
       "method": "GET",

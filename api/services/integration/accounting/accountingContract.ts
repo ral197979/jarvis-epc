@@ -233,3 +233,77 @@ export function buildIdempotencyKey(
   // a key without it would silently suppress the second send.
   return `accounting:${ACCOUNTING_CONTRACT_VERSION}:${type}:${denverId}:${sourceState}`
 }
+
+// ─── Emission policy ─────────────────────────────────────────────────────────
+//
+// OWNER DECISION, 2026-08-25: only APPROVED financial documents may emit.
+//
+// `submitted` is workflow — it means a person has finished preparing a document
+// and passed it on. It is not accounting authorization, and treating it as such
+// would put unapproved figures into the books and rely on a later correction.
+// So emission is gated on the approval state and nothing earlier.
+//
+// `paid` deliberately does NOT emit. A payment is not a second accounting
+// document: the receivable already exists, and settlement arrives back through
+// the acknowledgement boundary as a STATUS. Emitting on `paid` would create a
+// duplicate document in the accounting system for money it already knows about.
+
+/** The single state at which each document type becomes emittable. */
+export const EMITTING_STATE: Record<AccountingDocumentType, string> = {
+  vendor:                 'approved',
+  payable_invoice:        'approved',
+  receivable_application: 'approved',
+  commitment:             'approved',
+}
+
+/**
+ * States that are explicitly NOT emittable, and why — so a refusal can say
+ * something better than "wrong state".
+ */
+export const NON_EMITTING_STATE_REASON: Record<string, string> = {
+  draft:       'A draft has not been prepared for approval.',
+  submitted:   'Submitted is workflow, not accounting authorization. Approve the document first.',
+  negotiation: 'Still under negotiation; no approved commitment exists.',
+  rejected:    'A rejected document must not reach the accounting system.',
+  cancelled:   'A cancelled document must not reach the accounting system.',
+  paid:        'Settlement is not a new accounting document. The receivable already exists and its settlement arrives through the acknowledgement boundary.',
+}
+
+export type EmissionRefusalReason =
+  /** The document is not in its approved state. */
+  | 'not_approved'
+  /** AR only: no external customer mapping for the target provider. */
+  | 'customer_mapping_missing'
+  /** No connector is configured for the target provider in this tenant. */
+  | 'provider_not_configured'
+  /** The document does not exist, or is not reachable by this caller. */
+  | 'not_found'
+  /** This exact document+state was already enqueued; the outbox deduped it. */
+  | 'already_emitted'
+
+export interface EmissionRefusal {
+  emitted: false
+  reason:  EmissionRefusalReason
+  detail:  string
+  /** Present when the refusal is a state problem, so a UI can say which. */
+  sourceState?: string
+}
+
+export interface EmissionAccepted {
+  emitted: true
+  jobId:   string
+  provider: AccountingProviderId
+  idempotencyKey: string
+  documentType: AccountingDocumentType
+  denverId: string
+}
+
+export type EmissionOutcome = EmissionAccepted | EmissionRefusal
+
+/**
+ * Document types that require a mapped external customer before they may emit.
+ *
+ * Receivables only. A payable names a VENDOR, which Denver does own as master
+ * data, so it carries its party in the document itself.
+ */
+export const REQUIRES_CUSTOMER_MAPPING: readonly AccountingDocumentType[] = ['receivable_application']

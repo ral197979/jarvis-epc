@@ -1,11 +1,11 @@
 {
   "generatedFrom": "api/routes/*.ts + api/services/**/*.ts",
   "counts": {
-    "endpoints": 781,
+    "endpoints": 785,
     "resolvedHandlerSql": 251,
-    "resolvedViaService": 466,
-    "unresolved": 64,
-    "serviceFunctionsIndexed": 1638
+    "resolvedViaService": 469,
+    "unresolved": 65,
+    "serviceFunctionsIndexed": 1643
   },
   "endpoints": [
     {
@@ -11599,7 +11599,7 @@
       "method": "GET",
       "path": "/api/v1/integrations/accounting/contract",
       "file": "api/routes/accountingBoundary.ts",
-      "line": 51,
+      "line": 60,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -11616,10 +11616,35 @@
       "resolvedVia": "UNRESOLVED"
     },
     {
+      "method": "POST",
+      "path": "/api/v1/integrations/accounting/emit/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 175,
+      "pathParams": [
+        "type",
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [
+        "emitAccountingDocument"
+      ],
+      "resolvedVia": "UNRESOLVED"
+    },
+    {
       "method": "GET",
       "path": "/api/v1/integrations/accounting/outbound/:type/:id",
       "file": "api/routes/accountingBoundary.ts",
-      "line": 82,
+      "line": 96,
       "pathParams": [
         "type",
         "id"
@@ -11639,6 +11664,104 @@
         "buildAccountingDocument"
       ],
       "resolvedVia": "UNRESOLVED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/party/:projectId/:provider",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 137,
+      "pathParams": [
+        "projectId",
+        "provider"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "accounting_party_links"
+      ],
+      "readsFrom": [
+        "accounting_party_links"
+      ],
+      "primaryReadTable": "accounting_party_links",
+      "writeTables": [],
+      "delegatesTo": [
+        "resolvePartyLink"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/integrations/accounting/party/:projectId/:provider",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 149,
+      "pathParams": [
+        "projectId",
+        "provider"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [
+        {
+          "op": "INSERT",
+          "table": "accounting_party_links",
+          "scopeColumns": [],
+          "viaFunction": "upsertPartyLink",
+          "inFile": "api/services/integration/accounting/accountingEmission.ts"
+        }
+      ],
+      "reads": [
+        "integration_connectors"
+      ],
+      "readsFrom": [
+        "integration_connectors"
+      ],
+      "primaryReadTable": "integration_connectors",
+      "writeTables": [
+        "accounting_party_links"
+      ],
+      "delegatesTo": [
+        "upsertPartyLink"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/status/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 210,
+      "pathParams": [
+        "type",
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "integration_connectors",
+        "integration_jobs"
+      ],
+      "readsFrom": [
+        "integration_jobs"
+      ],
+      "primaryReadTable": "integration_jobs",
+      "writeTables": [],
+      "delegatesTo": [
+        "documentIntegrationStatus"
+      ],
+      "resolvedVia": "SERVICE"
     },
     {
       "method": "GET",
