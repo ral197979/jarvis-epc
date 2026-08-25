@@ -123,6 +123,11 @@ export const NESTED_ROUTE_FAMILIES: readonly NestedFamily[] = [
     evidence: 'Parent resolved through the canonical record-scope registry; the child query binds to that parent id.',
   })),
 
+  // ─── Accounting boundary (Phase 3O) ────────────────────────────────────────
+  { prefix: '/api/v1/integrations/accounting/outbound/:type', parent: 'accounting_document_type',
+    disposition: 'CONTEXT_ONLY_PARENT',
+    evidence: 'The dynamic `:type` segment is not a record id — it selects which Denver resource backs the document (DOCUMENT_SOURCE_RESOURCE) and is validated against a closed set before use. Authorization is resolved against the RESOURCE it names, using authorizeRecordScope on the `:id` that follows, so the parent segment carries no authority of its own and cannot be used to reach anything.' },
+
   // ─── Member-keyed collections (Phase 3G) ───────────────────────────────────
   { prefix: '/api/v1/team/members/:id', parent: 'team_members', disposition: 'PARENT_SCOPED_AND_BOUND',
     evidence: 'Phase 3G member-keyed collection scope — collectionScopeSql binds rows to the caller’s reachable projects.' },

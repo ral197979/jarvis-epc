@@ -221,6 +221,14 @@ export interface ReclassifiedRead {
  */
 export const RECLASSIFIED_NOT_HIGH_SENSITIVITY_READS: readonly ReclassifiedRead[] = [
   {
+    file: 'accountingBoundary.ts', method: 'GET', path: '/contract',
+    reason: 'ADR-014 Phase 3O. Returns the accounting integration CONTRACT — version, provider list, document types, the acknowledgement shape, the not-in-scope list and the open product decisions. It is a static description of the boundary and reads no tenant data at all: there is no query in the handler. Guarded by platform.integrations because it describes integration configuration, not because it discloses anything.',
+  },
+  {
+    file: 'accountingBoundary.ts', method: 'GET', path: '/outbound/:type/:id',
+    reason: 'ADR-014 Phase 3O. This DOES carry commercial figures — a payable invoice\'s gross/retention/net, a commitment total — so it is not reclassified as harmless. It is registered here rather than in HIGH_SENSITIVITY_READS because it is not a new disclosure surface: it projects ONE record the caller could already read through its own domain route, and it is guarded twice over by cost.view (Owner-only in this registry) AND requireRecordScope-equivalent authorization against the resource that backs the document type, so a caller cannot reach a project they could not already open. It writes nothing and enqueues nothing.',
+  },
+  {
     file: 'projects.ts', method: 'GET', path: '/',
     reason: 'ADR-014 Phase 3B converted this from a tenant-wide portfolio read into a RECORD-SCOPED collection, so the premise of its Phase 2B entry no longer holds. It was registered here because the row carries budget/committed_cost/actual_cost/forecast_cost and the only guard narrow enough for that payload was the Owner-only project.list.all. Two Phase-3 controls replace that single blunt guard: the membership predicate restricts the ROWS to projects the caller is an active member of, and projectForReader strips the five commercial columns from any caller without cost.view, so the payload a non-Owner receives no longer contains the data project.list.all was protecting. project.list.all is NOT redefined or deleted — it still means "the whole tenant portfolio" and is what suppresses the membership predicate for an Owner. Protection is asserted by the Phase 3B ratchet (route guard, membership predicate on BOTH the data and count queries, and cost-field projection), not merely moved out of this gate.',
   },

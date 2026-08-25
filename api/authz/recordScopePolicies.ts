@@ -2043,6 +2043,10 @@ export interface UnresolvedCollectionAudit {
  * `COLLECTION_DATA_ACCESS_UNEXPLAINED` must stay 0.
  */
 export const UNRESOLVED_COLLECTION_AUDIT: readonly UnresolvedCollectionAudit[] = [
+  { endpoint: 'GET /api/v1/integrations/accounting/contract', capability: 'platform.integrations',
+    returns: 'the accounting contract descriptor, in memory', disposition: 'SERVICE_OR_PLATFORM',
+    reason: 'ADR-014 Phase 3O. No SQL is issued at all — the handler returns constants describing the integration boundary: contract version, provider list, document types, acknowledgement shape, the not-in-scope list, and the open product decisions. Nothing tenant- or project-owned is disclosed, which is why no table resolved.' },
+
   { endpoint: 'GET /api/v1/safety/exposure-hours', capability: 'safety.view',
     returns: 'safety_exposure_hours rows whose project_id IS NULL', disposition: 'TENANT_GLOBAL',
     reason: 'ADR-014 Phase 3L. The table resolved as unknown because the handler delegates to `listExposureHours` one level away. The rows are deliberately TENANT-scoped: a NULL project_id means the record measures the whole tenant for its period, which is the denominator the executive TRIR uses. This route returns only those rows — the `project_id IS NULL` predicate is in the service, not a caller filter — so it never discloses a project\'s hours, and the project-scoped sibling at /projects/:projectId/safety/exposure-hours carries requireProjectScope for those. The rows carry no project to scope against, and the tenant predicate is on the statement.' },

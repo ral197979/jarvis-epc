@@ -1,6 +1,6 @@
 # ADR-014 — Phase-3C pre-work: machine-derived scope inventory
 
-**Generated from checked-in source at `aab57a0ecb5f1b1d52e8491ea41927b4082c3898`.**
+**Generated from checked-in source at `b1ba99ab94cf9034b0903af6bc48036657afe919`.**
 Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 
 > ## What this is
@@ -12,12 +12,12 @@ Regenerate with `node scripts/adr014/run-all.mjs`; output is byte-deterministic.
 > Functional authorization (ADR-014 Phase 2) and record scope (Phase 3) are both
 > read from source: the capability guard in force on each route, and whether the
 > handler calls the canonical record-scope layer. At this commit
-> `743` endpoints carry a capability guard and
-> `365` enforce record scope.
+> `745` endpoints carry a capability guard and
+> `366` enforce record scope.
 
 ## 1. Join against the Phase-2 census
 
-The extractor derives **779 endpoint rows** from the mounted
+The extractor derives **781 endpoint rows** from the mounted
 route surface. The canonical census in
 `api/__tests__/helpers/endpointCensus.ts` derives 747, scanning `api/routes/`
 only. The difference is `api/auth/saml/samlRoutes.ts` — nine routes that
@@ -31,13 +31,13 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 
 | Source | Value |
 |---|---|
-| Endpoints (mounted) | 777 |
+| Endpoints (mounted) | 779 |
 | Endpoints (declared but never mounted) | 2 |
-| Route files | 102 |
-| `app.use` mounts parsed | 108 |
+| Route files | 103 |
+| `app.use` mounts parsed | 109 |
 | Extraction anomalies | 0 |
 | Tables parsed from migrations | 236 |
-| Service functions indexed | 1632 |
+| Service functions indexed | 1638 |
 
 ## 2. HOB §5 — every endpoint has exactly one project-scope disposition
 
@@ -51,7 +51,7 @@ rows, and none is project-bound, so they do not affect any Phase-3 counter.
 | `PROJECT_CHILD_TENANT_COLLECTION` | 50 | 0 |
 | `PLATFORM_GLOBAL` | 40 | 18 |
 | `NO_PROJECT_PARENT` | 39 | 29 |
-| `UNRESOLVED_DATA_ACCESS` | 32 | 14 |
+| `UNRESOLVED_DATA_ACCESS` | 34 | 14 |
 | `SERVICE_BOUNDARY` | 31 | 17 |
 | `SELF_SCOPED` | 16 | 9 |
 | `PROJECT_CHILD_BODY_PROJECT` | 13 | 13 |
@@ -65,7 +65,7 @@ Dispositions are assigned by an ordered rule list in
 `scripts/adr014/classify-scope.mjs`; each registry entry records the rule that
 fired in `dispositionReason`, so a verdict can be argued with.
 
-`UNRESOLVED_DATA_ACCESS` (32) is deliberately **not**
+`UNRESOLVED_DATA_ACCESS` (34) is deliberately **not**
 folded into `NO_PROJECT_PARENT`: for these routes no table could be resolved, so
 their project relationship is *unknown*, not *absent*. Per HOB §64 they are
 deferred for a scope model, not closed.
@@ -75,8 +75,8 @@ deferred for a scope model, not closed.
 **176 of the 184 project-bound mutations carry no project
 predicate anywhere in their SQL.** They are constrained by `tenant_id` alone.
 
-Combined with the guard census — 746
-of 779 endpoints are authenticate-only, with no role or capability
+Combined with the guard census — 748
+of 781 endpoints are authenticate-only, with no role or capability
 gate — any authenticated member of a tenant can mutate project records in
 projects they have no relationship to. This is the gap ADR-014 Phase 3C exists to
 close, now measured rather than asserted.
@@ -93,7 +93,7 @@ close, now measured rather than asserted.
 ## 4. HOB §9 — direct-ID read inventory
 
 64 project-bound direct-ID reads, of
-135 direct-ID reads overall. The three surfaces HOB §8 names as
+136 direct-ID reads overall. The three surfaces HOB §8 names as
 mandatory Phase-3C candidates are all present, and every method on those paths is
 confirmed unscoped:
 
@@ -244,11 +244,11 @@ server, or contacts a database.
    `ADD … FOREIGN KEY` across all 87 migrations, then FK-walks to a
    project parent.
 3. `extract-route-data-access.mjs` — SQL in each handler, plus one level of
-   service delegation (1632 indexed functions), recording the
+   service delegation (1638 indexed functions), recording the
    WHERE-clause scoping columns of every write.
 
 **Stated limits.** Table resolution reaches 717 of
-779 endpoints; the remaining 62 are marked `UNRESOLVED`
+781 endpoints; the remaining 64 are marked `UNRESOLVED`
 and, where no other rule fires, land in `UNRESOLVED_DATA_ACCESS` rather than
 being assumed project-free. Service delegation is followed one level only.
 `primaryTable` is a heuristic — the first written table reaching a project —

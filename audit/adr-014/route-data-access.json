@@ -1,11 +1,11 @@
 {
   "generatedFrom": "api/routes/*.ts + api/services/**/*.ts",
   "counts": {
-    "endpoints": 779,
+    "endpoints": 781,
     "resolvedHandlerSql": 251,
     "resolvedViaService": 466,
-    "unresolved": 62,
-    "serviceFunctionsIndexed": 1632
+    "unresolved": 64,
+    "serviceFunctionsIndexed": 1638
   },
   "endpoints": [
     {
@@ -11594,6 +11594,51 @@
       ],
       "delegatesTo": [],
       "resolvedVia": "HANDLER_SQL"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/contract",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 51,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [],
+      "resolvedVia": "UNRESOLVED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/outbound/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 82,
+      "pathParams": [
+        "type",
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [],
+      "readsFrom": [],
+      "primaryReadTable": null,
+      "writeTables": [],
+      "delegatesTo": [
+        "buildAccountingDocument"
+      ],
+      "resolvedVia": "UNRESOLVED"
     },
     {
       "method": "GET",

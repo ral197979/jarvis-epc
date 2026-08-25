@@ -1,13 +1,13 @@
 {
   "generatedFrom": "checked-in source (api/server.ts + api/routes/*.ts)",
   "counts": {
-    "endpoints": 779,
-    "mounted": 777,
+    "endpoints": 781,
+    "mounted": 779,
     "unmounted": 2,
-    "reads": 368,
+    "reads": 370,
     "mutations": 411,
-    "routeFiles": 102,
-    "mounts": 108
+    "routeFiles": 103,
+    "mounts": 109
   },
   "anomalies": [],
   "endpoints": [
@@ -18,7 +18,7 @@
       "routePath": "/",
       "file": "api/routes/commissioningWebhook.ts",
       "line": 34,
-      "serverLine": 241,
+      "serverLine": 242,
       "pathParams": [],
       "guards": [],
       "capabilities": [],
@@ -33,7 +33,7 @@
       "routePath": "/commands",
       "file": "api/routes/novaCommands.ts",
       "line": 449,
-      "serverLine": 247,
+      "serverLine": 248,
       "pathParams": [],
       "guards": [
         "rateLimit"
@@ -50,7 +50,7 @@
       "routePath": "/reconcile",
       "file": "api/routes/novaCommands.ts",
       "line": 507,
-      "serverLine": 247,
+      "serverLine": 248,
       "pathParams": [],
       "guards": [
         "rateLimit"
@@ -67,7 +67,7 @@
       "routePath": "/",
       "file": "api/routes/actions.ts",
       "line": 70,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -87,7 +87,7 @@
       "routePath": "/:id",
       "file": "api/routes/actions.ts",
       "line": 386,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -109,7 +109,7 @@
       "routePath": "/:id",
       "file": "api/routes/actions.ts",
       "line": 418,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -131,7 +131,7 @@
       "routePath": "/:id/dependencies",
       "file": "api/routes/actions.ts",
       "line": 759,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -153,7 +153,7 @@
       "routePath": "/:id/relationships",
       "file": "api/routes/actions.ts",
       "line": 712,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -175,7 +175,7 @@
       "routePath": "/:id/relationships",
       "file": "api/routes/actions.ts",
       "line": 683,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -197,7 +197,7 @@
       "routePath": "/:id/sla/pause",
       "file": "api/routes/actions.ts",
       "line": 770,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -219,7 +219,7 @@
       "routePath": "/:id/sla/resume",
       "file": "api/routes/actions.ts",
       "line": 784,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -241,7 +241,7 @@
       "routePath": "/:id/timeline",
       "file": "api/routes/actions.ts",
       "line": 746,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -263,7 +263,7 @@
       "routePath": "/analytics/overview",
       "file": "api/routes/actions.ts",
       "line": 661,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -283,7 +283,7 @@
       "routePath": "/analytics/trends",
       "file": "api/routes/actions.ts",
       "line": 667,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -303,7 +303,7 @@
       "routePath": "/analytics/workload",
       "file": "api/routes/actions.ts",
       "line": 674,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -323,7 +323,7 @@
       "routePath": "/delegations",
       "file": "api/routes/actions.ts",
       "line": 274,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -343,7 +343,7 @@
       "routePath": "/delegations",
       "file": "api/routes/actions.ts",
       "line": 551,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -363,7 +363,7 @@
       "routePath": "/delegations/:id",
       "file": "api/routes/actions.ts",
       "line": 624,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -385,7 +385,7 @@
       "routePath": "/inbox",
       "file": "api/routes/actions.ts",
       "line": 296,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -405,7 +405,7 @@
       "routePath": "/my",
       "file": "api/routes/actions.ts",
       "line": 126,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -425,7 +425,7 @@
       "routePath": "/overdue",
       "file": "api/routes/actions.ts",
       "line": 163,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -445,7 +445,7 @@
       "routePath": "/relationships/:relId",
       "file": "api/routes/actions.ts",
       "line": 722,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "relId"
       ],
@@ -467,7 +467,7 @@
       "routePath": "/sla-rules",
       "file": "api/routes/actions.ts",
       "line": 263,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -487,7 +487,7 @@
       "routePath": "/sla-rules",
       "file": "api/routes/actions.ts",
       "line": 485,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -507,7 +507,7 @@
       "routePath": "/sla-rules/:id",
       "file": "api/routes/actions.ts",
       "line": 517,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [
         "id"
       ],
@@ -529,7 +529,7 @@
       "routePath": "/summary",
       "file": "api/routes/actions.ts",
       "line": 205,
-      "serverLine": 591,
+      "serverLine": 592,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -549,7 +549,7 @@
       "routePath": "/anomaly-patterns",
       "file": "api/routes/adaptive.ts",
       "line": 194,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -569,7 +569,7 @@
       "routePath": "/anomaly-patterns/:anomalyId/feedback",
       "file": "api/routes/adaptive.ts",
       "line": 209,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "anomalyId"
       ],
@@ -591,7 +591,7 @@
       "routePath": "/anomaly-patterns/:type",
       "file": "api/routes/adaptive.ts",
       "line": 201,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "type"
       ],
@@ -613,7 +613,7 @@
       "routePath": "/calibrate",
       "file": "api/routes/adaptive.ts",
       "line": 158,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -633,7 +633,7 @@
       "routePath": "/calibrate/drift/:type",
       "file": "api/routes/adaptive.ts",
       "line": 166,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "type"
       ],
@@ -655,7 +655,7 @@
       "routePath": "/feedback",
       "file": "api/routes/adaptive.ts",
       "line": 47,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -675,7 +675,7 @@
       "routePath": "/feedback",
       "file": "api/routes/adaptive.ts",
       "line": 40,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -695,7 +695,7 @@
       "routePath": "/feedback/health",
       "file": "api/routes/adaptive.ts",
       "line": 61,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -715,7 +715,7 @@
       "routePath": "/feedback/signals/:type",
       "file": "api/routes/adaptive.ts",
       "line": 68,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "type"
       ],
@@ -737,7 +737,7 @@
       "routePath": "/feedback/source/:sourceType/:sourceId",
       "file": "api/routes/adaptive.ts",
       "line": 76,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "sourceType",
         "sourceId"
@@ -760,7 +760,7 @@
       "routePath": "/forecast-accuracy",
       "file": "api/routes/adaptive.ts",
       "line": 142,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -780,7 +780,7 @@
       "routePath": "/forecast-accuracy",
       "file": "api/routes/adaptive.ts",
       "line": 118,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -800,7 +800,7 @@
       "routePath": "/forecast-accuracy/:id/actual",
       "file": "api/routes/adaptive.ts",
       "line": 125,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "id"
       ],
@@ -822,7 +822,7 @@
       "routePath": "/forecast-accuracy/stats/:type",
       "file": "api/routes/adaptive.ts",
       "line": 133,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "type"
       ],
@@ -844,7 +844,7 @@
       "routePath": "/memory",
       "file": "api/routes/adaptive.ts",
       "line": 226,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -864,7 +864,7 @@
       "routePath": "/memory",
       "file": "api/routes/adaptive.ts",
       "line": 219,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -884,7 +884,7 @@
       "routePath": "/memory/:agentType/:scopeType/:key",
       "file": "api/routes/adaptive.ts",
       "line": 240,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "agentType",
         "scopeType",
@@ -908,7 +908,7 @@
       "routePath": "/memory/decay",
       "file": "api/routes/adaptive.ts",
       "line": 254,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -928,7 +928,7 @@
       "routePath": "/memory/reinforce",
       "file": "api/routes/adaptive.ts",
       "line": 262,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -948,7 +948,7 @@
       "routePath": "/outcomes",
       "file": "api/routes/adaptive.ts",
       "line": 85,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -968,7 +968,7 @@
       "routePath": "/outcomes/:id/measurement",
       "file": "api/routes/adaptive.ts",
       "line": 92,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [
         "id"
       ],
@@ -990,7 +990,7 @@
       "routePath": "/outcomes/effectiveness",
       "file": "api/routes/adaptive.ts",
       "line": 100,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1010,7 +1010,7 @@
       "routePath": "/outcomes/top",
       "file": "api/routes/adaptive.ts",
       "line": 108,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1030,7 +1030,7 @@
       "routePath": "/rank",
       "file": "api/routes/adaptive.ts",
       "line": 175,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1050,7 +1050,7 @@
       "routePath": "/rank/top",
       "file": "api/routes/adaptive.ts",
       "line": 183,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1070,7 +1070,7 @@
       "routePath": "/simulation-outcomes",
       "file": "api/routes/adaptive.ts",
       "line": 279,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1090,7 +1090,7 @@
       "routePath": "/simulation-outcomes",
       "file": "api/routes/adaptive.ts",
       "line": 272,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1110,7 +1110,7 @@
       "routePath": "/simulation-outcomes/stats",
       "file": "api/routes/adaptive.ts",
       "line": 287,
-      "serverLine": 613,
+      "serverLine": 614,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1130,7 +1130,7 @@
       "routePath": "/background",
       "file": "api/routes/automation.ts",
       "line": 181,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1150,7 +1150,7 @@
       "routePath": "/background/:id/retry",
       "file": "api/routes/automation.ts",
       "line": 258,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [
         "id"
       ],
@@ -1172,7 +1172,7 @@
       "routePath": "/handlers",
       "file": "api/routes/automation.ts",
       "line": 40,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1192,7 +1192,7 @@
       "routePath": "/kpi-snapshots",
       "file": "api/routes/automation.ts",
       "line": 223,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1212,7 +1212,7 @@
       "routePath": "/mcp-tools",
       "file": "api/routes/automation.ts",
       "line": 285,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1232,7 +1232,7 @@
       "routePath": "/mcp-tools/:name/disable",
       "file": "api/routes/automation.ts",
       "line": 320,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [
         "name"
       ],
@@ -1254,7 +1254,7 @@
       "routePath": "/mcp-tools/:name/disable",
       "file": "api/routes/automation.ts",
       "line": 298,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [
         "name"
       ],
@@ -1276,7 +1276,7 @@
       "routePath": "/scheduled",
       "file": "api/routes/automation.ts",
       "line": 48,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1296,7 +1296,7 @@
       "routePath": "/scheduled",
       "file": "api/routes/automation.ts",
       "line": 77,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1316,7 +1316,7 @@
       "routePath": "/scheduled/:id",
       "file": "api/routes/automation.ts",
       "line": 163,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [
         "id"
       ],
@@ -1338,7 +1338,7 @@
       "routePath": "/scheduled/:id",
       "file": "api/routes/automation.ts",
       "line": 128,
-      "serverLine": 550,
+      "serverLine": 551,
       "pathParams": [
         "id"
       ],
@@ -1360,7 +1360,7 @@
       "routePath": "/",
       "file": "api/routes/agentActionsRoutes.ts",
       "line": 65,
-      "serverLine": 558,
+      "serverLine": 559,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1380,7 +1380,7 @@
       "routePath": "/_stats",
       "file": "api/routes/agentActionsRoutes.ts",
       "line": 37,
-      "serverLine": 558,
+      "serverLine": 559,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1402,7 +1402,7 @@
       "routePath": "/:id",
       "file": "api/routes/agentActionsRoutes.ts",
       "line": 110,
-      "serverLine": 558,
+      "serverLine": 559,
       "pathParams": [
         "id"
       ],
@@ -1426,7 +1426,7 @@
       "routePath": "/:id/review",
       "file": "api/routes/agentActionsRoutes.ts",
       "line": 125,
-      "serverLine": 558,
+      "serverLine": 559,
       "pathParams": [
         "id"
       ],
@@ -1450,7 +1450,7 @@
       "routePath": "/",
       "file": "api/routes/agents.ts",
       "line": 22,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1472,7 +1472,7 @@
       "routePath": "/",
       "file": "api/routes/agentApprovals.ts",
       "line": 26,
-      "serverLine": 606,
+      "serverLine": 607,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1494,7 +1494,7 @@
       "routePath": "/:id",
       "file": "api/routes/agentApprovals.ts",
       "line": 38,
-      "serverLine": 606,
+      "serverLine": 607,
       "pathParams": [
         "id"
       ],
@@ -1518,7 +1518,7 @@
       "routePath": "/:id/approve",
       "file": "api/routes/agentApprovals.ts",
       "line": 46,
-      "serverLine": 606,
+      "serverLine": 607,
       "pathParams": [
         "id"
       ],
@@ -1542,7 +1542,7 @@
       "routePath": "/:id/reject",
       "file": "api/routes/agentApprovals.ts",
       "line": 71,
-      "serverLine": 606,
+      "serverLine": 607,
       "pathParams": [
         "id"
       ],
@@ -1566,7 +1566,7 @@
       "routePath": "/expire",
       "file": "api/routes/agentApprovals.ts",
       "line": 92,
-      "serverLine": 606,
+      "serverLine": 607,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1588,7 +1588,7 @@
       "routePath": "/capabilities",
       "file": "api/routes/agents.ts",
       "line": 27,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1610,7 +1610,7 @@
       "routePath": "/execute",
       "file": "api/routes/agents.ts",
       "line": 69,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1634,7 +1634,7 @@
       "routePath": "/executions",
       "file": "api/routes/agents.ts",
       "line": 111,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1656,7 +1656,7 @@
       "routePath": "/executions/:id",
       "file": "api/routes/agents.ts",
       "line": 124,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [
         "id"
       ],
@@ -1680,7 +1680,7 @@
       "routePath": "/",
       "file": "api/routes/agentMemory.ts",
       "line": 26,
-      "serverLine": 607,
+      "serverLine": 608,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1702,7 +1702,7 @@
       "routePath": "/",
       "file": "api/routes/agentMemory.ts",
       "line": 42,
-      "serverLine": 607,
+      "serverLine": 608,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1724,7 +1724,7 @@
       "routePath": "/:agentType/:scopeType/:scopeId/:key",
       "file": "api/routes/agentMemory.ts",
       "line": 68,
-      "serverLine": 607,
+      "serverLine": 608,
       "pathParams": [
         "agentType",
         "scopeType",
@@ -1751,7 +1751,7 @@
       "routePath": "/:agentType/:scopeType/:scopeId/:key",
       "file": "api/routes/agentMemory.ts",
       "line": 54,
-      "serverLine": 607,
+      "serverLine": 608,
       "pathParams": [
         "agentType",
         "scopeType",
@@ -1778,7 +1778,7 @@
       "routePath": "/:entryId/links",
       "file": "api/routes/agentMemory.ts",
       "line": 81,
-      "serverLine": 607,
+      "serverLine": 608,
       "pathParams": [
         "entryId"
       ],
@@ -1802,7 +1802,7 @@
       "routePath": "/purge",
       "file": "api/routes/agentMemory.ts",
       "line": 93,
-      "serverLine": 607,
+      "serverLine": 608,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1824,7 +1824,7 @@
       "routePath": "/objectives",
       "file": "api/routes/agents.ts",
       "line": 32,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1846,7 +1846,7 @@
       "routePath": "/plan",
       "file": "api/routes/agents.ts",
       "line": 48,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1870,7 +1870,7 @@
       "routePath": "/assess",
       "file": "api/routes/agentReadiness.ts",
       "line": 69,
-      "serverLine": 609,
+      "serverLine": 610,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1890,7 +1890,7 @@
       "routePath": "/coordinate",
       "file": "api/routes/agentReadiness.ts",
       "line": 47,
-      "serverLine": 609,
+      "serverLine": 610,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -1912,7 +1912,7 @@
       "routePath": "/plan/:scope/:id",
       "file": "api/routes/agentReadiness.ts",
       "line": 29,
-      "serverLine": 609,
+      "serverLine": 610,
       "pathParams": [
         "scope",
         "id"
@@ -1935,7 +1935,7 @@
       "routePath": "/analyze",
       "file": "api/routes/agentRisk.ts",
       "line": 53,
-      "serverLine": 608,
+      "serverLine": 609,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1957,7 +1957,7 @@
       "routePath": "/mitigate",
       "file": "api/routes/agentRisk.ts",
       "line": 74,
-      "serverLine": 608,
+      "serverLine": 609,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -1979,7 +1979,7 @@
       "routePath": "/overview",
       "file": "api/routes/agentRisk.ts",
       "line": 22,
-      "serverLine": 608,
+      "serverLine": 609,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2001,7 +2001,7 @@
       "routePath": "/tasks",
       "file": "api/routes/agents.ts",
       "line": 89,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [],
       "guards": [
         "agentLimiter",
@@ -2023,7 +2023,7 @@
       "routePath": "/tasks/:id",
       "file": "api/routes/agents.ts",
       "line": 103,
-      "serverLine": 605,
+      "serverLine": 606,
       "pathParams": [
         "id"
       ],
@@ -2047,7 +2047,7 @@
       "routePath": "/recommendations",
       "file": "api/routes/aiGovernance.ts",
       "line": 30,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2066,7 +2066,7 @@
       "routePath": "/recommendations",
       "file": "api/routes/aiGovernance.ts",
       "line": 51,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2085,7 +2085,7 @@
       "routePath": "/recommendations/:id/approve",
       "file": "api/routes/aiGovernance.ts",
       "line": 82,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [
         "id"
       ],
@@ -2106,7 +2106,7 @@
       "routePath": "/recommendations/:id/execute",
       "file": "api/routes/aiGovernance.ts",
       "line": 99,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [
         "id"
       ],
@@ -2127,7 +2127,7 @@
       "routePath": "/recommendations/:id/preview",
       "file": "api/routes/aiGovernance.ts",
       "line": 71,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [
         "id"
       ],
@@ -2148,7 +2148,7 @@
       "routePath": "/recommendations/:id/reject",
       "file": "api/routes/aiGovernance.ts",
       "line": 90,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [
         "id"
       ],
@@ -2169,7 +2169,7 @@
       "routePath": "/recommendations/expire",
       "file": "api/routes/aiGovernance.ts",
       "line": 109,
-      "serverLine": 597,
+      "serverLine": 598,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2188,7 +2188,7 @@
       "routePath": "/",
       "file": "api/routes/ask.ts",
       "line": 56,
-      "serverLine": 562,
+      "serverLine": 563,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2208,7 +2208,7 @@
       "routePath": "/chunks/:id",
       "file": "api/routes/ask.ts",
       "line": 211,
-      "serverLine": 562,
+      "serverLine": 563,
       "pathParams": [
         "id"
       ],
@@ -2232,7 +2232,7 @@
       "routePath": "/sessions",
       "file": "api/routes/ask.ts",
       "line": 106,
-      "serverLine": 562,
+      "serverLine": 563,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2252,7 +2252,7 @@
       "routePath": "/sessions/:id",
       "file": "api/routes/ask.ts",
       "line": 196,
-      "serverLine": 562,
+      "serverLine": 563,
       "pathParams": [
         "id"
       ],
@@ -2277,7 +2277,7 @@
       "routePath": "/sessions/:id",
       "file": "api/routes/ask.ts",
       "line": 141,
-      "serverLine": 562,
+      "serverLine": 563,
       "pathParams": [
         "id"
       ],
@@ -2299,7 +2299,7 @@
       "routePath": "/sessions/:id/resolve",
       "file": "api/routes/ask.ts",
       "line": 170,
-      "serverLine": 562,
+      "serverLine": 563,
       "pathParams": [
         "id"
       ],
@@ -2321,7 +2321,7 @@
       "routePath": "/",
       "file": "api/routes/audit.ts",
       "line": 53,
-      "serverLine": 590,
+      "serverLine": 591,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2341,7 +2341,7 @@
       "routePath": "/_meta/actions",
       "file": "api/routes/audit.ts",
       "line": 170,
-      "serverLine": 590,
+      "serverLine": 591,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2361,7 +2361,7 @@
       "routePath": "/:id",
       "file": "api/routes/audit.ts",
       "line": 143,
-      "serverLine": 590,
+      "serverLine": 591,
       "pathParams": [
         "id"
       ],
@@ -2383,7 +2383,7 @@
       "routePath": "/export",
       "file": "api/routes/audit.ts",
       "line": 178,
-      "serverLine": 590,
+      "serverLine": 591,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -2403,7 +2403,7 @@
       "routePath": "/export",
       "file": "api/routes/auditVerification.ts",
       "line": 44,
-      "serverLine": 604,
+      "serverLine": 605,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2422,7 +2422,7 @@
       "routePath": "/integrity",
       "file": "api/routes/auditVerification.ts",
       "line": 29,
-      "serverLine": 604,
+      "serverLine": 605,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2441,7 +2441,7 @@
       "routePath": "/snapshot",
       "file": "api/routes/auditVerification.ts",
       "line": 37,
-      "serverLine": 604,
+      "serverLine": 605,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2460,7 +2460,7 @@
       "routePath": "/verify",
       "file": "api/routes/auditVerification.ts",
       "line": 20,
-      "serverLine": 604,
+      "serverLine": 605,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -2479,7 +2479,7 @@
       "routePath": "/:tenantSlug/callback",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 109,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2499,7 +2499,7 @@
       "routePath": "/:tenantSlug/config",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 366,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2522,7 +2522,7 @@
       "routePath": "/:tenantSlug/config",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 254,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2545,7 +2545,7 @@
       "routePath": "/:tenantSlug/config/metadata",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 327,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2568,7 +2568,7 @@
       "routePath": "/:tenantSlug/login",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 80,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2588,7 +2588,7 @@
       "routePath": "/:tenantSlug/metadata",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 45,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2608,7 +2608,7 @@
       "routePath": "/:tenantSlug/setup",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 213,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2631,7 +2631,7 @@
       "routePath": "/:tenantSlug/slo",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 200,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [
         "tenantSlug"
       ],
@@ -2651,7 +2651,7 @@
       "routePath": "/admin/certificates/rotate",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 388,
-      "serverLine": 451,
+      "serverLine": 452,
       "pathParams": [],
       "guards": [
         "authLimiter",
@@ -2672,7 +2672,7 @@
       "routePath": "/bid-packages/:id",
       "file": "api/routes/subcontracts.ts",
       "line": 88,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2696,7 +2696,7 @@
       "routePath": "/bid-packages/:id/cancel",
       "file": "api/routes/subcontracts.ts",
       "line": 115,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2720,7 +2720,7 @@
       "routePath": "/bid-packages/:id/close",
       "file": "api/routes/subcontracts.ts",
       "line": 106,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2744,7 +2744,7 @@
       "routePath": "/bid-packages/:id/issue",
       "file": "api/routes/subcontracts.ts",
       "line": 97,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2768,7 +2768,7 @@
       "routePath": "/bid-packages/:id/submissions",
       "file": "api/routes/subcontracts.ts",
       "line": 126,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2792,7 +2792,7 @@
       "routePath": "/bid-packages/:id/submissions",
       "file": "api/routes/subcontracts.ts",
       "line": 134,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2816,7 +2816,7 @@
       "routePath": "/bid-submissions/:id/award",
       "file": "api/routes/subcontracts.ts",
       "line": 144,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -2840,7 +2840,7 @@
       "routePath": "/bim-issues/:id",
       "file": "api/routes/bim.ts",
       "line": 189,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "id"
       ],
@@ -2864,7 +2864,7 @@
       "routePath": "/bim-models/:id",
       "file": "api/routes/bim.ts",
       "line": 103,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "id"
       ],
@@ -2888,7 +2888,7 @@
       "routePath": "/bim-models/:id",
       "file": "api/routes/bim.ts",
       "line": 69,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "id"
       ],
@@ -2912,7 +2912,7 @@
       "routePath": "/bim-models/:id",
       "file": "api/routes/bim.ts",
       "line": 82,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "id"
       ],
@@ -2936,7 +2936,7 @@
       "routePath": "/bim-models/:id/viewer-token",
       "file": "api/routes/bim.ts",
       "line": 118,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "id"
       ],
@@ -2960,7 +2960,7 @@
       "routePath": "/bim-models/:modelId/ava-estimate",
       "file": "api/routes/estimating.ts",
       "line": 286,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -2986,7 +2986,7 @@
       "routePath": "/bim-models/:modelId/elements",
       "file": "api/routes/estimating.ts",
       "line": 110,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3010,7 +3010,7 @@
       "routePath": "/bim-models/:modelId/elements/:id",
       "file": "api/routes/estimating.ts",
       "line": 129,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId",
         "id"
@@ -3035,7 +3035,7 @@
       "routePath": "/bim-models/:modelId/elements/:id/link",
       "file": "api/routes/estimating.ts",
       "line": 141,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId",
         "id"
@@ -3060,7 +3060,7 @@
       "routePath": "/bim-models/:modelId/parse-elements",
       "file": "api/routes/estimating.ts",
       "line": 71,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3084,7 +3084,7 @@
       "routePath": "/bim-models/:modelId/parse-job",
       "file": "api/routes/estimating.ts",
       "line": 99,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3108,7 +3108,7 @@
       "routePath": "/bim-models/:modelId/parse-job",
       "file": "api/routes/estimating.ts",
       "line": 87,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3132,7 +3132,7 @@
       "routePath": "/bim-models/:modelId/quantity-summary",
       "file": "api/routes/estimating.ts",
       "line": 156,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3156,7 +3156,7 @@
       "routePath": "/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
       "line": 193,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3180,7 +3180,7 @@
       "routePath": "/bim-models/:modelId/takeoff",
       "file": "api/routes/estimating.ts",
       "line": 168,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3204,7 +3204,7 @@
       "routePath": "/bim-models/:modelId/takeoff/auto",
       "file": "api/routes/estimating.ts",
       "line": 182,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "modelId"
       ],
@@ -3228,7 +3228,7 @@
       "routePath": "/budget-items/:itemId",
       "file": "api/routes/budgets.ts",
       "line": 145,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "itemId"
       ],
@@ -3252,7 +3252,7 @@
       "routePath": "/budget-items/:itemId",
       "file": "api/routes/budgets.ts",
       "line": 125,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "itemId"
       ],
@@ -3276,7 +3276,7 @@
       "routePath": "/budgets/:id",
       "file": "api/routes/budgets.ts",
       "line": 67,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "id"
       ],
@@ -3300,7 +3300,7 @@
       "routePath": "/budgets/:id/items",
       "file": "api/routes/budgets.ts",
       "line": 87,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "id"
       ],
@@ -3324,7 +3324,7 @@
       "routePath": "/budgets/:id/items",
       "file": "api/routes/budgets.ts",
       "line": 100,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "id"
       ],
@@ -3348,7 +3348,7 @@
       "routePath": "/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
       "line": 129,
-      "serverLine": 563,
+      "serverLine": 564,
       "pathParams": [
         "id"
       ],
@@ -3372,7 +3372,7 @@
       "routePath": "/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
       "line": 95,
-      "serverLine": 563,
+      "serverLine": 564,
       "pathParams": [
         "id"
       ],
@@ -3396,7 +3396,7 @@
       "routePath": "/calc-sessions/:id",
       "file": "api/routes/calculations.ts",
       "line": 112,
-      "serverLine": 563,
+      "serverLine": 564,
       "pathParams": [
         "id"
       ],
@@ -3420,7 +3420,7 @@
       "routePath": "/capas/:id",
       "file": "api/routes/ncr.ts",
       "line": 89,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "id"
       ],
@@ -3444,7 +3444,7 @@
       "routePath": "/capas/:id/verify",
       "file": "api/routes/ncr.ts",
       "line": 100,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "id"
       ],
@@ -3468,7 +3468,7 @@
       "routePath": "/change-orders/:id",
       "file": "api/routes/changeOrders.ts",
       "line": 93,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3492,7 +3492,7 @@
       "routePath": "/change-orders/:id",
       "file": "api/routes/changeOrders.ts",
       "line": 106,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3516,7 +3516,7 @@
       "routePath": "/change-orders/:id/approve",
       "file": "api/routes/changeOrders.ts",
       "line": 135,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3540,7 +3540,7 @@
       "routePath": "/change-orders/:id/reject",
       "file": "api/routes/changeOrders.ts",
       "line": 147,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3564,7 +3564,7 @@
       "routePath": "/change-orders/:id/submit",
       "file": "api/routes/changeOrders.ts",
       "line": 119,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3588,7 +3588,7 @@
       "routePath": "/change-orders/:id/tasks",
       "file": "api/routes/changeOrders.ts",
       "line": 172,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3612,7 +3612,7 @@
       "routePath": "/change-orders/:id/tasks",
       "file": "api/routes/changeOrders.ts",
       "line": 182,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3636,7 +3636,7 @@
       "routePath": "/change-orders/:id/tasks/:taskId",
       "file": "api/routes/changeOrders.ts",
       "line": 196,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id",
         "taskId"
@@ -3661,7 +3661,7 @@
       "routePath": "/change-orders/:id/void",
       "file": "api/routes/changeOrders.ts",
       "line": 159,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "id"
       ],
@@ -3685,7 +3685,7 @@
       "routePath": "/commissioning-items",
       "file": "api/routes/commissioningItems.ts",
       "line": 62,
-      "serverLine": 589,
+      "serverLine": 590,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3705,7 +3705,7 @@
       "routePath": "/commissioning-items/:itemId",
       "file": "api/routes/commissioningItems.ts",
       "line": 92,
-      "serverLine": 589,
+      "serverLine": 590,
       "pathParams": [
         "itemId"
       ],
@@ -3729,7 +3729,7 @@
       "routePath": "/",
       "file": "api/routes/autosignRules.ts",
       "line": 45,
-      "serverLine": 556,
+      "serverLine": 557,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3751,7 +3751,7 @@
       "routePath": "/",
       "file": "api/routes/autosignRules.ts",
       "line": 98,
-      "serverLine": 556,
+      "serverLine": 557,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3771,7 +3771,7 @@
       "routePath": "/:id",
       "file": "api/routes/autosignRules.ts",
       "line": 187,
-      "serverLine": 556,
+      "serverLine": 557,
       "pathParams": [
         "id"
       ],
@@ -3795,7 +3795,7 @@
       "routePath": "/:id",
       "file": "api/routes/autosignRules.ts",
       "line": 159,
-      "serverLine": 556,
+      "serverLine": 557,
       "pathParams": [
         "id"
       ],
@@ -3819,7 +3819,7 @@
       "routePath": "/arbitrate",
       "file": "api/routes/autosignRules.ts",
       "line": 203,
-      "serverLine": 556,
+      "serverLine": 557,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3839,7 +3839,7 @@
       "routePath": "/balance",
       "file": "api/routes/commissioning.ts",
       "line": 132,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3859,7 +3859,7 @@
       "routePath": "/",
       "file": "api/routes/baselinesRoutes.ts",
       "line": 30,
-      "serverLine": 557,
+      "serverLine": 558,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3881,7 +3881,7 @@
       "routePath": "/:id",
       "file": "api/routes/baselinesRoutes.ts",
       "line": 111,
-      "serverLine": 557,
+      "serverLine": 558,
       "pathParams": [
         "id"
       ],
@@ -3905,7 +3905,7 @@
       "routePath": "/:id",
       "file": "api/routes/baselinesRoutes.ts",
       "line": 87,
-      "serverLine": 557,
+      "serverLine": 558,
       "pathParams": [
         "id"
       ],
@@ -3929,7 +3929,7 @@
       "routePath": "/credits",
       "file": "api/routes/commissioning.ts",
       "line": 149,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3949,7 +3949,7 @@
       "routePath": "/finalize",
       "file": "api/routes/commissioning.ts",
       "line": 368,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3969,7 +3969,7 @@
       "routePath": "/generate-draft",
       "file": "api/routes/commissioning.ts",
       "line": 173,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -3993,7 +3993,7 @@
       "routePath": "/jobs",
       "file": "api/routes/commissioning.ts",
       "line": 407,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4013,7 +4013,7 @@
       "routePath": "/packs",
       "file": "api/routes/commissioning.ts",
       "line": 244,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4035,7 +4035,7 @@
       "routePath": "/packs/:id",
       "file": "api/routes/commissioning.ts",
       "line": 304,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [
         "id"
       ],
@@ -4059,7 +4059,7 @@
       "routePath": "/packs/:id/download/:format",
       "file": "api/routes/commissioning.ts",
       "line": 439,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [
         "id",
         "format"
@@ -4084,7 +4084,7 @@
       "routePath": "/packs/:id/review",
       "file": "api/routes/commissioning.ts",
       "line": 338,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [
         "id"
       ],
@@ -4108,7 +4108,7 @@
       "routePath": "/packs/manual",
       "file": "api/routes/commissioning.ts",
       "line": 219,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4132,7 +4132,7 @@
       "routePath": "/uploads",
       "file": "api/routes/commissioning.ts",
       "line": 100,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4154,7 +4154,7 @@
       "routePath": "/uploads/text-ingest",
       "file": "api/routes/commissioning.ts",
       "line": 73,
-      "serverLine": 549,
+      "serverLine": 550,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4178,7 +4178,7 @@
       "routePath": "/",
       "file": "api/routes/compliance.ts",
       "line": 43,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4200,7 +4200,7 @@
       "routePath": "/",
       "file": "api/routes/compliance.ts",
       "line": 113,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4220,7 +4220,7 @@
       "routePath": "/:id",
       "file": "api/routes/compliance.ts",
       "line": 240,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [
         "id"
       ],
@@ -4244,7 +4244,7 @@
       "routePath": "/:id",
       "file": "api/routes/compliance.ts",
       "line": 98,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [
         "id"
       ],
@@ -4268,7 +4268,7 @@
       "routePath": "/:id",
       "file": "api/routes/compliance.ts",
       "line": 160,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [
         "id"
       ],
@@ -4292,7 +4292,7 @@
       "routePath": "/:id/complete",
       "file": "api/routes/compliance.ts",
       "line": 197,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [
         "id"
       ],
@@ -4316,7 +4316,7 @@
       "routePath": "/:id/waive",
       "file": "api/routes/compliance.ts",
       "line": 219,
-      "serverLine": 551,
+      "serverLine": 552,
       "pathParams": [
         "id"
       ],
@@ -4340,7 +4340,7 @@
       "routePath": "/",
       "file": "api/routes/contracts.ts",
       "line": 68,
-      "serverLine": 625,
+      "serverLine": 627,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4362,7 +4362,7 @@
       "routePath": "/:id",
       "file": "api/routes/contracts.ts",
       "line": 94,
-      "serverLine": 625,
+      "serverLine": 627,
       "pathParams": [
         "id"
       ],
@@ -4386,7 +4386,7 @@
       "routePath": "/summary",
       "file": "api/routes/contracts.ts",
       "line": 52,
-      "serverLine": 625,
+      "serverLine": 627,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4408,7 +4408,7 @@
       "routePath": "/coordination/recommendations/:id/approve",
       "file": "api/routes/autoCoordination.ts",
       "line": 38,
-      "serverLine": 582,
+      "serverLine": 583,
       "pathParams": [
         "id"
       ],
@@ -4432,7 +4432,7 @@
       "routePath": "/coordination/recommendations/:id/dismiss",
       "file": "api/routes/autoCoordination.ts",
       "line": 48,
-      "serverLine": 582,
+      "serverLine": 583,
       "pathParams": [
         "id"
       ],
@@ -4456,7 +4456,7 @@
       "routePath": "/copilot/coordination",
       "file": "api/routes/copilot.ts",
       "line": 72,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4481,7 +4481,7 @@
       "routePath": "/copilot/focus",
       "file": "api/routes/copilot.ts",
       "line": 47,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4506,7 +4506,7 @@
       "routePath": "/copilot/portfolio",
       "file": "api/routes/copilot.ts",
       "line": 108,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4526,7 +4526,7 @@
       "routePath": "/copilot/projects/:projectId/coordination",
       "file": "api/routes/copilot.ts",
       "line": 60,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [
         "projectId"
       ],
@@ -4555,7 +4555,7 @@
       "routePath": "/copilot/projects/:projectId/focus",
       "file": "api/routes/copilot.ts",
       "line": 35,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [
         "projectId"
       ],
@@ -4584,7 +4584,7 @@
       "routePath": "/copilot/projects/:projectId/narrative-report",
       "file": "api/routes/copilot.ts",
       "line": 120,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [
         "projectId"
       ],
@@ -4612,7 +4612,7 @@
       "routePath": "/copilot/projects/:projectId/report",
       "file": "api/routes/copilot.ts",
       "line": 85,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [
         "projectId"
       ],
@@ -4638,7 +4638,7 @@
       "routePath": "/copilot/report",
       "file": "api/routes/copilot.ts",
       "line": 96,
-      "serverLine": 603,
+      "serverLine": 604,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4660,7 +4660,7 @@
       "routePath": "/",
       "file": "api/routes/correlations.ts",
       "line": 26,
-      "serverLine": 559,
+      "serverLine": 560,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4680,7 +4680,7 @@
       "routePath": "/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
       "line": 98,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "id"
       ],
@@ -4704,7 +4704,7 @@
       "routePath": "/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
       "line": 80,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "id"
       ],
@@ -4728,7 +4728,7 @@
       "routePath": "/cost-entries/:id",
       "file": "api/routes/costEntry.ts",
       "line": 89,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "id"
       ],
@@ -4752,7 +4752,7 @@
       "routePath": "/cost-entries/:id/post",
       "file": "api/routes/costEntry.ts",
       "line": 107,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "id"
       ],
@@ -4776,7 +4776,7 @@
       "routePath": "/cost-entries/:id/void",
       "file": "api/routes/costEntry.ts",
       "line": 116,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "id"
       ],
@@ -4800,7 +4800,7 @@
       "routePath": "/cost-items/search",
       "file": "api/routes/estimating.ts",
       "line": 205,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4820,7 +4820,7 @@
       "routePath": "/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
       "line": 143,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "id"
       ],
@@ -4844,7 +4844,7 @@
       "routePath": "/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
       "line": 103,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "id"
       ],
@@ -4868,7 +4868,7 @@
       "routePath": "/daily-logs/:id",
       "file": "api/routes/dailyLogs.ts",
       "line": 117,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "id"
       ],
@@ -4892,7 +4892,7 @@
       "routePath": "/daily-logs/:id/approve",
       "file": "api/routes/dailyLogs.ts",
       "line": 169,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "id"
       ],
@@ -4916,7 +4916,7 @@
       "routePath": "/daily-logs/:id/submit",
       "file": "api/routes/dailyLogs.ts",
       "line": 155,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "id"
       ],
@@ -4940,7 +4940,7 @@
       "routePath": "/deficiencies",
       "file": "api/routes/deficiencies.ts",
       "line": 56,
-      "serverLine": 588,
+      "serverLine": 589,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -4960,7 +4960,7 @@
       "routePath": "/deficiencies/:deficiencyId",
       "file": "api/routes/deficiencies.ts",
       "line": 84,
-      "serverLine": 588,
+      "serverLine": 589,
       "pathParams": [
         "deficiencyId"
       ],
@@ -4984,7 +4984,7 @@
       "routePath": "/drawings/:id",
       "file": "api/routes/drawings.ts",
       "line": 116,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5008,7 +5008,7 @@
       "routePath": "/drawings/:id",
       "file": "api/routes/drawings.ts",
       "line": 83,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5032,7 +5032,7 @@
       "routePath": "/drawings/:id",
       "file": "api/routes/drawings.ts",
       "line": 96,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5056,7 +5056,7 @@
       "routePath": "/drawings/:id/markups",
       "file": "api/routes/drawings.ts",
       "line": 166,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5080,7 +5080,7 @@
       "routePath": "/drawings/:id/markups",
       "file": "api/routes/drawings.ts",
       "line": 185,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5104,7 +5104,7 @@
       "routePath": "/drawings/:id/revisions",
       "file": "api/routes/drawings.ts",
       "line": 129,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5128,7 +5128,7 @@
       "routePath": "/drawings/:id/revisions",
       "file": "api/routes/drawings.ts",
       "line": 142,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "id"
       ],
@@ -5152,7 +5152,7 @@
       "routePath": "/adapters",
       "file": "api/routes/ecosystem.ts",
       "line": 294,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5172,7 +5172,7 @@
       "routePath": "/adapters",
       "file": "api/routes/ecosystem.ts",
       "line": 301,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5192,7 +5192,7 @@
       "routePath": "/adapters/:id/ingest",
       "file": "api/routes/ecosystem.ts",
       "line": 309,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5214,7 +5214,7 @@
       "routePath": "/air-gap/activate",
       "file": "api/routes/ecosystem.ts",
       "line": 387,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5234,7 +5234,7 @@
       "routePath": "/air-gap/status",
       "file": "api/routes/ecosystem.ts",
       "line": 395,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5254,7 +5254,7 @@
       "routePath": "/benchmarks/industry",
       "file": "api/routes/ecosystem.ts",
       "line": 122,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5274,7 +5274,7 @@
       "routePath": "/benchmarks/readiness",
       "file": "api/routes/ecosystem.ts",
       "line": 146,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5294,7 +5294,7 @@
       "routePath": "/benchmarks/sla",
       "file": "api/routes/ecosystem.ts",
       "line": 153,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5314,7 +5314,7 @@
       "routePath": "/benchmarks/tenant",
       "file": "api/routes/ecosystem.ts",
       "line": 133,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5334,7 +5334,7 @@
       "routePath": "/certification/exports",
       "file": "api/routes/ecosystem.ts",
       "line": 413,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5354,7 +5354,7 @@
       "routePath": "/certification/generate",
       "file": "api/routes/ecosystem.ts",
       "line": 405,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5375,7 +5375,7 @@
       "routePath": "/edge-nodes",
       "file": "api/routes/ecosystem.ts",
       "line": 347,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5395,7 +5395,7 @@
       "routePath": "/edge-nodes",
       "file": "api/routes/ecosystem.ts",
       "line": 354,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5415,7 +5415,7 @@
       "routePath": "/edge-nodes/:id/heartbeat",
       "file": "api/routes/ecosystem.ts",
       "line": 362,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5437,7 +5437,7 @@
       "routePath": "/edge-nodes/:id/revoke",
       "file": "api/routes/ecosystem.ts",
       "line": 370,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5459,7 +5459,7 @@
       "routePath": "/edge-nodes/admin/status",
       "file": "api/routes/ecosystem.ts",
       "line": 378,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5479,7 +5479,7 @@
       "routePath": "/external-agents/:id/capabilities",
       "file": "api/routes/ecosystem.ts",
       "line": 284,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5501,7 +5501,7 @@
       "routePath": "/external-agents/:id/execute",
       "file": "api/routes/ecosystem.ts",
       "line": 273,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5523,7 +5523,7 @@
       "routePath": "/external-agents/register",
       "file": "api/routes/ecosystem.ts",
       "line": 265,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5543,7 +5543,7 @@
       "routePath": "/federated/contribute",
       "file": "api/routes/ecosystem.ts",
       "line": 68,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5563,7 +5563,7 @@
       "routePath": "/federated/model-versions",
       "file": "api/routes/ecosystem.ts",
       "line": 104,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5583,7 +5583,7 @@
       "routePath": "/federated/model-versions/:id/activate",
       "file": "api/routes/ecosystem.ts",
       "line": 112,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5605,7 +5605,7 @@
       "routePath": "/federated/opt-in",
       "file": "api/routes/ecosystem.ts",
       "line": 60,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5625,7 +5625,7 @@
       "routePath": "/federated/opt-in",
       "file": "api/routes/ecosystem.ts",
       "line": 44,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5645,7 +5645,7 @@
       "routePath": "/federated/opt-out",
       "file": "api/routes/ecosystem.ts",
       "line": 52,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5665,7 +5665,7 @@
       "routePath": "/federated/patterns",
       "file": "api/routes/ecosystem.ts",
       "line": 84,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5685,7 +5685,7 @@
       "routePath": "/federated/patterns",
       "file": "api/routes/ecosystem.ts",
       "line": 96,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5707,7 +5707,7 @@
       "routePath": "/federated/withdraw/:id",
       "file": "api/routes/ecosystem.ts",
       "line": 76,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5729,7 +5729,7 @@
       "routePath": "/knowledge-graph/entities/:id",
       "file": "api/routes/ecosystem.ts",
       "line": 319,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5751,7 +5751,7 @@
       "routePath": "/knowledge-graph/neighborhood/:id",
       "file": "api/routes/ecosystem.ts",
       "line": 336,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5773,7 +5773,7 @@
       "routePath": "/knowledge-graph/query",
       "file": "api/routes/ecosystem.ts",
       "line": 328,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5793,7 +5793,7 @@
       "routePath": "/marketplace/playbooks",
       "file": "api/routes/ecosystem.ts",
       "line": 162,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5813,7 +5813,7 @@
       "routePath": "/marketplace/playbooks",
       "file": "api/routes/ecosystem.ts",
       "line": 173,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5833,7 +5833,7 @@
       "routePath": "/marketplace/playbooks/:id/install",
       "file": "api/routes/ecosystem.ts",
       "line": 189,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5855,7 +5855,7 @@
       "routePath": "/marketplace/playbooks/:id/publish",
       "file": "api/routes/ecosystem.ts",
       "line": 181,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5877,7 +5877,7 @@
       "routePath": "/marketplace/playbooks/:id/review",
       "file": "api/routes/ecosystem.ts",
       "line": 205,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5899,7 +5899,7 @@
       "routePath": "/marketplace/playbooks/:id/uninstall",
       "file": "api/routes/ecosystem.ts",
       "line": 197,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5921,7 +5921,7 @@
       "routePath": "/plugins",
       "file": "api/routes/ecosystem.ts",
       "line": 215,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5941,7 +5941,7 @@
       "routePath": "/plugins",
       "file": "api/routes/ecosystem.ts",
       "line": 223,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -5961,7 +5961,7 @@
       "routePath": "/plugins/:id/disable",
       "file": "api/routes/ecosystem.ts",
       "line": 247,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -5983,7 +5983,7 @@
       "routePath": "/plugins/:id/install",
       "file": "api/routes/ecosystem.ts",
       "line": 231,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6005,7 +6005,7 @@
       "routePath": "/plugins/:id/kill-switch",
       "file": "api/routes/ecosystem.ts",
       "line": 255,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6027,7 +6027,7 @@
       "routePath": "/plugins/:id/rollback",
       "file": "api/routes/ecosystem.ts",
       "line": 239,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6049,7 +6049,7 @@
       "routePath": "/workflows",
       "file": "api/routes/ecosystem.ts",
       "line": 426,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6069,7 +6069,7 @@
       "routePath": "/workflows",
       "file": "api/routes/ecosystem.ts",
       "line": 434,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6089,7 +6089,7 @@
       "routePath": "/workflows/:id/publish",
       "file": "api/routes/ecosystem.ts",
       "line": 458,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6111,7 +6111,7 @@
       "routePath": "/workflows/:id/rollback",
       "file": "api/routes/ecosystem.ts",
       "line": 466,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6133,7 +6133,7 @@
       "routePath": "/workflows/:id/test",
       "file": "api/routes/ecosystem.ts",
       "line": 450,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6155,7 +6155,7 @@
       "routePath": "/workflows/:id/validate",
       "file": "api/routes/ecosystem.ts",
       "line": 442,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6177,7 +6177,7 @@
       "routePath": "/workflows/:id/versions",
       "file": "api/routes/ecosystem.ts",
       "line": 474,
-      "serverLine": 616,
+      "serverLine": 617,
       "pathParams": [
         "id"
       ],
@@ -6199,7 +6199,7 @@
       "routePath": "/ai-usage",
       "file": "api/routes/enterprise.ts",
       "line": 275,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6219,7 +6219,7 @@
       "routePath": "/ai-usage",
       "file": "api/routes/enterprise.ts",
       "line": 264,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6239,7 +6239,7 @@
       "routePath": "/ai-usage/budget",
       "file": "api/routes/enterprise.ts",
       "line": 287,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6259,7 +6259,7 @@
       "routePath": "/ai-usage/by-agent",
       "file": "api/routes/enterprise.ts",
       "line": 298,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6279,7 +6279,7 @@
       "routePath": "/api-keys",
       "file": "api/routes/enterprise.ts",
       "line": 521,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6299,7 +6299,7 @@
       "routePath": "/api-keys",
       "file": "api/routes/enterprise.ts",
       "line": 510,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6319,7 +6319,7 @@
       "routePath": "/api-keys/:id",
       "file": "api/routes/enterprise.ts",
       "line": 533,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "id"
       ],
@@ -6341,7 +6341,7 @@
       "routePath": "/demo",
       "file": "api/routes/enterprise.ts",
       "line": 487,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6361,7 +6361,7 @@
       "routePath": "/demo",
       "file": "api/routes/enterprise.ts",
       "line": 473,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6381,7 +6381,7 @@
       "routePath": "/demo/:tenantId/reset",
       "file": "api/routes/enterprise.ts",
       "line": 498,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6403,7 +6403,7 @@
       "routePath": "/deployment/health",
       "file": "api/routes/enterprise.ts",
       "line": 441,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6423,7 +6423,7 @@
       "routePath": "/deployment/health/check",
       "file": "api/routes/enterprise.ts",
       "line": 461,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6443,7 +6443,7 @@
       "routePath": "/deployment/health/run",
       "file": "api/routes/enterprise.ts",
       "line": 451,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6463,7 +6463,7 @@
       "routePath": "/entitlements",
       "file": "api/routes/enterprise.ts",
       "line": 193,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6483,7 +6483,7 @@
       "routePath": "/exports",
       "file": "api/routes/enterprise.ts",
       "line": 410,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6503,7 +6503,7 @@
       "routePath": "/exports",
       "file": "api/routes/enterprise.ts",
       "line": 397,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6524,7 +6524,7 @@
       "routePath": "/exports/:id",
       "file": "api/routes/enterprise.ts",
       "line": 422,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "id"
       ],
@@ -6546,7 +6546,7 @@
       "routePath": "/features",
       "file": "api/routes/enterprise.ts",
       "line": 159,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6566,7 +6566,7 @@
       "routePath": "/features/:featureKey",
       "file": "api/routes/enterprise.ts",
       "line": 170,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "featureKey"
       ],
@@ -6588,7 +6588,7 @@
       "routePath": "/features/:featureKey",
       "file": "api/routes/enterprise.ts",
       "line": 182,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "featureKey"
       ],
@@ -6610,7 +6610,7 @@
       "routePath": "/health-score",
       "file": "api/routes/enterprise.ts",
       "line": 311,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6630,7 +6630,7 @@
       "routePath": "/quota/api",
       "file": "api/routes/enterprise.ts",
       "line": 204,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6650,7 +6650,7 @@
       "routePath": "/quota/seats",
       "file": "api/routes/enterprise.ts",
       "line": 215,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6670,7 +6670,7 @@
       "routePath": "/subscriptions",
       "file": "api/routes/enterprise.ts",
       "line": 146,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6690,7 +6690,7 @@
       "routePath": "/tenants/:tenantId/archive",
       "file": "api/routes/enterprise.ts",
       "line": 135,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6711,7 +6711,7 @@
       "routePath": "/tenants/:tenantId/lifecycle",
       "file": "api/routes/enterprise.ts",
       "line": 90,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6732,7 +6732,7 @@
       "routePath": "/tenants/:tenantId/lifecycle/history",
       "file": "api/routes/enterprise.ts",
       "line": 103,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6753,7 +6753,7 @@
       "routePath": "/tenants/:tenantId/provision",
       "file": "api/routes/enterprise.ts",
       "line": 67,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6774,7 +6774,7 @@
       "routePath": "/tenants/:tenantId/reactivate",
       "file": "api/routes/enterprise.ts",
       "line": 124,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6795,7 +6795,7 @@
       "routePath": "/tenants/:tenantId/subscription",
       "file": "api/routes/enterprise.ts",
       "line": 78,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6817,7 +6817,7 @@
       "routePath": "/tenants/:tenantId/suspend",
       "file": "api/routes/enterprise.ts",
       "line": 113,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "tenantId"
       ],
@@ -6838,7 +6838,7 @@
       "routePath": "/tickets",
       "file": "api/routes/enterprise.ts",
       "line": 335,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6858,7 +6858,7 @@
       "routePath": "/tickets",
       "file": "api/routes/enterprise.ts",
       "line": 324,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6878,7 +6878,7 @@
       "routePath": "/tickets/:id",
       "file": "api/routes/enterprise.ts",
       "line": 358,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "id"
       ],
@@ -6900,7 +6900,7 @@
       "routePath": "/tickets/:id/escalate",
       "file": "api/routes/enterprise.ts",
       "line": 383,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "id"
       ],
@@ -6922,7 +6922,7 @@
       "routePath": "/tickets/:id/status",
       "file": "api/routes/enterprise.ts",
       "line": 370,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [
         "id"
       ],
@@ -6944,7 +6944,7 @@
       "routePath": "/tickets/sla-breaches",
       "file": "api/routes/enterprise.ts",
       "line": 347,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6964,7 +6964,7 @@
       "routePath": "/usage",
       "file": "api/routes/enterprise.ts",
       "line": 239,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -6984,7 +6984,7 @@
       "routePath": "/usage",
       "file": "api/routes/enterprise.ts",
       "line": 228,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7004,7 +7004,7 @@
       "routePath": "/usage/summary",
       "file": "api/routes/enterprise.ts",
       "line": 251,
-      "serverLine": 615,
+      "serverLine": 616,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7024,7 +7024,7 @@
       "routePath": "/estimates",
       "file": "api/routes/estimating.ts",
       "line": 233,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7044,7 +7044,7 @@
       "routePath": "/estimates",
       "file": "api/routes/estimating.ts",
       "line": 221,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7064,7 +7064,7 @@
       "routePath": "/estimates/:id",
       "file": "api/routes/estimating.ts",
       "line": 244,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "id"
       ],
@@ -7088,7 +7088,7 @@
       "routePath": "/estimates/:id/approve",
       "file": "api/routes/estimating.ts",
       "line": 270,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "id"
       ],
@@ -7112,7 +7112,7 @@
       "routePath": "/estimates/:id/lines",
       "file": "api/routes/estimating.ts",
       "line": 255,
-      "serverLine": 617,
+      "serverLine": 618,
       "pathParams": [
         "id"
       ],
@@ -7136,7 +7136,7 @@
       "routePath": "/:id",
       "file": "api/routes/evidence.ts",
       "line": 112,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [
         "id"
       ],
@@ -7158,7 +7158,7 @@
       "routePath": "/:id/retry",
       "file": "api/routes/evidence.ts",
       "line": 101,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [
         "id"
       ],
@@ -7180,7 +7180,7 @@
       "routePath": "/assets/:id/scan",
       "file": "api/routes/evidence.ts",
       "line": 127,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [
         "id"
       ],
@@ -7202,7 +7202,7 @@
       "routePath": "/confirm",
       "file": "api/routes/evidence.ts",
       "line": 53,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7222,7 +7222,7 @@
       "routePath": "/entity/:type/:id",
       "file": "api/routes/evidence.ts",
       "line": 90,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [
         "type",
         "id"
@@ -7245,7 +7245,7 @@
       "routePath": "/initiate",
       "file": "api/routes/evidence.ts",
       "line": 25,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7265,7 +7265,7 @@
       "routePath": "/link",
       "file": "api/routes/evidence.ts",
       "line": 70,
-      "serverLine": 595,
+      "serverLine": 596,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7285,7 +7285,7 @@
       "routePath": "/evm/baselines/:baselineId/wbs",
       "file": "api/routes/evm.ts",
       "line": 78,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "baselineId"
       ],
@@ -7309,7 +7309,7 @@
       "routePath": "/evm/baselines/:baselineId/wbs",
       "file": "api/routes/evm.ts",
       "line": 64,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "baselineId"
       ],
@@ -7335,7 +7335,7 @@
       "routePath": "/ai-acceptance",
       "file": "api/routes/executive.ts",
       "line": 141,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7354,7 +7354,7 @@
       "routePath": "/contractor-performance",
       "file": "api/routes/executive.ts",
       "line": 101,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7373,7 +7373,7 @@
       "routePath": "/escalation-hotspots",
       "file": "api/routes/executive.ts",
       "line": 83,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7392,7 +7392,7 @@
       "routePath": "/overview",
       "file": "api/routes/executive.ts",
       "line": 20,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7411,7 +7411,7 @@
       "routePath": "/portfolio-risk",
       "file": "api/routes/executive.ts",
       "line": 61,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7430,7 +7430,7 @@
       "routePath": "/sla-compliance",
       "file": "api/routes/executive.ts",
       "line": 122,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7449,7 +7449,7 @@
       "routePath": "/throughput",
       "file": "api/routes/executive.ts",
       "line": 160,
-      "serverLine": 600,
+      "serverLine": 601,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7468,7 +7468,7 @@
       "routePath": "/",
       "file": "api/routes/exports.ts",
       "line": 20,
-      "serverLine": 602,
+      "serverLine": 603,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -7488,7 +7488,7 @@
       "routePath": "/:id",
       "file": "api/routes/exports.ts",
       "line": 37,
-      "serverLine": 602,
+      "serverLine": 603,
       "pathParams": [
         "id"
       ],
@@ -7509,7 +7509,7 @@
       "routePath": "/:id/download",
       "file": "api/routes/exports.ts",
       "line": 45,
-      "serverLine": 602,
+      "serverLine": 603,
       "pathParams": [
         "id"
       ],
@@ -7530,7 +7530,7 @@
       "routePath": "/batch",
       "file": "api/routes/fieldSync.ts",
       "line": 37,
-      "serverLine": 552,
+      "serverLine": 553,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7550,7 +7550,7 @@
       "routePath": "/operations",
       "file": "api/routes/fieldSync.ts",
       "line": 63,
-      "serverLine": 552,
+      "serverLine": 553,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7570,7 +7570,7 @@
       "routePath": "/confirm/:versionId",
       "file": "api/routes/files.ts",
       "line": 240,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "versionId"
       ],
@@ -7594,7 +7594,7 @@
       "routePath": "/documents",
       "file": "api/routes/files.ts",
       "line": 435,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7616,7 +7616,7 @@
       "routePath": "/documents/:id",
       "file": "api/routes/files.ts",
       "line": 613,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "id"
       ],
@@ -7640,7 +7640,7 @@
       "routePath": "/documents/:id",
       "file": "api/routes/files.ts",
       "line": 481,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "id"
       ],
@@ -7664,7 +7664,7 @@
       "routePath": "/documents/:id",
       "file": "api/routes/files.ts",
       "line": 589,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "id"
       ],
@@ -7688,7 +7688,7 @@
       "routePath": "/documents/:id/content",
       "file": "api/routes/files.ts",
       "line": 536,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "id"
       ],
@@ -7712,7 +7712,7 @@
       "routePath": "/download/:token",
       "file": "api/routes/files.ts",
       "line": 344,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "token"
       ],
@@ -7736,7 +7736,7 @@
       "routePath": "/folders",
       "file": "api/routes/files.ts",
       "line": 628,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7758,7 +7758,7 @@
       "routePath": "/folders",
       "file": "api/routes/files.ts",
       "line": 664,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7782,7 +7782,7 @@
       "routePath": "/presign/:versionId",
       "file": "api/routes/files.ts",
       "line": 287,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "versionId"
       ],
@@ -7806,7 +7806,7 @@
       "routePath": "/request-upload",
       "file": "api/routes/files.ts",
       "line": 78,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7830,7 +7830,7 @@
       "routePath": "/upload/:token",
       "file": "api/routes/files.ts",
       "line": 192,
-      "serverLine": 541,
+      "serverLine": 542,
       "pathParams": [
         "token"
       ],
@@ -7851,7 +7851,7 @@
       "routePath": "/inspection-templates",
       "file": "api/routes/inspections.ts",
       "line": 63,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7871,7 +7871,7 @@
       "routePath": "/inspection-templates/:id",
       "file": "api/routes/inspections.ts",
       "line": 91,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "id"
       ],
@@ -7893,7 +7893,7 @@
       "routePath": "/inspections/:id",
       "file": "api/routes/inspections.ts",
       "line": 219,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "id"
       ],
@@ -7917,7 +7917,7 @@
       "routePath": "/inspections/:id",
       "file": "api/routes/inspections.ts",
       "line": 239,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "id"
       ],
@@ -7941,7 +7941,7 @@
       "routePath": "/inspections/:id/complete",
       "file": "api/routes/inspections.ts",
       "line": 266,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "id"
       ],
@@ -7965,7 +7965,7 @@
       "routePath": "/",
       "file": "api/routes/integrations.ts",
       "line": 194,
-      "serverLine": 542,
+      "serverLine": 543,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -7985,7 +7985,7 @@
       "routePath": "/",
       "file": "api/routes/integrations.ts",
       "line": 230,
-      "serverLine": 542,
+      "serverLine": 543,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8005,7 +8005,7 @@
       "routePath": "/:id",
       "file": "api/routes/integrations.ts",
       "line": 218,
-      "serverLine": 542,
+      "serverLine": 543,
       "pathParams": [
         "id"
       ],
@@ -8027,7 +8027,7 @@
       "routePath": "/:id",
       "file": "api/routes/integrations.ts",
       "line": 246,
-      "serverLine": 542,
+      "serverLine": 543,
       "pathParams": [
         "id"
       ],
@@ -8049,7 +8049,7 @@
       "routePath": "/:id/sync",
       "file": "api/routes/integrations.ts",
       "line": 305,
-      "serverLine": 542,
+      "serverLine": 543,
       "pathParams": [
         "id"
       ],
@@ -8071,7 +8071,7 @@
       "routePath": "/:id/test",
       "file": "api/routes/integrations.ts",
       "line": 269,
-      "serverLine": 542,
+      "serverLine": 543,
       "pathParams": [
         "id"
       ],
@@ -8088,12 +8088,57 @@
     },
     {
       "method": "GET",
+      "path": "/api/v1/integrations/accounting/contract",
+      "mountPrefix": "/api/v1/integrations/accounting",
+      "routePath": "/contract",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 51,
+      "serverLine": 625,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "platform.integrations"
+      ],
+      "recordScopeCalls": [],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/integrations/accounting/outbound/:type/:id",
+      "mountPrefix": "/api/v1/integrations/accounting",
+      "routePath": "/outbound/:type/:id",
+      "file": "api/routes/accountingBoundary.ts",
+      "line": 82,
+      "serverLine": 625,
+      "pathParams": [
+        "type",
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "cost.view"
+      ],
+      "recordScopeCalls": [
+        "authorizeRecordScope"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true
+    },
+    {
+      "method": "GET",
       "path": "/api/v1/integrations/hub",
       "mountPrefix": "/api/v1/integrations/hub",
       "routePath": "/",
       "file": "api/routes/integrationHub.ts",
       "line": 31,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -8112,7 +8157,7 @@
       "routePath": "/:id/health",
       "file": "api/routes/integrationHub.ts",
       "line": 47,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [
         "id"
       ],
@@ -8133,7 +8178,7 @@
       "routePath": "/connect",
       "file": "api/routes/integrationHub.ts",
       "line": 20,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -8152,7 +8197,7 @@
       "routePath": "/health",
       "file": "api/routes/integrationHub.ts",
       "line": 38,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -8171,7 +8216,7 @@
       "routePath": "/jobs/:id/complete",
       "file": "api/routes/integrationHub.ts",
       "line": 65,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [
         "id"
       ],
@@ -8192,7 +8237,7 @@
       "routePath": "/jobs/:id/fail",
       "file": "api/routes/integrationHub.ts",
       "line": 72,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [
         "id"
       ],
@@ -8213,7 +8258,7 @@
       "routePath": "/sync",
       "file": "api/routes/integrationHub.ts",
       "line": 56,
-      "serverLine": 601,
+      "serverLine": 602,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -8232,7 +8277,7 @@
       "routePath": "/iot/ingest",
       "file": "api/routes/iot.ts",
       "line": 205,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8250,7 +8295,7 @@
       "routePath": "/",
       "file": "api/routes/fixLibrary.ts",
       "line": 77,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8272,7 +8317,7 @@
       "routePath": "/",
       "file": "api/routes/fixLibrary.ts",
       "line": 136,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8292,7 +8337,7 @@
       "routePath": "/_meta/symptoms",
       "file": "api/routes/fixLibrary.ts",
       "line": 41,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8314,7 +8359,7 @@
       "routePath": "/:id",
       "file": "api/routes/fixLibrary.ts",
       "line": 228,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [
         "id"
       ],
@@ -8338,7 +8383,7 @@
       "routePath": "/:id",
       "file": "api/routes/fixLibrary.ts",
       "line": 164,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [
         "id"
       ],
@@ -8362,7 +8407,7 @@
       "routePath": "/:id",
       "file": "api/routes/fixLibrary.ts",
       "line": 174,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [
         "id"
       ],
@@ -8386,7 +8431,7 @@
       "routePath": "/:id/verify",
       "file": "api/routes/fixLibrary.ts",
       "line": 209,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [
         "id"
       ],
@@ -8410,7 +8455,7 @@
       "routePath": "/search",
       "file": "api/routes/fixLibrary.ts",
       "line": 58,
-      "serverLine": 560,
+      "serverLine": 561,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8430,7 +8475,7 @@
       "routePath": "/bulk-ingest",
       "file": "api/routes/knowledge.ts",
       "line": 67,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8450,7 +8495,7 @@
       "routePath": "/embed-bulk",
       "file": "api/routes/knowledge.ts",
       "line": 400,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8470,7 +8515,7 @@
       "routePath": "/embed-status",
       "file": "api/routes/knowledge.ts",
       "line": 417,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8492,7 +8537,7 @@
       "routePath": "/mine-fixes-bulk",
       "file": "api/routes/knowledge.ts",
       "line": 461,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8512,7 +8557,7 @@
       "routePath": "/search",
       "file": "api/routes/knowledge.ts",
       "line": 114,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8532,7 +8577,7 @@
       "routePath": "/sources",
       "file": "api/routes/knowledge.ts",
       "line": 136,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8554,7 +8599,7 @@
       "routePath": "/sources",
       "file": "api/routes/knowledge.ts",
       "line": 190,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8574,7 +8619,7 @@
       "routePath": "/sources/:id",
       "file": "api/routes/knowledge.ts",
       "line": 481,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [
         "id"
       ],
@@ -8598,7 +8643,7 @@
       "routePath": "/sources/:id",
       "file": "api/routes/knowledge.ts",
       "line": 273,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [
         "id"
       ],
@@ -8622,7 +8667,7 @@
       "routePath": "/sources/:id/chunks",
       "file": "api/routes/knowledge.ts",
       "line": 288,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [
         "id"
       ],
@@ -8646,7 +8691,7 @@
       "routePath": "/sources/:id/embed",
       "file": "api/routes/knowledge.ts",
       "line": 376,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [
         "id"
       ],
@@ -8670,7 +8715,7 @@
       "routePath": "/sources/:id/mine-fixes",
       "file": "api/routes/knowledge.ts",
       "line": 338,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [
         "id"
       ],
@@ -8694,7 +8739,7 @@
       "routePath": "/sources/:id/reingest",
       "file": "api/routes/knowledge.ts",
       "line": 318,
-      "serverLine": 561,
+      "serverLine": 562,
       "pathParams": [
         "id"
       ],
@@ -8718,7 +8763,7 @@
       "routePath": "/",
       "file": "api/routes/leads.ts",
       "line": 60,
-      "serverLine": 624,
+      "serverLine": 626,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8740,7 +8785,7 @@
       "routePath": "/:id",
       "file": "api/routes/leads.ts",
       "line": 79,
-      "serverLine": 624,
+      "serverLine": 626,
       "pathParams": [
         "id"
       ],
@@ -8764,7 +8809,7 @@
       "routePath": "/summary",
       "file": "api/routes/leads.ts",
       "line": 44,
-      "serverLine": 624,
+      "serverLine": 626,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8786,7 +8831,7 @@
       "routePath": "/markups/:markupId",
       "file": "api/routes/drawings.ts",
       "line": 227,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "markupId"
       ],
@@ -8810,7 +8855,7 @@
       "routePath": "/markups/:markupId",
       "file": "api/routes/drawings.ts",
       "line": 203,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "markupId"
       ],
@@ -8834,7 +8879,7 @@
       "routePath": "/ava/health",
       "file": "api/routes/mcp.ts",
       "line": 207,
-      "serverLine": 548,
+      "serverLine": 549,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8854,7 +8899,7 @@
       "routePath": "/execute",
       "file": "api/routes/mcp.ts",
       "line": 225,
-      "serverLine": 548,
+      "serverLine": 549,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8874,7 +8919,7 @@
       "routePath": "/sessions",
       "file": "api/routes/mcp.ts",
       "line": 288,
-      "serverLine": 548,
+      "serverLine": 549,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8896,7 +8941,7 @@
       "routePath": "/tools",
       "file": "api/routes/mcp.ts",
       "line": 176,
-      "serverLine": 548,
+      "serverLine": 549,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8916,7 +8961,7 @@
       "routePath": "/me/agent/ask",
       "file": "api/routes/personalAgent.ts",
       "line": 123,
-      "serverLine": 525,
+      "serverLine": 526,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8939,7 +8984,7 @@
       "routePath": "/me/agent/briefing",
       "file": "api/routes/personalAgent.ts",
       "line": 65,
-      "serverLine": 525,
+      "serverLine": 526,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8959,7 +9004,7 @@
       "routePath": "/me/agent/memory",
       "file": "api/routes/personalAgent.ts",
       "line": 75,
-      "serverLine": 525,
+      "serverLine": 526,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8979,7 +9024,7 @@
       "routePath": "/me/agent/memory",
       "file": "api/routes/personalAgent.ts",
       "line": 85,
-      "serverLine": 525,
+      "serverLine": 526,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -8999,7 +9044,7 @@
       "routePath": "/me/agent/memory/:key",
       "file": "api/routes/personalAgent.ts",
       "line": 105,
-      "serverLine": 525,
+      "serverLine": 526,
       "pathParams": [
         "key"
       ],
@@ -9021,7 +9066,7 @@
       "routePath": "/meetings/:id",
       "file": "api/routes/meetings.ts",
       "line": 73,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9045,7 +9090,7 @@
       "routePath": "/meetings/:id",
       "file": "api/routes/meetings.ts",
       "line": 82,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9069,7 +9114,7 @@
       "routePath": "/meetings/:id/actions",
       "file": "api/routes/meetings.ts",
       "line": 148,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9093,7 +9138,7 @@
       "routePath": "/meetings/:id/actions",
       "file": "api/routes/meetings.ts",
       "line": 156,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9119,7 +9164,7 @@
       "routePath": "/meetings/:id/agenda",
       "file": "api/routes/meetings.ts",
       "line": 111,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9143,7 +9188,7 @@
       "routePath": "/meetings/:id/agenda",
       "file": "api/routes/meetings.ts",
       "line": 119,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9167,7 +9212,7 @@
       "routePath": "/meetings/:id/agenda/:itemId",
       "file": "api/routes/meetings.ts",
       "line": 138,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id",
         "itemId"
@@ -9192,7 +9237,7 @@
       "routePath": "/meetings/:id/agenda/:itemId",
       "file": "api/routes/meetings.ts",
       "line": 129,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id",
         "itemId"
@@ -9217,7 +9262,7 @@
       "routePath": "/meetings/:id/archive",
       "file": "api/routes/meetings.ts",
       "line": 100,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9241,7 +9286,7 @@
       "routePath": "/meetings/:id/publish",
       "file": "api/routes/meetings.ts",
       "line": 91,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "id"
       ],
@@ -9265,7 +9310,7 @@
       "routePath": "/runs",
       "file": "api/routes/monteCarlo.ts",
       "line": 58,
-      "serverLine": 618,
+      "serverLine": 619,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9285,7 +9330,7 @@
       "routePath": "/runs",
       "file": "api/routes/monteCarlo.ts",
       "line": 35,
-      "serverLine": 618,
+      "serverLine": 619,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9309,7 +9354,7 @@
       "routePath": "/runs/:id",
       "file": "api/routes/monteCarlo.ts",
       "line": 69,
-      "serverLine": 618,
+      "serverLine": 619,
       "pathParams": [
         "id"
       ],
@@ -9333,7 +9378,7 @@
       "routePath": "/runs/:id/distribution",
       "file": "api/routes/monteCarlo.ts",
       "line": 80,
-      "serverLine": 618,
+      "serverLine": 619,
       "pathParams": [
         "id"
       ],
@@ -9357,7 +9402,7 @@
       "routePath": "/my-work",
       "file": "api/routes/myWork.ts",
       "line": 21,
-      "serverLine": 575,
+      "serverLine": 576,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9377,7 +9422,7 @@
       "routePath": "/ncrs/:id",
       "file": "api/routes/ncr.ts",
       "line": 50,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "id"
       ],
@@ -9401,7 +9446,7 @@
       "routePath": "/ncrs/:id/capas",
       "file": "api/routes/ncr.ts",
       "line": 72,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "id"
       ],
@@ -9425,7 +9470,7 @@
       "routePath": "/ncrs/:id/capas",
       "file": "api/routes/ncr.ts",
       "line": 78,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "id"
       ],
@@ -9449,7 +9494,7 @@
       "routePath": "/ncrs/:id/close",
       "file": "api/routes/ncr.ts",
       "line": 63,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "id"
       ],
@@ -9473,7 +9518,7 @@
       "routePath": "/notifications",
       "file": "api/routes/notifications.ts",
       "line": 81,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9493,7 +9538,7 @@
       "routePath": "/notifications/:id/dismiss",
       "file": "api/routes/notifications.ts",
       "line": 150,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [
         "id"
       ],
@@ -9515,7 +9560,7 @@
       "routePath": "/notifications/:id/read",
       "file": "api/routes/notifications.ts",
       "line": 137,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [
         "id"
       ],
@@ -9537,7 +9582,7 @@
       "routePath": "/notifications/clear",
       "file": "api/routes/notifications.ts",
       "line": 121,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9557,7 +9602,7 @@
       "routePath": "/notifications/count",
       "file": "api/routes/notifications.ts",
       "line": 97,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9577,7 +9622,7 @@
       "routePath": "/notifications/read-all",
       "file": "api/routes/notifications.ts",
       "line": 107,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9597,7 +9642,7 @@
       "routePath": "/notifications/scan",
       "file": "api/routes/notifications.ts",
       "line": 69,
-      "serverLine": 632,
+      "serverLine": 634,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9617,7 +9662,7 @@
       "routePath": "/blockers",
       "file": "api/routes/ops.ts",
       "line": 187,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9637,7 +9682,7 @@
       "routePath": "/escalate",
       "file": "api/routes/ops.ts",
       "line": 253,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9657,7 +9702,7 @@
       "routePath": "/escalations",
       "file": "api/routes/ops.ts",
       "line": 162,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9677,7 +9722,7 @@
       "routePath": "/freeze",
       "file": "api/routes/ops.ts",
       "line": 289,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9697,7 +9742,7 @@
       "routePath": "/incident",
       "file": "api/routes/ops.ts",
       "line": 351,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9721,7 +9766,7 @@
       "routePath": "/live-feed",
       "file": "api/routes/ops.ts",
       "line": 84,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9743,7 +9788,7 @@
       "routePath": "/overview",
       "file": "api/routes/ops.ts",
       "line": 34,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9763,7 +9808,7 @@
       "routePath": "/readiness",
       "file": "api/routes/ops.ts",
       "line": 119,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9786,7 +9831,7 @@
       "routePath": "/reassign",
       "file": "api/routes/ops.ts",
       "line": 212,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9806,7 +9851,7 @@
       "routePath": "/recommendations",
       "file": "api/routes/ops.ts",
       "line": 376,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9826,7 +9871,7 @@
       "routePath": "/unfreeze",
       "file": "api/routes/ops.ts",
       "line": 323,
-      "serverLine": 592,
+      "serverLine": 593,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9846,7 +9891,7 @@
       "routePath": "/consensus",
       "file": "api/routes/optimization.ts",
       "line": 102,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9866,7 +9911,7 @@
       "routePath": "/coordinate",
       "file": "api/routes/optimization.ts",
       "line": 110,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9886,7 +9931,7 @@
       "routePath": "/proposals",
       "file": "api/routes/optimization.ts",
       "line": 53,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9906,7 +9951,7 @@
       "routePath": "/proposals",
       "file": "api/routes/optimization.ts",
       "line": 46,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9926,7 +9971,7 @@
       "routePath": "/proposals/:id/apply",
       "file": "api/routes/optimization.ts",
       "line": 75,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [
         "id"
       ],
@@ -9948,7 +9993,7 @@
       "routePath": "/proposals/:id/approve",
       "file": "api/routes/optimization.ts",
       "line": 65,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [
         "id"
       ],
@@ -9970,7 +10015,7 @@
       "routePath": "/proposals/summary",
       "file": "api/routes/optimization.ts",
       "line": 83,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -9990,7 +10035,7 @@
       "routePath": "/resources",
       "file": "api/routes/optimization.ts",
       "line": 30,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10010,7 +10055,7 @@
       "routePath": "/resources/balance-plan",
       "file": "api/routes/optimization.ts",
       "line": 37,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10030,7 +10075,7 @@
       "routePath": "/root-cause",
       "file": "api/routes/optimization.ts",
       "line": 120,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10050,7 +10095,7 @@
       "routePath": "/strategy",
       "file": "api/routes/optimization.ts",
       "line": 92,
-      "serverLine": 614,
+      "serverLine": 615,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10070,7 +10115,7 @@
       "routePath": "/pay-applications/:id",
       "file": "api/routes/payApplications.ts",
       "line": 91,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "id"
       ],
@@ -10094,7 +10139,7 @@
       "routePath": "/pay-applications/:id",
       "file": "api/routes/payApplications.ts",
       "line": 147,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "id"
       ],
@@ -10118,7 +10163,7 @@
       "routePath": "/pay-applications/:id/lines",
       "file": "api/routes/payApplications.ts",
       "line": 100,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "id"
       ],
@@ -10142,7 +10187,7 @@
       "routePath": "/pay-applications/:id/submit",
       "file": "api/routes/payApplications.ts",
       "line": 126,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "id"
       ],
@@ -10166,7 +10211,7 @@
       "routePath": "/",
       "file": "api/routes/policies.ts",
       "line": 22,
-      "serverLine": 599,
+      "serverLine": 600,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -10185,7 +10230,7 @@
       "routePath": "/",
       "file": "api/routes/policies.ts",
       "line": 36,
-      "serverLine": 599,
+      "serverLine": 600,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -10204,7 +10249,7 @@
       "routePath": "/:id",
       "file": "api/routes/policies.ts",
       "line": 50,
-      "serverLine": 599,
+      "serverLine": 600,
       "pathParams": [
         "id"
       ],
@@ -10225,7 +10270,7 @@
       "routePath": "/audit",
       "file": "api/routes/policies.ts",
       "line": 73,
-      "serverLine": 599,
+      "serverLine": 600,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -10244,7 +10289,7 @@
       "routePath": "/evaluate",
       "file": "api/routes/policies.ts",
       "line": 59,
-      "serverLine": 599,
+      "serverLine": 600,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -10267,7 +10312,7 @@
       "routePath": "/anomalies",
       "file": "api/routes/portfolio.ts",
       "line": 88,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10287,7 +10332,7 @@
       "routePath": "/anomalies/:anomalyId/false-positive",
       "file": "api/routes/portfolio.ts",
       "line": 128,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [
         "anomalyId"
       ],
@@ -10309,7 +10354,7 @@
       "routePath": "/anomalies/:anomalyId/resolve",
       "file": "api/routes/portfolio.ts",
       "line": 118,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [
         "anomalyId"
       ],
@@ -10331,7 +10376,7 @@
       "routePath": "/anomalies/detect",
       "file": "api/routes/portfolio.ts",
       "line": 106,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10351,7 +10396,7 @@
       "routePath": "/bottlenecks",
       "file": "api/routes/portfolio.ts",
       "line": 56,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10371,7 +10416,7 @@
       "routePath": "/conflicts",
       "file": "api/routes/portfolio.ts",
       "line": 44,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10391,7 +10436,7 @@
       "routePath": "/forecast",
       "file": "api/routes/portfolio.ts",
       "line": 69,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10411,7 +10456,7 @@
       "routePath": "/maintenance/health/:twinId",
       "file": "api/routes/portfolio.ts",
       "line": 154,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [
         "twinId"
       ],
@@ -10433,7 +10478,7 @@
       "routePath": "/maintenance/recommendations",
       "file": "api/routes/portfolio.ts",
       "line": 140,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10453,7 +10498,7 @@
       "routePath": "/readiness",
       "file": "api/routes/portfolio.ts",
       "line": 17,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10473,7 +10518,7 @@
       "routePath": "/readiness/:scopeType/:scopeId",
       "file": "api/routes/portfolio.ts",
       "line": 27,
-      "serverLine": 611,
+      "serverLine": 612,
       "pathParams": [
         "scopeType",
         "scopeId"
@@ -10498,7 +10543,7 @@
       "routePath": "/predict/portfolio",
       "file": "api/routes/predict.ts",
       "line": 24,
-      "serverLine": 633,
+      "serverLine": 635,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10518,7 +10563,7 @@
       "routePath": "/predict/projects/:id",
       "file": "api/routes/predict.ts",
       "line": 35,
-      "serverLine": 633,
+      "serverLine": 635,
       "pathParams": [
         "id"
       ],
@@ -10542,7 +10587,7 @@
       "routePath": "/",
       "file": "api/routes/projects.ts",
       "line": 98,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10564,7 +10609,7 @@
       "routePath": "/",
       "file": "api/routes/projects.ts",
       "line": 233,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -10584,7 +10629,7 @@
       "routePath": "/:id",
       "file": "api/routes/projects.ts",
       "line": 491,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10608,7 +10653,7 @@
       "routePath": "/:id",
       "file": "api/routes/projects.ts",
       "line": 187,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10632,7 +10677,7 @@
       "routePath": "/:id",
       "file": "api/routes/projects.ts",
       "line": 287,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10656,7 +10701,7 @@
       "routePath": "/:id/agent-mode",
       "file": "api/routes/projects.ts",
       "line": 557,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10680,7 +10725,7 @@
       "routePath": "/:id/close",
       "file": "api/routes/projects.ts",
       "line": 591,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10704,7 +10749,7 @@
       "routePath": "/:id/members",
       "file": "api/routes/projects.ts",
       "line": 389,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10728,7 +10773,7 @@
       "routePath": "/:id/members",
       "file": "api/routes/projects.ts",
       "line": 410,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10752,7 +10797,7 @@
       "routePath": "/:id/members/:userId",
       "file": "api/routes/projects.ts",
       "line": 457,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id",
         "userId"
@@ -10777,7 +10822,7 @@
       "routePath": "/:id/summary",
       "file": "api/routes/projects.ts",
       "line": 511,
-      "serverLine": 534,
+      "serverLine": 535,
       "pathParams": [
         "id"
       ],
@@ -10801,7 +10846,7 @@
       "routePath": "/projects/:projectId/advance",
       "file": "api/routes/lifecycle.ts",
       "line": 50,
-      "serverLine": 576,
+      "serverLine": 577,
       "pathParams": [
         "projectId"
       ],
@@ -10825,7 +10870,7 @@
       "routePath": "/projects/:projectId/bid-packages",
       "file": "api/routes/subcontracts.ts",
       "line": 72,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "projectId"
       ],
@@ -10849,7 +10894,7 @@
       "routePath": "/projects/:projectId/bid-packages",
       "file": "api/routes/subcontracts.ts",
       "line": 62,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "projectId"
       ],
@@ -10873,7 +10918,7 @@
       "routePath": "/projects/:projectId/bid-packages/summary",
       "file": "api/routes/subcontracts.ts",
       "line": 80,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "projectId"
       ],
@@ -10897,7 +10942,7 @@
       "routePath": "/projects/:projectId/bim-issues",
       "file": "api/routes/bim.ts",
       "line": 138,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "projectId"
       ],
@@ -10921,7 +10966,7 @@
       "routePath": "/projects/:projectId/bim-issues",
       "file": "api/routes/bim.ts",
       "line": 157,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "projectId"
       ],
@@ -10945,7 +10990,7 @@
       "routePath": "/projects/:projectId/bim-models",
       "file": "api/routes/bim.ts",
       "line": 33,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "projectId"
       ],
@@ -10969,7 +11014,7 @@
       "routePath": "/projects/:projectId/bim-models",
       "file": "api/routes/bim.ts",
       "line": 46,
-      "serverLine": 566,
+      "serverLine": 567,
       "pathParams": [
         "projectId"
       ],
@@ -10993,7 +11038,7 @@
       "routePath": "/projects/:projectId/budget",
       "file": "api/routes/budgets.ts",
       "line": 37,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "projectId"
       ],
@@ -11017,7 +11062,7 @@
       "routePath": "/projects/:projectId/budget",
       "file": "api/routes/budgets.ts",
       "line": 49,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "projectId"
       ],
@@ -11041,7 +11086,7 @@
       "routePath": "/projects/:projectId/budget/rollup",
       "file": "api/routes/budgets.ts",
       "line": 157,
-      "serverLine": 567,
+      "serverLine": 568,
       "pathParams": [
         "projectId"
       ],
@@ -11065,7 +11110,7 @@
       "routePath": "/projects/:projectId/calc-sessions",
       "file": "api/routes/calculations.ts",
       "line": 25,
-      "serverLine": 563,
+      "serverLine": 564,
       "pathParams": [
         "projectId"
       ],
@@ -11089,7 +11134,7 @@
       "routePath": "/projects/:projectId/calc-sessions",
       "file": "api/routes/calculations.ts",
       "line": 55,
-      "serverLine": 563,
+      "serverLine": 564,
       "pathParams": [
         "projectId"
       ],
@@ -11113,7 +11158,7 @@
       "routePath": "/projects/:projectId/change-orders",
       "file": "api/routes/changeOrders.ts",
       "line": 63,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "projectId"
       ],
@@ -11137,7 +11182,7 @@
       "routePath": "/projects/:projectId/change-orders",
       "file": "api/routes/changeOrders.ts",
       "line": 45,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "projectId"
       ],
@@ -11161,7 +11206,7 @@
       "routePath": "/projects/:projectId/change-orders/summary",
       "file": "api/routes/changeOrders.ts",
       "line": 81,
-      "serverLine": 623,
+      "serverLine": 624,
       "pathParams": [
         "projectId"
       ],
@@ -11185,7 +11230,7 @@
       "routePath": "/projects/:projectId/commissioning-items",
       "file": "api/routes/commissioningItems.ts",
       "line": 51,
-      "serverLine": 589,
+      "serverLine": 590,
       "pathParams": [
         "projectId"
       ],
@@ -11209,7 +11254,7 @@
       "routePath": "/projects/:projectId/commitments",
       "file": "api/routes/commitments.ts",
       "line": 19,
-      "serverLine": 572,
+      "serverLine": 573,
       "pathParams": [
         "projectId"
       ],
@@ -11233,7 +11278,7 @@
       "routePath": "/projects/:projectId/coordination/recommendations",
       "file": "api/routes/autoCoordination.ts",
       "line": 30,
-      "serverLine": 582,
+      "serverLine": 583,
       "pathParams": [
         "projectId"
       ],
@@ -11262,7 +11307,7 @@
       "routePath": "/projects/:projectId/coordination/scan",
       "file": "api/routes/autoCoordination.ts",
       "line": 23,
-      "serverLine": 582,
+      "serverLine": 583,
       "pathParams": [
         "projectId"
       ],
@@ -11291,7 +11336,7 @@
       "routePath": "/projects/:projectId/cost-control",
       "file": "api/routes/costControl.ts",
       "line": 23,
-      "serverLine": 628,
+      "serverLine": 630,
       "pathParams": [
         "projectId"
       ],
@@ -11315,7 +11360,7 @@
       "routePath": "/projects/:projectId/cost-entries",
       "file": "api/routes/costEntry.ts",
       "line": 56,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "projectId"
       ],
@@ -11339,7 +11384,7 @@
       "routePath": "/projects/:projectId/cost-entries",
       "file": "api/routes/costEntry.ts",
       "line": 40,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "projectId"
       ],
@@ -11363,7 +11408,7 @@
       "routePath": "/projects/:projectId/cost-entries/summary",
       "file": "api/routes/costEntry.ts",
       "line": 70,
-      "serverLine": 629,
+      "serverLine": 631,
       "pathParams": [
         "projectId"
       ],
@@ -11387,7 +11432,7 @@
       "routePath": "/projects/:projectId/cost-intelligence",
       "file": "api/routes/costIntelligence.ts",
       "line": 19,
-      "serverLine": 571,
+      "serverLine": 572,
       "pathParams": [
         "projectId"
       ],
@@ -11411,7 +11456,7 @@
       "routePath": "/projects/:projectId/coverage",
       "file": "api/routes/systems.ts",
       "line": 197,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "projectId"
       ],
@@ -11435,7 +11480,7 @@
       "routePath": "/projects/:projectId/daily-logs",
       "file": "api/routes/dailyLogs.ts",
       "line": 32,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "projectId"
       ],
@@ -11459,7 +11504,7 @@
       "routePath": "/projects/:projectId/daily-logs",
       "file": "api/routes/dailyLogs.ts",
       "line": 63,
-      "serverLine": 564,
+      "serverLine": 565,
       "pathParams": [
         "projectId"
       ],
@@ -11483,7 +11528,7 @@
       "routePath": "/projects/:projectId/deficiencies",
       "file": "api/routes/deficiencies.ts",
       "line": 48,
-      "serverLine": 588,
+      "serverLine": 589,
       "pathParams": [
         "projectId"
       ],
@@ -11507,7 +11552,7 @@
       "routePath": "/projects/:projectId/drawings",
       "file": "api/routes/drawings.ts",
       "line": 32,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "projectId"
       ],
@@ -11531,7 +11576,7 @@
       "routePath": "/projects/:projectId/drawings",
       "file": "api/routes/drawings.ts",
       "line": 59,
-      "serverLine": 565,
+      "serverLine": 566,
       "pathParams": [
         "projectId"
       ],
@@ -11555,7 +11600,7 @@
       "routePath": "/projects/:projectId/evm/actuals",
       "file": "api/routes/evm.ts",
       "line": 104,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11579,7 +11624,7 @@
       "routePath": "/projects/:projectId/evm/actuals",
       "file": "api/routes/evm.ts",
       "line": 90,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11603,7 +11648,7 @@
       "routePath": "/projects/:projectId/evm/baselines",
       "file": "api/routes/evm.ts",
       "line": 52,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11627,7 +11672,7 @@
       "routePath": "/projects/:projectId/evm/baselines",
       "file": "api/routes/evm.ts",
       "line": 39,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11651,7 +11696,7 @@
       "routePath": "/projects/:projectId/evm/metrics",
       "file": "api/routes/evm.ts",
       "line": 132,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11675,7 +11720,7 @@
       "routePath": "/projects/:projectId/evm/progress",
       "file": "api/routes/evm.ts",
       "line": 116,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11699,7 +11744,7 @@
       "routePath": "/projects/:projectId/evm/scurve",
       "file": "api/routes/evm.ts",
       "line": 156,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11723,7 +11768,7 @@
       "routePath": "/projects/:projectId/evm/snapshot",
       "file": "api/routes/evm.ts",
       "line": 144,
-      "serverLine": 620,
+      "serverLine": 621,
       "pathParams": [
         "projectId"
       ],
@@ -11747,7 +11792,7 @@
       "routePath": "/projects/:projectId/field-assistant",
       "file": "api/routes/fieldAssistant.ts",
       "line": 19,
-      "serverLine": 581,
+      "serverLine": 582,
       "pathParams": [
         "projectId"
       ],
@@ -11774,7 +11819,7 @@
       "routePath": "/projects/:projectId/gates/:gateKey",
       "file": "api/routes/lifecycle.ts",
       "line": 33,
-      "serverLine": 576,
+      "serverLine": 577,
       "pathParams": [
         "projectId",
         "gateKey"
@@ -11799,7 +11844,7 @@
       "routePath": "/projects/:projectId/inspection-templates",
       "file": "api/routes/inspections.ts",
       "line": 33,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "projectId"
       ],
@@ -11823,7 +11868,7 @@
       "routePath": "/projects/:projectId/inspections",
       "file": "api/routes/inspections.ts",
       "line": 115,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "projectId"
       ],
@@ -11847,7 +11892,7 @@
       "routePath": "/projects/:projectId/inspections",
       "file": "api/routes/inspections.ts",
       "line": 155,
-      "serverLine": 583,
+      "serverLine": 584,
       "pathParams": [
         "projectId"
       ],
@@ -11871,7 +11916,7 @@
       "routePath": "/projects/:projectId/lifecycle",
       "file": "api/routes/lifecycle.ts",
       "line": 24,
-      "serverLine": 576,
+      "serverLine": 577,
       "pathParams": [
         "projectId"
       ],
@@ -11895,7 +11940,7 @@
       "routePath": "/projects/:projectId/meetings",
       "file": "api/routes/meetings.ts",
       "line": 61,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "projectId"
       ],
@@ -11919,7 +11964,7 @@
       "routePath": "/projects/:projectId/meetings",
       "file": "api/routes/meetings.ts",
       "line": 47,
-      "serverLine": 627,
+      "serverLine": 629,
       "pathParams": [
         "projectId"
       ],
@@ -11943,7 +11988,7 @@
       "routePath": "/projects/:projectId/ncr-summary",
       "file": "api/routes/ncr.ts",
       "line": 117,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "projectId"
       ],
@@ -11967,7 +12012,7 @@
       "routePath": "/projects/:projectId/ncrs",
       "file": "api/routes/ncr.ts",
       "line": 34,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "projectId"
       ],
@@ -11991,7 +12036,7 @@
       "routePath": "/projects/:projectId/ncrs",
       "file": "api/routes/ncr.ts",
       "line": 40,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "projectId"
       ],
@@ -12015,7 +12060,7 @@
       "routePath": "/projects/:projectId/ncrs/auto-raise",
       "file": "api/routes/ncr.ts",
       "line": 109,
-      "serverLine": 574,
+      "serverLine": 575,
       "pathParams": [
         "projectId"
       ],
@@ -12039,7 +12084,7 @@
       "routePath": "/projects/:projectId/nova-integration",
       "file": "api/routes/novaIntegrationStatus.ts",
       "line": 103,
-      "serverLine": 579,
+      "serverLine": 580,
       "pathParams": [
         "projectId"
       ],
@@ -12063,7 +12108,7 @@
       "routePath": "/projects/:projectId/nova-integration/retry",
       "file": "api/routes/novaIntegrationStatus.ts",
       "line": 205,
-      "serverLine": 579,
+      "serverLine": 580,
       "pathParams": [
         "projectId"
       ],
@@ -12087,7 +12132,7 @@
       "routePath": "/projects/:projectId/pay-applications",
       "file": "api/routes/payApplications.ts",
       "line": 72,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "projectId"
       ],
@@ -12111,7 +12156,7 @@
       "routePath": "/projects/:projectId/pay-applications",
       "file": "api/routes/payApplications.ts",
       "line": 79,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "projectId"
       ],
@@ -12135,7 +12180,7 @@
       "routePath": "/projects/:projectId/procurement-risk",
       "file": "api/routes/procurementRisk.ts",
       "line": 19,
-      "serverLine": 580,
+      "serverLine": 581,
       "pathParams": [
         "projectId"
       ],
@@ -12159,7 +12204,7 @@
       "routePath": "/projects/:projectId/punch-lists",
       "file": "api/routes/punchLists.ts",
       "line": 36,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "projectId"
       ],
@@ -12183,7 +12228,7 @@
       "routePath": "/projects/:projectId/punch-lists",
       "file": "api/routes/punchLists.ts",
       "line": 73,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "projectId"
       ],
@@ -12207,7 +12252,7 @@
       "routePath": "/projects/:projectId/quality-intelligence",
       "file": "api/routes/qualityIntelligence.ts",
       "line": 19,
-      "serverLine": 569,
+      "serverLine": 570,
       "pathParams": [
         "projectId"
       ],
@@ -12231,7 +12276,7 @@
       "routePath": "/projects/:projectId/risks",
       "file": "api/routes/riskRegister.ts",
       "line": 54,
-      "serverLine": 635,
+      "serverLine": 637,
       "pathParams": [
         "projectId"
       ],
@@ -12255,7 +12300,7 @@
       "routePath": "/projects/:projectId/risks",
       "file": "api/routes/riskRegister.ts",
       "line": 42,
-      "serverLine": 635,
+      "serverLine": 637,
       "pathParams": [
         "projectId"
       ],
@@ -12279,7 +12324,7 @@
       "routePath": "/projects/:projectId/risks/summary",
       "file": "api/routes/riskRegister.ts",
       "line": 36,
-      "serverLine": 635,
+      "serverLine": 637,
       "pathParams": [
         "projectId"
       ],
@@ -12303,7 +12348,7 @@
       "routePath": "/projects/:projectId/safety/exposure-hours",
       "file": "api/routes/safety.ts",
       "line": 193,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12327,7 +12372,7 @@
       "routePath": "/projects/:projectId/safety/exposure-hours",
       "file": "api/routes/safety.ts",
       "line": 197,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12351,7 +12396,7 @@
       "routePath": "/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
       "line": 72,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12375,7 +12420,7 @@
       "routePath": "/projects/:projectId/safety/incidents",
       "file": "api/routes/safety.ts",
       "line": 78,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12399,7 +12444,7 @@
       "routePath": "/projects/:projectId/safety/intelligence",
       "file": "api/routes/safety.ts",
       "line": 101,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12423,7 +12468,7 @@
       "routePath": "/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
       "line": 43,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12447,7 +12492,7 @@
       "routePath": "/projects/:projectId/safety/observations",
       "file": "api/routes/safety.ts",
       "line": 49,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12471,7 +12516,7 @@
       "routePath": "/projects/:projectId/safety/trir",
       "file": "api/routes/safety.ts",
       "line": 214,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "projectId"
       ],
@@ -12495,7 +12540,7 @@
       "routePath": "/projects/:projectId/schedule/import",
       "file": "api/routes/scheduleImport.ts",
       "line": 39,
-      "serverLine": 621,
+      "serverLine": 622,
       "pathParams": [
         "projectId"
       ],
@@ -12519,7 +12564,7 @@
       "routePath": "/projects/:projectId/schedule/imports",
       "file": "api/routes/scheduleImport.ts",
       "line": 67,
-      "serverLine": 621,
+      "serverLine": 622,
       "pathParams": [
         "projectId"
       ],
@@ -12543,7 +12588,7 @@
       "routePath": "/projects/:projectId/sensors",
       "file": "api/routes/iot.ts",
       "line": 136,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "projectId"
       ],
@@ -12567,7 +12612,7 @@
       "routePath": "/projects/:projectId/sensors",
       "file": "api/routes/iot.ts",
       "line": 128,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "projectId"
       ],
@@ -12591,7 +12636,7 @@
       "routePath": "/projects/:projectId/sensors/alerts",
       "file": "api/routes/iot.ts",
       "line": 174,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "projectId"
       ],
@@ -12615,7 +12660,7 @@
       "routePath": "/projects/:projectId/sov-items",
       "file": "api/routes/payApplications.ts",
       "line": 45,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "projectId"
       ],
@@ -12639,7 +12684,7 @@
       "routePath": "/projects/:projectId/sov-items",
       "file": "api/routes/payApplications.ts",
       "line": 52,
-      "serverLine": 568,
+      "serverLine": 569,
       "pathParams": [
         "projectId"
       ],
@@ -12663,7 +12708,7 @@
       "routePath": "/projects/:projectId/subcontracts",
       "file": "api/routes/subcontracts.ts",
       "line": 167,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "projectId"
       ],
@@ -12687,7 +12732,7 @@
       "routePath": "/projects/:projectId/subcontracts",
       "file": "api/routes/subcontracts.ts",
       "line": 155,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "projectId"
       ],
@@ -12711,7 +12756,7 @@
       "routePath": "/projects/:projectId/systems",
       "file": "api/routes/systems.ts",
       "line": 58,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "projectId"
       ],
@@ -12735,7 +12780,7 @@
       "routePath": "/projects/:projectId/systems",
       "file": "api/routes/systems.ts",
       "line": 66,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "projectId"
       ],
@@ -12759,7 +12804,7 @@
       "routePath": "/projects/:projectId/tags",
       "file": "api/routes/systems.ts",
       "line": 140,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "projectId"
       ],
@@ -12783,7 +12828,7 @@
       "routePath": "/projects/:projectId/team",
       "file": "api/routes/team.ts",
       "line": 122,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [
         "projectId"
       ],
@@ -12807,7 +12852,7 @@
       "routePath": "/projects/:projectId/test-packs",
       "file": "api/routes/testPacks.ts",
       "line": 51,
-      "serverLine": 586,
+      "serverLine": 587,
       "pathParams": [
         "projectId"
       ],
@@ -12831,7 +12876,7 @@
       "routePath": "/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
       "line": 48,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "projectId"
       ],
@@ -12855,7 +12900,7 @@
       "routePath": "/projects/:projectId/timesheets",
       "file": "api/routes/timesheets.ts",
       "line": 38,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "projectId"
       ],
@@ -12879,7 +12924,7 @@
       "routePath": "/projects/:projectId/timesheets/summary",
       "file": "api/routes/timesheets.ts",
       "line": 60,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "projectId"
       ],
@@ -12903,7 +12948,7 @@
       "routePath": "/projects/:projectId/turnover-packages",
       "file": "api/routes/turnover.ts",
       "line": 24,
-      "serverLine": 578,
+      "serverLine": 579,
       "pathParams": [
         "projectId"
       ],
@@ -12927,7 +12972,7 @@
       "routePath": "/projects/:projectId/turnover-packages",
       "file": "api/routes/turnover.ts",
       "line": 30,
-      "serverLine": 578,
+      "serverLine": 579,
       "pathParams": [
         "projectId"
       ],
@@ -12951,7 +12996,7 @@
       "routePath": "/projects/:projectId/vendor-scorecard",
       "file": "api/routes/vendorScorecard.ts",
       "line": 19,
-      "serverLine": 573,
+      "serverLine": 574,
       "pathParams": [
         "projectId"
       ],
@@ -12975,7 +13020,7 @@
       "routePath": "/proposals",
       "file": "api/routes/proposals.ts",
       "line": 65,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -12995,7 +13040,7 @@
       "routePath": "/proposals",
       "file": "api/routes/proposals.ts",
       "line": 55,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13015,7 +13060,7 @@
       "routePath": "/proposals/:id",
       "file": "api/routes/proposals.ts",
       "line": 78,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13037,7 +13082,7 @@
       "routePath": "/proposals/:id",
       "file": "api/routes/proposals.ts",
       "line": 87,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13059,7 +13104,7 @@
       "routePath": "/proposals/:id/items",
       "file": "api/routes/proposals.ts",
       "line": 136,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13081,7 +13126,7 @@
       "routePath": "/proposals/:id/items",
       "file": "api/routes/proposals.ts",
       "line": 144,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13103,7 +13148,7 @@
       "routePath": "/proposals/:id/items/:itemId",
       "file": "api/routes/proposals.ts",
       "line": 163,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id",
         "itemId"
@@ -13126,7 +13171,7 @@
       "routePath": "/proposals/:id/items/:itemId",
       "file": "api/routes/proposals.ts",
       "line": 154,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id",
         "itemId"
@@ -13149,7 +13194,7 @@
       "routePath": "/proposals/:id/lost",
       "file": "api/routes/proposals.ts",
       "line": 116,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13171,7 +13216,7 @@
       "routePath": "/proposals/:id/no-bid",
       "file": "api/routes/proposals.ts",
       "line": 125,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13193,7 +13238,7 @@
       "routePath": "/proposals/:id/submit",
       "file": "api/routes/proposals.ts",
       "line": 98,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13215,7 +13260,7 @@
       "routePath": "/proposals/:id/won",
       "file": "api/routes/proposals.ts",
       "line": 107,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [
         "id"
       ],
@@ -13237,7 +13282,7 @@
       "routePath": "/proposals/summary",
       "file": "api/routes/proposals.ts",
       "line": 45,
-      "serverLine": 630,
+      "serverLine": 632,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13257,7 +13302,7 @@
       "routePath": "/punch-items/:id",
       "file": "api/routes/punchLists.ts",
       "line": 310,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13281,7 +13326,7 @@
       "routePath": "/punch-items/:id",
       "file": "api/routes/punchLists.ts",
       "line": 252,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13305,7 +13350,7 @@
       "routePath": "/punch-items/:id/close",
       "file": "api/routes/punchLists.ts",
       "line": 292,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13329,7 +13374,7 @@
       "routePath": "/punch-items/:id/verify",
       "file": "api/routes/punchLists.ts",
       "line": 274,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13353,7 +13398,7 @@
       "routePath": "/punch-lists/:id",
       "file": "api/routes/punchLists.ts",
       "line": 140,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13377,7 +13422,7 @@
       "routePath": "/punch-lists/:id",
       "file": "api/routes/punchLists.ts",
       "line": 93,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13401,7 +13446,7 @@
       "routePath": "/punch-lists/:id",
       "file": "api/routes/punchLists.ts",
       "line": 118,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13425,7 +13470,7 @@
       "routePath": "/punch-lists/:id/items",
       "file": "api/routes/punchLists.ts",
       "line": 153,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13449,7 +13494,7 @@
       "routePath": "/punch-lists/:id/items",
       "file": "api/routes/punchLists.ts",
       "line": 186,
-      "serverLine": 584,
+      "serverLine": 585,
       "pathParams": [
         "id"
       ],
@@ -13473,7 +13518,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 163,
-      "serverLine": 536,
+      "serverLine": 537,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13495,7 +13540,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 232,
-      "serverLine": 536,
+      "serverLine": 537,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13515,7 +13560,7 @@
       "routePath": "/:id",
       "file": "api/routes/procurement.ts",
       "line": 212,
-      "serverLine": 536,
+      "serverLine": 537,
       "pathParams": [
         "id"
       ],
@@ -13539,7 +13584,7 @@
       "routePath": "/:id",
       "file": "api/routes/procurement.ts",
       "line": 248,
-      "serverLine": 536,
+      "serverLine": 537,
       "pathParams": [
         "id"
       ],
@@ -13563,7 +13608,7 @@
       "routePath": "/:id/approve",
       "file": "api/routes/procurement.ts",
       "line": 270,
-      "serverLine": 536,
+      "serverLine": 537,
       "pathParams": [
         "id"
       ],
@@ -13587,7 +13632,7 @@
       "routePath": "/overview",
       "file": "api/routes/readiness.ts",
       "line": 98,
-      "serverLine": 593,
+      "serverLine": 594,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13608,7 +13653,7 @@
       "routePath": "/project/:id",
       "file": "api/routes/readiness.ts",
       "line": 23,
-      "serverLine": 593,
+      "serverLine": 594,
       "pathParams": [
         "id"
       ],
@@ -13633,7 +13678,7 @@
       "routePath": "/project/:id/history",
       "file": "api/routes/readiness.ts",
       "line": 79,
-      "serverLine": 593,
+      "serverLine": 594,
       "pathParams": [
         "id"
       ],
@@ -13658,7 +13703,7 @@
       "routePath": "/subsystem/:id",
       "file": "api/routes/readiness.ts",
       "line": 67,
-      "serverLine": 593,
+      "serverLine": 594,
       "pathParams": [
         "id"
       ],
@@ -13683,7 +13728,7 @@
       "routePath": "/system/:id",
       "file": "api/routes/readiness.ts",
       "line": 49,
-      "serverLine": 593,
+      "serverLine": 594,
       "pathParams": [
         "id"
       ],
@@ -13708,7 +13753,7 @@
       "routePath": "/related/:source/:id",
       "file": "api/routes/related.ts",
       "line": 50,
-      "serverLine": 577,
+      "serverLine": 578,
       "pathParams": [
         "source",
         "id"
@@ -13732,7 +13777,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 297,
-      "serverLine": 537,
+      "serverLine": 538,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13754,7 +13799,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 341,
-      "serverLine": 537,
+      "serverLine": 538,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -13774,7 +13819,7 @@
       "routePath": "/:id/copilot",
       "file": "api/routes/rfiCopilot.ts",
       "line": 21,
-      "serverLine": 538,
+      "serverLine": 539,
       "pathParams": [
         "id"
       ],
@@ -13799,7 +13844,7 @@
       "routePath": "/:id/respond",
       "file": "api/routes/procurement.ts",
       "line": 369,
-      "serverLine": 537,
+      "serverLine": 538,
       "pathParams": [
         "id"
       ],
@@ -13823,7 +13868,7 @@
       "routePath": "/risks/:id",
       "file": "api/routes/riskRegister.ts",
       "line": 65,
-      "serverLine": 635,
+      "serverLine": 637,
       "pathParams": [
         "id"
       ],
@@ -13847,7 +13892,7 @@
       "routePath": "/risks/:id",
       "file": "api/routes/riskRegister.ts",
       "line": 74,
-      "serverLine": 635,
+      "serverLine": 637,
       "pathParams": [
         "id"
       ],
@@ -13871,7 +13916,7 @@
       "routePath": "/risks/:id/close",
       "file": "api/routes/riskRegister.ts",
       "line": 83,
-      "serverLine": 635,
+      "serverLine": 637,
       "pathParams": [
         "id"
       ],
@@ -13895,7 +13940,7 @@
       "routePath": "/",
       "file": "api/routes/runbooks.ts",
       "line": 22,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -13914,7 +13959,7 @@
       "routePath": "/",
       "file": "api/routes/runbooks.ts",
       "line": 37,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -13933,7 +13978,7 @@
       "routePath": "/:id/execute",
       "file": "api/routes/runbooks.ts",
       "line": 63,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [
         "id"
       ],
@@ -13954,7 +13999,7 @@
       "routePath": "/:id/executions",
       "file": "api/routes/runbooks.ts",
       "line": 94,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [
         "id"
       ],
@@ -13975,7 +14020,7 @@
       "routePath": "/:id/simulate",
       "file": "api/routes/runbooks.ts",
       "line": 80,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [
         "id"
       ],
@@ -13996,7 +14041,7 @@
       "routePath": "/executions/:execId/approve/:stepIndex",
       "file": "api/routes/runbooks.ts",
       "line": 115,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [
         "execId",
         "stepIndex"
@@ -14018,7 +14063,7 @@
       "routePath": "/executions/:execId/rollback",
       "file": "api/routes/runbooks.ts",
       "line": 108,
-      "serverLine": 596,
+      "serverLine": 597,
       "pathParams": [
         "execId"
       ],
@@ -14039,7 +14084,7 @@
       "routePath": "/safety/exposure-hours",
       "file": "api/routes/safety.ts",
       "line": 204,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14059,7 +14104,7 @@
       "routePath": "/safety/exposure-hours",
       "file": "api/routes/safety.ts",
       "line": 208,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14079,7 +14124,7 @@
       "routePath": "/safety/incidents/:id",
       "file": "api/routes/safety.ts",
       "line": 88,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "id"
       ],
@@ -14103,7 +14148,7 @@
       "routePath": "/safety/incidents/:id/recordable",
       "file": "api/routes/safety.ts",
       "line": 128,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "id"
       ],
@@ -14127,7 +14172,7 @@
       "routePath": "/safety/observations/:id",
       "file": "api/routes/safety.ts",
       "line": 59,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [
         "id"
       ],
@@ -14151,7 +14196,7 @@
       "routePath": "/safety/trir",
       "file": "api/routes/safety.ts",
       "line": 238,
-      "serverLine": 570,
+      "serverLine": 571,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14173,7 +14218,7 @@
       "routePath": "/sc-invoices/:id/approve",
       "file": "api/routes/subcontracts.ts",
       "line": 226,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -14197,7 +14242,7 @@
       "routePath": "/sc-invoices/:id/reject",
       "file": "api/routes/subcontracts.ts",
       "line": 236,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -14221,7 +14266,7 @@
       "routePath": "/sc-invoices/:id/submit",
       "file": "api/routes/subcontracts.ts",
       "line": 217,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -14245,7 +14290,7 @@
       "routePath": "/",
       "file": "api/routes/scenarios.ts",
       "line": 26,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14265,7 +14310,7 @@
       "routePath": "/",
       "file": "api/routes/scenarios.ts",
       "line": 15,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14285,7 +14330,7 @@
       "routePath": "/:scenarioId",
       "file": "api/routes/scenarios.ts",
       "line": 42,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "scenarioId"
       ],
@@ -14307,7 +14352,7 @@
       "routePath": "/:scenarioId/cancel",
       "file": "api/routes/scenarios.ts",
       "line": 63,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "scenarioId"
       ],
@@ -14329,7 +14374,7 @@
       "routePath": "/:scenarioId/run",
       "file": "api/routes/scenarios.ts",
       "line": 53,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "scenarioId"
       ],
@@ -14351,7 +14396,7 @@
       "routePath": "/projection/:twinId",
       "file": "api/routes/scenarios.ts",
       "line": 75,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "twinId"
       ],
@@ -14375,7 +14420,7 @@
       "routePath": "/temporal/:twinId/at",
       "file": "api/routes/scenarios.ts",
       "line": 88,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "twinId"
       ],
@@ -14399,7 +14444,7 @@
       "routePath": "/temporal/:twinId/diff",
       "file": "api/routes/scenarios.ts",
       "line": 112,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "twinId"
       ],
@@ -14423,7 +14468,7 @@
       "routePath": "/temporal/:twinId/replay",
       "file": "api/routes/scenarios.ts",
       "line": 100,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "twinId"
       ],
@@ -14447,7 +14492,7 @@
       "routePath": "/temporal/:twinId/trend/:field",
       "file": "api/routes/scenarios.ts",
       "line": 135,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "twinId",
         "field"
@@ -14472,7 +14517,7 @@
       "routePath": "/temporal/:twinId/velocity",
       "file": "api/routes/scenarios.ts",
       "line": 124,
-      "serverLine": 612,
+      "serverLine": 613,
       "pathParams": [
         "twinId"
       ],
@@ -14496,7 +14541,7 @@
       "routePath": "/:projectId/cpm",
       "file": "api/routes/schedule.ts",
       "line": 191,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "projectId"
       ],
@@ -14520,7 +14565,7 @@
       "routePath": "/:projectId/critical-path",
       "file": "api/routes/scheduleCriticalPath.ts",
       "line": 19,
-      "serverLine": 555,
+      "serverLine": 556,
       "pathParams": [
         "projectId"
       ],
@@ -14544,7 +14589,7 @@
       "routePath": "/:projectId/dependencies",
       "file": "api/routes/schedule.ts",
       "line": 126,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "projectId"
       ],
@@ -14568,7 +14613,7 @@
       "routePath": "/:projectId/dependencies",
       "file": "api/routes/schedule.ts",
       "line": 142,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "projectId"
       ],
@@ -14592,7 +14637,7 @@
       "routePath": "/:projectId/forecast",
       "file": "api/routes/scheduleForecast.ts",
       "line": 21,
-      "serverLine": 554,
+      "serverLine": 555,
       "pathParams": [
         "projectId"
       ],
@@ -14616,7 +14661,7 @@
       "routePath": "/:projectId/tasks",
       "file": "api/routes/schedule.ts",
       "line": 36,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "projectId"
       ],
@@ -14640,7 +14685,7 @@
       "routePath": "/:projectId/tasks",
       "file": "api/routes/schedule.ts",
       "line": 52,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "projectId"
       ],
@@ -14664,7 +14709,7 @@
       "routePath": "/:projectId/what-if",
       "file": "api/routes/scheduleCriticalPath.ts",
       "line": 28,
-      "serverLine": 555,
+      "serverLine": 556,
       "pathParams": [
         "projectId"
       ],
@@ -14688,7 +14733,7 @@
       "routePath": "/dependencies/:id",
       "file": "api/routes/schedule.ts",
       "line": 175,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "id"
       ],
@@ -14712,7 +14757,7 @@
       "routePath": "/tasks/:id",
       "file": "api/routes/schedule.ts",
       "line": 110,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "id"
       ],
@@ -14736,7 +14781,7 @@
       "routePath": "/tasks/:id",
       "file": "api/routes/schedule.ts",
       "line": 82,
-      "serverLine": 553,
+      "serverLine": 554,
       "pathParams": [
         "id"
       ],
@@ -14760,7 +14805,7 @@
       "routePath": "/audit",
       "file": "api/routes/scim.ts",
       "line": 643,
-      "serverLine": 459,
+      "serverLine": 460,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14780,7 +14825,7 @@
       "routePath": "/tokens",
       "file": "api/routes/scim.ts",
       "line": 619,
-      "serverLine": 459,
+      "serverLine": 460,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14800,7 +14845,7 @@
       "routePath": "/tokens",
       "file": "api/routes/scim.ts",
       "line": 587,
-      "serverLine": 459,
+      "serverLine": 460,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14822,7 +14867,7 @@
       "routePath": "/tokens/:id",
       "file": "api/routes/scim.ts",
       "line": 631,
-      "serverLine": 459,
+      "serverLine": 460,
       "pathParams": [
         "id"
       ],
@@ -14846,7 +14891,7 @@
       "routePath": "/sensors/:id",
       "file": "api/routes/iot.ts",
       "line": 144,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "id"
       ],
@@ -14870,7 +14915,7 @@
       "routePath": "/sensors/:id/readings",
       "file": "api/routes/iot.ts",
       "line": 162,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "id"
       ],
@@ -14894,7 +14939,7 @@
       "routePath": "/sensors/:id/thresholds",
       "file": "api/routes/iot.ts",
       "line": 153,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "id"
       ],
@@ -14918,7 +14963,7 @@
       "routePath": "/sensors/:uid/readings",
       "file": "api/routes/iot.ts",
       "line": 244,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "uid"
       ],
@@ -14938,7 +14983,7 @@
       "routePath": "/sensors/alerts/:alertId/acknowledge",
       "file": "api/routes/iot.ts",
       "line": 182,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [
         "alertId"
       ],
@@ -14962,7 +15007,7 @@
       "routePath": "/sensors/tokens",
       "file": "api/routes/iot.ts",
       "line": 190,
-      "serverLine": 622,
+      "serverLine": 623,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -14982,7 +15027,7 @@
       "routePath": "/",
       "file": "api/routes/simulation.ts",
       "line": 58,
-      "serverLine": 598,
+      "serverLine": 599,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -15001,7 +15046,7 @@
       "routePath": "/:id/results",
       "file": "api/routes/simulation.ts",
       "line": 50,
-      "serverLine": 598,
+      "serverLine": 599,
       "pathParams": [
         "id"
       ],
@@ -15022,7 +15067,7 @@
       "routePath": "/replay",
       "file": "api/routes/simulation.ts",
       "line": 23,
-      "serverLine": 598,
+      "serverLine": 599,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -15045,7 +15090,7 @@
       "routePath": "/what-if",
       "file": "api/routes/simulation.ts",
       "line": 36,
-      "serverLine": 598,
+      "serverLine": 599,
       "pathParams": [],
       "guards": [
         "requireAuth"
@@ -15064,7 +15109,7 @@
       "routePath": "/subcontracts/:id",
       "file": "api/routes/subcontracts.ts",
       "line": 175,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -15088,7 +15133,7 @@
       "routePath": "/subcontracts/:id/invoices",
       "file": "api/routes/subcontracts.ts",
       "line": 209,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -15112,7 +15157,7 @@
       "routePath": "/subcontracts/:id/invoices",
       "file": "api/routes/subcontracts.ts",
       "line": 197,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -15136,7 +15181,7 @@
       "routePath": "/subcontracts/:id/status",
       "file": "api/routes/subcontracts.ts",
       "line": 184,
-      "serverLine": 626,
+      "serverLine": 628,
       "pathParams": [
         "id"
       ],
@@ -15160,7 +15205,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 390,
-      "serverLine": 539,
+      "serverLine": 540,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15182,7 +15227,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 427,
-      "serverLine": 539,
+      "serverLine": 540,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15202,7 +15247,7 @@
       "routePath": "/:id",
       "file": "api/routes/procurement.ts",
       "line": 455,
-      "serverLine": 539,
+      "serverLine": 540,
       "pathParams": [
         "id"
       ],
@@ -15226,7 +15271,7 @@
       "routePath": "/:id/review",
       "file": "api/routes/submittalReview.ts",
       "line": 21,
-      "serverLine": 540,
+      "serverLine": 541,
       "pathParams": [
         "id"
       ],
@@ -15250,7 +15295,7 @@
       "routePath": "/:id/review",
       "file": "api/routes/procurement.ts",
       "line": 489,
-      "serverLine": 539,
+      "serverLine": 540,
       "pathParams": [
         "id"
       ],
@@ -15274,7 +15319,7 @@
       "routePath": "/subsystems/:subsystemId",
       "file": "api/routes/systems.ts",
       "line": 125,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "subsystemId"
       ],
@@ -15298,7 +15343,7 @@
       "routePath": "/",
       "file": "api/routes/integrations.ts",
       "line": 403,
-      "serverLine": 544,
+      "serverLine": 545,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15318,7 +15363,7 @@
       "routePath": "/conflicts",
       "file": "api/routes/sync.ts",
       "line": 129,
-      "serverLine": 594,
+      "serverLine": 595,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15338,7 +15383,7 @@
       "routePath": "/pull",
       "file": "api/routes/sync.ts",
       "line": 91,
-      "serverLine": 594,
+      "serverLine": 595,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15358,7 +15403,7 @@
       "routePath": "/register",
       "file": "api/routes/sync.ts",
       "line": 22,
-      "serverLine": 594,
+      "serverLine": 595,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15378,7 +15423,7 @@
       "routePath": "/resolve",
       "file": "api/routes/sync.ts",
       "line": 101,
-      "serverLine": 594,
+      "serverLine": 595,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15398,7 +15443,7 @@
       "routePath": "/upload",
       "file": "api/routes/sync.ts",
       "line": 55,
-      "serverLine": 594,
+      "serverLine": 595,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15418,7 +15463,7 @@
       "routePath": "/systems/:systemId",
       "file": "api/routes/systems.ts",
       "line": 87,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "systemId"
       ],
@@ -15442,7 +15487,7 @@
       "routePath": "/systems/:systemId/subsystems",
       "file": "api/routes/systems.ts",
       "line": 103,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "systemId"
       ],
@@ -15466,7 +15511,7 @@
       "routePath": "/systems/:systemId/tags",
       "file": "api/routes/systems.ts",
       "line": 148,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "systemId"
       ],
@@ -15490,7 +15535,7 @@
       "routePath": "/tags/:tagId",
       "file": "api/routes/systems.ts",
       "line": 175,
-      "serverLine": 585,
+      "serverLine": 586,
       "pathParams": [
         "tagId"
       ],
@@ -15514,7 +15559,7 @@
       "routePath": "/team/assignments",
       "file": "api/routes/team.ts",
       "line": 112,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15538,7 +15583,7 @@
       "routePath": "/team/assignments/:id/end",
       "file": "api/routes/team.ts",
       "line": 128,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [
         "id"
       ],
@@ -15562,7 +15607,7 @@
       "routePath": "/team/members",
       "file": "api/routes/team.ts",
       "line": 53,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15582,7 +15627,7 @@
       "routePath": "/team/members",
       "file": "api/routes/team.ts",
       "line": 43,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15602,7 +15647,7 @@
       "routePath": "/team/members/:id",
       "file": "api/routes/team.ts",
       "line": 64,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [
         "id"
       ],
@@ -15626,7 +15671,7 @@
       "routePath": "/team/members/:id",
       "file": "api/routes/team.ts",
       "line": 84,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [
         "id"
       ],
@@ -15648,7 +15693,7 @@
       "routePath": "/team/members/:id/assignments",
       "file": "api/routes/team.ts",
       "line": 93,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [
         "id"
       ],
@@ -15672,7 +15717,7 @@
       "routePath": "/team/members/:memberId/timesheets",
       "file": "api/routes/timesheets.ts",
       "line": 68,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "memberId"
       ],
@@ -15696,7 +15741,7 @@
       "routePath": "/team/summary",
       "file": "api/routes/team.ts",
       "line": 37,
-      "serverLine": 631,
+      "serverLine": 633,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15716,7 +15761,7 @@
       "routePath": "/",
       "file": "api/routes/tenants.ts",
       "line": 45,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [],
       "guards": [
         "rateLimit",
@@ -15735,7 +15780,7 @@
       "routePath": "/me",
       "file": "api/routes/tenants.ts",
       "line": 114,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15755,7 +15800,7 @@
       "routePath": "/me",
       "file": "api/routes/tenants.ts",
       "line": 128,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15775,7 +15820,7 @@
       "routePath": "/me/usage",
       "file": "api/routes/tenants.ts",
       "line": 261,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15795,7 +15840,7 @@
       "routePath": "/me/users",
       "file": "api/routes/tenants.ts",
       "line": 153,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15815,7 +15860,7 @@
       "routePath": "/me/users",
       "file": "api/routes/tenants.ts",
       "line": 168,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15835,7 +15880,7 @@
       "routePath": "/me/users/:userId",
       "file": "api/routes/tenants.ts",
       "line": 244,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [
         "userId"
       ],
@@ -15857,7 +15902,7 @@
       "routePath": "/me/users/:userId",
       "file": "api/routes/tenants.ts",
       "line": 212,
-      "serverLine": 522,
+      "serverLine": 523,
       "pathParams": [
         "userId"
       ],
@@ -15879,7 +15924,7 @@
       "routePath": "/test-packs",
       "file": "api/routes/testPacks.ts",
       "line": 59,
-      "serverLine": 586,
+      "serverLine": 587,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15899,7 +15944,7 @@
       "routePath": "/test-packs/:packId",
       "file": "api/routes/testPacks.ts",
       "line": 90,
-      "serverLine": 586,
+      "serverLine": 587,
       "pathParams": [
         "packId"
       ],
@@ -15923,7 +15968,7 @@
       "routePath": "/test-packs/:packId",
       "file": "api/routes/testPacks.ts",
       "line": 98,
-      "serverLine": 586,
+      "serverLine": 587,
       "pathParams": [
         "packId"
       ],
@@ -15947,7 +15992,7 @@
       "routePath": "/test-results",
       "file": "api/routes/testResults.ts",
       "line": 48,
-      "serverLine": 587,
+      "serverLine": 588,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -15967,7 +16012,7 @@
       "routePath": "/test-results/:resultId",
       "file": "api/routes/testResults.ts",
       "line": 82,
-      "serverLine": 587,
+      "serverLine": 588,
       "pathParams": [
         "resultId"
       ],
@@ -15991,7 +16036,7 @@
       "routePath": "/timesheets/:id/approve",
       "file": "api/routes/timesheets.ts",
       "line": 94,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "id"
       ],
@@ -16015,7 +16060,7 @@
       "routePath": "/timesheets/:id/reject",
       "file": "api/routes/timesheets.ts",
       "line": 103,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "id"
       ],
@@ -16039,7 +16084,7 @@
       "routePath": "/timesheets/:id/submit",
       "file": "api/routes/timesheets.ts",
       "line": 85,
-      "serverLine": 634,
+      "serverLine": 636,
       "pathParams": [
         "id"
       ],
@@ -16063,7 +16108,7 @@
       "routePath": "/",
       "file": "api/routes/transmittals.ts",
       "line": 82,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16085,7 +16130,7 @@
       "routePath": "/",
       "file": "api/routes/transmittals.ts",
       "line": 65,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16105,7 +16150,7 @@
       "routePath": "/:id",
       "file": "api/routes/transmittals.ts",
       "line": 109,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [
         "id"
       ],
@@ -16129,7 +16174,7 @@
       "routePath": "/:id/close",
       "file": "api/routes/transmittals.ts",
       "line": 145,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [
         "id"
       ],
@@ -16153,7 +16198,7 @@
       "routePath": "/:id/respond",
       "file": "api/routes/transmittals.ts",
       "line": 130,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [
         "id"
       ],
@@ -16177,7 +16222,7 @@
       "routePath": "/:id/send",
       "file": "api/routes/transmittals.ts",
       "line": 120,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [
         "id"
       ],
@@ -16201,7 +16246,7 @@
       "routePath": "/overdue",
       "file": "api/routes/transmittals.ts",
       "line": 43,
-      "serverLine": 619,
+      "serverLine": 620,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16223,7 +16268,7 @@
       "routePath": "/turnover-packages/:id",
       "file": "api/routes/turnover.ts",
       "line": 40,
-      "serverLine": 578,
+      "serverLine": 579,
       "pathParams": [
         "id"
       ],
@@ -16247,7 +16292,7 @@
       "routePath": "/turnover-packages/:id/accept",
       "file": "api/routes/turnover.ts",
       "line": 51,
-      "serverLine": 578,
+      "serverLine": 579,
       "pathParams": [
         "id"
       ],
@@ -16271,7 +16316,7 @@
       "routePath": "/",
       "file": "api/routes/twin.ts",
       "line": 33,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16291,7 +16336,7 @@
       "routePath": "/",
       "file": "api/routes/twin.ts",
       "line": 23,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16311,7 +16356,7 @@
       "routePath": "/:twinId",
       "file": "api/routes/twin.ts",
       "line": 50,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16335,7 +16380,7 @@
       "routePath": "/:twinId/events",
       "file": "api/routes/twin.ts",
       "line": 128,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16359,7 +16404,7 @@
       "routePath": "/:twinId/impact",
       "file": "api/routes/twin.ts",
       "line": 257,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16383,7 +16428,7 @@
       "routePath": "/:twinId/relationships",
       "file": "api/routes/twin.ts",
       "line": 215,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16407,7 +16452,7 @@
       "routePath": "/:twinId/relationships",
       "file": "api/routes/twin.ts",
       "line": 201,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16431,7 +16476,7 @@
       "routePath": "/:twinId/relationships",
       "file": "api/routes/twin.ts",
       "line": 191,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16455,7 +16500,7 @@
       "routePath": "/:twinId/risk-propagation",
       "file": "api/routes/twin.ts",
       "line": 268,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16479,7 +16524,7 @@
       "routePath": "/:twinId/snapshots",
       "file": "api/routes/twin.ts",
       "line": 141,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16503,7 +16548,7 @@
       "routePath": "/:twinId/snapshots",
       "file": "api/routes/twin.ts",
       "line": 177,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16527,7 +16572,7 @@
       "routePath": "/:twinId/snapshots/:snapshotId",
       "file": "api/routes/twin.ts",
       "line": 166,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId",
         "snapshotId"
@@ -16552,7 +16597,7 @@
       "routePath": "/:twinId/snapshots/latest",
       "file": "api/routes/twin.ts",
       "line": 155,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16576,7 +16621,7 @@
       "routePath": "/:twinId/state",
       "file": "api/routes/twin.ts",
       "line": 94,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16600,7 +16645,7 @@
       "routePath": "/:twinId/status",
       "file": "api/routes/twin.ts",
       "line": 82,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16624,7 +16669,7 @@
       "routePath": "/:twinId/sync",
       "file": "api/routes/twin.ts",
       "line": 105,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16648,7 +16693,7 @@
       "routePath": "/:twinId/traverse",
       "file": "api/routes/twin.ts",
       "line": 245,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "twinId"
       ],
@@ -16672,7 +16717,7 @@
       "routePath": "/entity/:entityType/:entityId",
       "file": "api/routes/twin.ts",
       "line": 61,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [
         "entityType",
         "entityId"
@@ -16697,7 +16742,7 @@
       "routePath": "/graph/overview",
       "file": "api/routes/twin.ts",
       "line": 228,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16717,7 +16762,7 @@
       "routePath": "/register-sync",
       "file": "api/routes/twin.ts",
       "line": 115,
-      "serverLine": 610,
+      "serverLine": 611,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16737,7 +16782,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 43,
-      "serverLine": 535,
+      "serverLine": 536,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16757,7 +16802,7 @@
       "routePath": "/",
       "file": "api/routes/procurement.ts",
       "line": 95,
-      "serverLine": 535,
+      "serverLine": 536,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16777,7 +16822,7 @@
       "routePath": "/:id",
       "file": "api/routes/procurement.ts",
       "line": 77,
-      "serverLine": 535,
+      "serverLine": 536,
       "pathParams": [
         "id"
       ],
@@ -16799,7 +16844,7 @@
       "routePath": "/:id",
       "file": "api/routes/procurement.ts",
       "line": 109,
-      "serverLine": 535,
+      "serverLine": 536,
       "pathParams": [
         "id"
       ],
@@ -16821,7 +16866,7 @@
       "routePath": "/:id/approve",
       "file": "api/routes/procurement.ts",
       "line": 140,
-      "serverLine": 535,
+      "serverLine": 536,
       "pathParams": [
         "id"
       ],
@@ -16843,7 +16888,7 @@
       "routePath": "/",
       "file": "api/routes/integrations.ts",
       "line": 331,
-      "serverLine": 543,
+      "serverLine": 544,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16863,7 +16908,7 @@
       "routePath": "/",
       "file": "api/routes/integrations.ts",
       "line": 341,
-      "serverLine": 543,
+      "serverLine": 544,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -16883,7 +16928,7 @@
       "routePath": "/:id",
       "file": "api/routes/integrations.ts",
       "line": 377,
-      "serverLine": 543,
+      "serverLine": 544,
       "pathParams": [
         "id"
       ],
@@ -16905,7 +16950,7 @@
       "routePath": "/:id",
       "file": "api/routes/integrations.ts",
       "line": 359,
-      "serverLine": 543,
+      "serverLine": 544,
       "pathParams": [
         "id"
       ],
@@ -16927,7 +16972,7 @@
       "routePath": "/:id/deliveries",
       "file": "api/routes/integrations.ts",
       "line": 387,
-      "serverLine": 543,
+      "serverLine": 544,
       "pathParams": [
         "id"
       ],
@@ -16967,7 +17012,7 @@
       "routePath": "/openapi.json",
       "file": "api/routes/openapi.ts",
       "line": 14,
-      "serverLine": 273,
+      "serverLine": 274,
       "pathParams": [],
       "guards": [],
       "capabilities": [],
@@ -16982,7 +17027,7 @@
       "routePath": "/:tenantSlug/callback",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 109,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -16999,7 +17044,7 @@
       "routePath": "/:tenantSlug/config",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 366,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17020,7 +17065,7 @@
       "routePath": "/:tenantSlug/config",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 254,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17041,7 +17086,7 @@
       "routePath": "/:tenantSlug/config/metadata",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 327,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17062,7 +17107,7 @@
       "routePath": "/:tenantSlug/login",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 80,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17079,7 +17124,7 @@
       "routePath": "/:tenantSlug/metadata",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 45,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17096,7 +17141,7 @@
       "routePath": "/:tenantSlug/setup",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 213,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17117,7 +17162,7 @@
       "routePath": "/:tenantSlug/slo",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 200,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [
         "tenantSlug"
       ],
@@ -17134,7 +17179,7 @@
       "routePath": "/admin/certificates/rotate",
       "file": "api/auth/saml/samlRoutes.ts",
       "line": 388,
-      "serverLine": 452,
+      "serverLine": 453,
       "pathParams": [],
       "guards": [
         "requireAuth",
@@ -17153,7 +17198,7 @@
       "routePath": "/Schemas",
       "file": "api/routes/scim.ts",
       "line": 239,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [],
       "guards": [],
       "capabilities": [],
@@ -17168,7 +17213,7 @@
       "routePath": "/ServiceProviderConfig",
       "file": "api/routes/scim.ts",
       "line": 215,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [],
       "guards": [],
       "capabilities": [],
@@ -17183,7 +17228,7 @@
       "routePath": "/Users",
       "file": "api/routes/scim.ts",
       "line": 274,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [],
       "guards": [],
       "capabilities": [],
@@ -17198,7 +17243,7 @@
       "routePath": "/Users",
       "file": "api/routes/scim.ts",
       "line": 338,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [],
       "guards": [],
       "capabilities": [],
@@ -17213,7 +17258,7 @@
       "routePath": "/Users/:id",
       "file": "api/routes/scim.ts",
       "line": 545,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [
         "id"
       ],
@@ -17230,7 +17275,7 @@
       "routePath": "/Users/:id",
       "file": "api/routes/scim.ts",
       "line": 318,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [
         "id"
       ],
@@ -17247,7 +17292,7 @@
       "routePath": "/Users/:id",
       "file": "api/routes/scim.ts",
       "line": 459,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [
         "id"
       ],
@@ -17264,7 +17309,7 @@
       "routePath": "/Users/:id",
       "file": "api/routes/scim.ts",
       "line": 416,
-      "serverLine": 458,
+      "serverLine": 459,
       "pathParams": [
         "id"
       ],

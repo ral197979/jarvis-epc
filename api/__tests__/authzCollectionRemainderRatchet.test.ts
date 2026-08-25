@@ -181,7 +181,7 @@ describe('every collection row model now has a scope policy', () => {
 describe('every unresolved collection data surface has a verdict', () => {
   it('covers all thirteen, with nothing unexplained', () => {
     const c = unresolvedCollectionCounters()
-    expect(c.total, 'Phase 3F left thirteen').toBe(14)
+    expect(c.total, 'Phase 3F left thirteen').toBe(15)
     expect(c.resolvedProjectBound + c.platform + c.tenantGlobal + c.nonProject
          + c.selfScoped + c.deferred).toBe(c.total)
     expect(c.unexplained, 'a verdict without an argument is a gap wearing a label').toBe(0)
@@ -191,7 +191,7 @@ describe('every unresolved collection data surface has a verdict', () => {
     const unresolved = new Set(registry.registry
       .filter(r => r.disposition === 'UNRESOLVED_DATA_ACCESS' && r.operationType === 'READ_COLLECTION')
       .map(r => `${r.method} ${r.path}`))
-    expect(unresolved.size).toBe(14)
+    expect(unresolved.size).toBe(15)
     for (const a of UNRESOLVED_COLLECTION_AUDIT) {
       expect(unresolved.has(a.endpoint), `${a.endpoint} is not an unresolved collection`).toBe(true)
     }
