@@ -69,8 +69,8 @@ describe('every project-bound collection is dispositioned', () => {
 
   it('reports the split this slice actually achieved', () => {
     const c = collectionScopeCounters()
-    expect(c.candidates, 'the corrected denominator, not the 58 Phase 3E-R reported').toBe(113)
-    expect(c.protected_).toBe(87)
+    expect(c.candidates, 'the corrected denominator, not the 58 Phase 3E-R reported').toBe(115)
+    expect(c.protected_).toBe(89)
     expect(c.selfScoped).toBe(7)
     expect(c.aggregate).toBe(19)
     expect(c.deferred, 'Phase 3G closed the last three').toBe(0)

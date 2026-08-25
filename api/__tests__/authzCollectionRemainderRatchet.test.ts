@@ -119,8 +119,8 @@ describe('every collection row model now has a scope policy', () => {
     const c = collectionScopeCounters()
     expect(c.deferred, 'Phase 3F deferred three; Phase 3G must leave none').toBe(0)
     expect(c.unexplained).toBe(0)
-    expect(c.candidates).toBe(113)
-    expect(c.protected_).toBe(87)
+    expect(c.candidates).toBe(115)
+    expect(c.protected_).toBe(89)
   })
 
   it('gives document_folders and source_uploads dual semantics, with evidence', () => {
@@ -293,11 +293,11 @@ describe('the direct-ID inventory reconciles with nothing unexplained', () => {
     // the numerator moves with it: the route arrives already scoped.
     // 62 with the repaired viewer route, which is also a project-bound
     // direct-ID read and is scoped from the moment it exists.
-    expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(63)
+    expect(direct.length, '63 before the repair; two were falsely project-bound').toBe(64)
     // 55 after Phase 3G; Phase 3H closed the twin projection route, which is the
     // last project-bound direct-ID read that was open for a MODEL reason.
     // Phase 3M: +1 for GET /api/v1/contracts/:id, which arrives already scoped.
-    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(59)
+    expect(direct.filter(r => r.enforcesRecordScope).length).toBe(60)
   })
 
   it('leaves open only SELF surfaces, whose guard is narrower than membership', () => {

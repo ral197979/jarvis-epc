@@ -903,6 +903,21 @@ export const RECORD_SCOPE_POLICIES: readonly RecordScopePolicy[] = [
     approveCapabilities: ['risk.approve'],
   },
   {
+    resource: 'crm_leads',
+    table: 'crm_leads',
+    capabilities: ['crm.view'],
+    strategy: 'PARENT_PROJECT',
+    projectSemantics: 'DUAL_PROJECT_OR_TENANT',
+    projectParentMutation: 'IMMUTABLE',
+    projectSemanticsEvidence:
+      'ADR-014 Phase 3N. Migration 002 declares `project_id UUID REFERENCES projects(id) ON DELETE SET NULL` — nullable, and SET NULL rather than CASCADE, so a lead OUTLIVES the project it was linked to. That is the designed state for a CRM: a lead is pre-award and usually precedes any project at all, which is the same argument Phase 3J accepted for `proposals`. Classifying it PROJECT_REQUIRED would make every unlinked lead unreachable by every principal including the Owner.',
+    scopeKey: 'crm_leads.project_id',
+    tenantRule: 'crm_leads.tenant_id = app.current_tenant_id',
+    reason: 'ADR-014 Phase 3N. crm.view is the capability the lead read surface declares; there are no write routes because the audit found no writer anywhere in the API.',
+    derivation: { kind: 'DIRECT_COLUMN', table: 'crm_leads', idColumn: 'id', tenantColumn: 'tenant_id', projectColumn: 'project_id' },
+    writeCapabilities: ['crm.write'],
+  },
+  {
     resource: 'contracts',
     table: 'contracts',
     capabilities: ['procurement.view'],
@@ -1512,6 +1527,21 @@ export interface CollectionScopeAdoption {
  * Phase-3F ratchet.
  */
 export const COLLECTION_SCOPE_ADOPTION: readonly CollectionScopeAdoption[] = [
+  // ── ADR-014 Phase 3N — the CRM lead read surface ─────────────────────────
+  // `crm_leads` is DUAL_PROJECT_OR_TENANT: project_id is nullable with ON
+  // DELETE SET NULL, so an unlinked lead is a designed state (a lead is
+  // pre-award and outlives any project). The predicate therefore keeps
+  // project-less leads visible to a crm.view holder while still requiring live
+  // membership for a lead that names a project.
+  { endpoint: 'GET /api/v1/leads', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
+    rows: 'crm_leads', capabilities: ['crm.view'],
+    disposition: 'PROTECTED_PHASE3F',
+    reason: 'Tenant-level collection of dual-parent rows. collectionScopeSql builds the predicate from the `crm_leads` policy inside the handler, ANDed outside the caller\'s stage filter and before LIMIT. No stage filter is implied: `stage` is an unconstrained VARCHAR with no CHECK, so the schema cannot say which stages mean "in the pipeline".' },
+  { endpoint: 'GET /api/v1/leads/summary', shape: 'TENANT_COLLECTION_PROJECT_ROWS',
+    rows: 'crm_leads', capabilities: ['crm.view'],
+    disposition: 'PROTECTED_PHASE3F',
+    reason: 'The dashboard aggregate. Same predicate applied to the grouped COUNT and SUM so the totals describe the authorized set. The weighted total is withheld entirely while any lead lacks a value or probability, because a NULL is an unknown contribution rather than a zero one.' },
+
   // ── ADR-014 Phase 3M — the contracts read surface ────────────────────────
   // Both collections apply the registry-driven predicate through
   // `collectionScopeSql` inside `contractService`, one level below the route.

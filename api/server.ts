@@ -164,6 +164,7 @@ import { evmRouter                    } from './routes/evm'                     
 import { scheduleImportRouter         } from './routes/scheduleImport'                                    // v10.4.0: P6 XER + MSP XML schedule import
 import { iotRouter                    } from './routes/iot'                                               // v10.5.0: IoT sensor ingest
 import { changeOrdersRouter           } from './routes/changeOrders'                                      // v10.7.0: Change Order Management
+import { leadsRouter                 } from './routes/leads'                                              // v10.15.0: CRM leads read API
 import { contractsRouter             } from './routes/contracts'                                          // v10.14.0: Contracts read API
 import { subcontractsRouter           } from './routes/subcontracts'                                      // v10.8.0: Bid Packages & Subcontracts
 import { meetingsRouter               } from './routes/meetings'                                           // v10.9.0: Meeting Minutes
@@ -620,6 +621,7 @@ app.use('/api/v1',                      evmRouter)               // v10.3.0: Ear
 app.use('/api/v1',                      scheduleImportRouter)    // v10.4.0: P6 XER + MSP XML import
 app.use('/api/v1',                      iotRouter)               // v10.5.0: IoT sensor ingest
 app.use('/api/v1',                      changeOrdersRouter)      // v10.7.0: Change Order Management
+app.use('/api/v1/leads',                leadsRouter)             // v10.15.0: CRM leads (pre-award), read-only
 app.use('/api/v1/contracts',            contractsRouter)         // v10.14.0: Contracts (vendor commitments), read-only
 app.use('/api/v1',                      subcontractsRouter)      // v10.8.0: Bid Packages & Subcontracts
 app.use('/api/v1',                      meetingsRouter)          // v10.9.0: Meeting Minutes

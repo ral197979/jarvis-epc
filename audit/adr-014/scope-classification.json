@@ -1,13 +1,13 @@
 {
   "generatedFrom": "endpoint-inventory + route-data-access + schema-project-parent-map",
   "counters": {
-    "TOTAL_API_ENDPOINTS": 776,
+    "TOTAL_API_ENDPOINTS": 779,
     "DISPOSITIONS": {
       "SERVICE_BOUNDARY": 31,
       "TENANT_GLOBAL": 253,
       "NO_PROJECT_PARENT": 39,
-      "PROJECT_CHILD_TENANT_COLLECTION": 48,
-      "PROJECT_CHILD_RECORD_ID": 188,
+      "PROJECT_CHILD_TENANT_COLLECTION": 50,
+      "PROJECT_CHILD_RECORD_ID": 189,
       "UNRESOLVED_DATA_ACCESS": 32,
       "SELF_SCOPED": 16,
       "PROJECT_CHILD_BODY_PROJECT": 13,
@@ -20,10 +20,10 @@
       "PUBLIC_UNAUTHENTICATED": 1
     },
     "UNEXPLAINED": 0,
-    "PROJECT_BOUND_TOTAL": 360,
+    "PROJECT_BOUND_TOTAL": 363,
     "PROJECT_BOUND_BY_OPERATION": {
-      "READ_COLLECTION": 113,
-      "READ_DIRECT_ID": 63,
+      "READ_COLLECTION": 115,
+      "READ_DIRECT_ID": 64,
       "MUTATION_UPDATE": 45,
       "MUTATION_CREATE": 85,
       "MUTATION_DELETE": 23,
@@ -51,33 +51,33 @@
       "projectBoundWithNoProjectPredicateInSql": 176
     },
     "DIRECT_ID_READS": {
-      "total": 134,
-      "projectBound": 63
+      "total": 135,
+      "projectBound": 64
     },
     "READ_COLLECTIONS": {
-      "total": 231,
-      "projectBound": 113
+      "total": 233,
+      "projectBound": 115
     },
     "SELF_SCOPED": 16,
     "DEFERRED_SCOPE_MODEL_UNRESOLVED": 32,
     "FUNCTIONAL_CAPABILITY": {
-      "guarded": 740,
+      "guarded": 743,
       "unguarded": 36
     },
     "RECORD_SCOPE": {
-      "candidates": 360,
-      "protected": 322,
+      "candidates": 363,
+      "protected": 325,
       "deferred": 38,
       "unexplained": 0
     },
-    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 362,
+    "RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT": 365,
     "PROJECT_BOUND_PROTECTED_BY_OPERATION": {
-      "READ_DIRECT_ID": 59,
+      "READ_DIRECT_ID": 60,
       "MUTATION_CREATE": 79,
       "MUTATION_DELETE": 22,
       "MUTATION_CONSEQUENTIAL": 31,
       "MUTATION_UPDATE": 44,
-      "READ_COLLECTION": 87
+      "READ_COLLECTION": 89
     },
     "PROJECT_BOUND_DEFERRED_BY_OPERATION": {
       "READ_COLLECTION": 26,
@@ -14195,6 +14195,114 @@
       "sqlScopesByTenant": false,
       "bodyProjectRefs": [],
       "tableResolution": "HANDLER_SQL+SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads",
+      "file": "api/routes/leads.ts",
+      "line": 60,
+      "operationType": "READ_COLLECTION",
+      "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
+      "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "crm.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "crm_leads",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads/:id",
+      "file": "api/routes/leads.ts",
+      "line": 79,
+      "operationType": "READ_DIRECT_ID",
+      "disposition": "PROJECT_CHILD_RECORD_ID",
+      "dispositionReason": "child record addressed by its own id; the record's own table reaches a project",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "crm.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "requireRecordScope"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "crm_leads",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
+      "status": "PROTECTED_PHASE3"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads/summary",
+      "file": "api/routes/leads.ts",
+      "line": 44,
+      "operationType": "READ_COLLECTION",
+      "disposition": "PROJECT_CHILD_TENANT_COLLECTION",
+      "dispositionReason": "tenant-level collection whose returned rows reach a project (Phase 3F §4)",
+      "projectBound": true,
+      "functionalAuthority": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "capabilities": [
+        "crm.view"
+      ],
+      "hasCapability": true,
+      "recordScopeCalls": [
+        "collectionScopeSql"
+      ],
+      "enforcesRecordScope": true,
+      "primaryTable": "crm_leads",
+      "writeTables": [],
+      "writeScopeColumns": [],
+      "projectScopeStrategy": "DIRECT_COLUMN",
+      "projectParent": {
+        "strategy": "DIRECT_COLUMN",
+        "column": "project_id",
+        "nullable": null
+      },
+      "sqlScopesByProject": false,
+      "sqlScopesByTenant": false,
+      "bodyProjectRefs": [],
+      "tableResolution": "SERVICE",
       "status": "PROTECTED_PHASE3"
     },
     {

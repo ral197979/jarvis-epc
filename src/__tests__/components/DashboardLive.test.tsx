@@ -63,13 +63,21 @@ const TRIR_UNAVAILABLE = {
 /** The contracts summary envelope. No writer exists yet, hence `writable:false`. */
 const CONTRACTS_EMPTY = { active: 0, activeValue: 0, total: 0, byStatus: {}, writable: false }
 
-function allOk(trir: unknown = TRIR_UNAVAILABLE, contracts: unknown = CONTRACTS_EMPTY): void {
+/** Leads summary. `stage` is ungoverned, hence `stageGoverned:false`. */
+const LEADS_EMPTY = {
+  pipelineWeighted: 0, valued: 0, unvalued: 0, total: 0,
+  byStage: {}, stageGoverned: false, writable: false,
+}
+
+function allOk(trir: unknown = TRIR_UNAVAILABLE, contracts: unknown = CONTRACTS_EMPTY,
+               leads: unknown = LEADS_EMPTY): void {
   fetchMock.mockImplementation(async (url: string) => {
     if (url.startsWith('/api/v1/purchase-orders'))   return ok(PO_ROWS)
     if (url.startsWith('/api/v1/files/documents'))   return ok(DOC_ROWS)
     if (url.startsWith('/api/v1/audit'))             return ok(AUDIT_ROWS)
     if (url.startsWith('/api/v1/safety/trir'))       return ok(trir)
     if (url.startsWith('/api/v1/contracts/summary')) return ok(contracts)
+    if (url.startsWith('/api/v1/leads/summary'))     return ok(leads)
     throw new Error(`unexpected fetch: ${url}`)
   })
 }
@@ -120,8 +128,9 @@ describe('the three derivable KPIs read real endpoints', () => {
     expect(urls.some(u => u.startsWith('/api/v1/files/documents'))).toBe(true)
     expect(urls.some(u => u.startsWith('/api/v1/audit'))).toBe(true)
     expect(urls.some(u => u.startsWith('/api/v1/contracts/summary'))).toBe(true)
-    // Nothing is invented to feed a widget: leads and accounting have no API.
-    expect(urls.some(u => /lead|invoice/i.test(u))).toBe(false)
+    expect(urls.some(u => u.startsWith('/api/v1/leads/summary'))).toBe(true)
+    // Nothing is invented to feed a widget: accounting still has no API.
+    expect(urls.some(u => /invoice|expense|journal/i.test(u))).toBe(false)
   })
 
   it('degrades one feed without blanking the others', async () => {
@@ -147,11 +156,43 @@ describe('the three derivable KPIs read real endpoints', () => {
 // ─── 2. What no API can answer says so ───────────────────────────────────────
 
 describe('a KPI with no backend shows no number', () => {
-  it('blanks the weighted pipeline and names the gap', async () => {
+  it('withholds the weighted pipeline while any lead is unvalued', async () => {
+    // A NULL value or probability is an UNKNOWN contribution, not a zero one.
+    allOk(TRIR_UNAVAILABLE, CONTRACTS_EMPTY, {
+      pipelineWeighted: null, reason: 'incomplete_valuation',
+      detail: 'Some leads have no value or no probability recorded.',
+      valued: 2, unvalued: 3, total: 5, byStage: { prospecting: 5 },
+      stageGoverned: false, writable: true,
+    })
     render(<Dashboard biz={EMPTY_BIZ} />)
     await waitFor(() => expect(kpi('Pipeline (Weighted)').textContent).toContain('—'))
-    expect(kpi('Pipeline (Weighted)').textContent).toContain('no leads backend')
+    expect(kpi('Pipeline (Weighted)').textContent).toContain('3 of 5 unvalued')
     expect(kpi('Pipeline (Weighted)').textContent).not.toContain('$0')
+  })
+
+  it('shows the weighted pipeline when every lead is valued', async () => {
+    allOk(TRIR_UNAVAILABLE, CONTRACTS_EMPTY, {
+      pipelineWeighted: 250_000, valued: 4, unvalued: 0, total: 4,
+      byStage: { prospecting: 4 }, stageGoverned: false, writable: true,
+    })
+    render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Pipeline (Weighted)').textContent).toContain('250K'))
+    expect(kpi('Pipeline (Weighted)').textContent).toContain('4 leads')
+  })
+
+  it('says leads cannot be recorded yet rather than reporting an empty pipeline', async () => {
+    render(<Dashboard biz={EMPTY_BIZ} />)
+    await waitFor(() => expect(kpi('Pipeline (Weighted)').textContent).toContain('no leads recorded yet'))
+  })
+
+  it('ignores a snapshot full of leads when the API is unavailable', async () => {
+    fetchMock.mockImplementation(async (url: string) =>
+      url.startsWith('/api/v1/leads/summary') ? denied() : ok(PO_ROWS))
+    render(<Dashboard biz={{ ...EMPTY_BIZ as object, leads: [
+      { id: 'L1', estimated_value: 400000, probability: 100, status: 'won' },
+    ] } as never} />)
+    await waitFor(() => expect(kpi('Pipeline (Weighted)').textContent).toContain('—'))
+    expect(kpi('Pipeline (Weighted)').textContent).not.toContain('400K')
   })
 
   it('ignores a snapshot full of "active" contracts when the API is unavailable', async () => {
@@ -275,8 +316,12 @@ describe('TRIR comes from the API, or not at all', () => {
 
 describe('supplied data is never overridden by a fetch', () => {
   it('uses the snapshot for snapshot-derived cards and asks for none of them', async () => {
-    render(<Dashboard biz={{ ...EMPTY_BIZ as object, leads: [{ id: 'L1', estimated_value: 100000, probability: 50, status: 'qualified' }] } as never} />)
-    await waitFor(() => expect(kpi('Pipeline (Weighted)').textContent).toContain('50K'))
+    // Procurement is still snapshot-first. Pipeline is NOT — it moved to the
+    // API in Phase 3N, so a snapshot lead no longer feeds it.
+    render(<Dashboard biz={{ ...EMPTY_BIZ as object,
+      purchase_orders: [{ id: 'PO-1', amount: 75000, status: 'ordered' }] } as never} />)
+    await waitFor(() => expect(kpi('Procurement').textContent).toContain('1 POs'))
+    expect(kpi('Procurement').textContent).toContain('75K')
     const urls = fetchMock.mock.calls.map(c => String(c[0]))
     // The snapshot-derived feeds are not requested…
     expect(urls.some(u => /purchase-orders|files\/documents|audit/.test(u))).toBe(false)
@@ -285,5 +330,6 @@ describe('supplied data is never overridden by a fetch', () => {
     // suppressing them would blank two governed metrics on someone else's data.
     expect(urls.some(u => u.startsWith('/api/v1/safety/trir'))).toBe(true)
     expect(urls.some(u => u.startsWith('/api/v1/contracts/summary'))).toBe(true)
+    expect(urls.some(u => u.startsWith('/api/v1/leads/summary'))).toBe(true)
   })
 })

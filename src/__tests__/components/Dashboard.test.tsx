@@ -104,7 +104,7 @@ describe('Dashboard — empty state', () => {
 
   it('does not show charts section when empty', () => {
     render(<Dashboard biz={emptyBiz()} />)
-    expect(screen.queryByText('Pipeline Funnel')).toBeNull()
+    expect(screen.queryByText(/Pipeline Funnel/)).toBeNull()
     expect(screen.queryByText('EVM Health')).toBeNull()
   })
 
@@ -242,7 +242,7 @@ describe('Dashboard — activity feed', () => {
 describe('Dashboard — pipeline funnel', () => {
   it('renders funnel chart when leads exist with value', () => {
     render(<Dashboard biz={richBiz()} />)
-    expect(screen.getByText('Pipeline Funnel')).toBeDefined()
+    expect(screen.getByText(/Pipeline Funnel/)).toBeDefined()
   })
 
   it('does not render funnel when all leads have zero value', () => {
@@ -251,7 +251,7 @@ describe('Dashboard — pipeline funnel', () => {
       leads: [{ id: 'L-1', status: 'open', estimated_value: 0, probability: 0 }],
     }
     render(<Dashboard biz={biz} />)
-    expect(screen.queryByText('Pipeline Funnel')).toBeNull()
+    expect(screen.queryByText(/Pipeline Funnel/)).toBeNull()
   })
 })
 

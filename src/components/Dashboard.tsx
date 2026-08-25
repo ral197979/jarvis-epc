@@ -144,9 +144,10 @@ export interface BizSnapshot {
 //     Safety (TRIR)     GET /api/v1/safety/trir        safety.view
 //   DERIVABLE as of Phase 3M
 //     Active Contracts  GET /api/v1/contracts/summary  procurement.view
+//   DERIVABLE as of Phase 3N
+//     Pipeline (Weighted)  GET /api/v1/leads/summary    crm.view
 //
 //   NOT DERIVABLE — no backend exists
-//     Pipeline (Weighted)   `crm_leads` is a table with no route
 //     Revenue Collected     no invoices table. `subcontract_invoices` is
 //     AR Outstanding        project-scoped accounts PAYABLE, not receivable.
 //     Safety (TRIR)         see below — the worst of them.
@@ -174,6 +175,37 @@ type FeedState = 'ok' | 'loading' | 'unavailable'
 
 interface PoRow  { status?: string; total_amount?: string | number | null; [k: string]: unknown }
 interface DocRow { status?: string; [k: string]: unknown }
+/**
+ * `GET /api/v1/leads/summary`.
+ *
+ * `pipelineWeighted` is null while any lead lacks a value or a probability: a
+ * NULL there is an UNKNOWN contribution, not a zero one, and the previous
+ * dashboard coerced both with `?? 0` — understating the pipeline by exactly the
+ * leads nobody had estimated.
+ *
+ * `stageGoverned` is false because `crm_leads.stage` is an unconstrained
+ * VARCHAR with no CHECK. `byStage` is descriptive only; it must not be
+ * presented as a lifecycle.
+ */
+interface LeadSummaryPayload {
+  pipelineWeighted: number | null
+  reason?: string
+  detail?: string
+  valued: number
+  unvalued: number
+  total: number
+  byStage: Record<string, number>
+  stageGoverned: boolean
+  writable: boolean
+}
+
+function isLeadSummary(v: unknown): v is LeadSummaryPayload {
+  const o = v as LeadSummaryPayload | null | undefined
+  return !!o && typeof o.total === 'number' && typeof o.valued === 'number'
+      && typeof o.unvalued === 'number'
+      && (o.pipelineWeighted === null || typeof o.pipelineWeighted === 'number')
+}
+
 /** Does this payload really carry a contract summary? */
 function isContractSummary(v: unknown): v is ContractSummaryPayload {
   const o = v as ContractSummaryPayload | null | undefined
@@ -221,6 +253,7 @@ interface LiveDashboard {
   activity: { rows: AuditRow[]; state: FeedState }
   trir:     { data: TrirPayload | null; state: FeedState }
   contracts:{ data: ContractSummaryPayload | null; state: FeedState }
+  leads:    { data: LeadSummaryPayload | null; state: FeedState }
 }
 
 const IDLE_FEED: LiveDashboard = {
@@ -229,6 +262,7 @@ const IDLE_FEED: LiveDashboard = {
   activity: { rows: [], state: 'ok' },
   trir:     { data: null, state: 'ok' },
   contracts:{ data: null, state: 'ok' },
+  leads:    { data: null, state: 'ok' },
 }
 
 /**
@@ -268,7 +302,7 @@ function useLiveDashboard(enabled: boolean): LiveDashboard {
     true
       ? { pos: { rows: [], state: 'loading' }, docs: { rows: [], state: 'loading' },
           activity: { rows: [], state: 'loading' }, trir: { data: null, state: 'loading' },
-          contracts: { data: null, state: 'loading' } }
+          contracts: { data: null, state: 'loading' }, leads: { data: null, state: 'loading' } }
       : IDLE_FEED,
   )
   useEffect(() => {
@@ -276,7 +310,7 @@ function useLiveDashboard(enabled: boolean): LiveDashboard {
     void (async () => {
       const period = trirPeriod(new Date())
       const idle = <T,>(): { rows: T[]; state: FeedState } => ({ rows: [], state: 'ok' })
-      const [pos, docs, activity, trir, contracts] = await Promise.all([
+      const [pos, docs, activity, trir, contracts, leads] = await Promise.all([
         enabled ? feed<PoRow>('/api/v1/purchase-orders?limit=200')   : idle<PoRow>(),
         enabled ? feed<DocRow>('/api/v1/files/documents?limit=200')  : idle<DocRow>(),
         enabled ? feed<AuditRow>('/api/v1/audit?limit=10')           : idle<AuditRow>(),
@@ -305,8 +339,20 @@ function useLiveDashboard(enabled: boolean): LiveDashboard {
               : { data: null, state: 'unavailable' }
           } catch { return { data: null, state: 'unavailable' } }
         })(),
+        // API-only, like TRIR and contracts: a snapshot carries no persisted
+        // value/probability pair and its `status` is not `crm_leads.stage`.
+        (async (): Promise<LiveDashboard['leads']> => {
+          try {
+            const res = await fetch('/api/v1/leads/summary')
+            if (!res.ok) return { data: null, state: 'unavailable' }
+            const body = await res.json() as { data?: unknown }
+            return isLeadSummary(body.data)
+              ? { data: body.data, state: 'ok' }
+              : { data: null, state: 'unavailable' }
+          } catch { return { data: null, state: 'unavailable' } }
+        })(),
       ])
-      if (live) setData({ pos, docs, activity, trir, contracts })
+      if (live) setData({ pos, docs, activity, trir, contracts, leads })
     })()
     return () => { live = false }
   }, [enabled])
@@ -577,9 +623,14 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
   const livePoTotal = api.pos.rows.reduce((t, p) => t + Number(p.total_amount ?? 0), 0)
 
   // ── KPI computations ────────────────────────────────────────────────────────
-  const weightedPipeline = useMemo(() =>
-    leads.reduce((sum, l) => sum + (l.estimated_value ?? 0) * (l.probability ?? 0) / 100, 0),
-  [leads])
+  // The local weighted pipeline is DELETED, not merely unwired:
+  //
+  //   leads.reduce((s, l) => s + (l.estimated_value ?? 0) * (l.probability ?? 0) / 100, 0)
+  //
+  // Both `?? 0` coercions turned an UNKNOWN estimate into a zero contribution,
+  // understating the pipeline by exactly the leads nobody had valued. The
+  // snapshot's `estimated_value` is not even the persisted column — the table
+  // stores `value` — so this could never have agreed with the database.
 
   // The local contract count is DELETED, not merely unwired:
   //
@@ -624,6 +675,11 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
   // would leave a path back: the rate now has exactly one source, and this
   // comment is what remains of the other one.
 
+  // NOTE: buildFunnelData groups by five hardcoded stage names — new,
+  // qualified, proposal, negotiation, won — none of which exists in the schema,
+  // and none of which is `crm_leads.stage`'s own default ('prospecting').
+  // `stage` has no CHECK and no enum, so no funnel can be governed. This one is
+  // snapshot-derived and titled to say so.
   const funnelData = useMemo(() => buildFunnelData(leads), [leads])
 
   // ── Safety (TRIR) ──
@@ -643,6 +699,33 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
     : typeof trirPayload?.trir === 'number'
         ? `${trirPayload.recordableIncidents ?? 0} recordable`
         : (trirPayload?.detail ?? 'needs recordable classification + exposure hours')
+
+  // ── Pipeline (Weighted) ──
+  // API only, for the same reason as TRIR and Active Contracts: a `biz`
+  // snapshot carries no persisted value/probability pair, and its `status` is
+  // not `crm_leads.stage` — which is an unconstrained VARCHAR anyway, so no
+  // stage filter is applied here or in the service.
+  const leadsPayload = api.leads.data
+  // `total === 0 && !writable` is checked BEFORE the number branch, exactly as
+  // the contracts card does. A weighted pipeline of $0 over zero leads, in a
+  // system that cannot record a lead, is the empty-order-book claim again — the
+  // arithmetic is sound and the statement is still misleading.
+  const leadsUnrecordable = !!leadsPayload && leadsPayload.total === 0 && !leadsPayload.writable
+  const pipelineValue =
+    api.leads.state === 'loading'     ? '…'
+    : api.leads.state === 'unavailable' ? NO_DATA
+    : leadsUnrecordable                 ? NO_DATA
+    : typeof leadsPayload?.pipelineWeighted === 'number'
+        ? formatCurrency(leadsPayload.pipelineWeighted)
+        : NO_DATA
+  const pipelineSub =
+    api.leads.state === 'loading'     ? 'loading…'
+    : api.leads.state === 'unavailable' ? 'unavailable'
+    : !leadsPayload                     ? 'unavailable'
+    : leadsUnrecordable                 ? 'no leads recorded yet'
+    : typeof leadsPayload.pipelineWeighted === 'number'
+        ? `${leadsPayload.total} lead${leadsPayload.total !== 1 ? 's' : ''}`
+        : `${leadsPayload.unvalued} of ${leadsPayload.total} unvalued`
 
   // ── Active Contracts ──
   // Rendered from the API envelope alone, for the same reason as TRIR: a biz
@@ -699,12 +782,15 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
         role="region"
         aria-label="Key Performance Indicators"
       >
-        {/* No leads route exists, so with nothing handed in this KPI cannot be
-            computed. A weighted pipeline of $0 is a sales claim, not a blank. */}
+        {/* Reads GET /api/v1/leads/summary and nothing else. A weighted
+            pipeline of $0 is a sales claim, not a blank, and a lead with no
+            value or no probability contributes an UNKNOWN amount rather than a
+            zero — so the total is withheld while any lead is unvalued and the
+            card says how many. */}
         <KPICard
           label="Pipeline (Weighted)"
-          value={live ? NO_DATA : formatCurrency(weightedPipeline)}
-          sub={live ? 'no leads backend' : `${leads.length} lead${leads.length !== 1 ? 's' : ''}`}
+          value={pipelineValue}
+          sub={pipelineSub}
         />
         {/* Reads GET /api/v1/contracts/summary and nothing else — no local
             count, no biz fallback. `active` is the persisted contract_status
@@ -781,7 +867,7 @@ export default function Dashboard({ biz, onNavigate }: DashboardProps) {
         >
           {/* Pipeline funnel */}
           {funnelData.length > 0 && (
-            <SectionCard title="Pipeline Funnel">
+            <SectionCard title="Pipeline Funnel (loaded snapshot)">
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={funnelData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--jarvis-border)" />

@@ -1,11 +1,11 @@
 {
   "generatedFrom": "api/routes/*.ts + api/services/**/*.ts",
   "counts": {
-    "endpoints": 776,
+    "endpoints": 779,
     "resolvedHandlerSql": 251,
-    "resolvedViaService": 463,
+    "resolvedViaService": 466,
     "unresolved": 62,
-    "serviceFunctionsIndexed": 1629
+    "serviceFunctionsIndexed": 1632
   },
   "endpoints": [
     {
@@ -12631,6 +12631,86 @@
         "enqueueSourceIngest"
       ],
       "resolvedVia": "HANDLER_SQL+SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads",
+      "file": "api/routes/leads.ts",
+      "line": 60,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "crm_leads"
+      ],
+      "readsFrom": [
+        "crm_leads"
+      ],
+      "primaryReadTable": "crm_leads",
+      "writeTables": [],
+      "delegatesTo": [
+        "listLeads"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads/:id",
+      "file": "api/routes/leads.ts",
+      "line": 79,
+      "pathParams": [
+        "id"
+      ],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "crm_leads"
+      ],
+      "readsFrom": [
+        "crm_leads"
+      ],
+      "primaryReadTable": "crm_leads",
+      "writeTables": [],
+      "delegatesTo": [
+        "getLead"
+      ],
+      "resolvedVia": "SERVICE"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/leads/summary",
+      "file": "api/routes/leads.ts",
+      "line": 44,
+      "pathParams": [],
+      "guards": [
+        "requireAuth",
+        "requireTenant"
+      ],
+      "bodyProjectRefs": [],
+      "mounted": true,
+      "writes": [],
+      "reads": [
+        "crm_leads"
+      ],
+      "readsFrom": [
+        "crm_leads"
+      ],
+      "primaryReadTable": "crm_leads",
+      "writeTables": [],
+      "delegatesTo": [
+        "leadSummary"
+      ],
+      "resolvedVia": "SERVICE"
     },
     {
       "method": "DELETE",
