@@ -86,6 +86,82 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=high
 
+  integration-postgres:
+    # The accounting boundary's guarantees are database guarantees: row-level
+    # security under a non-owner role, a UNIQUE index doing the outbox
+    # deduplication, an enum refusing an unconfigured provider, and a governed
+    # currency whose ABSENCE is the control. None of that is observable against
+    # a mocked pool, so without this job the 21 tests that prove it would skip
+    # and CI would go green on an absence of evidence.
+    #
+    # Blocking on purpose — no continue-on-error. A skipped proof must fail the
+    # build, not decorate it.
+    name: Integration (PostgreSQL)
+    needs: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        # Matches the version the boundary was verified against locally.
+        image: postgres:18
+        env:
+          POSTGRES_DB: denver_ci
+          # Trust auth inside an ephemeral service container. This is the point:
+          # migration 001 creates `jarvis_app` with a placeholder password, and
+          # with trust the workflow needs no credential of any kind — no secret,
+          # no literal, nothing to leak into logs or a permission entry.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+
+      # Migrations run as the SUPERUSER, exactly as they do in production.
+      - name: Apply migrations as the owner role
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: postgres://postgres@localhost:5432/denver_ci
+
+      # RLS is only a control when the connection is NOT the owner. Postgres
+      # exempts superusers from row-level security, so running the suite as
+      # `postgres` would assert app-layer WHERE clauses and call it isolation.
+      # `jarvis_app` (migration 001, NOSUPERUSER/NOBYPASSRLS) is the role the
+      # request path actually uses, and the suite refuses to run unless the two
+      # URLs differ.
+      - name: Confirm the app role is a non-owner, or the RLS proof is theatre
+        run: |
+          BYPASS=$(psql "postgres://postgres@localhost:5432/denver_ci" -tAc \
+            "SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname = 'jarvis_app'")
+          echo "jarvis_app rolsuper-or-bypassrls = '${BYPASS}' (must be 'f')"
+          if [ "${BYPASS}" != "f" ]; then
+            echo "::error::jarvis_app can bypass row-level security; the isolation proof would be meaningless."
+            exit 1
+          fi
+
+      - name: Accounting boundary integration suite
+        run: npx vitest run api/__tests__/accountingBoundaryIntegration.test.ts --reporter=json --outputFile=integration-report.json
+        env:
+          ACCOUNTING_IT_DATABASE_URL: postgres://postgres@localhost:5432/denver_ci
+          ACCOUNTING_IT_DATABASE_URL_APP: postgres://jarvis_app@localhost:5432/denver_ci
+
+      # Vitest reports a fully-skipped file as success with exit code 0, so the
+      # exit code is not the signal — the counts are.
+      - name: Prove the suite actually ran, rather than skipping
+        if: always()
+        run: node scripts/ci/assert-integration-ran.mjs integration-report.json 21
+
   fly-staging-config-guard:
     name: Fly staging config anti-regression guard
     runs-on: ubuntu-latest
