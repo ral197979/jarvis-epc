@@ -103,8 +103,14 @@ jobs:
 
     services:
       postgres:
-        # Matches the version the boundary was verified against locally.
-        image: postgres:18
+        # pgvector's build of PostgreSQL 18, NOT the stock `postgres:18`.
+        # Migration 025 does `CREATE EXTENSION IF NOT EXISTS vector`, which the
+        # stock image cannot satisfy — the first hosted run died there with
+        # `extension "vector" is not available`, 78 migrations in. It passed
+        # locally because the Homebrew PostgreSQL happens to have pgvector
+        # installed, which is precisely the host-divergence this job exists to
+        # expose rather than inherit.
+        image: pgvector/pgvector:pg18
         env:
           POSTGRES_DB: denver_ci
           # Trust auth inside an ephemeral service container. This is the point:
