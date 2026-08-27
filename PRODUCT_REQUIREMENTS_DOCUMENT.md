@@ -1,6 +1,6 @@
 # Denver Engineering — Product Requirements Document
 
-> **Status:** Build-ready v2 · Grounded in the shipped codebase (Express + Node 20 / PostgreSQL 16 / pgvector / Redis backend, React 18 + Vite + Zustand frontend, deployed on Render).
+> **Status:** Build-ready v2 · Grounded in the shipped codebase (Express + Node 20 / PostgreSQL 16 / pgvector / Redis backend, React 18 + Vite + Zustand frontend, deployed on Fly.io + Neon).
 > **Companion specs:** [System Architecture](SYSTEM_ARCHITECTURE.md) · [Domain Model](DOMAIN_MODEL.md)
 > **Source-of-truth honesty docs:** [FEATURES.md](FEATURES.md) · [APP_OVERVIEW.md](APP_OVERVIEW.md)
 
@@ -137,7 +137,7 @@ Priorities: **P0** = must hold for enterprise evaluation / launch; **P1** = comp
 
 | Category | Requirement | Current state |
 |----------|-------------|---------------|
-| **Availability** | 99.9% API uptime; health endpoint pings DB + Redis (`GET /api/v1/health`, 503 on degraded) | ✅ health check; single-region Render → multi-region/HA ❌ |
+| **Availability** | 99.9% API uptime; health endpoint pings DB + Redis (`GET /api/v1/health`, 503 on degraded) | ✅ health check; single-region Fly.io → multi-region/HA ❌ |
 | **Latency** | p95 read < 300 ms; slow-query log at >500 ms (`pool.ts`) | 🟡 instrumented, not load-tested at scale |
 | **Throughput / limits** | Global 600 req/min; auth 200/15 min; AI 30/min; agent 20/min (`server.ts`) | ✅ |
 | **Scalability** | Horizontal API behind LB; pooled PG (min 2 / max 20 per instance) | 🟡 stateless API is horizontal-ready; worker singletons need leases (`worker_leases`) |
@@ -145,7 +145,7 @@ Priorities: **P0** = must hold for enterprise evaluation / launch; **P1** = comp
 | **Data residency** | Per-tenant region pin; air-gapped option | ❌ planned (`air_gap_licenses` schema only) |
 | **Observability** | Pino structured logs + correlation IDs; Prometheus `/metrics`; Sentry error tracking | ✅ |
 | **Privacy / compliance** | GDPR erasure (`DELETE /api/v1/auth/me` → `data_deletion_requests`); audit retention purge; DP for federation | ✅ erasure + retention; SOC 2 / FedRAMP ❌ |
-| **Backup / DR** | PITR, tested restore, RPO ≤ 1 h / RTO ≤ 4 h | ❌ relies on Render-managed PG defaults |
+| **Backup / DR** | PITR, tested restore, RPO ≤ 1 h / RTO ≤ 4 h | ❌ relies on Neon-managed PG defaults |
 | **Accessibility** | WCAG 2.1 AA on core flows | 🟡 keyboard + ARIA on Copilot cards; full audit ❌ |
 | **Internationalization** | Multi-currency (`currency CHAR(3)`) | 🟡 currency fields exist; UI i18n ❌ |
 

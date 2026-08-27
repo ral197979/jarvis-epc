@@ -53,11 +53,11 @@ collected against the deployed release, and to 🏆 thereafter.
 
 ## 3. Production Validation Checklist (operator — `audit/evidence/operator-kit.sh`)
 
-- [ ] Render Postgres **PITR enabled** + retention ≥ 7d (screenshot)
+- [ ] Neon Postgres **PITR / history retention enabled** + retention ≥ 7d (screenshot)
 - [ ] **Production restore drill** → record RPO + RTO
 - [ ] **Production-scale load** (100/500/1000 + burst) + CPU/mem/net/DB/pool/cache/queue telemetry
 - [ ] Bucket: **versioning + lifecycle + default encryption + public-access-block + IAM least-privilege**
-- [ ] Render secrets set: `S3_BUCKET`, AWS creds, `METRICS_TOKEN`; (RLS) `DATABASE_URL_APP` + `jarvis_app` password
+- [ ] Fly.io secrets set: `S3_BUCKET`, AWS creds, `METRICS_TOKEN`; (RLS) `DATABASE_URL_APP` + `jarvis_app` password
 - [ ] **Deploy** Prometheus/Grafana/Alertmanager (Grafana Cloud or hosted); mount PagerDuty/Slack secrets
 - [ ] **Fire one synthetic alert per class** (service/db/queue/backup/error-rate) → capture delivery + recovery-clear
 - [ ] Execute tabletop exercises T1–T5 (`docs/runbooks/OPERATIONAL_RUNBOOKS.md`)

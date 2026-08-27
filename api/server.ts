@@ -189,7 +189,7 @@ import { metricsMiddleware, metricsHandler, setDbUp } from './services/observabi
 const log = pino({
   level: process.env['LOG_LEVEL'] ?? 'info',
   // pino-pretty only in local development — staging and production use structured JSON
-  // for Render log drain, Datadog, and Sentry breadcrumb ingestion.
+  // for Fly.io log shipping, Datadog, and Sentry breadcrumb ingestion.
   ...(process.env['NODE_ENV'] === 'development'
     ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
     : {}),
@@ -376,7 +376,7 @@ app.use(async (req: Request, _res: Response, next: NextFunction) => {
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 // Enterprise-grade: verifies DB connectivity with a live query ping.
-// Uptime monitors (Render, Datadog, PagerDuty) hit this every 30s.
+// Uptime monitors (Fly.io health checks, Datadog, PagerDuty) hit this every 30s.
 
 app.get('/api/v1/health', async (_req: Request, res: Response) => {
   const dbOk = poolHealthy()

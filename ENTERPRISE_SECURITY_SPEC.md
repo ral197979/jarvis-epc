@@ -27,7 +27,7 @@
 `api/auth.ts`:
 - **JWT** HS256, signed with `JWT_SECRET` (fatal if missing in prod). Access TTL **15 min** (cookie `jarvis_at`), refresh TTL **7 days** (cookie `jarvis_rt`). Cookies are `httpOnly`, `secure` in prod, `sameSite=strict`; refresh cookie scoped to `path=/api/v1/auth/refresh`.
 - **Refresh-token revocation:** JTI tracked in **Redis** (`isRevoked`/`hasRefreshToken`) **and** the `refresh_tokens` table (SHA-256 token hash, never plaintext). Refresh performs **rotation** (old JTI revoked in Redis + DB, new pair issued). `purgeExpiredTokens()` runs hourly.
-  - ⚠️ Redis must be `noeviction` with ≥1 GB — `render.yaml` notes the free 25 MB tier silently evicted revocation records at ~1k users, allowing reuse of revoked tokens. This is now `starter` (1 GB, noeviction).
+  - ⚠️ Where Redis is used it must be `noeviction` with ≥1 GB: a small evicting tier silently drops revocation records at ~1k users, allowing reuse of revoked tokens. On Fly.io + Neon a single always-on instance uses the in-memory token store; add Upstash Redis (`noeviction`) when scaling to multiple instances.
 - **Passwords:** bcrypt cost 12; constant-time compare against a dummy hash for unknown users; **account lockout** after 5 failed attempts (15 min). SCIM-provisioned users get a valid-but-unusable random bcrypt hash (SSO-only).
 - **Middleware:** `requireAuth` (cookie-first, then `Authorization: Bearer`), `requireRole(...roles)`.
 
@@ -160,7 +160,7 @@ Extend the existing `auditVerifier` chain into a true immutable **decision log**
 
 | Tier | Hosting | Identity / AI | Status |
 |---|---|---|---|
-| **Managed SaaS** | Render (`render.yaml`): Postgres 16 (SSL forced), Redis (noeviction), separate web + worker, staging parity; secrets `generateValue`; `S3_SSE=AES256` | Cloud IdP (SAML/SCIM); cloud AI (Anthropic) | ✅ live |
+| **Managed SaaS** | Fly.io (`fly.toml`, `fly.staging.toml`) + Neon Postgres 16 (SSL forced); Redis optional (Upstash, `noeviction`); workers in-process; staging parity via `denver-epc-staging`; Fly-managed secrets; `S3_SSE=AES256` | Cloud IdP (SAML/SCIM); cloud AI (Anthropic) | ✅ live |
 | **Air-gapped / on-prem** | Customer-isolated, no egress; offline signed update/model/plugin bundles (SHA-256 + HMAC verified) | Local IdP; **local AI provider** (`LOCAL_AI_PROVIDER`, e.g. ollama); cloud integrations **disabled** (`getAirGapStatus().cloudIntegrationsDisabled`) | 🟡 designed ([docs/AIR_GAPPED_DEPLOYMENT_MODE.md](./docs/AIR_GAPPED_DEPLOYMENT_MODE.md)) |
 | **FedRAMP-aligned GovCloud** | AWS GovCloud / Azure Gov; FIPS 140-2/3 crypto modules; FedRAMP-aligned control baseline (Moderate→High path); US-person operations; boundary + SSP | GovCloud IdP; FedRAMP-authorized AI or on-prem model | ❌ to build |
 
@@ -174,7 +174,7 @@ Air-gap and GovCloud both lean on the per-tenant key model (§4) with HSM/local 
 - **ISO 27001:2022:** Annex A alignment in [docs/ISO27001_ALIGNMENT.md](./docs/ISO27001_ALIGNMENT.md); finalize SoA, run internal audit + management review, then certification audit (Stage 1/2). **Today: aligned, not certified.**
 - **Automated evidence:** `certificationEvidenceService` produces checksummed, tenant-scoped evidence exports (audit-chain proof hash, AI-governance counters, isolation config, retention policy) into `compliance_exports` (90-day TTL, `verifyExportIntegrity()`).
 - **Encryption:** in transit TLS 1.2+ (1.3 preferred, `DB_SSL=true`); at rest DB volume encryption + `S3_SSE=AES256`; per-tenant envelope keys (§4) as the hardening step.
-- **Secrets management:** SaaS uses Render-managed secrets (`generateValue` for `JWT_SECRET`/`SESSION_SECRET`); no secrets in DB (Stripe/SAML keys env-only); air-gap/Gov uses HSM/local KMS.
+- **Secrets management:** SaaS uses Fly.io-managed secrets (`flyctl secrets set` for `JWT_SECRET`/`SESSION_SECRET`); no secrets in DB (Stripe/SAML keys env-only); air-gap/Gov uses HSM/local KMS.
 - **Backup / DR:** Postgres point-in-time recovery + tested restore; documented RPO/RTO; runbooks under `docs/DISASTER_RECOVERY_RUNBOOK*` (verify presence — see acceptance §10).
 
 ---
@@ -192,7 +192,7 @@ Air-gap and GovCloud both lean on the per-tenant key model (§4) with HSM/local 
 | **Information disclosure** | Secret leakage in logs | Redaction set (`password,token,secret,api_key,…`) in audit + agent middleware | `api/server.ts`, `api/middleware/agentMode.ts` |
 | **Information disclosure** | SSRF to internal services | `assertSafeUrl()` on outbound webhook/connector calls | `api/routes/integrations.ts` |
 | **Denial of service** | Brute-force / flooding | Account lockout (5/15min) + tiered rate limiters | `api/auth.ts`, `api/server.ts` |
-| **Denial of service** | Revoked-token reuse via Redis eviction | Redis `noeviction` ≥1 GB | `render.yaml` |
+| **Denial of service** | Revoked-token reuse via Redis eviction | Redis `noeviction` ≥1 GB (or single-instance in-memory store) | `api/tokenStore.ts` |
 | **Elevation of privilege** | Stale session after offboarding | SCIM deactivate → revoke refresh tokens (Redis+DB) | §5, `api/auth.ts` |
 | **Elevation of privilege** | Autonomous agent overreach | `agentMode` gating (frozen/review_all), fail-closed; human-approval governance | `api/middleware/agentMode.ts` |
 | **Elevation of privilege** | CSRF on mutations | Double-submit token on `/api/v1` writes | `api/middleware/csrf.ts` |
@@ -208,14 +208,14 @@ Air-gap and GovCloud both lean on the per-tenant key model (§4) with HSM/local 
 | Federated SSO | CC6 / A.9.2 | SAML 2.0 (replay-protected) | `073`, `api/auth/saml/*` | ✅ |
 | Provisioning / deprovisioning | CC6 / A.9.2 | SCIM 2.0 + PatchOp validation; deactivate→token revoke | `074`, `api/routes/scim.ts` | ✅ (group→role §5) |
 | MFA | CC6 / A.9.4 | Delegated to IdP; AuthnContext enforcement | §5 | 🟡 |
-| Encryption in transit | CC6 / A.8.24 | TLS 1.2+, DB SSL | `render.yaml` | ✅ |
-| Encryption at rest | CC6 / A.8.24 | DB volume + S3 SSE-AES256; per-tenant DEK | `render.yaml`, §4 | 🟡 |
+| Encryption in transit | CC6 / A.8.24 | TLS 1.2+, DB SSL | `fly.toml` (`DB_SSL=true`), Neon TLS | ✅ |
+| Encryption at rest | CC6 / A.8.24 | Neon storage encryption + S3 SSE-AES256; per-tenant DEK | §4 | 🟡 |
 | Change management | CC8 / A.8.32 | Production gates, deployment audit, 90% threshold | [docs/SOC2_READINESS_PACK.md](./docs/SOC2_READINESS_PACK.md) | ✅ |
 | Audit logging | CC2/CC7 / A.8.15 | Append-only audit middleware + export | `api/server.ts`, `api/routes/audit.ts` | ✅ |
 | Log integrity | CC7 / A.8.15 | Hash-chain verify + gap detect + snapshots; (planned) WORM/sig | `api/services/audit/auditVerifier.ts`, §4.2 | 🟡→✅ |
 | Evidence automation | CC3/CC4 | `certificationEvidenceService` checksummed exports | `api/services/ecosystem/certificationEvidenceService.ts` | ✅ |
 | AppSec headers / CSRF / rate limit | CC6/CC7 / A.8.26 | Helmet CSP, CORS, CSRF, rate limiters | `api/server.ts`, `api/middleware/csrf.ts` | ✅ |
-| Secrets management | CC6 / A.8.24 | Env/managed secrets, no DB secrets; HSM in air-gap | `render.yaml` | ✅ |
+| Secrets management | CC6 / A.8.24 | Fly.io-managed secrets, no DB secrets; HSM in air-gap | `fly.toml` | ✅ |
 | Backup / DR | A.5.30, A.8.13 | PITR + restore drills + runbooks | `docs/DISASTER_RECOVERY_RUNBOOK*` | 🟡 verify |
 | Air-gapped operation | A.8.* | Offline signed bundles, local AI, cloud disabled | [docs/AIR_GAPPED_DEPLOYMENT_MODE.md](./docs/AIR_GAPPED_DEPLOYMENT_MODE.md) | 🟡 |
 

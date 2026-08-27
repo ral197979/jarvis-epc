@@ -195,7 +195,7 @@ export function ApsViewer({ modelId, height = 480 }: ApsViewerProps) {
 
   if (state === 'unconfigured') return overlay(
     '🔑', 'APS not configured',
-    'Set APS_CLIENT_ID and APS_CLIENT_SECRET environment variables in Render to enable the 3D viewer.',
+    'Set APS_CLIENT_ID and APS_CLIENT_SECRET environment variables on the API host to enable the 3D viewer.',
   )
 
   if (state === 'no-urn') return overlay(

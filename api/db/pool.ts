@@ -12,7 +12,7 @@
  *   - Graceful shutdown hook
  *
  * Environment variables:
- *   DATABASE_URL  — full connection string (preferred, e.g. Render/Neon/Supabase)
+ *   DATABASE_URL  — full connection string (preferred, e.g. Neon/Supabase/RDS)
  *   DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD — individual overrides
  *   DB_POOL_MIN   — minimum idle connections (default: 2)
  *   DB_POOL_MAX   — maximum connections     (default: 20)

@@ -8,7 +8,7 @@
 
 ## 1. Topology — today
 
-Denver runs as a **monolithic Express API + React SPA**, deployed on Render, in front of managed PostgreSQL 16 (pgvector) and Redis. The "AI agent orchestrator" (Ava) is an **external** service reached over an MCP bridge; it is not part of this deployable.
+Denver runs as a **monolithic Express API + React SPA**, deployed on Fly.io, in front of Neon-managed PostgreSQL 16 (pgvector) and optional Redis. The "AI agent orchestrator" (Ava) is an **external** service reached over an MCP bridge; it is not part of this deployable.
 
 ```
                          ┌──────────────────────────────────────────────┐
@@ -43,7 +43,7 @@ Denver runs as a **monolithic Express API + React SPA**, deployed on Render, in 
               └──────────────────┘
 ```
 
-**Tech stack (verified):** React 18 · Vite · TypeScript · Zustand · Express · Node 20 · PostgreSQL 16 · pgvector · Redis · Pino · Helmet · `jsonwebtoken` · bcrypt · samlify (SAML) · `@anthropic-ai/sdk` · Render hosting.
+**Tech stack (verified):** React 18 · Vite · TypeScript · Zustand · Express · Node 20 · PostgreSQL 16 · pgvector · Redis · Pino · Helmet · `jsonwebtoken` · bcrypt · samlify (SAML) · `@anthropic-ai/sdk` · Fly.io + Neon hosting.
 
 ---
 
@@ -247,7 +247,7 @@ What's **missing** (the headline P2 build) is a **traversal service** that answe
 
 | Tier | Audience | Mechanism | Status |
 |------|----------|-----------|--------|
-| **SaaS multi-tenant** | Commercial, primary markets | Shared-schema RLS on Render; per-tenant SAML/SCIM | ✅ today |
+| **SaaS multi-tenant** | Commercial, primary markets | Shared-schema RLS on Fly.io + Neon; per-tenant SAML/SCIM | ✅ today |
 | **Air-gapped single-tenant** | Embassies, secure gov, critical infra | One codebase, offline license (`air_gap_licenses`: license_key_hash, tier, seat_limit, feature_set, signature), edge nodes (`edge_nodes`, `edge_sync_sessions`) | 🟡 schema only |
 | **FedRAMP / government cloud** | Federal, DoD | Control overlay (FIPS crypto, boundary, continuous monitoring), region pin, audit export (`compliance_exports`) | ❌ planned |
 
@@ -269,7 +269,7 @@ What's **missing** (the headline P2 build) is a **traversal service** that answe
 | Security | Helmet CSP, CORS, CSRF double-submit, rate-limit, SSRF allowlist, UUID guards |
 | Observability | Pino, Prometheus `/metrics`, Sentry |
 | Storage | S3 presigned upload (local fallback) |
-| Hosting | Render (Node 20, PostgreSQL 16, Redis) |
+| Hosting | Fly.io (Node 20) + Neon PostgreSQL 16; Redis optional (Upstash) |
 
 ---
 
@@ -277,7 +277,7 @@ What's **missing** (the headline P2 build) is a **traversal service** that answe
 
 1. **RLS is opt-in at runtime** (§4 caveat) — must make `DATABASE_URL_APP` mandatory + CI-proven. *Highest priority.*
 2. **Workers run in the API process** — a busy worker can starve request latency; needs the leased worker tier (`worker_leases` is ready).
-3. **Single region, single primary PG** — no HA/read-replica/PITR strategy documented; DR is Render defaults.
+3. **Single region, single primary PG** — no HA/read-replica/PITR strategy documented; DR is Neon defaults.
 4. **Schedule engine is FS-only** — no SS/FF/SF, calendars, or resource leveling; limits P6 fidelity.
 5. **Engineering calculators are ⚠️ shells** — must never ship to an enterprise eval as validated; bridge to real engines or hide.
 6. **Object-graph traversal not yet a service** — the edges exist but cross-entity impact analysis is unbuilt (§8); it's the core differentiation gap.

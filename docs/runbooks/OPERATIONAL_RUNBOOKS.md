@@ -1,12 +1,28 @@
-# Operational Runbooks — Denver Engineering (Render)
+# Operational Runbooks — Denver Engineering (Render — SUPERSEDED)
+
+> ## ⚠️ Platform-specific steps below are stale.
+>
+> The owner confirmed on **2026-08-27** that the active hosting stack is **Fly.io + Neon**
+> and that Render is retired. Every instruction referring to the Render dashboard, Render
+> Postgres, Render Key Value, or Render auto-build **no longer applies**. Rewriting these
+> procedures against Fly.io and Neon is outstanding follow-up work.
+>
+> Still valid and platform-independent: the incident-severity model (§1), the tabletop
+> exercises T1–T5 (§5), and the health/metrics endpoints below.
+>
+> For the current deploy and rollback mechanism see
+> [`STAGING.md`](../../STAGING.md) and
+> [`docs/deploy/fly-neon-upstash.md`](../deploy/fly-neon-upstash.md).
 
 Companion to `docs/DISASTER_RECOVERY_RUNBOOK_RENDER.md` (DR is separate). Covers
 incident response, production deployment, rollback, and security incidents, plus
 tabletop exercises. Audience: on-call engineers + release managers.
 
-Stack reference: Render web + worker services, Render PostgreSQL 16, Render Key
-Value (Redis), S3-compatible object storage. Health: `GET /api/v1/health`
-(reports db/redis). Metrics: `GET /metrics` (bearer `METRICS_TOKEN`).
+Health: `GET /api/v1/health` (reports db/redis). Metrics: `GET /metrics`
+(bearer `METRICS_TOKEN`).
+
+Stack reference (**stale — Render-era**): Render web + worker services, Render
+PostgreSQL 16, Render Key Value (Redis), S3-compatible object storage.
 
 ---
 

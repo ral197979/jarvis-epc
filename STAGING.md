@@ -2,92 +2,113 @@
 
 Denver Engineering runs a production-parity staging environment for validating changes before they reach production users.
 
+Authoritative deployment guide: [`docs/deploy/fly-neon-upstash.md`](./docs/deploy/fly-neon-upstash.md) (§12 covers staging).
+
 ## Architecture
 
 | Service | Staging | Production |
 |---------|---------|------------|
-| Web API + SPA | `jarvis-epc-staging` (Render starter) | `jarvis-epc` (Render standard) |
-| Background workers | `jarvis-epc-workers-staging` (Render starter) | `jarvis-epc-workers` (Render starter) |
-| PostgreSQL | `jarvis-epc-db-staging` (standard-1gb, v16) | `jarvis-epc-db` (standard-4gb, v16) |
-| Redis | `jarvis-epc-redis-staging` (starter, 1GB, noeviction) | `jarvis-epc-redis` (starter, 1GB, noeviction) |
+| Web API + SPA | `denver-epc-staging` (Fly.io, org `personal`, region `iad`) | `denver-epc` (Fly.io, same org/region) |
+| Background workers | In-process with the web server | In-process with the web server |
+| PostgreSQL | Neon — dedicated staging branch/project | Neon — production project |
+| Redis | Optional (Upstash); a single instance uses the in-memory token store | Optional (Upstash); a single instance uses the in-memory token store |
 
-All infrastructure is defined in `render.yaml`.
+Infrastructure config lives in `fly.staging.toml` and `fly.toml` at the repo root. `api/worker.ts`
+is an undeployed second entrypoint retained for a future dedicated worker tier — it is **not**
+part of either environment today.
 
 ## Deploy Flow
 
 ```
-developer push → GitHub Actions CI
-  └── npm run typecheck
+developer push → GitHub Actions CI (.github/workflows/ci.yml, push + PR on main)
+  └── npm run typecheck:all
   └── npm run lint
-  └── npm test -- --run          (4,785 tests, must pass)
+  └── npm test -- --run
   └── npm run build
-  └── trigger Render staging deploy (render deploy-hook)
-      └── jarvis-epc-staging
-      └── jarvis-epc-workers-staging
-          ← health check: GET /api/v1/health → 200
+  └── fly-staging-config-guard  (scripts/validate-fly-staging-config.mjs)
+
+manual promotion → workflow_dispatch only
+  ├── Fly Staging Deploy (.github/workflows/fly-staging-deploy.yml, requires a `ref` input)
+  │     └── denver-epc-staging   ← health check: GET /api/v1/health → 200
+  └── Fly Deploy       (.github/workflows/fly-deploy.yml)
+        └── denver-epc
 ```
 
-Production deploys require a manual promotion from staging (`autoDeploy: false` on staging prevents accidental auto-deploys from feature branches).
+**Neither environment auto-deploys.** CI runs on every push and PR to `main` but contains no
+deploy step; both Fly workflows are `workflow_dispatch` only. `scripts/validate-fly-staging-config.mjs`
+fails CI if the staging config or workflow ever drifts toward being able to target production
+(wrong app name, a `push` trigger, a user-suppliable app-name input, and similar).
+
+Production deploys require separate, explicit owner authorization.
 
 ## Environment Differences
 
 | Setting | Staging | Production |
 |---------|---------|------------|
-| `NODE_ENV` | `staging` | `production` |
+| `NODE_ENV` | `production` (staging runs the real production code paths) | `production` |
+| `APP_ENV` | `staging` | unset |
 | `LOG_LEVEL` | `debug` | `info` |
-| `DB_POOL_MAX` | 10 | 20 |
-| `autoDeploy` | false | true |
+| `min_machines_running` | 0 (`auto_stop_machines=true`, cost control) | 1 (always-on — workers run in-process) |
 | Log format | JSON (structured) | JSON (structured) |
 | Pino-pretty | ❌ | ❌ |
 
-Both staging and production emit structured JSON to stdout for Render log drain ingestion.
+Both staging and production emit structured JSON to stdout for Fly.io log shipping.
+
+`DATABASE_URL_APP` is **mandatory with no fallback in both environments** — since AUDIT-P0-06 the
+API refuses to boot in `NODE_ENV=production` if it is unset. There is no code path that falls back
+to the owner-level `DATABASE_URL` for runtime traffic. See `api/db/pool.ts`.
+
+Staging must use its own Neon branch or project — never production's database, and never merely a
+schema inside it. Using production customer data in staging requires separate explicit approval.
 
 ## Initial Setup
 
-### 1. Apply render.yaml to Render
+### 1. Provision the Neon staging branch
 
-```bash
-# If using Render CLI:
-render up
+Create a dedicated Neon branch/project (Postgres 16, `pgvector` available) and an application-level
+role for it. Provisioning credentials is a separate, explicitly-authorized step — connection strings
+are never committed to this repo.
 
-# Or: push render.yaml to your repo — Render picks it up automatically
-```
+### 2. Set GitHub Actions secrets
 
-### 2. Set secret env vars in Render dashboard
+Supplied out-of-band; values are never recorded in this repo.
 
-Navigate to each staging service and set:
+| Secret | Description |
+|--------|-------------|
+| `FLY_API_TOKEN` | Fly.io deploy token |
+| `STAGING_DATABASE_URL_APP` | Neon staging connection string for the least-privilege app role |
+| `STAGING_JWT_SECRET` | Staging JWT signing secret (never reuse production's) |
+| `ANTHROPIC_API_KEY` | Optional — staging Anthropic key |
 
-| Var | Description |
-|-----|-------------|
-| `ANTHROPIC_API_KEY` | Staging Anthropic key (can share with production or use separate) |
-| `OPENAI_API_KEY` | OpenAI key for embeddings |
-| `ALLOWED_ORIGINS` | e.g. `https://staging.yourcompany.com` |
-| `API_BASE_URL` | e.g. `https://api-staging.yourcompany.com` |
-| `APP_BASE_URL` | e.g. `https://staging.yourcompany.com` |
-| `SAML_SP_CERT` | Staging SP certificate (generate separately — never reuse production cert) |
-| `SAML_SP_KEY` | Staging SP private key |
-| `SENTRY_DSN` | Staging Sentry project DSN (use `environment: staging` in Sentry) |
-| `METRICS_TOKEN` | Random secret for `/metrics` endpoint — set same value in Prometheus scrape config |
+### 3. Set app secrets on Fly
 
-`JWT_SECRET` and `SESSION_SECRET` are auto-generated by Render (`generateValue: true`).
+Set any remaining runtime secrets on the staging app with `flyctl secrets set --app denver-epc-staging`:
+`OPENAI_API_KEY`, `ALLOWED_ORIGINS`, `API_BASE_URL`, `APP_BASE_URL`, `SAML_SP_CERT`, `SAML_SP_KEY`
+(generate separately — never reuse the production cert), `SENTRY_DSN`, `METRICS_TOKEN`.
 
-### 3. Set deploy branch in Render dashboard
+### 4. Deploy
 
-- `jarvis-epc-staging`: deploy branch → `develop`
-- `jarvis-epc-workers-staging`: deploy branch → `develop`
-- Production services (`jarvis-epc`, `jarvis-epc-workers`): deploy branch → `main`
+Run the **Fly Staging Deploy** workflow with the git ref to deploy. It passes
+`--env APP_RELEASE_SHA=<git-sha>`, so `GET /api/v1/health` reports a non-secret `releaseSha`
+confirming exactly which commit is running.
 
-### 4. Seed staging database
+### 5. Seed staging database
 
 The staging DB runs migrations automatically on deploy (same `runMigrations()` call in server startup). No seed script is required — the platform creates data on first use.
 
-For SAML testing:
+For SAML testing, register a test tenant via the API:
+
 ```bash
-# Register a test tenant via the API
 curl -X POST https://api-staging.yourcompany.com/api/v1/tenants \
   -H 'Content-Type: application/json' \
-  -d '{ "name": "Acme Test", "slug": "acme-test", "email": "admin@acme.test", "password": "Test1234!" }'
+  -d "{ \"name\": \"Acme Test\", \"slug\": \"acme-test\", \"email\": \"admin@acme.test\", \"password\": \"${TEST_TENANT_PASSWORD}\" }"
 ```
+
+## Rollback
+
+The rollback target is whatever release was running immediately before the failed deploy.
+List releases with `flyctl releases --app <app>`, then `flyctl deploy --image <prior-release-image>`
+(or use the Fly dashboard rollback action).
 
 ## Prometheus Scraping
 
@@ -131,5 +152,5 @@ Key metrics to alert on:
 - [ ] SAML SSO login works with at least one test IdP config
 - [ ] SCIM provisioning: POST /scim/v2/Users creates a user
 - [ ] Audit log export: GET /api/v1/audit/export?format=csv returns data
-- [ ] Background jobs: scheduler is running (check Render worker logs for `[scheduler] Started`)
+- [ ] Background jobs: scheduler is running (`flyctl logs --app denver-epc-staging` shows `[scheduler] Started`)
 - [ ] No errors in Sentry staging project after smoke test

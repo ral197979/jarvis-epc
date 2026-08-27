@@ -189,7 +189,7 @@ export async function processNextIfcJob(): Promise<boolean> {
     await client.query('COMMIT')
 
     // Read file from storage_key
-    // In production this would fetch from S3/GCS. For local/Render: try local path.
+    // In production this would fetch from S3/GCS. For local/single-machine: try local path.
     const localPath = job.storage_key.startsWith('/') ? job.storage_key : null
     if (!localPath || !existsSync(localPath)) {
       // Mark as failed — storage integration not configured
