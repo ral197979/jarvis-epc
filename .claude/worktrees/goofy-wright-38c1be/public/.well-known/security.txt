@@ -1,7 +1,0 @@
-Contact: mailto:security@jarvis-epc.example.com
-Expires: 2027-01-01T00:00:00.000Z
-Encryption: https://jarvis-epc.example.com/.well-known/pgp-key.txt
-Preferred-Languages: en
-Canonical: https://jarvis-epc.example.com/.well-known/security.txt
-Policy: https://jarvis-epc.example.com/security-policy
-Acknowledgments: https://jarvis-epc.example.com/security-acknowledgments

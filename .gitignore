@@ -56,5 +56,10 @@ bundle-*/
 # Local Claude Code tooling (preview server config, etc.)
 .claude/launch.json
 
+# Claude Code git worktrees: full working checkouts of this same repo.
+# Never commit them — they duplicate every tracked file, so repo-wide greps
+# return 2-3x hits and deleted files reappear as stale copies.
+.claude/worktrees/
+
 # CI artifact: vitest JSON report consumed by scripts/ci/assert-integration-ran.mjs
 integration-report.json
