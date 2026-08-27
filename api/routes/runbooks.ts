@@ -9,6 +9,7 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { executeRunbook, rollbackExecution, approveRunbookStep } from '../services/runbook/runbookEngine'
+import { requireCapability } from '../authz/requireCapability'
 
 export const runbooksRouter = Router()
 const auth = requireAuth as never
@@ -18,7 +19,7 @@ type RunbookReq = Request & AuthenticatedRequest & TenantRequest
 runbooksRouter.use(auth)
 
 // ─── List runbooks ────────────────────────────────────────────────────────────
-runbooksRouter.get('/', async (req: Request, res: Response) => {
+runbooksRouter.get('/', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT r.id, r.name, r.description, r.trigger_type, r.status, r.tags,
@@ -33,7 +34,7 @@ runbooksRouter.get('/', async (req: Request, res: Response) => {
 })
 
 // ─── Create runbook ───────────────────────────────────────────────────────────
-runbooksRouter.post('/', async (req: Request, res: Response) => {
+runbooksRouter.post('/', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { name, description, trigger_type = 'manual', trigger_config = {}, tags = [], steps, rollback_steps = [] } = req.body
   if (!name || !steps || !Array.isArray(steps)) {
@@ -59,7 +60,7 @@ runbooksRouter.post('/', async (req: Request, res: Response) => {
 })
 
 // ─── Execute runbook ──────────────────────────────────────────────────────────
-runbooksRouter.post('/:id/execute', async (req: Request, res: Response) => {
+runbooksRouter.post('/:id/execute', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { mode = 'live', variables = {}, correlation_id } = req.body
   if (!['live', 'dry_run', 'simulation'].includes(mode)) {
@@ -76,7 +77,7 @@ runbooksRouter.post('/:id/execute', async (req: Request, res: Response) => {
 })
 
 // ─── Simulate runbook (dry-run shortcut) ──────────────────────────────────────
-runbooksRouter.post('/:id/simulate', async (req: Request, res: Response) => {
+runbooksRouter.post('/:id/simulate', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const { variables = {} } = req.body
   try {
@@ -90,7 +91,7 @@ runbooksRouter.post('/:id/simulate', async (req: Request, res: Response) => {
 })
 
 // ─── Get executions ───────────────────────────────────────────────────────────
-runbooksRouter.get('/:id/executions', async (req: Request, res: Response) => {
+runbooksRouter.get('/:id/executions', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const limit = Math.min(Number(req.query['limit'] ?? 20), 100)
   const { rows } = await tenantQuery(r.tenantId!, `
@@ -104,14 +105,14 @@ runbooksRouter.get('/:id/executions', async (req: Request, res: Response) => {
 })
 
 // ─── Rollback execution ───────────────────────────────────────────────────────
-runbooksRouter.post('/executions/:execId/rollback', async (req: Request, res: Response) => {
+runbooksRouter.post('/executions/:execId/rollback', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   const result = await rollbackExecution(req.params['execId'] as string, r.tenantId!)
   res.json({ data: result })
 })
 
 // ─── Approve step ─────────────────────────────────────────────────────────────
-runbooksRouter.post('/executions/:execId/approve/:stepIndex', async (req: Request, res: Response) => {
+runbooksRouter.post('/executions/:execId/approve/:stepIndex', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as RunbookReq
   await approveRunbookStep(r.tenantId!, req.params['execId'] as string, Number(req.params['stepIndex']), r.auth!.sub)
   res.json({ data: { approved: true } })

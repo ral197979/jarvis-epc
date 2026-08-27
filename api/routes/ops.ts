@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Operations Center Routes (v4.35.0)
  * ─────────────────────────────────────────────────────────
@@ -22,12 +21,17 @@ import { generateInboxRecommendations, fetchRecommendationInputs } from '../serv
 import { pollEvents } from '../realtime/wsGateway'
 import { publishActionEvent } from '../services/actions/actionEventPublisher'
 import { broadcastEvent } from '../realtime/eventBroadcaster'
+import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
+import { projectScopeSql, polymorphicCollectionScopeSql } from '../authz/recordScope'
+import { realtimeScopePolicy } from '../authz/polymorphicScopePolicies'
+import { resolveCurrentUser } from '../authz/currentUser'
+import { requireBodyProjectScope } from '../authz/recordScope'
 
 export const opsRouter = Router()
 
 // ─── GET /ops/overview ────────────────────────────────────────────────────────
 
-opsRouter.get('/overview', async (req: Request, res: Response) => {
+opsRouter.get('/overview', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 
@@ -77,32 +81,71 @@ opsRouter.get('/overview', async (req: Request, res: Response) => {
 
 // ─── GET /ops/live-feed ───────────────────────────────────────────────────────
 
-opsRouter.get('/live-feed', async (req: Request, res: Response) => {
+opsRouter.get('/live-feed', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const lastSeq  = parseInt(req.query['last_seq'] as string ?? '0', 10)
   const scope    = (req.query['scope'] as string) ?? 'tenant'
   const scopeId  = req.query['scope_id'] as string | undefined
 
+  // ADR-014 Phase 3H §17–§20. The caller chooses `scope`, so the selector is
+  // validated against the registry before anything is read, and the class it
+  // names decides the predicate: tenant events need only the tenant boundary,
+  // action and escalation events follow the OWNERSHIP of the action they are
+  // about, and a scope with no agreed meaning returns nothing rather than
+  // everything. The predicate goes inside the query, so the page is the newest
+  // AUTHORIZED events and `count` describes that set — a post-filtered page
+  // would both come up short and reveal how many events were hidden.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const policy = realtimeScopePolicy(scope)
+  if (!policy || policy.class === 'DENY_UNSUPPORTED') {
+    res.status(400).json({ error: 'unsupported_scope_type' }); return
+  }
+  const authScope = {
+    sql:    polymorphicCollectionScopeSql(principal, policy, 'scope_id', '$SCOPE_USER'),
+    params: [] as unknown[],
+  }
+  if (authScope.sql.includes('$SCOPE_USER')) authScope.params.push(principal.id)
+
   const events = await pollEvents(
     tenantId, isNaN(lastSeq) ? 0 : lastSeq,
-    scope as never, scopeId,
+    scope as never, scopeId, undefined, authScope,
   )
   res.json({ data: events, meta: { count: events.length } })
 })
 
 // ─── GET /ops/readiness ───────────────────────────────────────────────────────
 
-opsRouter.get('/readiness', async (req: Request, res: Response) => {
+opsRouter.get('/readiness', requireAllCapabilities('project.view', 'quality.view') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 
-  // Get all projects and compute readiness
+  // ADR-014 Phase 3G §15–§18. This route returns PROJECTS with a readiness score
+  // computed per project — its outer query selects FROM projects. Phase 3F
+  // reported `action_relations` as its row model, which was an artefact of
+  // following `computeReadiness` one service level down into
+  // `_fetchEntityMetrics`; the id the caller receives is a project id.
+  //
+  // So no `action_relations` scope policy is needed, and none is invented: the
+  // relation graph question §17 warned about does not arise, because the caller
+  // never receives a relation. This is the same membership predicate
+  // `GET /projects` has carried since Phase 3B, and it is applied BEFORE the
+  // LIMIT 20 so the page is twenty authorized projects rather than twenty tenant
+  // projects with holes cut in it. `?project_id=` narrows inside it and cannot
+  // widen it (§30).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const params: unknown[] = projectId ? [tenantId, projectId] : [tenantId]
+  const scope = projectScopeSql(principal, `$${params.length + 1}`)
+  if (scope) params.push(principal.id)
+
   const projectsRes = await tenantQuery(tenantId, `
-    SELECT id, name FROM projects
-    WHERE tenant_id = $1 ${projectId ? 'AND id = $2' : ''}
-      AND status NOT IN ('archived','cancelled')
+    SELECT p.id, p.name FROM projects p
+    WHERE p.tenant_id = $1 ${projectId ? 'AND p.id = $2' : ''}
+      AND p.status NOT IN ('archived','cancelled')
+      ${scope}
     LIMIT 20
-  `, projectId ? [tenantId, projectId] : [tenantId])
+  `, params)
 
   const readiness = await Promise.all(
     projectsRes.rows.map(async (p) => {
@@ -116,7 +159,7 @@ opsRouter.get('/readiness', async (req: Request, res: Response) => {
 
 // ─── GET /ops/escalations ─────────────────────────────────────────────────────
 
-opsRouter.get('/escalations', async (req: Request, res: Response) => {
+opsRouter.get('/escalations', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const limit    = Math.min(parseInt(req.query['limit'] as string ?? '50', 10), 200)
 
@@ -141,7 +184,7 @@ opsRouter.get('/escalations', async (req: Request, res: Response) => {
 
 // ─── GET /ops/blockers ────────────────────────────────────────────────────────
 
-opsRouter.get('/blockers', async (req: Request, res: Response) => {
+opsRouter.get('/blockers', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
 
   const res2 = await tenantQuery(tenantId, `
@@ -166,7 +209,7 @@ opsRouter.get('/blockers', async (req: Request, res: Response) => {
 
 // ─── POST /ops/reassign ───────────────────────────────────────────────────────
 
-opsRouter.post('/reassign', async (req: Request, res: Response) => {
+opsRouter.post('/reassign', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId   = req.tenantId!
   const issuedBy   = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, target_user_id, reason } = req.body as {
@@ -207,7 +250,7 @@ opsRouter.post('/reassign', async (req: Request, res: Response) => {
 
 // ─── POST /ops/escalate ───────────────────────────────────────────────────────
 
-opsRouter.post('/escalate', async (req: Request, res: Response) => {
+opsRouter.post('/escalate', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const issuedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, reason } = req.body as { action_ids: string[]; reason: string }
@@ -243,7 +286,7 @@ opsRouter.post('/escalate', async (req: Request, res: Response) => {
 
 // ─── POST /ops/freeze ────────────────────────────────────────────────────────
 
-opsRouter.post('/freeze', async (req: Request, res: Response) => {
+opsRouter.post('/freeze', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const issuedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, reason } = req.body as { action_ids: string[]; reason: string }
@@ -277,7 +320,7 @@ opsRouter.post('/freeze', async (req: Request, res: Response) => {
 
 // ─── POST /ops/unfreeze ──────────────────────────────────────────────────────
 
-opsRouter.post('/unfreeze', async (req: Request, res: Response) => {
+opsRouter.post('/unfreeze', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const issuedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { action_ids, reason } = req.body as { action_ids: string[]; reason: string }
@@ -305,7 +348,7 @@ opsRouter.post('/unfreeze', async (req: Request, res: Response) => {
 
 // ─── POST /ops/incident ───────────────────────────────────────────────────────
 
-opsRouter.post('/incident', async (req: Request, res: Response) => {
+opsRouter.post('/incident', requireCapability('platform.automation') as never, requireBodyProjectScope('project_id') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const reportedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { title, description, severity, project_id, related_action_ids } = req.body as {
@@ -330,7 +373,7 @@ opsRouter.post('/incident', async (req: Request, res: Response) => {
 
 // ─── GET /ops/recommendations ──────────────────────────────────────────────────
 
-opsRouter.get('/recommendations', async (req: Request, res: Response) => {
+opsRouter.get('/recommendations', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const projectId = req.query['project_id'] as string | undefined
 

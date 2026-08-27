@@ -9,12 +9,14 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildQualityIntelligence } from '../services/quality/qualityIntelligenceService'
 
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/projects/:projectId/quality-intelligence', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/quality-intelligence', requireCapability('quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildQualityIntelligence(r.tenantId!, String(req.params.projectId), new Date())

@@ -105,6 +105,8 @@ export interface StatsWindow {
   projectId?: string
   from:       string            // ISO
   to:         string            // ISO
+  /** ADR-014 Phase 3G: the collection predicate the ROUTE built. */
+  scope?: { sql: string; params: unknown[] }
 }
 
 export interface StatsRollup {
@@ -122,6 +124,19 @@ export async function stats(w: StatsWindow): Promise<StatsRollup> {
   if (w.projectId) {
     conds.push(`project_id = $${i++}`)
     vals.push(w.projectId)
+  }
+  // ADR-014 Phase 3G §22/§23. Every one of the five rollups below shares this
+  // WHERE, so the authorization predicate goes on it once and no aggregate can
+  // be left tenant-wide while its siblings are scoped. `agent_actions` is
+  // DUAL_PROJECT_OR_TENANT, so a project-less agent action stays counted.
+  //
+  // This route is NOT holder-neutral: `ai.govern` is held by the platform
+  // administrator as well as the Owner, and an administrator has no tenant-wide
+  // project scope (§42). Without the predicate, admin would see counts over
+  // every project in the tenant.
+  if (w.scope?.sql) {
+    conds.push(w.scope.sql.replace(/^AND\s+/i, '').replace(/\$SCOPE_USER/g, `$${i++}`))
+    vals.push(...w.scope.params)
   }
   const where = conds.join(' AND ')
 

@@ -25,10 +25,46 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 const DEFAULT_POLICY: PolicyConfig = { writesEnabled: false, chatEnabled: false, exportsEnabled: false, activeRole: 'viewer' }
 
+// ─── This screen has no books behind it ──────────────────────────────────────
+//
+// The nav calls this "Portfolio" and it renders six financial KPIs — Total
+// Invoiced, Collected, Outstanding, Total Expenses, Net Position, Journal
+// Entries. All three collections it reads (`invoices`, `expenses`, `journal`)
+// come from `useBizStore`, and NONE of them has a backend: no migration creates
+// an invoices, expenses or journal table, and no route serves one. The only
+// invoice table in the schema is `subcontract_invoices` (migration 059), a
+// project-scoped subcontractor payable reached at
+// GET /api/v1/subcontracts/:id/invoices — a different domain, and nested, so it
+// is not a general ledger and there is no tenant-wide list to fetch.
+//
+// That made this the most misleading screen in the app. An empty list is a weak
+// claim; "Collected $0" and "Net Position $0" are FINANCIAL ASSERTIONS, and a
+// reader has no way to tell them from a company that genuinely billed nothing.
+// So an unstored total reads `—`, not `$0`.
+//
+// The Add controls are worse than dead: they dispatch into the store and the
+// entry appears, so a user can type a real invoice, watch it land, and lose it
+// on refresh. The workspace rule against faking persistence is exactly this
+// case. They are kept working — a session scratchpad is a legitimate thing —
+// but the impermanence is stated where it cannot be missed rather than
+// discovered afterwards.
+const FINANCE_API = false  // no invoices/expenses/journal table or route (verified 2026-08-24)
+
 function fmt(n: number) {
   if (n >= 1_000_000) return `$${(n/1_000_000).toFixed(1)}M`
   if (n >= 1_000)     return `$${(n/1_000).toFixed(0)}K`
   return `$${n.toFixed(0)}`
+}
+
+/**
+ * A money total, or `—` when there is nothing stored to total.
+ *
+ * Only collapses to a dash when the collection is EMPTY and no backend exists.
+ * The moment a session entry is added the real figure shows, because for that
+ * session it is true.
+ */
+function money(total: number, sourceCount: number): string {
+  return !FINANCE_API && sourceCount === 0 ? '—' : fmt(total)
 }
 
 function GenericTable({ rows, cols, ariaLabel, emptyIcon, emptyText }: {
@@ -115,6 +151,18 @@ export function FinanceView({ policy: policyProp, onAudit, onToast }: FinanceVie
 
   return (
     <div role="main" aria-label="Finance">
+      {!FINANCE_API && (
+        <p role="note" className="jarvis-small" style={{
+          marginBottom: 12, padding: '8px 12px', borderRadius: 6,
+          border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-cd)',
+          color: 'var(--jarvis-ts)',
+        }}>
+          <strong style={{ color: 'var(--jarvis-amb)' }}>Not connected to accounting.</strong>{' '}
+          Invoices, expenses and journal entries have no backend yet — anything
+          entered here stays in this browser session and is <strong>not saved</strong>.
+          These figures are not the books.
+        </p>
+      )}
       <div role="tablist" aria-label="Finance sections" style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid var(--jarvis-bd)', paddingBottom: 0 }}>
         {TABS.map(t => (
           <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
@@ -127,12 +175,15 @@ export function FinanceView({ policy: policyProp, onAudit, onToast }: FinanceVie
       {tab === 'summary' && (
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 16 }}>
-            <KpiCard label="Total Invoiced"  value={fmt(totalInvoiced)}  color="var(--jarvis-blue)" />
-            <KpiCard label="Collected"        value={fmt(totalPaid)}      color="var(--jarvis-grn)" />
-            <KpiCard label="Outstanding"      value={fmt(totalInvoiced - totalPaid)} color={outstanding.length ? 'var(--jarvis-red)' : 'var(--jarvis-grn)'} sub={`${outstanding.length} invoices`} />
-            <KpiCard label="Total Expenses"   value={fmt(totalExpenses)}  color="var(--jarvis-amb)" />
-            <KpiCard label="Net Position"     value={fmt(totalPaid - totalExpenses)} color={(totalPaid - totalExpenses) >= 0 ? 'var(--jarvis-grn)' : 'var(--jarvis-red)'} />
-            <KpiCard label="Journal Entries"  value={journal.length}       color="var(--jarvis-pur)" />
+            {/* `—` rather than `$0` while nothing is stored: a zero here is a
+                claim about a company's finances, not about a list's length. */}
+            <KpiCard label="Total Invoiced"  value={money(totalInvoiced, invoices.length)}  color="var(--jarvis-blue)" />
+            <KpiCard label="Collected"        value={money(totalPaid, invoices.length)}      color="var(--jarvis-grn)" />
+            <KpiCard label="Outstanding"      value={money(totalInvoiced - totalPaid, invoices.length)} color={outstanding.length ? 'var(--jarvis-red)' : 'var(--jarvis-grn)'} sub={`${outstanding.length} invoices`} />
+            <KpiCard label="Total Expenses"   value={money(totalExpenses, expenses.length)}  color="var(--jarvis-amb)" />
+            {/* Net Position spans both collections, so it needs both. */}
+            <KpiCard label="Net Position"     value={money(totalPaid - totalExpenses, invoices.length + expenses.length)} color={(totalPaid - totalExpenses) >= 0 ? 'var(--jarvis-grn)' : 'var(--jarvis-red)'} />
+            <KpiCard label="Journal Entries"  value={!FINANCE_API && journal.length === 0 ? '—' : journal.length}       color="var(--jarvis-pur)" />
           </div>
           {outstanding.length > 0 && (
             <div className="jarvis-card" style={{ padding: 16 }}>

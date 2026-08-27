@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Integration Hub Routes (v4.40.0)
  * ───────────────────────────────────────────────────────
@@ -9,6 +8,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { registerConnector, listConnectors, getConnectorHealth, enqueueIntegrationJob, completeIntegrationJob, failIntegrationJob } from '../services/integration/connectorFramework'
+import { requireCapability } from '../authz/requireCapability'
 
 export const integrationHubRouter = Router()
 const auth = requireAuth as never
@@ -17,7 +17,7 @@ type IntReq = Request & AuthenticatedRequest & TenantRequest
 integrationHubRouter.use(auth)
 
 // ─── Register connector ───────────────────────────────────────────────────────
-integrationHubRouter.post('/connect', async (req: Request, res: Response) => {
+integrationHubRouter.post('/connect', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const { name, type, config = {}, credential_ref } = req.body
   if (!name || !type) { res.status(400).json({ error: 'name and type required' }); return }
@@ -28,14 +28,14 @@ integrationHubRouter.post('/connect', async (req: Request, res: Response) => {
 })
 
 // ─── List connectors ──────────────────────────────────────────────────────────
-integrationHubRouter.get('/', async (req: Request, res: Response) => {
+integrationHubRouter.get('/', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const connectors = await listConnectors(r.tenantId!)
   res.json({ data: connectors })
 })
 
 // ─── Connector health ─────────────────────────────────────────────────────────
-integrationHubRouter.get('/health', async (req: Request, res: Response) => {
+integrationHubRouter.get('/health', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const connectors = await listConnectors(r.tenantId!)
   const health = await Promise.all(
@@ -44,7 +44,7 @@ integrationHubRouter.get('/health', async (req: Request, res: Response) => {
   res.json({ data: health })
 })
 
-integrationHubRouter.get('/:id/health', async (req: Request, res: Response) => {
+integrationHubRouter.get('/:id/health', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   try {
     const h = await getConnectorHealth(r.tenantId!, req.params['id'] as string)
@@ -53,7 +53,7 @@ integrationHubRouter.get('/:id/health', async (req: Request, res: Response) => {
 })
 
 // ─── Trigger sync ─────────────────────────────────────────────────────────────
-integrationHubRouter.post('/sync', async (req: Request, res: Response) => {
+integrationHubRouter.post('/sync', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   const { connector_id, job_type = 'sync', payload = {}, idempotency_key } = req.body
   if (!connector_id) { res.status(400).json({ error: 'connector_id required' }); return }
@@ -62,14 +62,14 @@ integrationHubRouter.post('/sync', async (req: Request, res: Response) => {
 })
 
 // ─── Complete job (worker callback) ──────────────────────────────────────────
-integrationHubRouter.post('/jobs/:id/complete', async (req: Request, res: Response) => {
+integrationHubRouter.post('/jobs/:id/complete', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   await completeIntegrationJob(req.params['id'] as string, r.tenantId!, req.body.result ?? {})
   res.json({ data: { completed: true } })
 })
 
 // ─── Fail job (worker callback) ───────────────────────────────────────────────
-integrationHubRouter.post('/jobs/:id/fail', async (req: Request, res: Response) => {
+integrationHubRouter.post('/jobs/:id/fail', requireCapability('platform.integrations') as never, async (req: Request, res: Response) => {
   const r = req as IntReq
   await failIntegrationJob(req.params['id'] as string, r.tenantId!, req.body.error ?? 'unknown')
   res.json({ data: { failed: true } })

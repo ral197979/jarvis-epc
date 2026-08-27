@@ -10,16 +10,22 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildMyWork } from '../services/myWork/myWorkService'
+import { requireCapability } from '../authz/requireCapability'
+import { personalPrincipal } from '../authz/personalScope'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/my-work', async (req: Request, res: Response) => {
+router.get('/my-work', requireCapability('personal.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
-  const userId = r.auth?.sub
-  if (!userId) return res.status(401).json({ error: 'No authenticated user' })
+  // ADR-014 Phase 2C-4A: live principal, so a deactivated or deleted user cannot
+  // pull a queue. `buildMyWork` is already self-scoped and stays that way — no
+  // caller-supplied user scope is accepted anywhere on this route.
+  const principal = await personalPrincipal(req)
+  if (!principal) return res.status(401).json({ error: 'unauthenticated' })
+  const userId = principal.id
   try {
     res.json({ data: await buildMyWork(r.tenantId!, userId, new Date()) })
   } catch (err) {

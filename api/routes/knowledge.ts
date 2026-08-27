@@ -18,6 +18,9 @@ import path from 'node:path'
 import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 import { enqueueSourceIngest } from '../services/knowledgeIngest'
 import { searchKnowledge } from '../services/knowledgeSearch'
 import { bulkIngestDirectory, isPathAllowed } from '../services/knowledgeBulkIngest'
@@ -29,14 +32,14 @@ type Req = AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
+// ADR-014 Phase 2 §20: reading the tenant knowledge corpus is assistant use;
+// ingesting into it, re-embedding it or deleting sources is corpus
+// administration. Both were previously reachable by any authenticated tenant
+// user (search) or gated by an inline owner/admin check (ingest).
+router.use(requireCapability('assistant.use') as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return false
-  }
-  return true
-}
+/** Corpus administration — ingest, re-embed, mine, delete. */
+const requireCorpusAdmin = requireCapability('assistant.admin') as never
 
 function _pagination(q: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(q['page']  ?? '1'), 10))
@@ -61,8 +64,7 @@ function _pagination(q: Record<string, unknown>) {
 // Returns the BulkIngestResult.  If KNOWLEDGE_INGEST_ROOTS is set in the
 // server env, root_path must be under one of those prefixes.
 
-router.post('/bulk-ingest', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/bulk-ingest', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -146,6 +148,18 @@ router.get('/sources', async (req: Req, res: Response) => {
   if (asset_system) { conds.push(`asset_system = $${i++}`); vals.push(asset_system) }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `knowledge_sources` is DUAL_PROJECT_OR_TENANT: migration
+  // 022 files `project_id` under "Classification tags used for retrieval
+  // filtering", and the bulk ingest omits it entirely — so the tenant corpus is
+  // project-less by construction and must stay visible, while a project-tagged
+  // source follows membership. Same predicate on the COUNT, so `total`
+  // describes the rows this caller can actually page through (§15).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = collectionScopeSql(principal, 'knowledge_sources', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'knowledge_sources')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT id, title, kind, storage_path, original_filename, byte_size, page_count,
@@ -153,13 +167,15 @@ router.get('/sources', async (req: Req, res: Response) => {
              tags, asset_system, project_id, ingested_at, created_at, updated_at
       FROM   knowledge_sources
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scope}
       ORDER  BY created_at DESC
-      LIMIT  $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT  $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM knowledge_sources
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scope}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)
@@ -171,7 +187,7 @@ router.get('/sources', async (req: Req, res: Response) => {
 
 // ─── Create / register source (+ enqueue ingest) ──────────────────────────────
 
-router.post('/sources', async (req: Req, res: Response) => {
+router.post('/sources', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -254,7 +270,7 @@ router.post('/sources', async (req: Req, res: Response) => {
 
 // ─── Detail ───────────────────────────────────────────────────────────────────
 
-router.get('/sources/:id', async (req: Req, res: Response) => {
+router.get('/sources/:id', requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -269,7 +285,7 @@ router.get('/sources/:id', async (req: Req, res: Response) => {
 
 // ─── Chunks for a source (paginated) ──────────────────────────────────────────
 
-router.get('/sources/:id/chunks', async (req: Req, res: Response) => {
+router.get('/sources/:id/chunks', requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -299,7 +315,7 @@ router.get('/sources/:id/chunks', async (req: Req, res: Response) => {
 
 // ─── Re-ingest ────────────────────────────────────────────────────────────────
 
-router.post('/sources/:id/reingest', async (req: Req, res: Response) => {
+router.post('/sources/:id/reingest', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -319,8 +335,7 @@ router.post('/sources/:id/reingest', async (req: Req, res: Response) => {
 
 // ─── Mine fixes from a single source ──────────────────────────────────────────
 
-router.post('/sources/:id/mine-fixes', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/sources/:id/mine-fixes', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -358,8 +373,7 @@ router.post('/sources/:id/mine-fixes', async (req: Req, res: Response) => {
 
 // ─── Embed chunks (per source) ────────────────────────────────────────────────
 
-router.post('/sources/:id/embed', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/sources/:id/embed', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -383,8 +397,7 @@ router.post('/sources/:id/embed', async (req: Req, res: Response) => {
 
 // ─── Embed in bulk — queue every source with un-embedded chunks ────────────────
 
-router.post('/embed-bulk', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/embed-bulk', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -404,16 +417,32 @@ router.post('/embed-bulk', async (req: Req, res: Response) => {
 router.get('/embed-status', async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // ADR-014 Phase 3F §16/§17. This is an AGGREGATE over project-bound rows, so
+  // the authorization predicate belongs INSIDE the aggregate query: a tenant-wide
+  // COUNT would report the size of a corpus the caller cannot read, which is the
+  // same disclosure as returning the rows.
+  //
+  // `knowledge_chunks` reaches its project through `source_id`, so the parent is
+  // reached by a single JOIN rather than a lookup per row (§37). The join is
+  // INNER because a chunk always has a source; the DUAL semantics then keep
+  // chunks of project-less (tenant corpus) sources counted.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'knowledge_sources', 's.project_id', '$1')
+  const scopeVals = collectionScopeParams(principal, 'knowledge_sources')
+
   const r = await tenantQuery<{
     total: string; embedded: string; pending: string
   }>(tenantId, `
     SELECT
-      COUNT(*)::text                                   AS total,
-      COUNT(*) FILTER (WHERE embedding IS NOT NULL)::text AS embedded,
-      COUNT(*) FILTER (WHERE embedding IS NULL)::text     AS pending
-    FROM knowledge_chunks
-    WHERE tenant_id = current_setting('app.current_tenant_id',true)::uuid
-  `, [])
+      COUNT(*)::text                                     AS total,
+      COUNT(*) FILTER (WHERE c.embedding IS NOT NULL)::text AS embedded,
+      COUNT(*) FILTER (WHERE c.embedding IS NULL)::text     AS pending
+    FROM knowledge_chunks c
+    JOIN knowledge_sources s ON s.id = c.source_id
+    WHERE c.tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    ${scopeSql}
+  `, scopeVals)
   const row = r.rows[0]!
   res.json({
     data: {
@@ -429,8 +458,7 @@ router.get('/embed-status', async (req: Req, res: Response) => {
 
 // ─── Mine fixes in bulk — OEM + record tier only by default ────────────────────
 
-router.post('/mine-fixes-bulk', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/mine-fixes-bulk', requireCorpusAdmin, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -450,8 +478,7 @@ router.post('/mine-fixes-bulk', async (req: Req, res: Response) => {
 
 // ─── Delete (admin) ───────────────────────────────────────────────────────────
 
-router.delete('/sources/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/sources/:id', requireCorpusAdmin, requireRecordScope('knowledge_sources') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

@@ -7,10 +7,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // ─── DB pool mocks ────────────────────────────────────────────────────────────
 
+// ADR-014 Phase 2C-1: the batch route now requires field.write, resolved from
+// the database rather than the token. Field operative is the role that holds it
+// — engineer deliberately does not, so the principal here is field_ops.
+const AUTHZ_USER = { id: 'user-1', tenant_id: 'tenant-1', role: 'field_ops', is_active: true }
+const isCurrentUserLookup = (sql: string) => /FROM\s+users\s+WHERE\s+id/i.test(sql)
+
 const mockQuery = vi.fn()
 const mockClientQuery = vi.fn()
 
 vi.mock('../db/pool', () => ({
+  query: (sql: string, params: unknown[]) =>
+    isCurrentUserLookup(sql)
+      ? Promise.resolve({ rows: [AUTHZ_USER], rowCount: 1 })
+      : mockQuery(null, sql, params),
   tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
   // tenantTransaction receives a fn; we invoke it with a fake client whose
   // .query delegates to mockClientQuery so the test controls every call.
@@ -24,7 +34,7 @@ vi.mock('../db/pool', () => ({
 
 vi.mock('../auth', () => ({
   requireAuth: (req: any, _res: any, next: any) => {
-    req.auth = { sub: 'user-1', role: 'engineer', tid: 'tenant-1', jti: 'j' }
+    req.auth = { sub: 'user-1', role: 'field_ops', tid: 'tenant-1', jti: 'j' }
     next()
   },
 }))

@@ -9,21 +9,44 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
 vi.mock('../auth', () => ({
-  requireAuth: (_req: any, _res: any, next: any) => next(),
-}))
-
-vi.mock('../middleware/tenant', () => ({
-  requireTenant: (req: any, _res: any, next: any) => {
-    req.tenantId = 'tenant-test'
-    req.auth     = { sub: 'user-abc', tid: 'tenant-test', role: 'owner', jti: 'jti-1' }
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'user-abc', tid: 'tenant-test', role: 'admin', jti: 'jti-1' }
     next()
   },
 }))
 
-vi.mock('../db/pool', () => ({
-  tenantQuery: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
-  query:       vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+// ADR-014 Phase 2B-1: mounted as the factory it is — `requireTenant()`. The
+// route file used to call it as `requireTenant(req, res, next)`, so this mock
+// was written as a bare middleware to match.
+vi.mock('../middleware/tenant', () => ({
+  requireTenant: () => (req: any, _res: any, next: any) => {
+    req.tenantId = 'tenant-test'
+    next()
+  },
 }))
+
+// ADR-014 Phase 2A: /mcp/execute requires `platform.automation`.
+// ADR-014 Phase 2B-1: the three reads require `platform.admin`, and /tools and
+// /ava/health no longer bypass authentication. The caller is the platform
+// administrator — the narrowest role holding both capabilities, and the role
+// whose Phase 1 screens (MCPToolsPage, AutomationView) actually read them. The
+// authorization lookup is answered by a wrapper ahead of the scripted `query`
+// mock, so `mockResolvedValueOnce` scripting in individual tests still lines up
+// with the handler's own queries.
+const currentUserRow = { id: 'user-abc', tenant_id: 'tenant-test', role: 'admin', is_active: true }
+vi.mock('../db/pool', () => {
+  const scripted = vi.fn().mockResolvedValue({ rows: [], rowCount: 0 })
+  return {
+    tenantQuery: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    query: Object.assign(
+      async (sql: string, params?: unknown[]) =>
+        /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+          ? { rows: [currentUserRow], rowCount: 1 }
+          : scripted(sql, params),
+      scripted,
+    ),
+  }
+})
 
 // Structured logger used by writeAudit's failure path — spy on it so we can
 // prove an audit-write failure is logged rather than silently swallowed.

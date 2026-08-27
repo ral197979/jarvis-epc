@@ -9,6 +9,8 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
 // requireAuth + requireTenant middleware guarantee these are set before any
 // handler in this file runs; asserting their presence at the type level avoids
@@ -20,7 +22,7 @@ router.use(requireAuth as any)
 router.use(requireTenant() as any)
 
 // ─── List sessions for a project ──────────────────────────────────────────────
-router.get('/projects/:projectId/calc-sessions', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/calc-sessions', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { projectId } = req.params
   const { tool_name, limit = '20', offset = '0' } = req.query
@@ -50,7 +52,7 @@ router.get('/projects/:projectId/calc-sessions', async (req: Request, res: Respo
 })
 
 // ─── Save a new session ────────────────────────────────────────────────────────
-router.post('/projects/:projectId/calc-sessions', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/calc-sessions', requireCapability('engineering.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { projectId } = req.params
   const { tool_name, tool_version, input_summary, output_summary, pid_svg, notes } = req.body
@@ -90,7 +92,7 @@ router.post('/projects/:projectId/calc-sessions', async (req: Request, res: Resp
 })
 
 // ─── Fetch single session (includes pid_svg) ──────────────────────────────────
-router.get('/calc-sessions/:id', async (req: Request, res: Response) => {
+router.get('/calc-sessions/:id', requireCapability('engineering.view') as never, requireRecordScope('calc_sessions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   try {
     const result = await tenantQuery(r.tenantId,
@@ -107,7 +109,7 @@ router.get('/calc-sessions/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Update notes ─────────────────────────────────────────────────────────────
-router.patch('/calc-sessions/:id', async (req: Request, res: Response) => {
+router.patch('/calc-sessions/:id', requireCapability('engineering.write') as never, requireRecordScope('calc_sessions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   const { notes } = req.body
   if (typeof notes !== 'string') return res.status(400).json({ error: 'notes (string) required' })
@@ -124,7 +126,7 @@ router.patch('/calc-sessions/:id', async (req: Request, res: Response) => {
 })
 
 // ─── Delete session ───────────────────────────────────────────────────────────
-router.delete('/calc-sessions/:id', async (req: Request, res: Response) => {
+router.delete('/calc-sessions/:id', requireCapability('engineering.write') as never, requireRecordScope('calc_sessions') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantRequest
   try {
     await tenantQuery(r.tenantId,

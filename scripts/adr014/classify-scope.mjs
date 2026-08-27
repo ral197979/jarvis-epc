@@ -1,0 +1,309 @@
+#!/usr/bin/env node
+/**
+ * ADR-014 — project-scope classification (HOB §5 mutation inventory, §9
+ * direct-ID read inventory, §41 adoption registry shape).
+ *
+ * Joins the three machine-derived inputs:
+ *   endpoint-inventory.json        route surface + guards in force
+ *   route-data-access.json         tables each route reads/writes
+ *   schema-project-parent-map.json how each table reaches a project
+ *
+ * and assigns every endpoint EXACTLY ONE disposition from the HOB §5 vocabulary
+ * via an ordered, explicit rule list. Each verdict carries the rule that fired,
+ * so a disposition can be argued with rather than taken on faith.
+ *
+ * ENFORCEMENT IS MEASURED, NOT ASSUMED. An earlier revision of this file
+ * hard-coded "no ADR-014 authorization layer at this commit", which was true of
+ * the pre-Phase-2 baseline it was written against and false of every commit
+ * since. It now reads the capability guard and the canonical record-scope call
+ * that `extract-endpoint-inventory.mjs` derives from source, so an endpoint is
+ * reported PROTECTED only when the source actually enforces it.
+ */
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join, dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
+const A    = join(ROOT, 'audit', 'adr-014')
+const rd   = f => JSON.parse(readFileSync(join(A, f), 'utf8'))
+
+const inv    = rd('endpoint-inventory.json')
+const access = rd('route-data-access.json')
+const schema = rd('schema-project-parent-map.json')
+
+const tableMap  = new Map(schema.tables.map(t => [t.table, t]))
+const accessMap = new Map(access.endpoints.map(e => [`${e.method} ${e.path} ${e.file}:${e.line}`, e]))
+
+const MUTATION = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+const projectParentOf = t => tableMap.get(t)?.projectParent ?? null
+const hasProjectParent = t => {
+  const p = projectParentOf(t)
+  return !!p && p.strategy !== 'NO_PROJECT_PARENT'
+}
+
+/** Consequential-transition verbs, matched on the final path segment only. */
+const TRANSITION_VERBS = [
+  'approve', 'reject', 'void', 'post', 'close', 'waive', 'accept', 'publish',
+  'finalize', 'mark-paid', 'submit', 'sign', 'issue', 'cancel', 'revoke',
+  'execute', 'release', 'authorize', 'complete', 'archive', 'suspend',
+]
+const lastSegment = p => p.split('/').filter(Boolean).pop() ?? ''
+const isTransition = p => TRANSITION_VERBS.includes(lastSegment(p))
+
+/** An :id-style path parameter that is not itself the project. */
+const recordIdParams = ep => ep.pathParams.filter(p => !/^projectId$/i.test(p))
+
+// ── ordered rules; first match wins, and records why ─────────────────────────
+const RULES = [
+  ['DEAD_OR_UNMOUNTED', ep => !ep.mounted,
+    'router is never mounted from api/server.ts'],
+
+  ['SERVICE_BOUNDARY', ep =>
+    /^\/scim\/|^\/api\/v1\/scim|^\/saml\/|^\/api\/v1\/auth\/saml|^\/api\/cx\/webhook/.test(ep.path) ||
+    ep.file.includes('scim') || ep.file.includes('saml') || ep.file.includes('Webhook'),
+    'service/IdP trust boundary — authenticates by service token, HMAC or SAML, not by user session (HOB §33)'],
+
+  ['PLATFORM_GLOBAL', ep => ep.guards.includes('requirePlatformAdmin') ||
+    /^\/api\/v1\/enterprise\//.test(ep.path),
+    'platform-administration surface, above tenant scope'],
+
+  ['PUBLIC_UNAUTHENTICATED', ep => !ep.guards.length,
+    'no session guard and not a recognised service boundary'],
+
+  // The project RECORD itself: /projects/:id, or a transition acting on it
+  // (/projects/:id/approve). A child collection under the same prefix
+  // (/projects/:id/bid-packages) is NOT the project record — it is rule
+  // PROJECT_CHILD_PATH_PROJECT below, which carries the same :projectId scope
+  // requirement but a different functional capability.
+  ['PROJECT_ROOT_EXISTING', ep =>
+    /^\/api\/v1\/projects\/:(id|projectId)$/.test(ep.path) ||
+    (/^\/api\/v1\/projects\/:(id|projectId)\/[^/]+$/.test(ep.path) && isTransition(ep.path)),
+    'operates on the existing project record identified in the path (HOB §13/§14)'],
+
+  ['PROJECT_CREATE_NO_EXISTING_SCOPE', ep =>
+    ep.method === 'POST' && ep.path === '/api/v1/projects',
+    'creates the project itself — no pre-existing project to be a member of (HOB §13)'],
+
+  // ADR-014 Phase 3F: `:projectId` anywhere in the path, not only under a
+  // `/projects/` prefix. api/routes/schedule.ts mounts its collections at
+  // `/schedule/:projectId/tasks`, and the old prefix-anchored regex missed all
+  // four of them — they name a project in the path exactly as the /projects/*
+  // routes do, and carry the same scope requirement.
+  ['PROJECT_CHILD_PATH_PROJECT', ep =>
+    /\/projects\/:(projectId|id)\//.test(ep.path) ||
+    ep.pathParams.some(p => /^projectId$/i.test(p)),
+    'project identified directly by a path parameter'],
+
+  ['SELF_SCOPED', ep =>
+    /\/me\/|\/me$|\/my-|\/inbox/.test(ep.path) ||
+    ep.writes.some(w => w.scopeColumns.includes('user_id') && !w.scopeColumns.includes('project_id')),
+    'record is scoped to the calling principal, not to a project (HOB §31 — SELF remains SELF)'],
+
+  ['PROJECT_CHILD_BODY_PROJECT', ep =>
+    MUTATION.has(ep.method) && ep.bodyProjectRefs.length > 0,
+    'project selected by a project id in the request body (HOB §16)'],
+
+  // ADR-014 Phase 3G §25–§28. Project-boundness for a direct-ID READ comes from
+  // the resource the PATH IDENTIFIER addresses, not from every table the payload
+  // query happens to touch. `GET /vendors/:id` selects FROM vendors and JOINs
+  // purchase orders for a count; the id names a vendor, and a vendor registry is
+  // not a project child. Using merged `reads` made that route — and others like
+  // it — look project-bound, which is the defect Phase 3F recorded and this rule
+  // repairs.
+  //
+  // MUTATIONS keep the old test: a write has no outer SELECT to read a primary
+  // entity from, and narrowing them here would silently move counters Phase 3D
+  // certified.
+  ['PROJECT_CHILD_RECORD_ID', ep =>
+    recordIdParams(ep).length > 0 &&
+    (MUTATION.has(ep.method)
+      ? (ep.writeTables.some(hasProjectParent) || ep.reads.some(hasProjectParent))
+      : (!!ep.primaryReadTable && hasProjectParent(ep.primaryReadTable))),
+    'child record addressed by its own id; the record\'s own table reaches a project'],
+
+  ['CROSSDOMAIN', ep => /\/related|\/cross-domain|\/correlations/.test(ep.path),
+    'cross-domain synthesised record — provenance unresolved (HOB §32)'],
+
+  // ADR-014 Phase 3F §4/§55. A collection with NO project path parameter can
+  // still return project-bound rows — `GET /files/documents`, `GET /risks`,
+  // `GET /transmittals`. Before this rule they fell past PROJECT_CHILD_RECORD_ID
+  // (which needs a record-id param) and past TENANT_GLOBAL (which needs NO table
+  // to reach a project) into the NO_PROJECT_PARENT catch-all, whose stated
+  // reason — "none of them reaches a project" — was simply false for them.
+  //
+  // Project-boundness is read from `primaryReadTable`: the outer query's FROM,
+  // not every table the route touches. A vendor registry that JOINs `projects`
+  // for a display name is not a project collection.
+  //
+  // Reads only. A mutation with no path or body project is Phase 3D's settled
+  // surface, and widening this rule to writes would silently move counters that
+  // slice already certified.
+  ['PROJECT_CHILD_TENANT_COLLECTION', ep =>
+    !MUTATION.has(ep.method) &&
+    recordIdParams(ep).length === 0 &&
+    !!ep.primaryReadTable && hasProjectParent(ep.primaryReadTable),
+    'tenant-level collection whose returned rows reach a project (Phase 3F §4)'],
+
+  ['TENANT_GLOBAL', ep =>
+    (ep.writeTables.length || ep.reads.length) &&
+    ![...ep.writeTables, ...ep.reads].some(hasProjectParent),
+    'every table this route touches has no project parent — tenant-level configuration or registry'],
+
+  // Visible, not silently declared project-free: no table could be resolved for
+  // this route, so its project relationship is UNKNOWN rather than absent.
+  // HOB §64 requires these be reported as deferred-for-scope-model, not closed.
+  ['UNRESOLVED_DATA_ACCESS', ep => ep.resolvedVia === 'UNRESOLVED',
+    'no SQL table resolved from handler or one-level service delegation — project relationship undetermined, manual review required'],
+
+  ['NO_PROJECT_PARENT', () => true,
+    'tables resolved, and none of them reaches a project'],
+]
+
+function classify (ep) {
+  for (const [disposition, test, reason] of RULES) {
+    if (test(ep)) return { disposition, reason }
+  }
+  return { disposition: 'UNEXPLAINED', reason: 'no rule matched' }
+}
+
+// ── build the registry ───────────────────────────────────────────────────────
+const registry = []
+for (const e of inv.endpoints) {
+  const acc = accessMap.get(`${e.method} ${e.path} ${e.file}:${e.line}`) ?? { writes: [], reads: [], writeTables: [], delegatesTo: [], resolvedVia: 'UNRESOLVED' }
+  const ep = { ...e, ...acc }
+  const { disposition, reason } = classify(ep)
+
+  const projectTables = [...new Set([...ep.writeTables, ...ep.reads])].filter(hasProjectParent)
+
+  /**
+   * Pick the table this route is ABOUT. Preferring a table whose name matches the
+   * resource segment of the path avoids naming a joined-in table as primary —
+   * without it, GET /change-orders/:id reports `change_order_tasks` because that
+   * join appears first in the SQL.
+   */
+  const resourceSegment = e.path.split('/').filter(s => s && !s.startsWith(':')).pop() ?? ''
+  const slug = resourceSegment.replace(/-/g, '_')
+  const nameMatches = t =>
+    t === slug || t === slug + 's' || t === slug.replace(/s$/, '') ||
+    t === slug.replace(/ies$/, 'y') || t.replace(/_/g, '') === slug.replace(/_/g, '')
+  const candidates = [...ep.writeTables, ...ep.reads]
+  // ADR-014 Phase 3G. For a READ, the table the outer query selects FROM is
+  // evidence, not a guess — `primaryReadTable` is parsed at paren depth 0 so a
+  // scalar subquery cannot masquerade as the entity. It wins over the path-noun
+  // heuristic, which disagreed with the real FROM on twenty collections:
+  // `/ops/readiness` selects FROM projects and was reported as action_relations
+  // purely because `computeReadiness` reaches that table one service down.
+  const primaryTable =
+    (!MUTATION.has(ep.method) && ep.primaryReadTable) ? ep.primaryReadTable :
+    candidates.find(t => nameMatches(t) && hasProjectParent(t)) ??
+    candidates.find(nameMatches) ??
+    ep.writeTables.find(hasProjectParent) ?? projectTables[0] ??
+    ep.writeTables[0] ?? ep.reads[0] ?? null
+
+  // Does the route already constrain by project anywhere in its SQL?
+  const scopesByProject = ep.writes.some(w => w.scopeColumns.includes('project_id'))
+  const scopesByTenant  = ep.writes.some(w => w.scopeColumns.includes('tenant_id'))
+
+  const operationType =
+    !MUTATION.has(e.method) ? (recordIdParams(e).length ? 'READ_DIRECT_ID' : 'READ_COLLECTION')
+    : isTransition(e.path)  ? 'MUTATION_CONSEQUENTIAL'
+    : e.method === 'POST'   ? 'MUTATION_CREATE'
+    : e.method === 'DELETE' ? 'MUTATION_DELETE'
+    :                         'MUTATION_UPDATE'
+
+  const projectBound = [
+    'PROJECT_ROOT_EXISTING', 'PROJECT_CHILD_PATH_PROJECT',
+    'PROJECT_CHILD_RECORD_ID', 'PROJECT_CHILD_BODY_PROJECT',
+    'PROJECT_CHILD_TENANT_COLLECTION',
+  ].includes(disposition)
+
+  registry.push({
+    method: e.method,
+    path: e.path,
+    file: e.file,
+    line: e.line,
+    operationType,
+    disposition,
+    dispositionReason: reason,
+    projectBound,
+    // functional authority actually in force at this commit
+    functionalAuthority: e.guards.length ? e.guards : ['(none)'],
+    // ADR-014 Phase 2 (functional) and Phase 3 (object) enforcement, both read
+    // from source by the inventory extractor rather than assumed.
+    capabilities: e.capabilities ?? [],
+    hasCapability: (e.capabilities ?? []).length > 0,
+    recordScopeCalls: e.recordScopeCalls ?? [],
+    enforcesRecordScope: (e.recordScopeCalls ?? []).length > 0,
+    // primaryTable is a HEURISTIC (first written table that reaches a project);
+    // writeTables/readTables carry the full resolved set so the heuristic can be
+    // checked rather than trusted.
+    primaryTable,
+    writeTables: ep.writeTables,
+    writeScopeColumns: [...new Set(ep.writes.flatMap(w => w.scopeColumns))].sort(),
+    projectScopeStrategy: primaryTable ? (projectParentOf(primaryTable)?.strategy ?? 'UNKNOWN_TABLE') : 'NO_TABLE_RESOLVED',
+    projectParent: primaryTable ? projectParentOf(primaryTable) : null,
+    sqlScopesByProject: scopesByProject,
+    sqlScopesByTenant: scopesByTenant,
+    bodyProjectRefs: e.bodyProjectRefs,
+    tableResolution: ep.resolvedVia,
+    status: !projectBound
+      ? `OUT_OF_PHASE3C_${disposition}`
+      : (e.recordScopeCalls ?? []).length ? 'PROTECTED_PHASE3' : 'CANDIDATE_PHASE3C',
+  })
+}
+
+registry.sort((a, b) => a.path.localeCompare(b.path) || a.method.localeCompare(b.method))
+
+// ── counters (HOB §42 / §62 shape, honestly labelled for this commit) ───────
+const by = (arr, f) => arr.reduce((a, x) => (a[f(x)] = (a[f(x)] || 0) + 1, a), {})
+const mut  = registry.filter(r => MUTATION.has(r.method))
+const read = registry.filter(r => !MUTATION.has(r.method))
+const pb   = registry.filter(r => r.projectBound)
+
+const counters = {
+  TOTAL_API_ENDPOINTS: registry.length,
+  DISPOSITIONS: by(registry, r => r.disposition),
+  UNEXPLAINED: registry.filter(r => r.disposition === 'UNEXPLAINED').length,
+
+  PROJECT_BOUND_TOTAL: pb.length,
+  PROJECT_BOUND_BY_OPERATION: by(pb, r => r.operationType),
+
+  MUTATIONS: {
+    total: mut.length,
+    projectBound: mut.filter(r => r.projectBound).length,
+    byDisposition: by(mut, r => r.disposition),
+    consequentialProjectBound: mut.filter(r => r.projectBound && r.operationType === 'MUTATION_CONSEQUENTIAL').length,
+    projectBoundWithNoProjectPredicateInSql:
+      mut.filter(r => r.projectBound && !r.sqlScopesByProject).length,
+  },
+  DIRECT_ID_READS: {
+    total: read.filter(r => r.operationType === 'READ_DIRECT_ID').length,
+    projectBound: read.filter(r => r.operationType === 'READ_DIRECT_ID' && r.projectBound).length,
+  },
+  READ_COLLECTIONS: {
+    total: read.filter(r => r.operationType === 'READ_COLLECTION').length,
+    projectBound: read.filter(r => r.operationType === 'READ_COLLECTION' && r.projectBound).length,
+  },
+  SELF_SCOPED: registry.filter(r => r.disposition === 'SELF_SCOPED').length,
+  DEFERRED_SCOPE_MODEL_UNRESOLVED: registry.filter(r => r.disposition === 'UNRESOLVED_DATA_ACCESS').length,
+  // ── measured enforcement (never hard-coded) ───────────────────────────────
+  FUNCTIONAL_CAPABILITY: {
+    guarded:   registry.filter(r => r.hasCapability).length,
+    unguarded: registry.filter(r => !r.hasCapability).length,
+  },
+  RECORD_SCOPE: {
+    candidates: pb.length,
+    protected:  pb.filter(r => r.enforcesRecordScope).length,
+    deferred:   pb.filter(r => !r.enforcesRecordScope).length,
+    unexplained: registry.filter(r => r.disposition === 'UNEXPLAINED').length,
+  },
+  RECORD_SCOPE_PROTECTED_AT_THIS_COMMIT: registry.filter(r => r.enforcesRecordScope).length,
+  PROJECT_BOUND_PROTECTED_BY_OPERATION:
+    by(pb.filter(r => r.enforcesRecordScope), r => r.operationType),
+  PROJECT_BOUND_DEFERRED_BY_OPERATION:
+    by(pb.filter(r => !r.enforcesRecordScope), r => r.operationType),
+}
+
+writeFileSync(join(A, 'scope-classification.json'),
+  JSON.stringify({ generatedFrom: 'endpoint-inventory + route-data-access + schema-project-parent-map', counters, registry }, null, 2) + '\n')
+console.log(JSON.stringify(counters, null, 2))

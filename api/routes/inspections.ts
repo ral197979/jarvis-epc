@@ -18,6 +18,9 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -27,7 +30,7 @@ router.use(requireTenant() as any)
 
 // ─── Inspection Templates ────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/inspection-templates', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/inspection-templates', requireCapability('quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { category, discipline } = req.query
   const params: unknown[] = [r.tenantId!]
@@ -57,7 +60,7 @@ router.get('/projects/:projectId/inspection-templates', async (req: Request, res
   }
 })
 
-router.post('/inspection-templates', async (req: Request, res: Response) => {
+router.post('/inspection-templates', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.name) return res.status(400).json({ error: 'name required' })
@@ -85,7 +88,7 @@ router.post('/inspection-templates', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/inspection-templates/:id', async (req: Request, res: Response) => {
+router.patch('/inspection-templates/:id', requireCapability('quality.write') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['name', 'category', 'discipline', 'checklist', 'is_active', 'version']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -109,7 +112,7 @@ router.patch('/inspection-templates/:id', async (req: Request, res: Response) =>
 
 // ─── Inspections ────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/inspections', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/inspections', requireCapability('quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, type, discipline, limit = '100', offset = '0' } = req.query
@@ -149,7 +152,7 @@ router.get('/projects/:projectId/inspections', async (req: Request, res: Respons
   }
 })
 
-router.post('/projects/:projectId/inspections', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/inspections', requireCapability('quality.write') as never, requireProjectScope() as never, guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const projectId = req.params.projectId as string
   const b = req.body ?? {}
@@ -213,7 +216,7 @@ router.post('/projects/:projectId/inspections', async (req: Request, res: Respon
   }
 })
 
-router.get('/inspections/:id', async (req: Request, res: Response) => {
+router.get('/inspections/:id', requireCapability('quality.view') as never, requireRecordScope('inspection') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(
@@ -233,7 +236,7 @@ router.get('/inspections/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/inspections/:id', async (req: Request, res: Response) => {
+router.patch('/inspections/:id', requireCapability('quality.write') as never, requireRecordScope('inspection') as never, guardTransitionOwnedState('inspections') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'type', 'location', 'discipline', 'status', 'scheduled_date', 'completed_date', 'inspector_id', 'results', 'notes', 'photos', 'signatures']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -260,15 +263,9 @@ router.patch('/inspections/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/inspections/:id/complete', async (req: Request, res: Response) => {
+router.post('/inspections/:id/complete', requireCapability('quality.verify') as never, requireRecordScope('inspection') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
-
-  // RBAC: finalizing an inspection is a quality gate; restrict to qualified roles.
-  const role = (r as any).auth?.role ?? ''
-  if (!['owner','admin','project_manager','engineer','inspector'].includes(role)) {
-    return res.status(403).json({ error: 'forbidden', message: 'Completing inspections requires inspector, engineer, project_manager, admin, or owner role' })
-  }
 
   // Get current inspection to access results
   const getResult = await tenantQuery(

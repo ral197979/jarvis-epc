@@ -2,6 +2,7 @@
 // Resource optimization, strategy planning, consensus decisions.
 
 import { Router, Request, Response } from 'express'
+import { requireCapability } from '../authz/requireCapability'
 import {
   analyzeResourceUtilization, buildWorkloadBalancePlan,
   proposeOptimization, approveOptimization,
@@ -20,17 +21,20 @@ import {
 
 const router = Router()
 const tid = (req: Request): string => (req as unknown as { tenantId: string }).tenantId
+/** The live authenticated principal — ADR-014 Phase 3I §24, never a body field. */
+const uid = (req: Request): string | undefined =>
+  (req as unknown as { auth?: { sub?: string } }).auth?.sub
 
 // ─── Resource analysis ────────────────────────────────────────────────────────
 
-router.get('/resources', async (req: Request, res: Response) => {
+router.get('/resources', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const allocations = await analyzeResourceUtilization(tid(req))
     res.json(allocations)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/resources/balance-plan', async (req: Request, res: Response) => {
+router.get('/resources/balance-plan', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const plan = await buildWorkloadBalancePlan(tid(req))
     res.json(plan)
@@ -39,14 +43,14 @@ router.get('/resources/balance-plan', async (req: Request, res: Response) => {
 
 // ─── Optimization proposals ───────────────────────────────────────────────────
 
-router.post('/proposals', async (req: Request, res: Response) => {
+router.post('/proposals', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const proposal = await proposeOptimization(tid(req), req.body)
     res.status(201).json(proposal)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/proposals', async (req: Request, res: Response) => {
+router.get('/proposals', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { status, optimizationType, limit } = req.query as Record<string, string>
     const proposals = await listOptimizationProposals(tid(req), {
@@ -58,15 +62,17 @@ router.get('/proposals', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/proposals/:id/approve', async (req: Request, res: Response) => {
+router.post('/proposals/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
-    const { approvedBy } = req.body
+    // ADR-014 Phase 3I §24: the approver is the live principal, not a body field.
+    const approvedBy = uid(req)
+    if (!approvedBy) return res.status(401).json({ error: 'unauthenticated' })
     const proposal = await approveOptimization(tid(req), req.params.id as string, approvedBy)
     res.json(proposal)
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/proposals/:id/apply', async (req: Request, res: Response) => {
+router.post('/proposals/:id/apply', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const { actualGain } = req.body
     const proposal = await markOptimizationApplied(tid(req), req.params.id as string, actualGain)
@@ -74,7 +80,7 @@ router.post('/proposals/:id/apply', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.get('/proposals/summary', async (req: Request, res: Response) => {
+router.get('/proposals/summary', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const summary = await getOptimizationSummary(tid(req))
     res.json(summary)
@@ -83,7 +89,7 @@ router.get('/proposals/summary', async (req: Request, res: Response) => {
 
 // ─── Strategy planning ────────────────────────────────────────────────────────
 
-router.post('/strategy', async (req: Request, res: Response) => {
+router.post('/strategy', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { horizon, objectives } = req.body ?? {}
     const plan = await generateStrategyPlan(tid(req), { horizon, objectives })
@@ -93,7 +99,7 @@ router.post('/strategy', async (req: Request, res: Response) => {
 
 // ─── Multi-agent consensus ────────────────────────────────────────────────────
 
-router.post('/consensus', async (req: Request, res: Response) => {
+router.post('/consensus', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { topic, votes } = req.body
     const result = await buildConsensus(tid(req), topic, votes)
@@ -101,7 +107,7 @@ router.post('/consensus', async (req: Request, res: Response) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }) }
 })
 
-router.post('/coordinate', async (req: Request, res: Response) => {
+router.post('/coordinate', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { inputs } = req.body
     const result = await coordinateRecommendations(tid(req), inputs)
@@ -111,7 +117,7 @@ router.post('/coordinate', async (req: Request, res: Response) => {
 
 // ─── Root cause synthesis ─────────────────────────────────────────────────────
 
-router.post('/root-cause', async (req: Request, res: Response) => {
+router.post('/root-cause', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   try {
     const { entityId, entityType, windowHours, anomalyIds } = req.body ?? {}
     const report = await synthesizeRootCause(tid(req), { entityId, entityType, windowHours, anomalyIds })

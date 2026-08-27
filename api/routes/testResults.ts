@@ -14,6 +14,8 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 import {
   createTestResult, updateTestResult,
   NotFoundError, ValidationError,
@@ -43,7 +45,7 @@ function _handleErr(err: unknown, res: Response, where: string): void {
   res.status(500).json({ error: 'internal_error', message: 'An unexpected error occurred' })
 }
 
-testResultsRouter.post('/test-results', async (req: Request, res: Response) => {
+testResultsRouter.post('/test-results', requireCapability('commissioning.write') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   if (!b.projectId || !b.testPackId || !b.stepTitle) {
@@ -77,7 +79,7 @@ testResultsRouter.post('/test-results', async (req: Request, res: Response) => {
   } catch (err) { _handleErr(err, res, 'create') }
 })
 
-testResultsRouter.patch('/test-results/:resultId', async (req: Request, res: Response) => {
+testResultsRouter.patch('/test-results/:resultId', requireCapability('commissioning.write') as never, requireRecordScope('test_results', 'resultId') as never, async (req: Request, res: Response) => {
   const r = req as Req
   const b = req.body ?? {}
   try {

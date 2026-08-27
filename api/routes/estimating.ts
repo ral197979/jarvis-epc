@@ -49,6 +49,8 @@ import {
 } from '../services/estimating/estimatingService'
 import { runEstimatingAgent } from '../services/estimating/estimatingAgent'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -66,7 +68,7 @@ const p   = (req: Request, key: string): string =>
 
 // POST /bim-models/:modelId/parse-elements
 // Accepts a JSON array of IFC element objects (from IFC.js parser output)
-router.post('/bim-models/:modelId/parse-elements', async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/parse-elements', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const { elements } = req.body as { elements?: unknown[] }
   if (!Array.isArray(elements) || !elements.length) {
     res.status(400).json({ error: 'elements array required' }); return
@@ -82,7 +84,7 @@ router.post('/bim-models/:modelId/parse-elements', async (req: Request, res: Res
 
 // POST /bim-models/:modelId/parse-job
 // Queues an async IFC parse job for server-side parsing (when file is in storage)
-router.post('/bim-models/:modelId/parse-job', async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/parse-job', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const { storage_key } = req.body as { storage_key?: string }
   if (!storage_key) { res.status(400).json({ error: 'storage_key required' }); return }
   try {
@@ -94,7 +96,7 @@ router.post('/bim-models/:modelId/parse-job', async (req: Request, res: Response
 })
 
 // GET /bim-models/:modelId/parse-job
-router.get('/bim-models/:modelId/parse-job', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/parse-job', requireCapability('engineering.view') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   try {
     const status = await getParseJobStatus(tid(req), p(req, 'modelId'))
     if (!status) { res.status(404).json({ error: 'No parse job found' }); return }
@@ -105,7 +107,7 @@ router.get('/bim-models/:modelId/parse-job', async (req: Request, res: Response)
 })
 
 // GET /bim-models/:modelId/elements
-router.get('/bim-models/:modelId/elements', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/elements', requireCapability('engineering.view') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const ifc_type   = qs(req.query['ifc_type'] as string | string[])
   const discipline = qs(req.query['discipline'] as string | string[])
   const level      = qs(req.query['level'] as string | string[])
@@ -124,9 +126,9 @@ router.get('/bim-models/:modelId/elements', async (req: Request, res: Response) 
 })
 
 // GET /bim-models/:modelId/elements/:id
-router.get('/bim-models/:modelId/elements/:id', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/elements/:id', requireCapability('engineering.view') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   try {
-    const el = await getElementById(tid(req), p(req, 'id'))
+    const el = await getElementById(tid(req), p(req, 'id'), p(req, 'modelId'))
     if (!el) { res.status(404).json({ error: 'Element not found' }); return }
     const links = await getElementLinks(tid(req), p(req, 'id'))
     res.json({ data: { ...el, links } })
@@ -136,13 +138,14 @@ router.get('/bim-models/:modelId/elements/:id', async (req: Request, res: Respon
 })
 
 // POST /bim-models/:modelId/elements/:id/link
-router.post('/bim-models/:modelId/elements/:id/link', async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/elements/:id/link', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const { entity_type, entity_id, context } = req.body as Record<string, string>
   if (!entity_type || !entity_id) {
     res.status(400).json({ error: 'entity_type and entity_id required' }); return
   }
   try {
-    await linkElementToEntity(tid(req), p(req, 'id'), entity_type, entity_id, sub(req), context)
+    const linked = await linkElementToEntity(tid(req), p(req, 'id'), p(req, 'modelId'), entity_type, entity_id, sub(req), context)
+    if (!linked) { res.status(404).json({ error: 'Element not found' }); return }
     res.status(201).json({ data: { linked: true } })
   } catch (e) {
     res.status(500).json({ error: 'Failed to link element' })
@@ -150,7 +153,7 @@ router.post('/bim-models/:modelId/elements/:id/link', async (req: Request, res: 
 })
 
 // GET /bim-models/:modelId/quantity-summary
-router.get('/bim-models/:modelId/quantity-summary', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/quantity-summary', requireCapability('engineering.view') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   try {
     const summary = await getModelQuantitySummary(tid(req), p(req, 'modelId'))
     res.json({ data: summary })
@@ -162,7 +165,7 @@ router.get('/bim-models/:modelId/quantity-summary', async (req: Request, res: Re
 // ─── Takeoff ──────────────────────────────────────────────────────────────────
 
 // POST /bim-models/:modelId/takeoff
-router.post('/bim-models/:modelId/takeoff', async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/takeoff', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const { items } = req.body as { items?: TakeoffInput[] }
   if (!Array.isArray(items) || !items.length) {
     res.status(400).json({ error: 'items array required' }); return
@@ -176,7 +179,7 @@ router.post('/bim-models/:modelId/takeoff', async (req: Request, res: Response) 
 })
 
 // POST /bim-models/:modelId/takeoff/auto
-router.post('/bim-models/:modelId/takeoff/auto', async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/takeoff/auto', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   try {
     const result = await autoTakeoffFromBim(tid(req), p(req, 'modelId'), sub(req))
     res.json({ data: result })
@@ -187,7 +190,7 @@ router.post('/bim-models/:modelId/takeoff/auto', async (req: Request, res: Respo
 })
 
 // GET /bim-models/:modelId/takeoff
-router.get('/bim-models/:modelId/takeoff', async (req: Request, res: Response) => {
+router.get('/bim-models/:modelId/takeoff', requireCapability('engineering.view') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   try {
     const items = await getTakeoffItems(tid(req), p(req, 'modelId'))
     res.json({ data: items })
@@ -199,7 +202,7 @@ router.get('/bim-models/:modelId/takeoff', async (req: Request, res: Response) =
 // ─── Cost Library ─────────────────────────────────────────────────────────────
 
 // GET /cost-items/search?q=concrete&region=NYC&limit=20
-router.get('/cost-items/search', async (req: Request, res: Response) => {
+router.get('/cost-items/search', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const q      = qs(req.query['q'] as string | string[])
   const region = qs(req.query['region'] as string | string[])
   const limit  = qs(req.query['limit'] as string | string[])
@@ -215,7 +218,7 @@ router.get('/cost-items/search', async (req: Request, res: Response) => {
 // ─── Estimates ────────────────────────────────────────────────────────────────
 
 // POST /estimates
-router.post('/estimates', async (req: Request, res: Response) => {
+router.post('/estimates', requireCapability('engineering.write') as never, async (req: Request, res: Response) => {
   const b = req.body as Record<string, unknown>
   if (!b['name']) { res.status(400).json({ error: 'name required' }); return }
   try {
@@ -227,7 +230,7 @@ router.post('/estimates', async (req: Request, res: Response) => {
 })
 
 // GET /estimates?project_id=...
-router.get('/estimates', async (req: Request, res: Response) => {
+router.get('/estimates', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const project_id = qs(req.query['project_id'] as string | string[])
   try {
     const estimates = await listEstimates(tid(req), project_id)
@@ -238,7 +241,7 @@ router.get('/estimates', async (req: Request, res: Response) => {
 })
 
 // GET /estimates/:id
-router.get('/estimates/:id', async (req: Request, res: Response) => {
+router.get('/estimates/:id', requireCapability('cost.view') as never, requireRecordScope('estimates') as never, async (req: Request, res: Response) => {
   try {
     const result = await getEstimate(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Estimate not found' }); return }
@@ -249,7 +252,7 @@ router.get('/estimates/:id', async (req: Request, res: Response) => {
 })
 
 // POST /estimates/:id/lines
-router.post('/estimates/:id/lines', async (req: Request, res: Response) => {
+router.post('/estimates/:id/lines', requireCapability('engineering.write') as never, requireRecordScope('estimates') as never, async (req: Request, res: Response) => {
   const { lines } = req.body as { lines?: EstimateLineDraft[] }
   if (!Array.isArray(lines) || !lines.length) {
     res.status(400).json({ error: 'lines array required' }); return
@@ -264,7 +267,7 @@ router.post('/estimates/:id/lines', async (req: Request, res: Response) => {
 })
 
 // POST /estimates/:id/approve
-router.post('/estimates/:id/approve', async (req: Request, res: Response) => {
+router.post('/estimates/:id/approve', requireCapability('cost.approve') as never, requireRecordScope('estimates') as never, async (req: Request, res: Response) => {
   try {
     await tenantQuery(tid(req),
       `UPDATE estimates SET status='approved', approved_by=$1, approved_at=now(), updated_at=now()
@@ -280,7 +283,7 @@ router.post('/estimates/:id/approve', async (req: Request, res: Response) => {
 
 // POST /bim-models/:modelId/ava-estimate
 // Full pipeline: BIM elements → takeoff → cost lookup → estimate + AI summary
-router.post('/bim-models/:modelId/ava-estimate', async (req: Request, res: Response) => {
+router.post('/bim-models/:modelId/ava-estimate', requireCapability('engineering.write') as never, requireRecordScope('bim_models', 'modelId') as never, async (req: Request, res: Response) => {
   const b = req.body as { project_id?: string; region?: string; name?: string }
   try {
     const result = await runEstimatingAgent({

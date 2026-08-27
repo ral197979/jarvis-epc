@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { useAppStore, type OwnerConfig } from '../modules/store/appSlice'
 import { NAVIGATION_ITEMS, NAV_SECTIONS, type NavItem } from '../config/navigation'
+import { canSee } from '../config/capabilities'
 
 // v4.31.0 TS fix: lucide-react icons are ForwardRefExoticComponent, not plain
 // ComponentType — use the library's own LucideIcon type so the map is assignable.
@@ -37,26 +38,28 @@ export function NavSidebar({ badges = {}, policy, onNavigate }: NavSidebarProps)
   const setTab      = useAppStore(s => s.setTab)
   const setCollapsed= useAppStore(s => s.setSidebarCollapsed)
   const ownerConfig = useAppStore(s => s.ownerConfig)
+  const authRole    = useAppStore(s => s.auth.role)
   const cfg         = { ...ownerConfig, ...policy }
 
   const orderedItems: NavItem[] = navOrder.length
     ? navOrder.map(id => NAVIGATION_ITEMS.find(n => n.id === id)!).filter(Boolean)
     : NAVIGATION_ITEMS
 
-  const _filtered = orderedItems.filter(item => {
-    if (navHidden[item.id]) return false
-    if (cfg.activeRole === 'owner' || !cfg.activeRole) return true
-    if (cfg.activeRole === 'admin') return true
-    if (cfg.activeRole === 'engineer' || cfg.activeRole === 'project_manager') {
-      return ['operations','engineering','construction','documents','field'].includes(item.domain ?? '')
-    }
-    if (cfg.activeRole === 'viewer') {
-      return ['operations','documents'].includes(item.domain ?? '')
-    }
-    return true
-  })
-  // Safety: if filter wipes everything (bad persisted state or unknown role), show full nav
-  const visibleItems = _filtered.length ? _filtered : orderedItems
+  // ADR-014: the sidebar is a projection of effective authorization. It reads the
+  // same canSee() the route guard reads — there is no sidebar-specific permission
+  // table.
+  //
+  // The subject is the AUTHENTICATED role. `cfg.activeRole` is the OwnerPanel
+  // preview and is passed second, where it can only narrow the result — it used
+  // to be the sole input, which meant a client-owned localStorage value (default
+  // `owner`) decided the sidebar and an authenticated viewer saw all 62 entries.
+  //
+  // Fails closed: no authenticated role, an unknown one, or an unregistered
+  // destination all render nothing. Sections with no permitted destination are
+  // dropped entirely below, so no empty group heading survives.
+  const visibleItems = orderedItems.filter(item =>
+    !navHidden[item.id] && canSee(item.id, authRole, cfg.activeRole)
+  )
 
   function navigate(id: string) {
     setTab(id)

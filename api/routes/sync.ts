@@ -13,12 +13,13 @@ import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
 import { processSyncUpload, pullDelta } from '../services/mobile/syncEngine'
 import { resolveConflict, listUnresolvedConflicts } from '../services/mobile/conflictResolver'
+import { requireCapability } from '../authz/requireCapability'
 
 export const syncRouter = Router()
 
 // ─── POST /sync/register ──────────────────────────────────────────────────────
 
-syncRouter.post('/register', async (req: Request, res: Response) => {
+syncRouter.post('/register', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const userId   = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { device_token, device_name, device_platform, app_version, push_token } = req.body as {
@@ -51,7 +52,7 @@ syncRouter.post('/register', async (req: Request, res: Response) => {
 
 // ─── POST /sync/upload ────────────────────────────────────────────────────────
 
-syncRouter.post('/upload', async (req: Request, res: Response) => {
+syncRouter.post('/upload', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const { device_id, mutations, client_watermark } = req.body as {
     device_id:         string
@@ -87,7 +88,7 @@ syncRouter.post('/upload', async (req: Request, res: Response) => {
 
 // ─── POST /sync/pull ──────────────────────────────────────────────────────────
 
-syncRouter.post('/pull', async (req: Request, res: Response) => {
+syncRouter.post('/pull', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const { since_watermark, limit } = req.body as { since_watermark?: string; limit?: number }
 
@@ -97,7 +98,7 @@ syncRouter.post('/pull', async (req: Request, res: Response) => {
 
 // ─── POST /sync/resolve ───────────────────────────────────────────────────────
 
-syncRouter.post('/resolve', async (req: Request, res: Response) => {
+syncRouter.post('/resolve', requireCapability('field.write') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const resolvedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { conflict_id, strategy, merge_fields } = req.body as {
@@ -125,7 +126,7 @@ syncRouter.post('/resolve', async (req: Request, res: Response) => {
 
 // ─── GET /sync/conflicts ──────────────────────────────────────────────────────
 
-syncRouter.get('/conflicts', async (req: Request, res: Response) => {
+syncRouter.get('/conflicts', requireCapability('field.view') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const limit    = Math.min(parseInt(req.query['limit'] as string ?? '50', 10), 200)
 

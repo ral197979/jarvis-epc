@@ -221,10 +221,23 @@ describe('DirectoryView — customer list', () => {
     expect(screen.getByText('← Customers')).toBeDefined()
   })
 
-  it('empty state when no customers', () => {
+  it('says the customer domain has no backend, rather than reporting it empty', () => {
+    // P0-11. "No customers in directory" was a claim about DATA. There is no
+    // `customers` table in any migration and no customer route on the API, so
+    // the only true statement is that the domain is not stored yet — and the
+    // empty state has to say which, because the two look identical otherwise.
     render(<DirectoryView {...defaultProps({ customers: [] })} />)
     fireEvent.click(screen.getByRole('tab', { name: /Customers/i }))
-    expect(screen.getByText(/No customers in directory/i)).toBeDefined()
+    expect(screen.getByText(/Customer directory not available/i)).toBeDefined()
+    expect(screen.getByText(/this domain has no backend/i)).toBeDefined()
+  })
+
+  it('does not report a customer count it cannot know', () => {
+    render(<DirectoryView {...defaultProps({ customers: [] })} />)
+    // `0` would assert an empty domain; the domain is unstored, not empty.
+    const kpi = screen.getByRole('group', { name: 'Active Customers' })
+    expect(kpi.textContent).toContain('—')
+    expect(kpi.textContent).not.toMatch(/\b0\b/)
   })
 })
 

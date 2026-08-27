@@ -1,0 +1,543 @@
+/**
+ * ADR-014 Phase 3A — the record-scope ratchet.
+ *
+ * Structural counterpart to the two behavioural suites. Every assertion here is
+ * derived from source and proves it FOUND its target first, so a renamed
+ * function, a moved file or a regex that stops matching fails loudly instead of
+ * passing vacuously.
+ *
+ * Three things are held:
+ *   §43  the Phase-3A endpoint set, its enforcement, and the invariants around it
+ *   §44  ONE classification engine — the private parser cannot come back
+ *   §45  the agent-risk audit actor cannot be supplied by the caller
+ */
+import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import {
+  classifiedCensus, classifyEndpoint, censusWithEffectivePaths, ALL_ROUTE_CLASSES,
+} from './helpers/endpointCensus'
+import {
+  RECORD_SCOPE_POLICIES, PROJECT_SCOPE_CANDIDATES, CANONICAL_PROJECT_SCOPE,
+  PENDING_PHASE3_POLICY, policyFor, recordScopeAdoption, PHASE_3A_ENDPOINT_CANDIDATES,
+} from '../authz/recordScopePolicies'
+import { RELATED_SOURCES } from '../services/related/relatedService'
+import { isServerCapability, SERVER_ROLE_CAPS, USER_ROLES, type UserRole } from '../authz/capabilities'
+
+const endpoints = classifiedCensus()
+const src = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), 'utf8')
+const holders = (c: string): UserRole[] =>
+  USER_ROLES.filter(r => (SERVER_ROLE_CAPS[r] as readonly string[]).includes(c))
+
+const PHASE_3A_ENDPOINTS = [
+  'projects.ts router.GET /:id',
+  'related.ts router.GET /related/:source/:id',
+] as const
+
+// ─── 1. The Phase-3A endpoint set (§43) ───────────────────────────────────────
+describe('the Phase 3A endpoint set is exactly the two former deferrals', () => {
+  it('still classifies both former deferrals as record-scoped', () => {
+    // ADR-014 Phase 3B extended record scope to the project collection, the
+    // membership routes and seven domain-child collections, so the scoped set
+    // is no longer exactly these two. The Phase 3A invariant that survives is
+    // that neither of them regressed — asserted as a SUBSET, with the exact
+    // Phase 3B set pinned by the Phase 3B ratchet.
+    const scoped = new Set(endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').map(e => e.key))
+    for (const key of PHASE_3A_ENDPOINTS) {
+      expect(scoped.has(key), `${key} must remain record-scoped`).toBe(true)
+    }
+    expect(scoped.size, 'Phase 3B widened the scoped set').toBeGreaterThan(PHASE_3A_ENDPOINTS.length)
+  })
+
+  it('leaves nothing pending and nothing unclassified', () => {
+    expect(endpoints.filter(e => e.klass === 'PENDING_PHASE2').map(e => e.key)).toEqual([])
+    const counted = ALL_ROUTE_CLASSES
+      .map(k => endpoints.filter(e => e.klass === k).length)
+      .reduce((a, b) => a + b, 0)
+    expect(counted).toBe(endpoints.length)
+  })
+
+  it('keeps both endpoints mounted, so the closure is not vacuous', () => {
+    for (const key of PHASE_3A_ENDPOINTS) {
+      const e = endpoints.find(x => x.key === key)
+      expect(e, `${key} must exist`).toBeTruthy()
+      expect(e!.effective.length, `${key} must be mounted`).toBeGreaterThan(0)
+    }
+  })
+
+  it('awards the class only where source really calls the record-scope layer', () => {
+    // The class is DERIVED. A manifest label without enforcement must not earn it.
+    for (const e of endpoints.filter(x => x.klass === 'CAPABILITY_RECORD_SCOPE')) {
+      expect(e.enforcesRecordScope, `${e.key} must call the record-scope layer`).toBe(true)
+      expect(e.body.length, `${e.key} handler body must have been found`).toBeGreaterThan(50)
+    }
+  })
+
+  it('refuses to award the class to a capability route that does not enforce scope', () => {
+    // Mutation-proof of the classifier itself: strip the scope call and the
+    // class must fall back to a plain CAPABILITY.
+    const real = endpoints.find(e => e.key === 'projects.ts router.GET /:id')!
+    const withoutScope = { ...real, enforcesRecordScope: false, enforcesPolicyCapability: false }
+    expect(classifyEndpoint(withoutScope)).toBe('CAPABILITY')
+  })
+
+  it('refuses to award the class to an unguarded route that only checks scope', () => {
+    // A route with no capability guard AND no policy-driven capability is still
+    // Phase-2 debt, however much record scope it applies.
+    const real = endpoints.find(e => e.key === 'related.ts router.GET /related/:source/:id')!
+    const scopeOnly = { ...real, capability: null, enforcesPolicyCapability: false }
+    expect(classifyEndpoint(scopeOnly)).toBe('PENDING_PHASE2')
+  })
+})
+
+// ─── 2. projects GET /:id enforcement (§43) ───────────────────────────────────
+describe('GET /projects/:id composes capability, scope and field authority', () => {
+  const projects = src('api/routes/projects.ts')
+
+  it('carries a functional capability guard', () => {
+    expect(projects).toMatch(/router\.get\('\/:id', requireCapability\('project\.view'\)/)
+  })
+
+  it('resolves the LIVE principal, not the token role', () => {
+    expect(projects).toMatch(/resolveCurrentUser\(req\)/)
+  })
+
+  it('decides record scope before loading the payload', () => {
+    const handler = /router\.get\('\/:id'[\s\S]*?\n\}\)/.exec(projects)?.[0]
+    expect(handler, 'the handler must be found').toBeTruthy()
+    const scopeAt   = handler!.indexOf('canAccessProject(')
+    const payloadAt = handler!.indexOf('FROM projects p')
+    expect(scopeAt, 'record scope must be enforced').toBeGreaterThan(-1)
+    expect(payloadAt, 'the payload query must exist').toBeGreaterThan(-1)
+    expect(scopeAt, 'scope must precede the payload query').toBeLessThan(payloadAt)
+  })
+
+  it('gates the commercial columns on cost.view', () => {
+    expect(projects).toMatch(/PROJECT_COST_FIELDS/)
+    for (const f of ['budget', 'committed_cost', 'actual_cost', 'forecast_cost', 'contingency_pct']) {
+      expect(projects, `${f} must be in the withheld set`).toMatch(new RegExp(`'${f}'`))
+    }
+    expect(projects).toMatch(/roleHasCapability\(role, 'cost\.view'\)/)
+  })
+
+  it('answers a refused record the same way as a missing one', () => {
+    const handler = /router\.get\('\/:id'[\s\S]*?\n\}\)/.exec(projects)![0]
+    const notFounds = [...handler.matchAll(/status\(404\)\.json\(\{ error: 'not_found', message: 'Project not found\.' \}\)/g)]
+    expect(notFounds.length, 'both the scope refusal and the missing row use one body').toBe(2)
+  })
+})
+
+// ─── 3. /related enforcement (§43) ────────────────────────────────────────────
+describe('GET /related/:source/:id authorizes the source and every target', () => {
+  const related = src('api/routes/related.ts')
+
+  it('authorizes the source before loading anything related', () => {
+    const sourceAt  = related.indexOf('authorizeSource(')
+    const loadAt    = related.indexOf('getRelated(')
+    expect(sourceAt).toBeGreaterThan(-1)
+    expect(loadAt).toBeGreaterThan(-1)
+    expect(sourceAt, 'source authorization must precede target loading').toBeLessThan(loadAt)
+  })
+
+  it('filters every group through target authorization', () => {
+    expect(related).toMatch(/filterAuthorizedTargets\(/)
+  })
+
+  it('drops groups that become empty, so the group list is not a side channel', () => {
+    expect(related).toMatch(/if \(permitted\.length > 0\)/)
+  })
+
+  it('strips the internal authorization field from returned items', () => {
+    expect(related).toMatch(/function publicItem/)
+    expect(related).toMatch(/assignedToUserId: _internal/)
+  })
+
+  it('resolves the live principal', () => {
+    expect(related).toMatch(/resolveCurrentUser\(r\)/)
+  })
+})
+
+// ─── 4. Policy registry integrity (§26) ───────────────────────────────────────
+describe('the record-scope policy registry is complete and fails closed', () => {
+  it('declares only registered capabilities', () => {
+    for (const p of RECORD_SCOPE_POLICIES) {
+      expect(p.capabilities.length, `${p.resource} needs a capability`).toBeGreaterThan(0)
+      for (const c of p.capabilities) {
+        expect(isServerCapability(c), `${p.resource}: unknown capability ${c}`).toBe(true)
+      }
+    }
+  })
+
+  it('covers every /related source type', () => {
+    const missing = [...RELATED_SOURCES].filter(s => policyFor(s) === null)
+    expect(missing, `a /related source with no scope policy would fail closed silently: ${missing.join(', ')}`).toEqual([])
+    expect(RELATED_SOURCES.size, 'expected the eight declared sources').toBe(8)
+  })
+
+  it('covers the action target, which is reachable but not a source', () => {
+    expect(policyFor('action')).toBeTruthy()
+    expect(policyFor('action')!.strategy).toBe('SELF')
+  })
+
+  it('denies an unknown resource type rather than defaulting it open', () => {
+    for (const unknown of ['bogus', '', 'project;drop', 'contract', 'invoice']) {
+      expect(policyFor(unknown), `${unknown} must have no policy`).toBeNull()
+    }
+  })
+
+  it('offers no ALLOW_ALL strategy', () => {
+    const strategies = new Set(RECORD_SCOPE_POLICIES.map(p => p.strategy))
+    expect([...strategies].sort())
+      .toEqual(['PARENT_PROJECT', 'SELF', 'TENANT_OWNER_OR_PROJECT_ASSIGNMENT'])
+    expect(src('api/authz/recordScopePolicies.ts')).not.toMatch(/'ALLOW_ALL'/)
+  })
+
+  it('gives every policy a substantive reason', () => {
+    for (const p of RECORD_SCOPE_POLICIES) {
+      expect(p.reason.length, `${p.resource} needs a reason`).toBeGreaterThan(40)
+      expect(p.tenantRule.length, `${p.resource} needs a tenant rule`).toBeGreaterThan(10)
+    }
+  })
+
+  it('records an empty deferred-policy set, or the slice is PARTIAL', () => {
+    expect([...PENDING_PHASE3_POLICY]).toEqual([])
+  })
+})
+
+// ─── 5. The canonical scope source is recorded and enforced (§5) ──────────────
+describe('the canonical project-scope source is the one the resolver uses', () => {
+  const resolver = src('api/authz/recordScope.ts')
+
+  it('records the discovery, with the rejected alternatives and why', () => {
+    expect(PROJECT_SCOPE_CANDIDATES.length, 'expected the candidates that were actually found').toBe(3)
+    const canonical = PROJECT_SCOPE_CANDIDATES.filter(c => c.verdict === 'CANONICAL')
+    expect(canonical, 'exactly one canonical source').toHaveLength(1)
+    expect(canonical[0]!.table).toBe('projects')
+    for (const c of PROJECT_SCOPE_CANDIDATES) {
+      expect(c.why.length, `${c.candidate} needs evidence, not a label`).toBeGreaterThan(80)
+    }
+  })
+
+  it('rejects project_assignments for the reason that actually disqualifies it', () => {
+    const rejected = PROJECT_SCOPE_CANDIDATES.find(c => c.table === 'project_assignments')!
+    expect(rejected.verdict).toBe('REJECTED')
+    expect(rejected.userKey, 'its user key does not reference users(id)').toMatch(/team_members/)
+    // Non-vacuity against the schema itself: the table really does point at the
+    // workforce roster, and team_members really has no user_id.
+    const migration = src('api/db/migrations/063_team.sql')
+    expect(migration).toMatch(/member_id\s+UUID\s+NOT NULL REFERENCES team_members\(id\)/)
+    const teamMembers = /CREATE TABLE IF NOT EXISTS team_members \(([\s\S]*?)\n\);/.exec(migration)
+    expect(teamMembers, 'team_members must be found').toBeTruthy()
+    expect(teamMembers![1], 'team_members must have no user_id').not.toMatch(/^\s*user_id\s/m)
+  })
+
+  it('no longer authorizes from the legacy responsible-user columns', () => {
+    // ADR-014 Phase 3B §21 — ONE runtime authorization truth. The three project
+    // columns are still business data and are still written and displayed, but
+    // the resolver must not consult them; `project_members` is the source.
+    for (const col of ['project_manager', 'lead_engineer', 'created_by']) {
+      expect(resolver, `${col} must not appear in a scope predicate`)
+        .not.toMatch(new RegExp(`${col}\\s*=\\s*\\$`))
+    }
+    expect(resolver, 'membership is the scope source').toMatch(/FROM project_members m/)
+    expect(resolver, 'and only ACTIVE membership counts')
+      .toMatch(/active_from <= NOW\(\)[\s\S]{0,80}active_to IS NULL OR m\.active_to > NOW\(\)/)
+  })
+
+  it('keeps the owner tenant-bounded on both branches', () => {
+    const predicates = [...resolver.matchAll(/tenant_id = current_setting\('app\.current_tenant_id', true\)::uuid/g)]
+    expect(predicates.length, 'every scope query must be tenant-scoped').toBeGreaterThanOrEqual(3)
+    // The owner branch must not be a bare "return true".
+    expect(resolver).not.toMatch(/role === 'owner'\s*\)\s*return true/)
+  })
+
+  it('takes no scope input from the caller', () => {
+    // The resolver must never touch the request. `projectIds` appears as a
+    // PARAMETER name, which is fine — what matters is where the values come
+    // from, and the resolver is handed ids by the route, never by the client.
+    for (const forbidden of ['req.query', 'req.headers']) {
+      expect(resolver, `record scope must not read ${forbidden}`).not.toContain(forbidden)
+    }
+
+    // `req.body` is permitted in exactly one place. ADR-014 Phase 3D §16 covers
+    // mutations whose TARGET project is named in the payload — a folder created
+    // under a project, a person assigned to one. Neither the path nor an
+    // existing record can supply that id, so the body is the only place it
+    // exists.
+    //
+    // Reading it is not the same as trusting it, and that is the property under
+    // test: whatever the body names is handed to `canAccessProject`, which
+    // re-derives membership from the database. The body selects a target; it
+    // never carries authority. Any OTHER use of req.body in this module — a
+    // tenant, a role, a memberOf claim, an early return — would be caller-
+    // supplied authorization and must not appear.
+    // ADR-014 Phase 3I added a SECOND body reader — `requireBodyPolymorphicScope`,
+    // for the AI-governance routes that name their target as `{ scope, scopeId }`
+    // in the payload. The invariant under test was never "exactly one function";
+    // it is "every function that reads the body VERIFIES what it read". So the
+    // count is pinned to the known readers and each is required to re-derive its
+    // answer from the database rather than believe the caller.
+    const bodyReaders = resolver.split('export function').filter(f => f.includes('req.body'))
+    expect(bodyReaders.length, 'the body may be read for scope only by known guards').toBe(2)
+
+    const projectReader = bodyReaders.find(f => /requireBodyProjectScope/.test(f))
+    const polyReader    = bodyReaders.find(f => /requireBodyPolymorphicScope/.test(f))
+    expect(projectReader, 'the body-selected project guard still reads the body').toBeTruthy()
+    expect(polyReader, 'the body-selected polymorphic guard is the only addition').toBeTruthy()
+
+    expect(projectReader, 'and what it reads is verified, not believed')
+      .toMatch(/canAccessProject\(/)
+    // The polymorphic guard verifies twice over: the KIND is looked up in the
+    // trusted Phase-3H registry (a caller cannot name a table), and the
+    // IDENTIFIER is resolved against the database by the canonical resolver.
+    expect(polyReader, 'the kind is resolved through the trusted registry')
+      .toMatch(/twinScopePolicy\(/)
+    expect(polyReader, 'and the identifier is verified, not believed')
+      .toMatch(/resolvePolymorphicScope\(/)
+    // Neither may short-circuit on something the caller asserted about itself.
+    for (const reader of bodyReaders) {
+      for (const claim of ['memberOf', 'authorized', 'allowedProjects', 'tenantId', 'role']) {
+        expect(reader, `a caller-supplied ${claim} is never authorization evidence`)
+          .not.toMatch(new RegExp(`body\\[?['"\`]?${claim}`))
+      }
+    }
+    // `requireProjectScope` is an express guard and legitimately reads the route
+    // PARAMETER, which is server-controlled routing, not caller-supplied scope.
+    // What must never appear is body/query/header-derived scope, asserted above.
+
+    // And the route layer must not hand caller-supplied ids to it either: the
+    // project id comes from the path, and the related ids from the database.
+    const projects = src('api/routes/projects.ts')
+    expect(projects).toMatch(/canAccessProject\(principal, String\(id\)\)/)
+    expect(projects, 'the id is the route parameter, not a body field')
+      .toMatch(/const \{ id \} = req\.params/)
+  })
+
+  it('fails closed on a database error rather than granting', () => {
+    expect(resolver).toMatch(/catch \{\s*\n?\s*\/\/[\s\S]{0,200}?return new Set\(\)/)
+  })
+})
+
+// ─── 6. Role is not record scope (§7), and admin gains nothing (§8) ───────────
+describe('roles confer function, never records', () => {
+  it('keeps project.view a functional capability held by the delivery roles', () => {
+    expect(holders('project.view'))
+      .toEqual(['owner', 'project_manager', 'engineer', 'procurement', 'field_ops', 'viewer'])
+  })
+
+  it('gives the platform administrator no project read authority at all', () => {
+    expect(holders('project.view'), 'ADR-014 D2').not.toContain('admin')
+    expect(SERVER_ROLE_CAPS['admin'] as readonly string[]).not.toContain('project.view')
+  })
+
+  it('leaves the viewer read-only and unwidened', () => {
+    const viewerCaps = SERVER_ROLE_CAPS['viewer'] as readonly string[]
+    expect(viewerCaps.filter(c => !c.endsWith('.view')), 'the viewer holds only *.view').toEqual([])
+  })
+
+  it('does not broaden the temporary crossdomain policy (§34)', () => {
+    expect(holders('crossdomain.read')).toEqual(['owner'])
+    expect(holders('crossdomain.write')).toEqual(['owner'])
+  })
+
+  it('keeps cost.view owner-only, which is what makes field gating meaningful', () => {
+    expect(holders('cost.view')).toEqual(['owner'])
+  })
+
+  it('adds no capability to the registry', () => {
+    // Phase 3A reused existing capabilities everywhere. The discriminating pair
+    // the /related tests rely on must stay discriminating.
+    expect(holders('construction.view')).toEqual(['owner', 'project_manager', 'engineer', 'field_ops'])
+    expect(holders('cost.view')).toEqual(['owner'])
+  })
+})
+
+// ─── 7. ONE classification engine (§44) ───────────────────────────────────────
+describe('classification has a single implementation', () => {
+  it('leaves no private route parser in authzCoverage', () => {
+    const coverage = src('api/__tests__/authzCoverage.test.ts')
+    expect(coverage, 'the private guard regex must be gone').not.toMatch(/requireCapability\\\(/)
+    expect(coverage, 'no local census function').not.toMatch(/function censusEndpoints/)
+    expect(coverage, 'no direct routes-directory read').not.toMatch(/readdirSync/)
+    expect(coverage, 'it must consume the canonical engine').toMatch(/classifiedCensus\(\)/)
+  })
+
+  it('leaves no private classifier in the residual-taxonomy ratchet', () => {
+    const residual = src('api/__tests__/authzResidualTaxonomyRatchet.test.ts')
+    expect(residual).toMatch(/classifiedCensus\(\)/)
+    expect(residual, 'must not re-derive the class from exceptions')
+      .not.toMatch(/ex \? ex\.klass :/)
+  })
+
+  it('produces identical endpoint sets and classifications from one engine', () => {
+    const raw = censusWithEffectivePaths()
+    const classified = classifiedCensus()
+    expect(classified.map(e => e.key)).toEqual(raw.map(e => e.key))
+    for (const e of classified) {
+      expect(e.klass, `${e.key} must match the single classifier`).toBe(classifyEndpoint(e))
+    }
+    expect(classified.length).toBe(raw.length)
+  })
+})
+
+// ─── 8. Audit actor cannot be forged (§45) ────────────────────────────────────
+describe('the agent-risk audit actor comes from the session', () => {
+  const agentRisk = src('api/routes/agentRisk.ts')
+
+  it('never persists a body-supplied actor', () => {
+    expect(agentRisk, 'createdBy must not read the request body')
+      .not.toMatch(/createdBy:\s*requestedBy/)
+    const createdBy = [...agentRisk.matchAll(/createdBy:\s*([^,\n]+)/g)].map(m => m[1]!.trim())
+    expect(createdBy.length, 'both mutation routes must be found').toBe(2)
+    for (const c of createdBy) {
+      expect(c, 'the actor is the authenticated subject').toMatch(/r\.auth\?\.sub/)
+    }
+  })
+
+  it('no longer destructures an actor out of the body at all', () => {
+    expect(agentRisk).not.toMatch(/const \{ scopeType, scopeId, requestedBy \} = req\.body/)
+  })
+})
+
+// ─── 9. Phase-3 adoption counters (§29) ───────────────────────────────────────
+describe('Phase-3 adoption is counted honestly and not overclaimed', () => {
+  const adoption = recordScopeAdoption([...RELATED_SOURCES])
+
+  it('protects every resource in the bounded candidate set', () => {
+    expect(adoption.unexplained,
+      `a resource type with no scope policy: ${adoption.unexplained.join(', ')}`).toEqual([])
+    expect(adoption.deferred, 'a deferred type downgrades the slice to PARTIAL').toEqual([])
+  })
+
+  it('counts the two endpoints plus the ten resource types, and no more', () => {
+    // 8 /related sources + project + action. Deliberately NOT the whole API:
+    // claiming 744 endpoints were record-scoped would be false.
+    expect(adoption.protectedBy.length).toBe(10)
+    expect(adoption.candidates.length).toBe(12)
+    expect([...PHASE_3A_ENDPOINT_CANDIDATES]).toEqual([...PHASE_3A_ENDPOINTS])
+  })
+
+  it('reports an unexplained type the moment a policy disappears', () => {
+    // Non-vacuity: the counter must actually detect a gap, not always be empty.
+    const withUnknown = recordScopeAdoption([...RELATED_SOURCES, 'contract'])
+    expect(withUnknown.unexplained).toEqual(['contract'])
+  })
+
+  it('does not claim record scope for the rest of the API', () => {
+    const scoped = endpoints.filter(e => e.klass === 'CAPABILITY_RECORD_SCOPE').length
+    const plain  = endpoints.filter(e => e.klass === 'CAPABILITY').length
+    // Phase 3B scoped 15 of ~747; Phase 3C took it to 39 by closing the
+    // direct-ID surface of three routers; Phase 3D took it to 190 across the
+    // mutation surface; Phase 3E took it to 236 across the direct-ID reads;
+    // Phase 3F takes it to 308 across the collection surface.
+    // Adoption is real but partial, and saying so is the point — a later slice
+    // must not imply full coverage. What remains is the aggregate surface whose
+    // capabilities are Owner-only today, and three collections whose returned
+    // rows have no record-scope policy at all.
+    // Phase 3K takes it to 354: the download token, plus the repaired
+    // inline viewer route, which is new surface that arrives already scoped.
+    // Phase 3L takes it to 359 with the TRIR surface — recordability
+    // classification, two project exposure-hours routes, and the two rate
+    // routes. All five arrive scoped; none is a reclassification.
+    // Phase 3Q takes it to 374 at the accounting boundary: the emission route
+    // split into one literal route per document type so each names its own
+    // capability as a literal (three of the four are project-scoped; a vendor
+    // has no project parent), plus the project-scoped read and write of the
+    // governed currency declaration. All four arrive scoped; none is a
+    // reclassification of an endpoint that was previously unscoped.
+    expect(scoped).toBe(374)
+    // Conservation, not a ratio. Phase 3C asserted that capability-only was the
+    // overwhelming majority, which is an assertion designed to fail as the
+    // rollout succeeds. What must hold at every point is that an endpoint only
+    // ever moves BETWEEN these two classes: gaining record scope must not
+    // invent a guard, and losing it must not hide one.
+    // 730 before Phase 3K; the viewer route is the 731st capability-guarded
+    // endpoint. Conservation is the property — the total may only move when
+    // surface is genuinely added or removed, never by an endpoint slipping
+    // out of both classes.
+    // Phase 3L: +7 for the TRIR surface (five scoped, two capability-only).
+    // Phase 3Q: +5 at the accounting boundary — three from splitting one
+    // emission route into four literal per-type routes, and the two governed
+    // currency routes. Four of the five are scoped, one (vendor emission) is
+    // capability-only because vendors have no project parent.
+    expect(plain + scoped, 'every capability-guarded endpoint is in exactly one of the two classes').toBe(755)
+  })
+})
+
+// ─── 10. denverMcp non-regression (§33) ───────────────────────────────────────
+describe('denverMcp stays owner-decided dormant', () => {
+  const server = src('api/server.ts')
+
+  it('is neither imported nor mounted', () => {
+    expect(server).not.toMatch(/from '\.\/routes\/denverMcp'/)
+    expect(server).not.toMatch(/denverMcpRouter/)
+  })
+
+  it('has no effective route path and stays UNMOUNTED', () => {
+    const mcp = endpoints.filter(e => e.file === 'denverMcp.ts')
+    expect(mcp.length).toBe(2)
+    for (const e of mcp) {
+      expect(e.effective).toEqual([])
+      expect(e.klass).toBe('UNMOUNTED')
+    }
+  })
+
+  it('stays flag-gated off in every environment file', () => {
+    for (const f of ['.env.example', 'fly.toml', 'fly.staging.toml']) {
+      expect(src(f), `${f}`).toMatch(/DENVER_MCP_SERVER\s*=\s*"?false"?/)
+    }
+  })
+})
+
+// ─── 11. every resource a route scopes on can actually be resolved (§38) ──────
+//
+// `requireRecordScope` fails closed when a policy has no `derivation`, which is
+// the right default and a silent one: the route answers 404 for everyone and
+// looks protected. During the Phase-3D rollout six Phase-3A resources were
+// reused by name and had no derivation, so those routes refused every caller
+// until it was caught. This asserts the two halves stay in step.
+describe('every scoped route names a resolvable resource', () => {
+  const ROUTES_DIR = path.join(process.cwd(), 'api', 'routes')
+
+  it('has a derivation for every resource passed to requireRecordScope', () => {
+    const used = new Set<string>()
+    for (const f of fs.readdirSync(ROUTES_DIR).filter(x => x.endsWith('.ts'))) {
+      const src = fs.readFileSync(path.join(ROUTES_DIR, f), 'utf8')
+      for (const m of src.matchAll(/requireRecordScope\(\s*'([^']+)'/g)) used.add(m[1])
+    }
+    expect(used.size, 'the rollout should have scoped many resources').toBeGreaterThan(40)
+
+    const missing = [...used].filter(r => !policyFor(r)?.derivation).sort()
+    expect(missing, `these resources are scoped by a route but cannot be resolved:\n  ${missing.join('\n  ')}`).toEqual([])
+  })
+
+  it('declares derivations that match the schema parsed from the migrations', () => {
+    const map = JSON.parse(fs.readFileSync(
+      path.join(process.cwd(), 'audit', 'adr-014', 'schema-project-parent-map.json'), 'utf8'))
+    const tables = new Map<string, Record<string, unknown>>(
+      (map.tables as Record<string, unknown>[]).map(t => [t['table'] as string, t]))
+
+    const wrong: string[] = []
+    for (const p of RECORD_SCOPE_POLICIES) {
+      const d = p.derivation
+      if (!d) continue
+      const meta = tables.get(d.table)
+      if (!meta) { wrong.push(`${p.resource}: table ${d.table} is not in the schema map`); continue }
+      const pp = meta['projectParent'] as { strategy: string; column?: string; path?: { via: string; table: string; column: string }[] }
+      if (d.kind === 'DIRECT_COLUMN') {
+        // A project row is its own parent, which the map records as PROJECT_ROOT.
+        const ok = pp.strategy === 'DIRECT_COLUMN' ? pp.column === d.projectColumn
+                 : pp.strategy === 'PROJECT_ROOT'  ? d.projectColumn === 'id'
+                 : false
+        if (!ok) wrong.push(`${p.resource}: declares ${d.table}.${d.projectColumn}, schema says ${pp.strategy} ${pp.column ?? ''}`)
+      } else {
+        const hop = pp.path?.[0]
+        if (pp.strategy !== 'FK_PATH' || !hop) { wrong.push(`${p.resource}: declares an FK path, schema says ${pp.strategy}`); continue }
+        if (hop.via !== d.via || hop.table !== d.parentTable || hop.column !== d.parentProjectColumn) {
+          wrong.push(`${p.resource}: declares ${d.via}→${d.parentTable}.${d.parentProjectColumn}, schema says ${hop.via}→${hop.table}.${hop.column}`)
+        }
+      }
+    }
+    expect(wrong, `derivations disagree with the migrations:\n  ${wrong.join('\n  ')}`).toEqual([])
+  })
+})

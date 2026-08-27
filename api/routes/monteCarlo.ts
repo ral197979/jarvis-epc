@@ -19,6 +19,8 @@ import {
   getIterationDistribution,
 } from '../services/simulation/monteCarloService'
 
+import { requireCapability } from '../authz/requireCapability'
+import { requireBodyProjectScope, requireRecordScope } from '../authz/recordScope'
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
@@ -30,7 +32,7 @@ const p   = (req: Request, key: string) =>
   qs((req.params as Record<string, string | string[]>)[key]) ?? ''
 
 // POST /monte-carlo/runs
-router.post('/runs', async (req: Request, res: Response) => {
+router.post('/runs', requireCapability('cost.write') as never, requireBodyProjectScope('project_id') as never, async (req: Request, res: Response) => {
   const b = req.body as Record<string, unknown>
   if (!b['name'] || !Array.isArray(b['tasks']) || !(b['tasks'] as unknown[]).length) {
     res.status(400).json({ error: 'name and tasks[] required' }); return
@@ -53,7 +55,7 @@ router.post('/runs', async (req: Request, res: Response) => {
 })
 
 // GET /monte-carlo/runs
-router.get('/runs', async (req: Request, res: Response) => {
+router.get('/runs', requireCapability('cost.view') as never, async (req: Request, res: Response) => {
   const project_id = qs(req.query['project_id'] as string | string[])
   try {
     const runs = await listMonteCarloRuns(tid(req), project_id)
@@ -64,7 +66,7 @@ router.get('/runs', async (req: Request, res: Response) => {
 })
 
 // GET /monte-carlo/runs/:id
-router.get('/runs/:id', async (req: Request, res: Response) => {
+router.get('/runs/:id', requireCapability('cost.view') as never, requireRecordScope('monte_carlo_runs') as never, async (req: Request, res: Response) => {
   try {
     const result = await getMonteCarloRun(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Run not found' }); return }
@@ -75,7 +77,7 @@ router.get('/runs/:id', async (req: Request, res: Response) => {
 })
 
 // GET /monte-carlo/runs/:id/distribution
-router.get('/runs/:id/distribution', async (req: Request, res: Response) => {
+router.get('/runs/:id/distribution', requireCapability('cost.view') as never, requireRecordScope('monte_carlo_runs') as never, async (req: Request, res: Response) => {
   try {
     const rows = await getIterationDistribution(tid(req), p(req, 'id'))
     res.json({ data: rows })

@@ -22,6 +22,7 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest, invalidateTenantCache } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
 import rateLimit from 'express-rate-limit'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -110,7 +111,7 @@ router.use(requireAuth as never, requireTenant() as never)
 
 // ─── GET /tenants/me ──────────────────────────────────────────────────────────
 
-router.get('/me', async (req: Req, res: Response) => {
+router.get('/me', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -124,10 +125,9 @@ router.get('/me', async (req: Req, res: Response) => {
 
 // ─── PATCH /tenants/me ────────────────────────────────────────────────────────
 
-router.patch('/me', async (req: Req, res: Response) => {
+router.patch('/me', requireCapability('platform.identity') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
 
   const fields = ['name','domain','settings']
   const sets: string[] = []; const vals: unknown[] = []; let i = 1
@@ -150,7 +150,7 @@ router.patch('/me', async (req: Req, res: Response) => {
 
 // ─── GET /tenants/me/users ────────────────────────────────────────────────────
 
-router.get('/me/users', async (req: Req, res: Response) => {
+router.get('/me/users', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -165,10 +165,9 @@ router.get('/me/users', async (req: Req, res: Response) => {
 
 // ─── POST /tenants/me/users — Invite/create user ──────────────────────────────
 
-router.post('/me/users', async (req: Req, res: Response) => {
+router.post('/me/users', requireCapability('platform.identity') as never, async (req: Req, res: Response) => {
   const { tenantId, tenant } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
 
   const { email, displayName, role = 'viewer', password } = req.body as Record<string, unknown>
   if (!email || !displayName || !password) {
@@ -210,10 +209,9 @@ router.post('/me/users', async (req: Req, res: Response) => {
 
 // ─── PATCH /tenants/me/users/:userId ─────────────────────────────────────────
 
-router.patch('/me/users/:userId', async (req: Req, res: Response) => {
+router.patch('/me/users/:userId', requireCapability('platform.identity') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
 
   // Cannot modify self via this endpoint
   if (req.params['userId'] === req.auth?.sub) {
@@ -243,10 +241,9 @@ router.patch('/me/users/:userId', async (req: Req, res: Response) => {
 
 // ─── DELETE /tenants/me/users/:userId ────────────────────────────────────────
 
-router.delete('/me/users/:userId', async (req: Req, res: Response) => {
+router.delete('/me/users/:userId', requireCapability('platform.identity') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) { res.status(403).json({ error: 'forbidden' }); return }
   if (req.params['userId'] === req.auth?.sub) {
     res.status(400).json({ error: 'self_deletion', message: 'Cannot delete your own account.' })
     return
@@ -261,7 +258,7 @@ router.delete('/me/users/:userId', async (req: Req, res: Response) => {
 
 // ─── GET /tenants/me/usage ────────────────────────────────────────────────────
 
-router.get('/me/usage', async (req: Req, res: Response) => {
+router.get('/me/usage', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId, tenant } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

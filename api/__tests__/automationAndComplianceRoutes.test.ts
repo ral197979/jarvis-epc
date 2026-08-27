@@ -5,14 +5,43 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// Declared before the pool mock factory so it can read the active role.
+let _currentRole = 'owner'
+
 const mockQuery = vi.fn()
+// ADR-014 Phase 2A: these routes now require a capability, so the pool must
+// answer the current-user lookup. It is served here rather than through
+// mockQuery so per-test scripting cannot starve authorization. The role mirrors
+// `_currentRole`, which each describe block already sets.
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery: (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
-  query:       (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  tenantQuery: (...__a: unknown[]) => _recordScopeAnswer(__a[1], __a[2]) ?? (((tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params)) as (...z: unknown[]) => unknown)(...__a),
+  query: async (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: 'u1', tenant_id: 'tenant-1', role: _currentRole, is_active: true }], rowCount: 1 }
+      : mockQuery(null, sql, params),
 }))
 
 // Auth mock factory — lets each describe pick the role
-let _currentRole = 'owner'
 vi.mock('../auth', () => ({
   requireAuth: (req: any, _res: any, next: any) => {
     req.auth = { sub: 'user-1', role: _currentRole, tid: 'tenant-1', jti: 'j' }
@@ -86,7 +115,7 @@ describe('automation routes — owner access', () => {
 
   it('POST /background/:id/retry requeues a failed job', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ id: 'j-1', status: 'queued', attempts: 0 }] })
-    const res = await request(makeApp()).post('/api/v1/admin/automation/background/j-1/retry')
+    const res = await request(makeApp()).post('/api/v1/admin/automation/background/44614134-209e-42af-8e9f-b5147392a492/retry')
     expect(res.status).toBe(200)
     expect(res.body.data.status).toBe('queued')
   })
@@ -133,7 +162,7 @@ describe('compliance routes', () => {
 
   it('POST /:id/complete marks task terminal', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [{ id: 't-1', status: 'completed' }] })
-    const res = await request(makeApp()).post('/api/v1/compliance-tasks/t-1/complete')
+    const res = await request(makeApp()).post('/api/v1/compliance-tasks/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/complete')
     expect(res.status).toBe(200)
     expect(res.body.data.status).toBe('completed')
     const [, sql] = mockQuery.mock.calls[0]!
@@ -142,19 +171,19 @@ describe('compliance routes', () => {
 
   it('POST /:id/complete returns 404 when task already terminal', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] })
-    const res = await request(makeApp()).post('/api/v1/compliance-tasks/t-1/complete')
+    const res = await request(makeApp()).post('/api/v1/compliance-tasks/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/complete')
     expect(res.status).toBe(404)
   })
 
   it('POST /:id/waive requires admin', async () => {
     _currentRole = 'engineer'
-    const res = await request(makeApp()).post('/api/v1/compliance-tasks/t-1/waive')
+    const res = await request(makeApp()).post('/api/v1/compliance-tasks/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda/waive')
     expect(res.status).toBe(403)
   })
 
   it('DELETE /:id requires admin', async () => {
     _currentRole = 'engineer'
-    const res = await request(makeApp()).delete('/api/v1/compliance-tasks/t-1')
+    const res = await request(makeApp()).delete('/api/v1/compliance-tasks/46e9bc34-76c9-4ea2-8fb1-7adac6cd9cda')
     expect(res.status).toBe(403)
   })
 })

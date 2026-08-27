@@ -9,12 +9,14 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { buildVendorScorecard } from '../services/procurement/vendorScorecardService'
 
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.get('/projects/:projectId/vendor-scorecard', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/vendor-scorecard', requireCapability('procurement.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await buildVendorScorecard(r.tenantId!, String(req.params.projectId), new Date())

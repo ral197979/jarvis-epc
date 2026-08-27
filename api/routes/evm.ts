@@ -15,6 +15,8 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import {
   createBaseline, listBaselines,
   upsertWbsEntries, listWbsEntries,
@@ -34,7 +36,7 @@ evmRouter.use(requireTenant() as never)
 
 // ─── Baselines ────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/baselines', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/baselines', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const baseline = await createBaseline(r.tenantId!, {
@@ -47,7 +49,7 @@ evmRouter.post('/projects/:projectId/evm/baselines', async (req: Request, res: R
   }
 })
 
-evmRouter.get('/projects/:projectId/evm/baselines', async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/baselines', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const baselines = await listBaselines(r.tenantId!, p(req, 'projectId'))
@@ -59,7 +61,7 @@ evmRouter.get('/projects/:projectId/evm/baselines', async (req: Request, res: Re
 
 // ─── WBS entries ──────────────────────────────────────────────────────────────
 
-evmRouter.post('/evm/baselines/:baselineId/wbs', async (req: Request, res: Response) => {
+evmRouter.post('/evm/baselines/:baselineId/wbs', requireCapability('cost.write') as never, requireRecordScope('evm_baselines', 'baselineId') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { projectId, entries } = req.body as { projectId: string; entries: unknown[] }
   if (!projectId || !Array.isArray(entries)) {
@@ -73,7 +75,7 @@ evmRouter.post('/evm/baselines/:baselineId/wbs', async (req: Request, res: Respo
   }
 })
 
-evmRouter.get('/evm/baselines/:baselineId/wbs', async (req: Request, res: Response) => {
+evmRouter.get('/evm/baselines/:baselineId/wbs', requireCapability('cost.view') as never, requireRecordScope('evm_baselines', 'baselineId') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const wbs = await listWbsEntries(r.tenantId!, p(req, 'baselineId'))
@@ -85,7 +87,7 @@ evmRouter.get('/evm/baselines/:baselineId/wbs', async (req: Request, res: Respon
 
 // ─── Actuals ──────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/actuals', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/actuals', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actual = await recordActual(r.tenantId!, {
@@ -99,7 +101,7 @@ evmRouter.post('/projects/:projectId/evm/actuals', async (req: Request, res: Res
   }
 })
 
-evmRouter.get('/projects/:projectId/evm/actuals', async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/actuals', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const actuals = await listActuals(r.tenantId!, p(req, 'projectId'))
@@ -111,7 +113,7 @@ evmRouter.get('/projects/:projectId/evm/actuals', async (req: Request, res: Resp
 
 // ─── Progress ─────────────────────────────────────────────────────────────────
 
-evmRouter.post('/projects/:projectId/evm/progress', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/progress', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const progress = await recordProgress(r.tenantId!, {
@@ -127,7 +129,7 @@ evmRouter.post('/projects/:projectId/evm/progress', async (req: Request, res: Re
 
 // ─── Metrics + S-curve ────────────────────────────────────────────────────────
 
-evmRouter.get('/projects/:projectId/evm/metrics', async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/metrics', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const statusDate = qs(req.query['status_date'] as string | undefined)
@@ -139,7 +141,7 @@ evmRouter.get('/projects/:projectId/evm/metrics', async (req: Request, res: Resp
   }
 })
 
-evmRouter.post('/projects/:projectId/evm/snapshot', async (req: Request, res: Response) => {
+evmRouter.post('/projects/:projectId/evm/snapshot', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const statusDate = req.body.status_date as string | undefined
@@ -151,7 +153,7 @@ evmRouter.post('/projects/:projectId/evm/snapshot', async (req: Request, res: Re
   }
 })
 
-evmRouter.get('/projects/:projectId/evm/scurve', async (req: Request, res: Response) => {
+evmRouter.get('/projects/:projectId/evm/scurve', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const data = await getScurveData(r.tenantId!, p(req, 'projectId'))

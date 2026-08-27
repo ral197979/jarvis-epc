@@ -206,28 +206,57 @@ export async function getModelElements(
   return { elements: rows.rows as BimElement[], total: parseInt(count.rows[0]?.count ?? '0') }
 }
 
-export async function getElementById(tenantId: string, elementId: string): Promise<BimElement | null> {
+/**
+ * One element, bound to the model whose path addressed it.
+ *
+ * ADR-014 Phase 3J §22: `/bim-models/:modelId/elements/:id` is authorized on the
+ * MODEL, so the lookup must be constrained to that model — otherwise the guard
+ * proves the caller may read model A while the query hands them an element of
+ * model B, which may belong to a project they cannot reach. The parent id is a
+ * boundary, not decoration (D27).
+ */
+export async function getElementById(
+  tenantId: string, elementId: string, modelId: string,
+): Promise<BimElement | null> {
   const res = await tenantQuery(tenantId,
-    'SELECT * FROM bim_elements WHERE id=$1 AND tenant_id=$2',
-    [elementId, tenantId])
+    'SELECT * FROM bim_elements WHERE id=$1 AND tenant_id=$2 AND model_id=$3',
+    [elementId, tenantId, modelId])
   return (res.rows[0] as BimElement) ?? null
 }
 
 // ─── Element links ────────────────────────────────────────────────────────────
 
+/**
+ * Link an element to a business entity.
+ *
+ * ADR-014 Phase 3J §22/§23: the INSERT selects its element through the model in
+ * the path, so an element belonging to another model cannot be linked through a
+ * model the caller happens to be authorized for. Returns false when the element
+ * is not part of that model, which the route answers as a 404.
+ */
 export async function linkElementToEntity(
   tenantId:   string,
   elementId:  string,
+  modelId:    string,
   entityType: string,
   entityId:   string,
   linkedBy:   string,
   context?:   string,
-): Promise<void> {
-  await tenantQuery(tenantId,
+): Promise<boolean> {
+  const res = await tenantQuery(tenantId,
     `INSERT INTO bim_element_links (tenant_id, element_id, entity_type, entity_id, linked_by, context)
-     VALUES ($1,$2,$3,$4,$5,$6)
+     SELECT $1, e.id, $3, $4, $5, $6
+       FROM bim_elements e
+      WHERE e.id = $2 AND e.tenant_id = $1 AND e.model_id = $7
      ON CONFLICT (tenant_id, element_id, entity_type, entity_id) DO NOTHING`,
-    [tenantId, elementId, entityType, entityId, linkedBy, context ?? null])
+    [tenantId, elementId, entityType, entityId, linkedBy, context ?? null, modelId])
+  if ((res.rowCount ?? 0) > 0) return true
+  // A zero rowCount is ambiguous: either the element is not in this model, or
+  // the link already existed. Distinguish, so an idempotent re-link still succeeds.
+  const own = await tenantQuery(tenantId,
+    'SELECT 1 FROM bim_elements WHERE id=$1 AND tenant_id=$2 AND model_id=$3',
+    [elementId, tenantId, modelId])
+  return (own.rowCount ?? 0) > 0
 }
 
 export async function getElementLinks(

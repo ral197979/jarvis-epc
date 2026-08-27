@@ -10,6 +10,8 @@ import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { importSchedule, listImportJobs } from '../services/schedule/scheduleImportService'
 
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
   const v = (req.params as Record<string, string | string[]>)[key]
@@ -32,8 +34,11 @@ scheduleImportRouter.use(requireTenant() as never)
 
 // ─── Upload + import ──────────────────────────────────────────────────────────
 
+// Authorization precedes multipart parsing: an unauthorized caller must not get
+// as far as having their upload buffered (ADR-014 Phase 2C-1 §15).
 scheduleImportRouter.post(
   '/projects/:projectId/schedule/import',
+  requireCapability('schedule.write') as never, requireProjectScope() as never,
   upload.single('file') as never,
   async (req: Request, res: Response) => {
     const r = req as R & { file?: Express.Multer.File }
@@ -59,7 +64,7 @@ scheduleImportRouter.post(
 
 // ─── Job history ──────────────────────────────────────────────────────────────
 
-scheduleImportRouter.get('/projects/:projectId/schedule/imports', async (req: Request, res: Response) => {
+scheduleImportRouter.get('/projects/:projectId/schedule/imports', requireCapability('schedule.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const jobs = await listImportJobs(r.tenantId!, p(req, 'projectId'))

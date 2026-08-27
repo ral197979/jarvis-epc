@@ -5,12 +5,27 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// ADR-014 Phase 2B-3: The RFI copilot reads only rfis and action_relations,
+// so it requires assistant.use AND construction.view. Its holders are
+// owner, project manager and engineer; the engineer is the narrowest.
+// Authorization re-resolves that role from the database on every request,
+// so the pool answers the lookup for the caller under test.
+const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'engineer', is_active: true }))
+
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
   tenantQuery: (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
-  query:       (sql: string, p: unknown[]) => mockQuery(null, sql, p),
+  query:       (sql: string, p: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
+      : mockQuery(null, sql, p),
 }))
-vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1' }; next() } }))
+vi.mock('../auth', () => ({
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'u1', tid: 'tenant-1', role: 'engineer' }
+    next()
+  },
+}))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
 import { tokenize, jaccard, findSimilarRfis, assessImpact, type RfiLite } from '../services/rfi/rfiCopilotService'
@@ -79,20 +94,30 @@ function makeApp() {
   return app
 }
 
+const PROJECT_1  = '30000000-0000-4000-8000-00000000000a'
+const RFI_1      = '40000000-0000-4000-8000-00000000000a'
+const ABSENT_RFI = '40000000-0000-4000-8000-0000000000ff'
+
 describe('RFI Copilot route', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('GET /rfis/:id/copilot returns precedent, responders, and impact', async () => {
     mockQuery.mockImplementation(async (_t: string, sql: string) => {
+      // ADR-014 Phase 3E: the route now resolves the RFI's parent project and
+      // the caller's membership of it before the handler runs. Both are
+      // answered from the same RFI→project fact the handler uses below, so the
+      // guard is exercised rather than bypassed.
+      if (/AS\s+project_id/i.test(sql)) return { rows: [{ project_id: PROJECT_1 }], rowCount: 1 }
+      if (/FROM\s+projects\s+p?\b/i.test(sql)) return { rows: [{ id: PROJECT_1 }], rowCount: 1 }
       if (/FROM rfis WHERE tenant_id=\$1 AND id=\$2/.test(sql)) {
-        return { rows: [{ id: 'rfi1', project_id: 'p1', rfi_number: '5', title: 'Beam connection bolt pattern', description: 'gridline B', discipline: 'Structural', priority: 'high', status: 'open', due_date: '2026-06-01' }], rowCount: 1 }
+        return { rows: [{ id: RFI_1, project_id: PROJECT_1, rfi_number: '5', title: 'Beam connection bolt pattern', description: 'gridline B', discipline: 'Structural', priority: 'high', status: 'open', due_date: '2026-06-01' }], rowCount: 1 }
       }
       if (/AND id<>\$3/.test(sql)) return { rows: [{ id: 'rfi2', rfi_number: '2', title: 'Beam connection bolt pattern gridline B', description: '', status: 'answered', response: '4 bolts' }] }
       if (/response_by AS user_id/.test(sql)) return { rows: [{ user_id: 'eng-7', answered: 9 }] }
       if (/relation_type='blocks'/.test(sql)) return { rows: [{ blocking: 1 }] }
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/rfis/rfi1/copilot')
+    const res = await request(makeApp()).get(`/api/v1/rfis/${RFI_1}/copilot`)
     expect(res.status).toBe(200)
     expect(res.body.data.similar.length).toBeGreaterThan(0)
     expect(res.body.data.suggestedResponders[0].userId).toBe('eng-7')
@@ -101,7 +126,21 @@ describe('RFI Copilot route', () => {
 
   it('404s for an unknown RFI', async () => {
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 })
-    const res = await request(makeApp()).get('/api/v1/rfis/nope/copilot')
+    const res = await request(makeApp()).get(`/api/v1/rfis/${ABSENT_RFI}/copilot`)
     expect(res.status).toBe(404)
+  })
+
+  // ADR-014 Phase 3E §18: capability alone is not enough — the RFI's project
+  // must be reachable. Here the parent resolves but membership does not.
+  it('404s for a same-tenant RFI in a project the caller cannot reach', async () => {
+    mockQuery.mockImplementation(async (_t: string, sql: string) => {
+      if (/AS\s+project_id/i.test(sql)) return { rows: [{ project_id: PROJECT_1 }], rowCount: 1 }
+      if (/FROM\s+projects\s+p?\b/i.test(sql)) return { rows: [], rowCount: 0 }   // no membership
+      return { rows: [], rowCount: 0 }
+    })
+    const res = await request(makeApp()).get(`/api/v1/rfis/${RFI_1}/copilot`)
+    expect(res.status).toBe(404)
+    // the payload query never ran
+    expect(mockQuery.mock.calls.some(c => /FROM rfis WHERE tenant_id/.test(String(c[1])))).toBe(false)
   })
 })

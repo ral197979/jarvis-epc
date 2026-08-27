@@ -25,6 +25,7 @@ import {
   type FieldSyncOperation,
 } from '../services/fieldSync'
 
+import { requireCapability } from '../authz/requireCapability'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -33,7 +34,7 @@ router.use(requireTenant() as never)
 
 const MAX_BATCH = 100
 
-router.post('/batch', async (req: Req, res: Response) => {
+router.post('/batch', requireCapability('field.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -59,7 +60,7 @@ router.post('/batch', async (req: Req, res: Response) => {
   res.json({ results })
 })
 
-router.get('/operations', async (req: Req, res: Response) => {
+router.get('/operations', requireCapability('field.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

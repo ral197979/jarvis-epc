@@ -46,7 +46,20 @@ vi.mock('../middleware/tenant', () => ({
 
 // budgets.ts touches the pool at request time only; mock it so importing the
 // router never opens a connection.
-vi.mock('../db/pool', () => ({ tenantQuery: vi.fn().mockResolvedValue({ rows: [] }) }))
+// ADR-014 Phase 2A/2B-1: authorization re-resolves the caller's role from the
+// database, so the pool must answer that lookup for the identity under test.
+vi.mock('../db/pool', () => ({
+  // ADR-014 Phase 3B: the change-order collection is record-scoped, so the
+  // membership lookup must resolve. Everything else still answers empty.
+  tenantQuery: async (_t: string, sql: string) =>
+    /SELECT (id|p\.id) FROM projects/i.test(String(sql))
+      ? { rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
+  query: async (sql: string) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? { rows: [{ id: h.identity.sub, tenant_id: h.identity.tid, role: h.identity.role, is_active: true }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
+}))
 
 vi.mock('../services/changeOrders/changeOrderService', () => ({
   createChangeOrder: h.createChangeOrder, getChangeOrder: vi.fn(),
@@ -99,25 +112,34 @@ beforeEach(() => {
 })
 
 describe('PR #22 — Change Orders route ownership', () => {
+  // ADR-014 Phase 2B-1: change-order *reads* disclose commercial value and
+  // require `cost.view`, which Phase 1 grants to the owner alone.
+  // ADR-014 Phase 2C-2: raising a change order now requires `cost.write`, also
+  // Owner-only, so creation is exercised as the owner as well. Route ownership,
+  // not authority, is what these tests prove — the principal is chosen to reach
+  // the handler, and the authority itself is proven in the Phase 2C-2 suites.
   it('production mount order resolves list to changeOrdersRouter (service-backed)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.listChangeOrders.mockResolvedValue({ items: [{ id: 'co-1', type: 'PCO' }], total: 1 })
-    const res = await request(makeChangeOrderApp()).get('/api/v1/projects/p1/change-orders')
+    const res = await request(makeChangeOrderApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/change-orders')
     expect(res.status).toBe(200)
     expect(h.listChangeOrders).toHaveBeenCalledTimes(1)
   })
 
   it('list returns the { items, total } envelope, NOT the legacy { change_orders }', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.listChangeOrders.mockResolvedValue({ items: [{ id: 'co-1' }], total: 1 })
-    const res = await request(makeChangeOrderApp()).get('/api/v1/projects/p1/change-orders')
+    const res = await request(makeChangeOrderApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/change-orders')
     expect(res.body).toHaveProperty('items')
     expect(res.body).toHaveProperty('total', 1)
     expect(res.body).not.toHaveProperty('change_orders') // legacy budgets.ts shape
   })
 
   it('create preserves type / costImpact / scheduleImpactDays (no silent amount:0)', async () => {
+    h.identity = { sub: 'u1', role: 'owner', tid: 'tenant-1' }
     h.createChangeOrder.mockResolvedValue({ id: 'co-9' })
     const res = await request(makeChangeOrderApp())
-      .post('/api/v1/projects/p1/change-orders')
+      .post('/api/v1/projects/30000000-0000-4000-8000-000000000001/change-orders')
       .send({ title: 'Added scope', type: 'PCO', costImpact: 12500, scheduleImpactDays: 4 })
     expect(res.status).toBe(201)
     expect(res.body).toHaveProperty('changeOrder')
@@ -129,8 +151,8 @@ describe('PR #22 — Change Orders route ownership', () => {
 
   it('ANTI-REGRESSION: budgetsRouter alone no longer answers change-order paths (404)', async () => {
     const app = makeBudgetsOnlyApp()
-    const list = await request(app).get('/api/v1/projects/p1/change-orders')
-    const create = await request(app).post('/api/v1/projects/p1/change-orders').send({ title: 'x' })
+    const list = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/change-orders')
+    const create = await request(app).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/change-orders').send({ title: 'x' })
     expect(list.status).toBe(404)
     expect(create.status).toBe(404)
     // If inline change-order routes are re-added to budgets.ts, these become 200/201 and fail.
@@ -141,7 +163,7 @@ describe('PR #22 — Risk Register route ownership', () => {
   it('create accepts the real service fields and returns { risk }', async () => {
     h.createRisk.mockResolvedValue({ id: 'r-1' })
     const res = await request(makeRiskApp())
-      .post('/api/v1/projects/p1/risks')
+      .post('/api/v1/projects/30000000-0000-4000-8000-000000000001/risks')
       .send({
         title: 'Long-lead switchgear', category: 'procurement',
         probability: 4, impact: 5, costExposure: 250000,
@@ -160,7 +182,7 @@ describe('PR #22 — Risk Register route ownership', () => {
 
   it('create rejects missing required fields (400) before hitting the service', async () => {
     const res = await request(makeRiskApp())
-      .post('/api/v1/projects/p1/risks')
+      .post('/api/v1/projects/30000000-0000-4000-8000-000000000001/risks')
       .send({ title: 'no category/prob/impact' })
     expect(res.status).toBe(400)
     expect(h.createRisk).not.toHaveBeenCalled()
@@ -168,7 +190,7 @@ describe('PR #22 — Risk Register route ownership', () => {
 
   it('list resolves to the service-backed handler and returns { risks }', async () => {
     h.listRisks.mockResolvedValue([{ id: 'r-1' }])
-    const res = await request(makeRiskApp()).get('/api/v1/projects/p1/risks')
+    const res = await request(makeRiskApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/risks')
     expect(res.status).toBe(200)
     expect(res.body).toHaveProperty('risks')
     expect(h.listRisks).toHaveBeenCalledTimes(1)

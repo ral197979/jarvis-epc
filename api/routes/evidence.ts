@@ -12,6 +12,7 @@
 import { Router, type Response } from 'express'
 import type { TenantRequest as Request } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 import {
   initiateUpload, confirmUpload, linkEvidence,
   getEvidenceForEntity, retryUpload,
@@ -21,7 +22,7 @@ export const evidenceRouter = Router()
 
 // ─── POST /evidence/initiate ──────────────────────────────────────────────────
 
-evidenceRouter.post('/initiate', async (req: Request, res: Response) => {
+evidenceRouter.post('/initiate', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const tenantId   = req.tenantId!
   const uploadedBy = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { evidence_type, original_filename, content_type, file_size_bytes,
@@ -49,7 +50,7 @@ evidenceRouter.post('/initiate', async (req: Request, res: Response) => {
 
 // ─── POST /evidence/confirm ───────────────────────────────────────────────────
 
-evidenceRouter.post('/confirm', async (req: Request, res: Response) => {
+evidenceRouter.post('/confirm', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const { evidence_id, storage_key, checksum_sha256 } = req.body as {
     evidence_id: string; storage_key: string; checksum_sha256?: string
@@ -66,7 +67,7 @@ evidenceRouter.post('/confirm', async (req: Request, res: Response) => {
 
 // ─── POST /evidence/link ──────────────────────────────────────────────────────
 
-evidenceRouter.post('/link', async (req: Request, res: Response) => {
+evidenceRouter.post('/link', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const linkedBy  = (req as never as { auth?: { sub?: string } }).auth?.sub
   const { evidence_id, entity_type, entity_id, context } = req.body as {
@@ -86,7 +87,7 @@ evidenceRouter.post('/link', async (req: Request, res: Response) => {
 
 // ─── GET /evidence/entity/:type/:id ──────────────────────────────────────────
 
-evidenceRouter.get('/entity/:type/:id', async (req: Request, res: Response) => {
+evidenceRouter.get('/entity/:type/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const entityType = req.params['type'] as string
   const entityId   = req.params['id'] as string
@@ -97,7 +98,7 @@ evidenceRouter.get('/entity/:type/:id', async (req: Request, res: Response) => {
 
 // ─── POST /evidence/:id/retry ─────────────────────────────────────────────────
 
-evidenceRouter.post('/:id/retry', async (req: Request, res: Response) => {
+evidenceRouter.post('/:id/retry', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const evidenceId = req.params['id'] as string
 
@@ -108,7 +109,7 @@ evidenceRouter.post('/:id/retry', async (req: Request, res: Response) => {
 
 // ─── GET /evidence/:id ────────────────────────────────────────────────────────
 
-evidenceRouter.get('/:id', async (req: Request, res: Response) => {
+evidenceRouter.get('/:id', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const evidenceId = req.params['id'] as string
 
@@ -123,7 +124,7 @@ evidenceRouter.get('/:id', async (req: Request, res: Response) => {
 // ─── GET /evidence/assets/:id/scan-event (QR/NFC) ────────────────────────────
 // Assets scan is co-located here since evidence and asset ops are tightly coupled
 
-evidenceRouter.post('/assets/:id/scan', async (req: Request, res: Response) => {
+evidenceRouter.post('/assets/:id/scan', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const assetId   = req.params['id'] as string
   const scannedBy = (req as never as { auth?: { sub?: string } }).auth?.sub

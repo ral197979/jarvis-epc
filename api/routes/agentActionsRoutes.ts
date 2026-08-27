@@ -17,6 +17,9 @@ import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { stats as actionStats, markReviewed } from '../services/agentActions'
 
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 type Req = AuthenticatedRequest & TenantRequest
 
 const router = Router()
@@ -31,7 +34,7 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── GET /_stats — mount BEFORE /:id so the param route doesn't swallow it ──
 
-router.get('/_stats', async (req: Req, res: Response) => {
+router.get('/_stats', requireCapability('ai.govern') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -39,18 +42,27 @@ router.get('/_stats', async (req: Req, res: Response) => {
   const now = new Date()
   const defaultFrom = new Date(now.getTime() - 24 * 3600 * 1000).toISOString()
 
+  // ADR-014 Phase 3G §22. `ai.govern` reaches the platform administrator as
+  // well as the Owner, and an administrator holds no tenant-wide project scope
+  // — so this rollup is not holder-neutral and the predicate really filters.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
   const rollup = await actionStats({
     tenantId,
     projectId: project_id,
     from: from ?? defaultFrom,
     to:   to   ?? now.toISOString(),
+    scope: {
+      sql:    collectionScopeSql(principal, 'agent_actions', 'project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'agent_actions'),
+    },
   })
   res.json({ data: rollup })
 })
 
 // ─── GET list ─────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('crossdomain.read') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -95,7 +107,7 @@ router.get('/', async (req: Req, res: Response) => {
 
 // ─── GET one ──────────────────────────────────────────────────────────────────
 
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('crossdomain.read') as never, requireRecordScope('agent_actions') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -110,7 +122,7 @@ router.get('/:id', async (req: Req, res: Response) => {
 
 // ─── POST review ──────────────────────────────────────────────────────────────
 
-router.post('/:id/review', async (req: Req, res: Response) => {
+router.post('/:id/review', requireCapability('ai.govern') as never, requireRecordScope('agent_actions') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

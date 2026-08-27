@@ -13,17 +13,41 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+/**
+ * ADR-014 Phase 2B-1: these smoke tests verify response *shape*, but the routes
+ * they exercise now require a capability, so each group must state who is
+ * calling. `CALLER.role` defaults to the project manager — the role that holds
+ * the delivery view capabilities the untouched groups need — and the groups
+ * covering a high-sensitivity domain narrow it to the role Phase 1 actually
+ * grants that domain to. Authorization re-resolves the role from the database,
+ * so the pool answers that lookup ahead of the scripted mock, keeping every
+ * `mockResolvedValueOnce` sequence aligned with the handler's own queries.
+ */
+const CALLER = vi.hoisted(() => ({ role: 'project_manager' }))
+
 // ─── Mock DB pool ─────────────────────────────────────────────────────────────
 const mockQuery = vi.fn()
 vi.mock('../db/pool', () => ({
-  tenantQuery:       (tenantId: string, sql: string, params: unknown[]) => mockQuery(tenantId, sql, params),
+  tenantQuery:       (tenantId: string, sql: string, params: unknown[]) =>
+    /SELECT (id|p\.id) FROM projects/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
+      // ADR-014 Phase 3C: `requireRecordScope` resolves a record's parent
+      // project before the handler runs. Answered here for the same reason the
+      // project lookup above is — an authorization query must not consume the
+      // `mockResolvedValueOnce` entries scripted for the handler's own queries.
+      : /AS\s+project_id/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
+      : mockQuery(tenantId, sql, params),
   tenantTransaction: async <T>(_tenantId: string, fn: (q: any) => Promise<T>) => fn(mockQuery),
-  query:             (sql: string, params: unknown[]) => mockQuery(null, sql, params),
+  query:             (sql: string, params: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ id: 'user-1', tenant_id: 'tenant-1', role: CALLER.role, is_active: true }], rowCount: 1 })
+      : mockQuery(null, sql, params),
 }))
 
 vi.mock('../auth', () => ({
   requireAuth: (req: any, _res: any, next: any) => {
-    req.auth = { sub: 'user-1', tid: 'tenant-1', role: 'project_manager', jti: 'abc' }
+    req.auth = { sub: 'user-1', tid: 'tenant-1', role: CALLER.role, jti: 'abc' }
     next()
   },
   requireRole: (..._roles: string[]) => (_req: any, _res: any, next: any) => next(),
@@ -92,20 +116,26 @@ function rowStub(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  CALLER.role = 'project_manager'
 })
 
 // ─── Daily Logs ───────────────────────────────────────────────────────────────
 describe('Tier-1 smoke: dailyLogs', () => {
   it('GET /projects/:id/daily-logs returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ log_date: '2026-04-16', weather: 'sunny' })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/daily-logs')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/daily-logs')
     expect([200, 204]).toContain(res.status)
     expect(mockQuery).toHaveBeenCalled()
   })
 
+  // ADR-014 Phase 3E: the detail route now carries `requireRecordScope`, which
+  // refuses a malformed record id WITHOUT issuing SQL (§45 fail closed). The id
+  // is a real uuid here so the request still reaches the handler and this stays
+  // a shape smoke test — a non-uuid would leave the scripted response unread and
+  // shift it onto the next test in the file.
   it('GET /daily-logs/:id passes through tenant query', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub()], rowCount: 1 })
-    const res = await request(app).get('/api/v1/daily-logs/row-1')
+    const res = await request(app).get('/api/v1/daily-logs/a0000000-0000-4000-8000-0000000000d1')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -114,19 +144,19 @@ describe('Tier-1 smoke: dailyLogs', () => {
 describe('Tier-1 smoke: drawings', () => {
   it('GET /projects/:id/drawings returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ sheet_number: 'A-101', title: 'Floor Plan' })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/drawings')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/drawings')
     expect([200, 204]).toContain(res.status)
   })
 
   it('GET /drawings/:id/revisions returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/drawings/dwg-1/revisions')
+    const res = await request(app).get('/api/v1/drawings/40000000-0000-4000-8000-0000000000d1/revisions')
     expect([200, 404]).toContain(res.status)
   })
 
   it('GET /drawings/:id/markups returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/drawings/dwg-1/markups')
+    const res = await request(app).get('/api/v1/drawings/40000000-0000-4000-8000-0000000000d1/markups')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -135,34 +165,39 @@ describe('Tier-1 smoke: drawings', () => {
 describe('Tier-1 smoke: bim', () => {
   it('GET /projects/:id/bim-models returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ name: 'Arch Model', version: '1.0' })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/bim-models')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/bim-models')
     expect([200, 204]).toContain(res.status)
   })
 
   it('GET /projects/:id/bim-issues returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/projects/proj-1/bim-issues')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/bim-issues')
     expect([200, 204]).toContain(res.status)
   })
 })
 
 // ─── Budgets ──────────────────────────────────────────────────────────────────
 describe('Tier-1 smoke: budgets', () => {
+  // Budget, rollup and change-order reads disclose commercial value and require
+  // `cost.view`. Phase 1 grants it to the owner alone — a project manager gets
+  // 403 here now, which is the §14 boundary this gate exists to create.
+  beforeEach(() => { CALLER.role = 'owner' })
+
   it('GET /projects/:id/budget returns budget', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ total: 100000, committed: 50000 })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/budget')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/budget')
     expect([200, 404]).toContain(res.status)
   })
 
   it('GET /projects/:id/budget/rollup returns rollup', async () => {
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/projects/proj-1/budget/rollup')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/budget/rollup')
     expect([200, 404]).toContain(res.status)
   })
 
   it('GET /projects/:id/change-orders returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/projects/proj-1/change-orders')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/change-orders')
     expect([200, 204]).toContain(res.status)
   })
 })
@@ -171,19 +206,19 @@ describe('Tier-1 smoke: budgets', () => {
 describe('Tier-1 smoke: inspections', () => {
   it('GET /projects/:id/inspection-templates returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ name: 'Pre-Functional', is_active: true })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/inspection-templates')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/inspection-templates')
     expect([200, 204]).toContain(res.status)
   })
 
   it('GET /projects/:id/inspections returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/projects/proj-1/inspections')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/inspections')
     expect([200, 204]).toContain(res.status)
   })
 
   it('GET /inspections/:id returns detail or 404', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/inspections/insp-1')
+    const res = await request(app).get('/api/v1/inspections/40000000-0000-4000-8000-0000000000b1')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -192,13 +227,13 @@ describe('Tier-1 smoke: inspections', () => {
 describe('Tier-1 smoke: punchLists', () => {
   it('GET /projects/:id/punch-lists returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ name: 'Pre-Handover' })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/punch-lists')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/punch-lists')
     expect([200, 204]).toContain(res.status)
   })
 
   it('GET /punch-lists/:id/items returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/punch-lists/pl-1/items')
+    const res = await request(app).get('/api/v1/punch-lists/40000000-0000-4000-8000-0000000000c1/items')
     expect([200, 404]).toContain(res.status)
   })
 })
@@ -207,19 +242,24 @@ describe('Tier-1 smoke: punchLists', () => {
 describe('Tier-1 smoke: calculations', () => {
   it('GET /projects/:id/calc-sessions returns list', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [rowStub({ name: 'Pump Sizing' })], rowCount: 1 })
-    const res = await request(app).get('/api/v1/projects/proj-1/calc-sessions')
+    const res = await request(app).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/calc-sessions')
     expect([200, 204]).toContain(res.status)
   })
 
+  // Real uuid for the same reason as the daily-log detail above (Phase 3E §45).
   it('GET /calc-sessions/:id returns detail or 404', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 })
-    const res = await request(app).get('/api/v1/calc-sessions/cs-1')
+    const res = await request(app).get('/api/v1/calc-sessions/a0000000-0000-4000-8000-0000000000c5')
     expect([200, 404]).toContain(res.status)
   })
 })
 
 // ─── Audit ────────────────────────────────────────────────────────────────────
 describe('Tier-1 smoke: audit', () => {
+  // The audit trail requires `audit.view`. Its holders are owner and admin;
+  // admin is the narrower of the two, so it is the caller here.
+  beforeEach(() => { CALLER.role = 'admin' })
+
   it('GET /audit returns paginated shape', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [rowStub({ action: 'create', resource: 'projects' })], rowCount: 1 })

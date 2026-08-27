@@ -12,11 +12,13 @@
 
 import React, { Suspense, lazy } from 'react'
 import type { PolicyConfig } from '../modules/biz/dispatch'
+import { isDemoSeed } from '../config/defaultState'
 import { useAppStore }       from '../modules/store/appSlice'
 import { ViewErrorBoundary } from './ErrorBoundary'
 import WorkflowContextBar    from './shell/WorkflowContextBar'
 import GuidedFlow            from './shell/GuidedFlow'
 import { flowForTab }        from '../config/workflows'
+import { canSee, capabilityForScreen, visibleScreens, effectiveWriteRole } from '../config/capabilities'
 
 // ─── Lazy load all view components ───────────────────────────────────────────
 // Using lazy() avoids bundling the entire component tree upfront.
@@ -147,7 +149,7 @@ function ViewLoader() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ViewEntry = React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>
 
-const TAB_MAP: Record<string, ViewEntry> = {
+export const TAB_MAP: Record<string, ViewEntry> = {
   dash:          Dashboard,
   crm:           CRMView,
   feed:          FeedView,
@@ -223,9 +225,52 @@ const TAB_MAP: Record<string, ViewEntry> = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: ContentRouterProps) {
-  const activeTab = useAppStore(s => s.ui.activeTab)
+  const activeTab   = useAppStore(s => s.ui.activeTab)
+  const ownerConfig = useAppStore(s => s.ownerConfig)
+  const authRole    = useAppStore(s => s.auth.role)
 
   const ViewComponent = TAB_MAP[activeTab]
+
+  // ADR-014 route guard. Hiding a nav item is not access control: a deep link, a
+  // persisted tab id from a prior session or role, a manually edited `?tab=`, or a
+  // programmatic setTab all set the active tab without passing the sidebar. The
+  // guard reads the same canSee() the sidebar projection reads, and fails closed.
+  //
+  // Subject = the authenticated role; the OwnerPanel preview is passed second and
+  // can only narrow. Previously this read the preview alone, so an authenticated
+  // viewer with the default stored `owner` walked straight into cost control.
+  const previewRole = { ...ownerConfig, ...policy }.activeRole
+  if (ViewComponent && !canSee(activeTab, authRole, previewRole)) {
+    const cap = capabilityForScreen(activeTab)
+    // Only offer a way out to a destination this user may actually open —
+    // otherwise the escape hatch lands on a second denial.
+    const landing = visibleScreens(authRole, previewRole)[0]
+    return (
+      <div
+        role="alert"
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 10, padding: 24, textAlign: 'center', color: 'var(--jarvis-ts)' }}
+      >
+        <span style={{ fontSize: 32 }} aria-hidden>🔒</span>
+        <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--jarvis-tp, inherit)' }}>
+          403 — not available to your role
+        </p>
+        <p style={{ fontSize: 13, maxWidth: 420 }}>
+          <code>{activeTab}</code>{cap ? <> requires <code>{cap}</code>, which</> : ' is not a registered destination and'}{' '}
+          your role ({String(authRole ?? 'unknown')}) does not hold. You reached this from a direct
+          URL, a bookmark or a stale link.
+        </p>
+        {onNavigate && landing && (
+          <button
+            type="button"
+            onClick={() => onNavigate(landing)}
+            style={{ marginTop: 4, padding: '7px 14px', fontSize: 13, borderRadius: 6, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'inherit', cursor: 'pointer' }}
+          >
+            Go to an available screen
+          </button>
+        )}
+      </div>
+    )
+  }
 
   if (!ViewComponent) {
     return (
@@ -236,8 +281,13 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
     )
   }
 
+  // ADR-014: views gate their own write affordances on `policy.activeRole !==
+  // 'viewer'`. Handing them the raw preview role would reopen the elevation the
+  // route guard just closed — an authenticated viewer whose stored preview is
+  // `owner` would get every write control. Downstream policy therefore carries
+  // the *effective* write role, which the preview can only narrow.
   const sharedProps = {
-    policy,
+    policy: { ...policy, activeRole: effectiveWriteRole(authRole, previewRole) },
     biz,
     onNavigate,
     onAudit,
@@ -251,6 +301,24 @@ export function ContentRouter({ policy, biz, onNavigate, onAudit, onToast }: Con
       aria-label={`${activeTab} view`}
       style={{ flex: 1, overflow: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column' }}
     >
+      {/* Every store-backed view downstream renders whatever is in `biz`, and on
+          a fresh session that is the shipped Lusaka/Maputo DEMO seed — a
+          $425,000 contract, $63,750 of invoices, two open incidents — styled
+          exactly like real figures. Nothing in the load path consults a domain
+          API: `biz` is replaced only by a persisted blob or a user's backup.
+          The banner sits here rather than in any one view because it is true of
+          all of them, and it is the shell that knows. */}
+      {isDemoSeed(biz) && (
+        <div role="status" style={{
+          padding: '6px 12px', fontSize: 11, lineHeight: 1.5,
+          background: 'color-mix(in srgb, var(--jarvis-amb) 14%, transparent)',
+          borderBottom: '1px solid var(--jarvis-amb)', color: 'var(--jarvis-tx)',
+        }}>
+          <strong>Demonstration data.</strong>{' '}
+          Figures on these screens come from the built-in sample project, not
+          from your organisation&rsquo;s records.
+        </div>
+      )}
       <WorkflowContextBar activeTab={activeTab} onNavigate={onNavigate} />
       {(() => { const flow = flowForTab(activeTab); return flow ? <GuidedFlow flow={flow} activeTab={activeTab} onNavigate={onNavigate} /> : null })()}
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>

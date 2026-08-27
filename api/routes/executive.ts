@@ -8,6 +8,7 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
 
 export const executiveRouter = Router()
 const auth = requireAuth as never
@@ -16,7 +17,7 @@ type ExecReq = Request & AuthenticatedRequest & TenantRequest
 executiveRouter.use(auth)
 
 // ─── Global overview ──────────────────────────────────────────────────────────
-executiveRouter.get('/overview', async (req: Request, res: Response) => {
+executiveRouter.get('/overview', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const [actions, readiness, incidents, aiRecs] = await Promise.all([
     tenantQuery(r.tenantId!, `
@@ -57,7 +58,7 @@ executiveRouter.get('/overview', async (req: Request, res: Response) => {
 })
 
 // ─── Portfolio risk heatmap ───────────────────────────────────────────────────
-executiveRouter.get('/portfolio-risk', async (req: Request, res: Response) => {
+executiveRouter.get('/portfolio-risk', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
@@ -79,7 +80,7 @@ executiveRouter.get('/portfolio-risk', async (req: Request, res: Response) => {
 })
 
 // ─── Escalation hotspots ──────────────────────────────────────────────────────
-executiveRouter.get('/escalation-hotspots', async (req: Request, res: Response) => {
+executiveRouter.get('/escalation-hotspots', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
@@ -97,7 +98,7 @@ executiveRouter.get('/escalation-hotspots', async (req: Request, res: Response) 
 })
 
 // ─── Contractor performance ───────────────────────────────────────────────────
-executiveRouter.get('/contractor-performance', async (req: Request, res: Response) => {
+executiveRouter.get('/contractor-performance', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
@@ -118,7 +119,7 @@ executiveRouter.get('/contractor-performance', async (req: Request, res: Respons
 })
 
 // ─── SLA compliance ───────────────────────────────────────────────────────────
-executiveRouter.get('/sla-compliance', async (req: Request, res: Response) => {
+executiveRouter.get('/sla-compliance', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
@@ -137,7 +138,7 @@ executiveRouter.get('/sla-compliance', async (req: Request, res: Response) => {
 })
 
 // ─── AI recommendation acceptance rate ───────────────────────────────────────
-executiveRouter.get('/ai-acceptance', async (req: Request, res: Response) => {
+executiveRouter.get('/ai-acceptance', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const { rows } = await tenantQuery(r.tenantId!, `
     SELECT
@@ -156,7 +157,7 @@ executiveRouter.get('/ai-acceptance', async (req: Request, res: Response) => {
 })
 
 // ─── Operational throughput ───────────────────────────────────────────────────
-executiveRouter.get('/throughput', async (req: Request, res: Response) => {
+executiveRouter.get('/throughput', requireCapability('portfolio.view') as never, async (req: Request, res: Response) => {
   const r = req as ExecReq
   const days = Math.min(Number(req.query['days'] ?? 30), 90)
   const { rows } = await tenantQuery(r.tenantId!, `

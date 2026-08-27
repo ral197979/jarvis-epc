@@ -15,6 +15,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import { useAppStore }                          from '../modules/store/appSlice'
+import { isUserRole }                           from '../config/capabilities'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,11 +87,17 @@ export function LoginScreen({ onSuccess, gatewayMode, backendUrl = '' }: LoginSc
       })
       const data = await res.json()
       if (res.ok) {
+        // ADR-014: `auth.role` is the subject of every client authorization
+        // decision, so only a value the registry recognises may be stored. An
+        // unexpected server value is left undefined, which fails closed (an
+        // absent role grants nothing) rather than being persisted as an opaque
+        // string nobody can reason about.
+        const serverRole = data.user?.role
         setAuth({
           isAuthenticated: true,
           userId:    data.user?.id,
           tenantId:  data.user?.tenant_id,
-          role:      data.user?.role,
+          role:      isUserRole(serverRole) ? serverRole : undefined,
           loginAt:   new Date().toISOString(),
         })
         addToast(`Welcome back, ${data.user?.name ?? email}`, 'success')
@@ -113,6 +120,10 @@ export function LoginScreen({ onSuccess, gatewayMode, backendUrl = '' }: LoginSc
     if (!pin || pin.length < 4) { setError('Enter your 4-digit PIN'); return }
     const expected = ownerConfig.pinHash || hashPin('0000')
     if (hashPin(pin) === expected) {
+      // Local PIN mode has no server to consult, so the stored position is the
+      // only available authority — the PIN itself is the gate. This is a real
+      // limit of local mode, recorded in ADR-014: only proxied (multi-tenant)
+      // mode has a server-issued role. It is not a fallback for proxied mode.
       setAuth({ isAuthenticated: true, role: ownerConfig.activeRole, loginAt: new Date().toISOString() })
       addToast('Access granted', 'success')
       onSuccess?.()

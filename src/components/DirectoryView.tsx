@@ -9,7 +9,7 @@
  *     or contract/invoice history (customers)
  */
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { type PolicyConfig } from '../modules/biz/dispatch'
 import { StatusBadge } from './StatusBadge'
 import { KpiCard }     from './KpiCard'
@@ -27,7 +27,10 @@ interface Customer {
 }
 interface PurchaseOrder {
   id: string; amount?: number; status?: string; vendor?: string; project?: string
-  subject?: string; [key: string]: unknown
+  subject?: string
+  /** The real foreign key, when the row came from the API. Names are not unique. */
+  vendorId?: string
+  [key: string]: unknown
 }
 interface Contract {
   id: string; project?: string; value?: number; status?: string; client?: string
@@ -49,6 +52,128 @@ export interface DirectoryViewProps {
   onNavigate?:   (tab: string) => void
   onAudit?:      (entry: unknown) => void
   onToast?:      (msg: string, type: string) => void
+}
+
+// ─── Live data ────────────────────────────────────────────────────────────────
+//
+// P0-11. This screen was graded BROKEN_OR_DEAD for a wiring reason, not a
+// backend one: it takes `vendors` / `purchaseOrders` / … as PROPS, and
+// `ContentRouter`'s `sharedProps` passes only {policy, biz, onNavigate, onAudit,
+// onToast}. Every prop defaulted to `[]`, so the routed screen rendered "No
+// vendors in directory" forever — identically on a healthy backend and a dead
+// one, which is the worst version of an empty state.
+//
+// Props still win when they are supplied, so an embedder (and the accessibility
+// suite, which renders this component with vendor and customer rows) behaves
+// exactly as before. When the vendor props are ABSENT the component now fetches
+// its own data — the pattern the other live-wired views in this app already use.
+//
+// What is deliberately NOT fetched: customers, contracts and invoices. There is
+// no `customers` table in any migration and no customer route on the API, and
+// the `contracts` table has no reader. Inventing a client-side stand-in would
+// make a dead domain look alive, so the Customers tab says plainly that the
+// directory has no backend yet. See CUSTOMER_BACKEND.
+
+/** There is no customers table, and no route reads `contracts`. Verified against migrations + api/routes. */
+const CUSTOMER_BACKEND = false
+
+type LoadState = 'loading' | 'ready' | 'forbidden' | 'error'
+
+interface VendorApiRow {
+  id: string; name?: string; type?: string; status?: string
+  primary_contact?: string; email?: string; phone?: string
+  address?: string; country?: string; categories?: string[] | null
+  rating?: string | number | null
+  [key: string]: unknown
+}
+interface PoApiRow {
+  id: string; po_number?: string; title?: string; status?: string
+  total_amount?: string | number | null
+  vendor_id?: string; vendor_name?: string
+  project_code?: string; project_name?: string
+  [key: string]: unknown
+}
+
+/** API row → the shape this component already renders. Nothing is invented. */
+function toPurchaseOrder(row: PoApiRow): PurchaseOrder {
+  return {
+    id:       row.po_number ?? row.id,
+    amount:   row.total_amount != null ? Number(row.total_amount) : undefined,
+    status:   row.status,
+    vendor:   row.vendor_name,
+    vendorId: row.vendor_id,
+    project:  row.project_code ?? row.project_name,
+    subject:  row.title,
+  }
+}
+
+function toVendor(row: VendorApiRow, pos: PurchaseOrder[]): Vendor {
+  // `vendors` has no project column. The projects a vendor touches ARE the
+  // projects of its purchase orders — derived, and the only honest source.
+  const projects = [...new Set(
+    pos.filter(p => p.vendorId === row.id).map(p => p.project).filter((x): x is string => Boolean(x)),
+  )]
+  return {
+    id:        row.id,
+    name:      row.name,
+    type:      row.type,
+    status:    row.status,
+    contact:   row.primary_contact,
+    email:     row.email,
+    phone:     row.phone,
+    location:  [row.address, row.country].filter(Boolean).join(', ') || undefined,
+    specialty: Array.isArray(row.categories) && row.categories.length ? row.categories.join(', ') : undefined,
+    rating:    row.rating != null ? Number(row.rating) : undefined,
+    projects,
+  }
+}
+
+interface DirectoryData { vendors: Vendor[]; pos: PurchaseOrder[]; state: LoadState; detail?: string }
+
+/**
+ * Fetch the vendor directory. `enabled` is false when the caller supplied the
+ * data as props, so an embedder never triggers a network call.
+ *
+ * 403 is surfaced as its own state rather than as an error or an empty list:
+ * `procurement.view` is a real capability that plenty of roles do not hold, and
+ * "you may not see this" is a different fact from "there is nothing here".
+ */
+function useDirectoryData(enabled: boolean): DirectoryData {
+  const [data, setData] = useState<DirectoryData>({ vendors: [], pos: [], state: enabled ? 'loading' : 'ready' })
+
+  useEffect(() => {
+    if (!enabled) return
+    let live = true
+    void (async () => {
+      try {
+        const [vRes, pRes] = await Promise.all([
+          fetch('/api/v1/vendors?limit=100'),
+          fetch('/api/v1/purchase-orders?limit=200'),
+        ])
+        if (!live) return
+        if (vRes.status === 401 || vRes.status === 403) {
+          setData({ vendors: [], pos: [], state: 'forbidden' }); return
+        }
+        if (!vRes.ok) {
+          setData({ vendors: [], pos: [], state: 'error', detail: `Vendors request failed (${vRes.status}).` }); return
+        }
+        const vBody = await vRes.json() as { data?: VendorApiRow[] }
+        // Purchase orders are supplementary — they add spend and project
+        // context. A caller who may read vendors but not POs still gets the
+        // directory, with the PO panel simply absent.
+        const pBody = pRes.ok ? await pRes.json() as { data?: PoApiRow[] } : { data: [] }
+        if (!live) return
+        const pos = (pBody.data ?? []).map(toPurchaseOrder)
+        setData({ vendors: (vBody.data ?? []).map(r => toVendor(r, pos)), pos, state: 'ready' })
+      } catch (err) {
+        if (!live) return
+        setData({ vendors: [], pos: [], state: 'error', detail: err instanceof Error ? err.message : String(err) })
+      }
+    })()
+    return () => { live = false }
+  }, [enabled])
+
+  return data
 }
 
 function fmtCurrency(n: number): string {
@@ -74,7 +199,9 @@ function VendorDetail({ vendor, pos, onBack }: {
   vendor: Vendor; pos: PurchaseOrder[]; onBack: () => void
 }) {
   const projects   = vendor.projects ?? []
-  const vendorPOs  = pos.filter(p => p.vendor === vendor.name)
+  // Match on the foreign key when the rows came from the API; fall back to the
+  // name for prop-supplied rows, which carry no id.
+  const vendorPOs  = pos.filter(p => (p.vendorId ? p.vendorId === vendor.id : p.vendor === vendor.name))
   const totalSpend = vendorPOs.reduce((s, p) => s + Number(p.amount ?? 0), 0)
 
   return (
@@ -297,7 +424,23 @@ function CustomersList({ customers, onSelect }: { customers: Customer[]; onSelec
   }, [customers, search])
 
   if (customers.length === 0) {
-    return <div className="jarvis-empty" role="status"><span className="jarvis-empty-icon">🏢</span><span>No customers in directory</span></div>
+    // Not "no customers" — there is nowhere for customers to live. No migration
+    // creates a `customers` table and no route serves one, so an empty list
+    // here would report a data state that cannot exist yet.
+    return (
+      <div className="jarvis-empty" role="status">
+        <span className="jarvis-empty-icon">🏢</span>
+        {CUSTOMER_BACKEND
+          ? <span>No customers in directory</span>
+          : <>
+              <span>Customer directory not available</span>
+              <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4, maxWidth: 420, textAlign: 'center' }}>
+                No customer records are stored yet — this domain has no backend.
+                Vendors and purchase orders are live.
+              </span>
+            </>}
+      </div>
+    )
   }
 
   return (
@@ -338,12 +481,22 @@ function CustomersList({ customers, onSelect }: { customers: Customer[]; onSelec
 
 // ─── DirectoryView (main export) ─────────────────────────────────────────────
 export function DirectoryView({
-  policy: _policy, vendors = [], customers = [], purchaseOrders = [], contracts = [], invoices = [],
+  policy: _policy, vendors: vendorsProp, customers = [], purchaseOrders: posProp, contracts = [], invoices = [],
   onNavigate: _onNavigate,
 }: DirectoryViewProps) {
   const [activeTab,      setActiveTab]      = useState<DirectoryTab>('vendors')
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+
+  // Undefined means "nobody gave me data", which is the routed case; an empty
+  // ARRAY means "I was given nothing", which is a legitimate caller assertion
+  // and must not trigger a fetch. The old signature defaulted both to `[]` and
+  // so could not tell them apart — that conflation is the whole defect.
+  const live = vendorsProp === undefined
+  const fetched = useDirectoryData(live)
+
+  const vendors        = live ? fetched.vendors : vendorsProp
+  const purchaseOrders = live ? fetched.pos     : (posProp ?? [])
 
   // ── Detail routing ────────────────────────────────────────────────────────────
   if (selectedVendor) {
@@ -370,7 +523,11 @@ export function DirectoryView({
       {/* Header KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
         <KpiCard label="Approved Vendors"   value={vendors.filter(v => v.status === 'approved').length}   color="var(--jarvis-grn)" />
-        <KpiCard label="Active Customers"   value={customers.length}                                       color="var(--jarvis-blue)" />
+        {/* Not 0 — a count of zero asserts the domain is empty, and it is not
+            stored at all. `—` is the honest value until a backend exists. */}
+        <KpiCard label="Active Customers"
+          value={!CUSTOMER_BACKEND && customers.length === 0 ? '—' : customers.length}
+          color="var(--jarvis-blue)" />
       </div>
 
       {/* Tab bar */}
@@ -397,6 +554,23 @@ export function DirectoryView({
       </div>
 
       {activeTab === 'vendors' && (
+        live && fetched.state === 'loading'   ? <div className="jarvis-empty" role="status"><span>Loading vendor directory…</span></div> :
+        live && fetched.state === 'forbidden' ? (
+          <div className="jarvis-empty" role="status">
+            <span className="jarvis-empty-icon">🔒</span>
+            <span>You do not have access to the vendor directory</span>
+            <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4 }}>
+              This view requires the procurement.view capability.
+            </span>
+          </div>
+        ) :
+        live && fetched.state === 'error' ? (
+          <div className="jarvis-empty" role="alert">
+            <span className="jarvis-empty-icon">⚠️</span>
+            <span>Could not load the vendor directory</span>
+            <span className="jarvis-small" style={{ color: 'var(--jarvis-ts)', marginTop: 4 }}>{fetched.detail ?? 'Request failed.'}</span>
+          </div>
+        ) :
         <VendorsList vendors={vendors} pos={purchaseOrders} onSelect={setSelectedVendor} />
       )}
       {activeTab === 'customers' && (

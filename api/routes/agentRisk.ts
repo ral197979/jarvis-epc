@@ -2,38 +2,58 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
-import { enqueueTask } from '../services/agents/agentTaskQueue'
+import { enqueueTask, latestTaskForScope } from '../services/agents/agentTaskQueue'
 
+import { requireCapability } from '../authz/requireCapability'
 type R = Request & AuthenticatedRequest & TenantRequest
 
 export const agentRiskRouter = Router()
 agentRiskRouter.use(requireAuth as never, requireTenant() as never)
 
-// GET /api/v1/agents/risk/overview — risk summary for a scope
-agentRiskRouter.get('/overview', async (req: Request, res: Response) => {
+// GET /api/v1/agents/risk/overview — latest risk analysis for a scope
+//
+// ADR-014 Phase 2C-5 §19/§20 (Option B, existing mutation). Until Phase 2C-5
+// this GET called `enqueueTask`, so `crossdomain.read` was sufficient to create
+// durable agent work — a read capability performing a write. It now OBSERVES the
+// newest `analyze_risk` task for the scope and creates nothing.
+//
+// The creation path is unchanged and already existed: POST /agents/risk/analyze,
+// guarded by `crossdomain.write`. No second way to create the same job was added.
+agentRiskRouter.get('/overview', requireCapability('crossdomain.read') as never, async (req: Request, res: Response) => {
   const r = req as R
-  const { scopeType, scopeId } = req.query
+  const scopeType = String(req.query['scopeType'] ?? 'global')
+  const scopeId   = String(req.query['scopeId']   ?? '')
 
-  // Enqueue a risk analysis task and return the task ID for async polling
-  const task = await enqueueTask({
-    tenantId: r.tenantId!,
-    agentType: 'RiskAgent',
-    taskType: 'analyze_risk',
-    priority: 4,
-    payload: { scopeType: scopeType ?? 'global', scopeId: scopeId ?? '' },
-    createdBy: r.auth?.sub ?? 'system',
+  const task = await latestTaskForScope(r.tenantId!, 'analyze_risk', scopeType, scopeId)
+  if (!task) {
+    // Honest empty state: nothing has been analysed for this scope yet. The
+    // caller triggers analysis through the mutation route, which needs
+    // crossdomain.write — deliberately more authority than reading.
+    res.json({ task: null, scopeType, scopeId })
+    return
+  }
+  res.json({
+    task: { taskId: task.id, status: task.status, result: task.result ?? null, createdAt: task.createdAt },
+    scopeType,
+    scopeId,
   })
-  res.status(202).json({ taskId: task.id, status: 'queued' })
 })
 
 // POST /api/v1/agents/risk/analyze — trigger risk analysis with payload
-agentRiskRouter.post('/analyze', async (req: Request, res: Response) => {
+//
+// ADR-014 Phase 3A §31 — audit-actor forgery closed. `created_by` was taken
+// from the request body (`requestedBy`), so any caller authorized to run an
+// analysis could record a DIFFERENT user as the one who requested it. The
+// persisted actor is now the authenticated subject from the verified token,
+// which is the repository standard (cf. exports.ts, agentReadiness POST /assess).
+//
+// `requestedBy` is no longer required: it had no remaining effect, and demanding
+// a field the server ignores would misdescribe the contract. A body that still
+// sends it is accepted and the value is discarded.
+agentRiskRouter.post('/analyze', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { scopeType, scopeId, requestedBy } = req.body
-    if (!requestedBy) {
-      return res.status(400).json({ error: 'requestedBy required' })
-    }
+    const { scopeType, scopeId } = req.body
 
     const task = await enqueueTask({
       tenantId: r.tenantId!,
@@ -41,7 +61,7 @@ agentRiskRouter.post('/analyze', async (req: Request, res: Response) => {
       taskType: 'analyze_risk',
       priority: 3,
       payload: { scopeType: scopeType ?? 'global', scopeId: scopeId ?? '' },
-      createdBy: requestedBy,
+      createdBy: r.auth?.sub ?? 'system',
     })
     res.status(202).json({ taskId: task.id, status: 'queued' })
   } catch (err: unknown) {
@@ -50,13 +70,11 @@ agentRiskRouter.post('/analyze', async (req: Request, res: Response) => {
 })
 
 // POST /api/v1/agents/risk/mitigate — recommend mitigations
-agentRiskRouter.post('/mitigate', async (req: Request, res: Response) => {
+// Same ADR-014 Phase 3A §31 correction as POST /analyze above.
+agentRiskRouter.post('/mitigate', requireCapability('crossdomain.write') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { scopeType, scopeId, requestedBy } = req.body
-    if (!requestedBy) {
-      return res.status(400).json({ error: 'requestedBy required' })
-    }
+    const { scopeType, scopeId } = req.body
 
     const task = await enqueueTask({
       tenantId: r.tenantId!,
@@ -64,7 +82,7 @@ agentRiskRouter.post('/mitigate', async (req: Request, res: Response) => {
       taskType: 'recommend_mitigation',
       priority: 3,
       payload: { scopeType: scopeType ?? 'global', scopeId: scopeId ?? '' },
-      createdBy: requestedBy,
+      createdBy: r.auth?.sub ?? 'system',
     })
     res.status(202).json({ taskId: task.id, status: 'queued' })
   } catch (err: unknown) {

@@ -18,6 +18,7 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
 import {
   createProposal, listProposals, getProposal, updateProposal,
   submitProposal, markWon, markLost, markNoBid, getPipelineSummary,
@@ -41,7 +42,7 @@ proposalsRouter.use(requireTenant() as never)
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
-proposalsRouter.get('/proposals/summary', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals/summary', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getPipelineSummary(r.tenantId!)
@@ -51,7 +52,7 @@ proposalsRouter.get('/proposals/summary', async (req: Request, res: Response) =>
 
 // ─── Collection ───────────────────────────────────────────────────────────────
 
-proposalsRouter.post('/proposals', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { title, clientName } = req.body as Record<string, unknown>
   if (!title || !clientName) { res.status(400).json({ error: 'title and clientName are required' }); return }
@@ -61,7 +62,7 @@ proposalsRouter.post('/proposals', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to create proposal' }) }
 })
 
-proposalsRouter.get('/proposals', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposals = await listProposals(r.tenantId!, {
@@ -74,7 +75,7 @@ proposalsRouter.get('/proposals', async (req: Request, res: Response) => {
 
 // ─── Single proposal ──────────────────────────────────────────────────────────
 
-proposalsRouter.get('/proposals/:id', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals/:id', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await getProposal(r.tenantId!, p(req, 'id'))
@@ -83,7 +84,7 @@ proposalsRouter.get('/proposals/:id', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to get proposal' }) }
 })
 
-proposalsRouter.patch('/proposals/:id', async (req: Request, res: Response) => {
+proposalsRouter.patch('/proposals/:id', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await updateProposal(r.tenantId!, p(req, 'id'), req.body)
@@ -94,7 +95,7 @@ proposalsRouter.patch('/proposals/:id', async (req: Request, res: Response) => {
 
 // ─── Status transitions ───────────────────────────────────────────────────────
 
-proposalsRouter.post('/proposals/:id/submit', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/submit', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await submitProposal(r.tenantId!, p(req, 'id'))
@@ -103,7 +104,7 @@ proposalsRouter.post('/proposals/:id/submit', async (req: Request, res: Response
   } catch (e) { res.status(500).json({ error: 'Failed to submit proposal' }) }
 })
 
-proposalsRouter.post('/proposals/:id/won', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/won', requireCapability('crm.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await markWon(r.tenantId!, p(req, 'id'))
@@ -112,7 +113,7 @@ proposalsRouter.post('/proposals/:id/won', async (req: Request, res: Response) =
   } catch (e) { res.status(500).json({ error: 'Failed to mark proposal won' }) }
 })
 
-proposalsRouter.post('/proposals/:id/lost', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/lost', requireCapability('crm.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await markLost(r.tenantId!, p(req, 'id'))
@@ -121,7 +122,7 @@ proposalsRouter.post('/proposals/:id/lost', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to mark proposal lost' }) }
 })
 
-proposalsRouter.post('/proposals/:id/no-bid', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/no-bid', requireCapability('crm.approve') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const proposal = await markNoBid(r.tenantId!, p(req, 'id'))
@@ -132,7 +133,7 @@ proposalsRouter.post('/proposals/:id/no-bid', async (req: Request, res: Response
 
 // ─── Items ────────────────────────────────────────────────────────────────────
 
-proposalsRouter.get('/proposals/:id/items', async (req: Request, res: Response) => {
+proposalsRouter.get('/proposals/:id/items', requireCapability('crm.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const items = await listProposalItems(r.tenantId!, p(req, 'id'))
@@ -140,7 +141,7 @@ proposalsRouter.get('/proposals/:id/items', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to list proposal items' }) }
 })
 
-proposalsRouter.post('/proposals/:id/items', async (req: Request, res: Response) => {
+proposalsRouter.post('/proposals/:id/items', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { description, unitCost } = req.body as Record<string, unknown>
   if (!description || unitCost === undefined) { res.status(400).json({ error: 'description and unitCost are required' }); return }
@@ -150,19 +151,20 @@ proposalsRouter.post('/proposals/:id/items', async (req: Request, res: Response)
   } catch (e) { res.status(500).json({ error: 'Failed to add proposal item' }) }
 })
 
-proposalsRouter.patch('/proposals/:id/items/:itemId', async (req: Request, res: Response) => {
+proposalsRouter.patch('/proposals/:id/items/:itemId', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const item = await updateProposalItem(r.tenantId!, p(req, 'itemId'), req.body)
+    const item = await updateProposalItem(r.tenantId!, p(req, 'itemId'), req.body, p(req, 'id'))
     if (!item) { res.status(404).json({ error: 'Item not found' }); return }
     res.json({ item })
   } catch (e) { res.status(500).json({ error: 'Failed to update proposal item' }) }
 })
 
-proposalsRouter.delete('/proposals/:id/items/:itemId', async (req: Request, res: Response) => {
+proposalsRouter.delete('/proposals/:id/items/:itemId', requireCapability('crm.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    await deleteProposalItem(r.tenantId!, p(req, 'itemId'))
+    const removed = await deleteProposalItem(r.tenantId!, p(req, 'itemId'), p(req, 'id'))
+    if (!removed) { res.status(404).json({ error: 'Item not found' }); return }
     res.status(204).end()
   } catch (e) { res.status(500).json({ error: 'Failed to delete proposal item' }) }
 })

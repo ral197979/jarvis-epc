@@ -43,7 +43,68 @@ export interface PresignUploadResult {
 export interface PresignDownloadResult {
   downloadUrl: string
   expiresAt:   Date
+  /**
+   * Whether the backend that minted this URL can still refuse it at redemption
+   * time. True for the local backend, whose URL comes back through this API and
+   * is re-authorized on every call. False for S3, whose presigned URL is
+   * honoured by S3 itself — nothing in this process sees the request, so the
+   * binding below cannot be enforced there. See ADR-014 Phase 3K.
+   */
+  enforceable: boolean
 }
+
+/**
+ * Who a download token is for, and what it addresses (ADR-014 Phase 3K).
+ *
+ * A download token used to record only the storage key. That made it a pure
+ * bearer credential: anything holding it got the bytes, for the token's whole
+ * lifetime, whatever had happened to the holder's access in the meantime.
+ *
+ * Recording the principal and the record turns the token back into a POINTER.
+ * It names what to re-authorize; it does not itself carry authority. The
+ * redemption path re-derives the answer from the database on every call, so
+ * revoking membership, demoting a role or deactivating the account takes effect
+ * on the next request rather than an hour later.
+ *
+ * Required, not optional, on purpose: a mint site that cannot say who the token
+ * is for is a mint site that would produce an unbound one.
+ */
+export interface DownloadBinding {
+  /** The tenant the token was minted in. A token never crosses tenants. */
+  tenantId:  string
+  /** The user the token was minted for. A token is not transferable. */
+  subjectId: string
+  /** The `recordScopePolicies` resource whose scope ladder governs the file. */
+  resource:  string
+  /** The row id to re-authorize — NOT the storage key, which carries no scope. */
+  recordId:  string
+}
+
+/** The on-disk shape of a local-backend download-token sidecar. */
+export interface LocalDownloadTokenMeta extends DownloadBinding {
+  key:       string
+  token:     string
+  expiresAt: string
+}
+
+/**
+ * The exact shape of a minted token, and the only thing the redemption paths
+ * will put into a filesystem path (ADR-014 Phase 3K).
+ *
+ * Both token routes build a sidecar path out of `req.params.token`. Express
+ * percent-DECODES path parameters, so a request for
+ * `/files/download/..%2F..%2Fsomething` arrives as the single parameter
+ * `../../something` — one path segment as far as routing is concerned, and a
+ * traversal as far as `path.join` is concerned. The sidecar's contents are then
+ * parsed as JSON and its `key` used to open a file, so a readable JSON file
+ * anywhere on the host was the head of a file-read chain.
+ *
+ * The fix is not to sanitise the value but to REJECT anything that is not a
+ * token: 24 (download) or 32 (upload) random bytes as lowercase hex, and
+ * nothing else. Validated before the value touches `path.join`.
+ */
+export const DOWNLOAD_TOKEN_PATTERN = /^[0-9a-f]{48}$/
+export const UPLOAD_TOKEN_PATTERN   = /^[0-9a-f]{64}$/
 
 export interface ObjectMetadata {
   key:          string
@@ -63,12 +124,20 @@ export interface PresignUploadOptions {
 
 export interface IStorage {
   presignUpload(key: string, opts?: PresignUploadOptions): Promise<PresignUploadResult>
-  presignDownload(key: string, ttlSeconds?: number): Promise<PresignDownloadResult>
+  presignDownload(key: string, binding: DownloadBinding, ttlSeconds?: number): Promise<PresignDownloadResult>
   deleteObject(key: string): Promise<void>
   copyObject(srcKey: string, dstKey: string): Promise<void>
   objectExists(key: string): Promise<boolean>
   getMetadata(key: string): Promise<ObjectMetadata | null>
   streamToKey(key: string, stream: NodeJS.ReadableStream, mimeType?: string): Promise<{ sizeBytes: number; etag: string }>
+  /**
+   * Open a stored object for reading, or `null` when it is not there.
+   *
+   * Added for the in-app viewer (`GET /files/documents/:id/content`), which
+   * must serve bytes through the API rather than hand out a URL: the viewer
+   * renders INLINE, so the response has to stay under this process's control.
+   */
+  readStream(key: string): Promise<NodeJS.ReadableStream | null>
 }
 
 // ─── Local filesystem backend ─────────────────────────────────────────────────
@@ -117,11 +186,24 @@ class LocalStorage implements IStorage {
     }
   }
 
-  async presignDownload(key: string, ttlSeconds = 3600): Promise<PresignDownloadResult> {
+  /**
+   * ADR-014 Phase 3K. The sidecar records the BINDING alongside the key, so
+   * `GET /files/download/:token` can re-derive authority instead of trusting
+   * the bearer. Expiry is now a backstop on a re-authorized credential rather
+   * than the only thing standing between a revoked user and the bytes.
+   */
+  async presignDownload(key: string, binding: DownloadBinding, ttlSeconds = 3600): Promise<PresignDownloadResult> {
     const token = crypto.randomBytes(24).toString('hex')
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 
-    const meta = { key, token, expiresAt: expiresAt.toISOString() }
+    const meta: LocalDownloadTokenMeta = {
+      key, token,
+      expiresAt: expiresAt.toISOString(),
+      tenantId:  binding.tenantId,
+      subjectId: binding.subjectId,
+      resource:  binding.resource,
+      recordId:  binding.recordId,
+    }
     const metaPath = path.join(LOCAL_DIR, '.tokens', `dl_${token}.json`)
     fs.mkdirSync(path.dirname(metaPath), { recursive: true })
     fs.writeFileSync(metaPath, JSON.stringify(meta))
@@ -129,6 +211,7 @@ class LocalStorage implements IStorage {
     return {
       downloadUrl: `${PUBLIC_URL}/api/v1/files/download/${token}`,
       expiresAt,
+      enforceable: true,
     }
   }
 
@@ -180,6 +263,12 @@ class LocalStorage implements IStorage {
       out.on('error', reject)
       stream.on('error', reject)
     })
+  }
+
+  async readStream(key: string): Promise<NodeJS.ReadableStream | null> {
+    const fp = this._fullPath(key)
+    if (!fs.existsSync(fp)) return null
+    return fs.createReadStream(fp)
   }
 }
 
@@ -234,14 +323,22 @@ class S3Storage implements IStorage {
     return { uploadUrl, key, expiresAt, requiredHeaders: { 'x-amz-server-side-encryption': SSE_ALGORITHM } }
   }
 
-  async presignDownload(key: string, ttlSeconds = 3600): Promise<PresignDownloadResult> {
+  /**
+   * The binding is accepted and deliberately NOT stored: an S3 presigned URL is
+   * validated by S3, so this process never sees the redemption and cannot
+   * re-authorize it. `enforceable: false` says so rather than implying a
+   * guarantee the backend does not give. Closing that window needs a streaming
+   * proxy or short-lived STS credentials — an infrastructure decision, recorded
+   * as a residual risk in the ADR-014 Phase 3K evidence, not papered over here.
+   */
+  async presignDownload(key: string, _binding: DownloadBinding, ttlSeconds = 3600): Promise<PresignDownloadResult> {
      
     const { GetObjectCommand } = require('@aws-sdk/client-s3')
      
     const { getSignedUrl }     = require('@aws-sdk/s3-request-presigner')
     const cmd = new GetObjectCommand({ Bucket: this._bucket, Key: key })
     const downloadUrl = await getSignedUrl(this._client, cmd, { expiresIn: ttlSeconds })
-    return { downloadUrl, expiresAt: new Date(Date.now() + ttlSeconds * 1000) }
+    return { downloadUrl, expiresAt: new Date(Date.now() + ttlSeconds * 1000), enforceable: false }
   }
 
   async deleteObject(key: string): Promise<void> {
@@ -301,6 +398,15 @@ class S3Storage implements IStorage {
     const result = await upload.done()
     const meta   = await this.getMetadata(key)
     return { sizeBytes: meta?.sizeBytes ?? 0, etag: result.ETag ?? '' }
+  }
+
+  async readStream(key: string): Promise<NodeJS.ReadableStream | null> {
+
+    const { GetObjectCommand } = require('@aws-sdk/client-s3')
+    try {
+      const res = await this._client.send(new GetObjectCommand({ Bucket: this._bucket, Key: key }))
+      return (res.Body as NodeJS.ReadableStream | undefined) ?? null
+    } catch { return null }
   }
 }
 

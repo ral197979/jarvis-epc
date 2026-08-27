@@ -17,6 +17,9 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -26,7 +29,7 @@ router.use(requireTenant() as any)
 
 const JSONB_FIELDS = new Set(['manpower','equipment','visitors','deliveries','incidents','photos'])
 
-router.get('/projects/:projectId/daily-logs', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/daily-logs', requireCapability('construction.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, from, to, limit = '60', offset = '0' } = req.query
@@ -57,7 +60,7 @@ router.get('/projects/:projectId/daily-logs', async (req: Request, res: Response
   }
 })
 
-router.post('/projects/:projectId/daily-logs', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/daily-logs', requireCapability('construction.write') as never, requireProjectScope() as never, guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const projectId = req.params.projectId as string
   const b = req.body ?? {}
@@ -97,7 +100,7 @@ router.post('/projects/:projectId/daily-logs', async (req: Request, res: Respons
   }
 })
 
-router.get('/daily-logs/:id', async (req: Request, res: Response) => {
+router.get('/daily-logs/:id', requireCapability('construction.view') as never, requireRecordScope('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -111,7 +114,7 @@ router.get('/daily-logs/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/daily-logs/:id', async (req: Request, res: Response) => {
+router.patch('/daily-logs/:id', requireCapability('construction.write') as never, requireRecordScope('daily_logs') as never, guardTransitionOwnedState('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['log_date','weather','temp_f','wind_mph','humidity_pct',
     'manpower','equipment','visitors','deliveries',
@@ -137,7 +140,7 @@ router.patch('/daily-logs/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/daily-logs/:id', async (req: Request, res: Response) => {
+router.delete('/daily-logs/:id', requireCapability('construction.write') as never, requireRecordScope('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,
@@ -149,7 +152,7 @@ router.delete('/daily-logs/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/daily-logs/:id/submit', async (req: Request, res: Response) => {
+router.post('/daily-logs/:id/submit', requireCapability('construction.write') as never, requireRecordScope('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -163,7 +166,7 @@ router.post('/daily-logs/:id/submit', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/daily-logs/:id/approve', async (req: Request, res: Response) => {
+router.post('/daily-logs/:id/approve', requireCapability('construction.approve') as never, requireRecordScope('daily_logs') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,

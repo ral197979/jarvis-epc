@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Denver Engineering — Ecosystem Platform Routes (v9.0.0)
 // 44 endpoints across federated intelligence, benchmarking, playbook marketplace,
 // plugin framework, external agents, automation adapters, knowledge graph,
@@ -30,6 +29,7 @@ import { activateLicense, getActiveLicense, getAirGapStatus } from '../services/
 import { generateCertificationEvidence, listCertificationExports } from '../services/ecosystem/certificationEvidenceService'
 
 import { createWorkflow, listWorkflows, validateWorkflowPolicy, dryRunWorkflow, publishWorkflow, rollbackWorkflow, getWorkflowVersions } from '../services/ecosystem/workflowComposerService'
+import { requireAllCapabilities, requireCapability } from '../authz/requireCapability'
 
 const router = Router()
 
@@ -41,7 +41,7 @@ const tid = (req: Request): string => (req as unknown as Req).tenantId
 // ─── Federated Intelligence ───────────────────────────────────────────────────
 
 // POST /api/v1/ecosystem/federated/opt-in
-router.post('/federated/opt-in', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/opt-in', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await setFederatedOptIn(tid(req), true)
     res.json({ optIn: true })
@@ -49,7 +49,7 @@ router.post('/federated/opt-in', async (req: Request, res: Response, next: NextF
 })
 
 // POST /api/v1/ecosystem/federated/opt-out
-router.post('/federated/opt-out', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/opt-out', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await setFederatedOptIn(tid(req), false)
     res.json({ optIn: false })
@@ -57,7 +57,7 @@ router.post('/federated/opt-out', async (req: Request, res: Response, next: Next
 })
 
 // GET /api/v1/ecosystem/federated/opt-in
-router.get('/federated/opt-in', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/federated/opt-in', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const optedIn = await isOptedIn(tid(req))
     res.json({ optedIn })
@@ -65,7 +65,7 @@ router.get('/federated/opt-in', async (req: Request, res: Response, next: NextFu
 })
 
 // POST /api/v1/ecosystem/federated/contribute
-router.post('/federated/contribute', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/contribute', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const contribution = await contributeData(tid(req), req.body)
     res.status(201).json(contribution)
@@ -73,7 +73,7 @@ router.post('/federated/contribute', async (req: Request, res: Response, next: N
 })
 
 // POST /api/v1/ecosystem/federated/withdraw/:id
-router.post('/federated/withdraw/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/withdraw/:id', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await withdrawContribution(tid(req), req.params['id'] as string)
     res.json({ withdrawn: true })
@@ -81,7 +81,7 @@ router.post('/federated/withdraw/:id', async (req: Request, res: Response, next:
 })
 
 // GET /api/v1/ecosystem/federated/patterns
-router.get('/federated/patterns', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/federated/patterns', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const patterns = await listActivePatterns(req.query['type'] as string | undefined)
     res.json(patterns)
@@ -93,7 +93,7 @@ router.get('/federated/patterns', async (req: Request, res: Response, next: Next
 // any authenticated tenant user could publish a federated pattern. The
 // contributorCount trust issue is fixed separately in publishPattern()
 // itself (federatedIntelligenceEngine.ts); this closes the missing-authz half.
-router.post('/federated/patterns', requireRole('owner', 'admin') as never, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/patterns', requireCapability('ai.govern') as never, requireRole('owner', 'admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const pattern = await publishPattern(req.body)
     res.status(201).json(pattern)
@@ -101,7 +101,7 @@ router.post('/federated/patterns', requireRole('owner', 'admin') as never, async
 })
 
 // POST /api/v1/ecosystem/federated/model-versions (admin)
-router.post('/federated/model-versions', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/model-versions', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const mv = await createModelVersion(req.body)
     res.status(201).json(mv)
@@ -109,7 +109,7 @@ router.post('/federated/model-versions', async (req: Request, res: Response, nex
 })
 
 // POST /api/v1/ecosystem/federated/model-versions/:id/activate (admin)
-router.post('/federated/model-versions/:id/activate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/federated/model-versions/:id/activate', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const mv = await activateModelVersion(req.params['id'] as string)
     res.json(mv)
@@ -119,7 +119,7 @@ router.post('/federated/model-versions/:id/activate', async (req: Request, res: 
 // ─── Benchmarking ─────────────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/benchmarks/industry
-router.get('/benchmarks/industry', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/benchmarks/industry', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const cohorts = await getIndustryBenchmarks(
       req.query['industry'] as string | undefined,
@@ -130,7 +130,7 @@ router.get('/benchmarks/industry', async (req: Request, res: Response, next: Nex
 })
 
 // GET /api/v1/ecosystem/benchmarks/tenant
-router.get('/benchmarks/tenant', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/benchmarks/tenant', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { metric, value } = req.query
     const result = await getTenantBenchmark(
@@ -143,14 +143,14 @@ router.get('/benchmarks/tenant', async (req: Request, res: Response, next: NextF
 })
 
 // GET /api/v1/ecosystem/benchmarks/readiness
-router.get('/benchmarks/readiness', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/benchmarks/readiness', requireCapability('platform.admin') as never, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     res.json(await getReadinessBenchmarks())
   } catch (err) { next(err) }
 })
 
 // GET /api/v1/ecosystem/benchmarks/sla
-router.get('/benchmarks/sla', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/benchmarks/sla', requireCapability('platform.admin') as never, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     res.json(await getSlaBenchmarks())
   } catch (err) { next(err) }
@@ -159,7 +159,7 @@ router.get('/benchmarks/sla', async (_req: Request, res: Response, next: NextFun
 // ─── Playbook Marketplace ─────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/marketplace/playbooks
-router.get('/marketplace/playbooks', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/marketplace/playbooks', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const playbooks = await listPlaybooks({
       status: req.query['status'] as import('../services/ecosystem/ecosystemTypes').PlaybookStatus | undefined,
@@ -170,7 +170,7 @@ router.get('/marketplace/playbooks', async (req: Request, res: Response, next: N
 })
 
 // POST /api/v1/ecosystem/marketplace/playbooks
-router.post('/marketplace/playbooks', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/marketplace/playbooks', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const playbook = await createPlaybook(req.body)
     res.status(201).json(playbook)
@@ -178,7 +178,7 @@ router.post('/marketplace/playbooks', async (req: Request, res: Response, next: 
 })
 
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/publish
-router.post('/marketplace/playbooks/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/marketplace/playbooks/:id/publish', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const playbook = await publishPlaybook(req.params['id'] as string, req.body.sandboxValidated === true)
     res.json(playbook)
@@ -186,7 +186,7 @@ router.post('/marketplace/playbooks/:id/publish', async (req: Request, res: Resp
 })
 
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/install
-router.post('/marketplace/playbooks/:id/install', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/marketplace/playbooks/:id/install', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const install = await installPlaybook(tid(req), req.params['id'] as string, req.body)
     res.status(201).json(install)
@@ -194,7 +194,7 @@ router.post('/marketplace/playbooks/:id/install', async (req: Request, res: Resp
 })
 
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/uninstall
-router.post('/marketplace/playbooks/:id/uninstall', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/marketplace/playbooks/:id/uninstall', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await uninstallPlaybook(tid(req), req.params['id'] as string)
     res.json({ uninstalled: true })
@@ -202,7 +202,7 @@ router.post('/marketplace/playbooks/:id/uninstall', async (req: Request, res: Re
 })
 
 // POST /api/v1/ecosystem/marketplace/playbooks/:id/review
-router.post('/marketplace/playbooks/:id/review', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/marketplace/playbooks/:id/review', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await submitPlaybookReview(tid(req), req.params['id'] as string, req.body.rating, req.body.reviewText)
     res.json({ submitted: true })
@@ -212,7 +212,7 @@ router.post('/marketplace/playbooks/:id/review', async (req: Request, res: Respo
 // ─── Plugin Framework ─────────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/plugins
-router.get('/plugins', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/plugins', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const plugins = await listPlugins({ status: req.query['status'] as import('../services/ecosystem/ecosystemTypes').PluginStatus | undefined })
     res.json(plugins)
@@ -220,7 +220,7 @@ router.get('/plugins', async (req: Request, res: Response, next: NextFunction) =
 })
 
 // POST /api/v1/ecosystem/plugins
-router.post('/plugins', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/plugins', requireCapability('platform.integrations') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const plugin = await registerPlugin(req.body)
     res.status(201).json(plugin)
@@ -228,7 +228,7 @@ router.post('/plugins', async (req: Request, res: Response, next: NextFunction) 
 })
 
 // POST /api/v1/ecosystem/plugins/:id/install
-router.post('/plugins/:id/install', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/plugins/:id/install', requireCapability('platform.integrations') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const install = await installPlugin(tid(req), req.params['id'] as string, req.body)
     res.status(201).json(install)
@@ -236,7 +236,7 @@ router.post('/plugins/:id/install', async (req: Request, res: Response, next: Ne
 })
 
 // POST /api/v1/ecosystem/plugins/:id/rollback
-router.post('/plugins/:id/rollback', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/plugins/:id/rollback', requireCapability('platform.integrations') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const install = await rollbackPlugin(tid(req), req.params['id'] as string)
     res.json(install)
@@ -244,7 +244,7 @@ router.post('/plugins/:id/rollback', async (req: Request, res: Response, next: N
 })
 
 // POST /api/v1/ecosystem/plugins/:id/disable
-router.post('/plugins/:id/disable', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/plugins/:id/disable', requireCapability('platform.integrations') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await disablePlugin(tid(req), req.params['id'] as string)
     res.json({ disabled: true })
@@ -252,7 +252,7 @@ router.post('/plugins/:id/disable', async (req: Request, res: Response, next: Ne
 })
 
 // POST /api/v1/ecosystem/plugins/:id/kill-switch (admin)
-router.post('/plugins/:id/kill-switch', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/plugins/:id/kill-switch', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await triggerKillSwitch(req.params['id'] as string, req.body.actor ?? 'admin')
     res.json({ killSwitchTriggered: true })
@@ -262,7 +262,7 @@ router.post('/plugins/:id/kill-switch', async (req: Request, res: Response, next
 // ─── External Agents ──────────────────────────────────────────────────────────
 
 // POST /api/v1/ecosystem/external-agents/register
-router.post('/external-agents/register', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/external-agents/register', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await registerExternalAgent(req.body)
     res.status(201).json(result)
@@ -270,7 +270,7 @@ router.post('/external-agents/register', async (req: Request, res: Response, nex
 })
 
 // POST /api/v1/ecosystem/external-agents/:id/execute
-router.post('/external-agents/:id/execute', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/external-agents/:id/execute', requireCapability('ai.govern') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await executeExternalAgent(req.params['id'] as string, {
       tenantId: tid(req),
@@ -281,7 +281,7 @@ router.post('/external-agents/:id/execute', async (req: Request, res: Response, 
 })
 
 // GET /api/v1/ecosystem/external-agents/:id/capabilities
-router.get('/external-agents/:id/capabilities', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/external-agents/:id/capabilities', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const capabilities = await getAgentCapabilities(req.params['id'] as string)
     res.json({ capabilities })
@@ -291,14 +291,14 @@ router.get('/external-agents/:id/capabilities', async (req: Request, res: Respon
 // ─── Automation Adapters ──────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/adapters
-router.get('/adapters', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/adapters', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     res.json(await listAdapters(tid(req)))
   } catch (err) { next(err) }
 })
 
 // POST /api/v1/ecosystem/adapters
-router.post('/adapters', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/adapters', requireCapability('platform.integrations') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await createAdapter(tid(req), req.body)
     res.status(201).json(result)
@@ -306,7 +306,7 @@ router.post('/adapters', async (req: Request, res: Response, next: NextFunction)
 })
 
 // POST /api/v1/ecosystem/adapters/:id/ingest
-router.post('/adapters/:id/ingest', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/adapters/:id/ingest', requireCapability('platform.integrations') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const event = await ingestInboundEvent(tid(req), req.params['id'] as string, req.body)
     res.status(201).json(event)
@@ -316,7 +316,7 @@ router.post('/adapters/:id/ingest', async (req: Request, res: Response, next: Ne
 // ─── Knowledge Graph ──────────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/knowledge-graph/entities/:id
-router.get('/knowledge-graph/entities/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/knowledge-graph/entities/:id', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const entity = await getEntity(tid(req), req.params['id'] as string)
     if (entity == null) return res.status(404).json({ error: 'Not found' })
@@ -325,7 +325,7 @@ router.get('/knowledge-graph/entities/:id', async (req: Request, res: Response, 
 })
 
 // POST /api/v1/ecosystem/knowledge-graph/query
-router.post('/knowledge-graph/query', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/knowledge-graph/query', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await queryGraph(tid(req), req.body)
     res.json(result)
@@ -333,7 +333,7 @@ router.post('/knowledge-graph/query', async (req: Request, res: Response, next: 
 })
 
 // GET /api/v1/ecosystem/knowledge-graph/neighborhood/:id
-router.get('/knowledge-graph/neighborhood/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/knowledge-graph/neighborhood/:id', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const depth = Number(req.query['depth'] ?? 1)
     const result = await getNeighborhood(tid(req), req.params['id'] as string, depth)
@@ -344,14 +344,14 @@ router.get('/knowledge-graph/neighborhood/:id', async (req: Request, res: Respon
 // ─── Edge Nodes ───────────────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/edge-nodes
-router.get('/edge-nodes', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/edge-nodes', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     res.json(await listEdgeNodes(tid(req)))
   } catch (err) { next(err) }
 })
 
 // POST /api/v1/ecosystem/edge-nodes
-router.post('/edge-nodes', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/edge-nodes', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const node = await registerEdgeNode(tid(req), req.body)
     res.status(201).json(node)
@@ -359,7 +359,7 @@ router.post('/edge-nodes', async (req: Request, res: Response, next: NextFunctio
 })
 
 // POST /api/v1/ecosystem/edge-nodes/:id/heartbeat
-router.post('/edge-nodes/:id/heartbeat', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/edge-nodes/:id/heartbeat', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await heartbeatNode(tid(req), req.params['id'] as string)
     res.json({ ok: true })
@@ -367,7 +367,7 @@ router.post('/edge-nodes/:id/heartbeat', async (req: Request, res: Response, nex
 })
 
 // POST /api/v1/ecosystem/edge-nodes/:id/revoke
-router.post('/edge-nodes/:id/revoke', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/edge-nodes/:id/revoke', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await revokeEdgeNode(tid(req), req.params['id'] as string)
     res.json({ revoked: true })
@@ -375,7 +375,7 @@ router.post('/edge-nodes/:id/revoke', async (req: Request, res: Response, next: 
 })
 
 // GET /api/v1/ecosystem/edge-nodes/admin/status (admin)
-router.get('/edge-nodes/admin/status', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/edge-nodes/admin/status', requireCapability('platform.admin') as never, async (_req: Request, res: Response, next: NextFunction) => {
   try {
     res.json(await getAllEdgeNodeStatuses())
   } catch (err) { next(err) }
@@ -384,7 +384,7 @@ router.get('/edge-nodes/admin/status', async (_req: Request, res: Response, next
 // ─── Air-Gap Mode ─────────────────────────────────────────────────────────────
 
 // POST /api/v1/ecosystem/air-gap/activate
-router.post('/air-gap/activate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/air-gap/activate', requireCapability('platform.security') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const license = await activateLicense(tid(req), req.body)
     res.json(license)
@@ -392,7 +392,7 @@ router.post('/air-gap/activate', async (req: Request, res: Response, next: NextF
 })
 
 // GET /api/v1/ecosystem/air-gap/status
-router.get('/air-gap/status', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/air-gap/status', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const license = await getActiveLicense(tid(req))
     res.json(getAirGapStatus(license))
@@ -402,7 +402,7 @@ router.get('/air-gap/status', async (req: Request, res: Response, next: NextFunc
 // ─── Certification ────────────────────────────────────────────────────────────
 
 // POST /api/v1/ecosystem/certification/generate
-router.post('/certification/generate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/certification/generate', requireAllCapabilities('platform.export', 'platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await generateCertificationEvidence(tid(req), req.body.certificationType)
     res.json(result)
@@ -410,7 +410,7 @@ router.post('/certification/generate', async (req: Request, res: Response, next:
 })
 
 // GET /api/v1/ecosystem/certification/exports
-router.get('/certification/exports', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/certification/exports', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const exports = await listCertificationExports(
       tid(req),
@@ -423,7 +423,7 @@ router.get('/certification/exports', async (req: Request, res: Response, next: N
 // ─── Workflows ────────────────────────────────────────────────────────────────
 
 // GET /api/v1/ecosystem/workflows
-router.get('/workflows', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/workflows', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const wfs = await listWorkflows(tid(req), req.query['status'] as WorkflowStatus | undefined)
     res.json(wfs)
@@ -431,7 +431,7 @@ router.get('/workflows', async (req: Request, res: Response, next: NextFunction)
 })
 
 // POST /api/v1/ecosystem/workflows
-router.post('/workflows', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/workflows', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const wf = await createWorkflow(tid(req), req.body)
     res.status(201).json(wf)
@@ -439,7 +439,7 @@ router.post('/workflows', async (req: Request, res: Response, next: NextFunction
 })
 
 // POST /api/v1/ecosystem/workflows/:id/validate
-router.post('/workflows/:id/validate', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/workflows/:id/validate', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await validateWorkflowPolicy(tid(req), req.params['id'] as string)
     res.json(result)
@@ -447,7 +447,7 @@ router.post('/workflows/:id/validate', async (req: Request, res: Response, next:
 })
 
 // POST /api/v1/ecosystem/workflows/:id/test
-router.post('/workflows/:id/test', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/workflows/:id/test', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await dryRunWorkflow(tid(req), req.params['id'] as string, req.body.testContext)
     res.json(result)
@@ -455,7 +455,7 @@ router.post('/workflows/:id/test', async (req: Request, res: Response, next: Nex
 })
 
 // POST /api/v1/ecosystem/workflows/:id/publish
-router.post('/workflows/:id/publish', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/workflows/:id/publish', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const wf = await publishWorkflow(tid(req), req.params['id'] as string, req.body.publishedBy ?? 'admin')
     res.json(wf)
@@ -463,7 +463,7 @@ router.post('/workflows/:id/publish', async (req: Request, res: Response, next: 
 })
 
 // POST /api/v1/ecosystem/workflows/:id/rollback
-router.post('/workflows/:id/rollback', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/workflows/:id/rollback', requireCapability('platform.automation') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const wf = await rollbackWorkflow(tid(req), req.params['id'] as string, Number(req.body.targetVersion))
     res.json(wf)
@@ -471,7 +471,7 @@ router.post('/workflows/:id/rollback', async (req: Request, res: Response, next:
 })
 
 // GET /api/v1/ecosystem/workflows/:id/versions
-router.get('/workflows/:id/versions', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/workflows/:id/versions', requireCapability('platform.admin') as never, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const versions = await getWorkflowVersions(tid(req), req.params['id'] as string)
     res.json(versions)

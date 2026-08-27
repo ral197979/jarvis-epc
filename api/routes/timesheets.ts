@@ -12,6 +12,9 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 import {
   upsertTimesheet, listTimesheets, submitTimesheet,
   approveTimesheet, rejectTimesheet, getWeeklySummary,
@@ -32,7 +35,7 @@ export const timesheetsRouter = Router()
 timesheetsRouter.use(requireAuth     as never)
 timesheetsRouter.use(requireTenant() as never)
 
-timesheetsRouter.put('/projects/:projectId/timesheets', async (req: Request, res: Response) => {
+timesheetsRouter.put('/projects/:projectId/timesheets', requireCapability('team.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { memberId, weekStart } = req.body as Record<string, unknown>
   if (!memberId || !weekStart) { res.status(400).json({ error: 'memberId and weekStart required' }); return }
@@ -42,7 +45,7 @@ timesheetsRouter.put('/projects/:projectId/timesheets', async (req: Request, res
   } catch (e) { res.status(500).json({ error: 'Failed to save timesheet' }) }
 })
 
-timesheetsRouter.get('/projects/:projectId/timesheets', async (req: Request, res: Response) => {
+timesheetsRouter.get('/projects/:projectId/timesheets', requireCapability('team.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const timesheets = await listTimesheets(r.tenantId!, {
@@ -54,7 +57,7 @@ timesheetsRouter.get('/projects/:projectId/timesheets', async (req: Request, res
   } catch (e) { res.status(500).json({ error: 'Failed to list timesheets' }) }
 })
 
-timesheetsRouter.get('/projects/:projectId/timesheets/summary', async (req: Request, res: Response) => {
+timesheetsRouter.get('/projects/:projectId/timesheets/summary', requireCapability('team.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const weeks = await getWeeklySummary(r.tenantId!, p(req, 'projectId'))
@@ -62,15 +65,24 @@ timesheetsRouter.get('/projects/:projectId/timesheets/summary', async (req: Requ
   } catch (e) { res.status(500).json({ error: 'Failed to get summary' }) }
 })
 
-timesheetsRouter.get('/team/members/:memberId/timesheets', async (req: Request, res: Response) => {
+timesheetsRouter.get('/team/members/:memberId/timesheets', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const timesheets = await listTimesheets(r.tenantId!, { memberId: p(req, 'memberId') })
+    // ADR-014 Phase 3G §6. The path id addresses a team member, which has no
+    // project parent; the TIMESHEETS beneath it do. `timesheets.project_id` is
+    // NOT NULL, so the resource is PROJECT_REQUIRED and hours from projects the
+    // caller cannot reach never enter the response — nor any total over them (§7).
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const timesheets = await listTimesheets(r.tenantId!, { memberId: p(req, 'memberId') }, {
+      sql:    collectionScopeSql(principal, 'timesheets', 't.project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'timesheets'),
+    })
     res.json({ timesheets })
   } catch (e) { res.status(500).json({ error: 'Failed to list timesheets' }) }
 })
 
-timesheetsRouter.post('/timesheets/:id/submit', async (req: Request, res: Response) => {
+timesheetsRouter.post('/timesheets/:id/submit', requireCapability('team.write') as never, requireRecordScope('timesheets') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ts = await submitTimesheet(r.tenantId!, p(req, 'id'))
@@ -79,7 +91,7 @@ timesheetsRouter.post('/timesheets/:id/submit', async (req: Request, res: Respon
   } catch (e) { res.status(500).json({ error: 'Failed to submit' }) }
 })
 
-timesheetsRouter.post('/timesheets/:id/approve', async (req: Request, res: Response) => {
+timesheetsRouter.post('/timesheets/:id/approve', requireCapability('team.approve') as never, requireRecordScope('timesheets') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ts = await approveTimesheet(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown')
@@ -88,7 +100,7 @@ timesheetsRouter.post('/timesheets/:id/approve', async (req: Request, res: Respo
   } catch (e) { res.status(500).json({ error: 'Failed to approve' }) }
 })
 
-timesheetsRouter.post('/timesheets/:id/reject', async (req: Request, res: Response) => {
+timesheetsRouter.post('/timesheets/:id/reject', requireCapability('team.approve') as never, requireRecordScope('timesheets') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ts = await rejectTimesheet(r.tenantId!, p(req, 'id'))

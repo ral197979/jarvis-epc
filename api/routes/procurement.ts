@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Procurement Routes
  * ──────────────────────────────────
@@ -16,6 +15,10 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { resolveCurrentUser } from '../authz/currentUser'
+import { projectScopeSql, requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { requireCapability } from '../authz/requireCapability'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type Req = AuthenticatedRequest & TenantRequest
@@ -37,7 +40,7 @@ function _authMiddleware() { return [requireAuth as never, requireTenant() as ne
 export const vendorsRouter = Router()
 vendorsRouter.use(..._authMiddleware())
 
-vendorsRouter.get('/', async (req: Req, res: Response) => {
+vendorsRouter.get('/', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -71,7 +74,7 @@ vendorsRouter.get('/', async (req: Req, res: Response) => {
   res.json({ data: data.rows, meta: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-vendorsRouter.get('/:id', async (req: Req, res: Response) => {
+vendorsRouter.get('/:id', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -89,7 +92,7 @@ vendorsRouter.get('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-vendorsRouter.post('/', async (req: Req, res: Response) => {
+vendorsRouter.post('/', requireCapability('procurement.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -103,7 +106,7 @@ vendorsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-vendorsRouter.patch('/:id', async (req: Req, res: Response) => {
+vendorsRouter.patch('/:id', requireCapability('procurement.write') as never, guardTransitionOwnedState('vendors') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -117,18 +120,36 @@ vendorsRouter.patch('/:id', async (req: Req, res: Response) => {
   }
   if (!sets.length) { res.status(422).json({ error: 'validation', message: 'No valid fields' }); return }
 
-  // Auto-set approved fields when status changes to 'approved'
-  if (req.body['status'] === 'approved') {
-    sets.push(`approved_by = $${i++}`, `approved_at = NOW()`)
-    vals.push(req.auth?.sub ?? null)
-  }
-
   vals.push(req.params['id'])
   const result = await tenantQuery(tenantId, `
     UPDATE vendors SET ${sets.join(',')}
     WHERE id = $${i} AND tenant_id = current_setting('app.current_tenant_id',true)::uuid RETURNING *
   `, vals)
   if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  res.json({ data: result.rows[0] })
+})
+
+/**
+ * Canonical vendor approval (ADR-014 Phase 2A-2).
+ *
+ * The generic PATCH used to stamp approved_by/approved_at whenever the body said
+ * `status: 'approved'` — an approval, recorded as one, with no approval
+ * authority required. Qualifying a vendor decides who the business may buy from,
+ * so it belongs on its own route behind procurement.approve.
+ */
+vendorsRouter.post('/:id/approve', requireCapability('procurement.approve') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE vendors SET status = 'approved', approved_by = $1, approved_at = NOW()
+    WHERE id = $2 AND status <> 'approved'
+      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    RETURNING *
+  `, [req.auth?.sub ?? null, req.params['id']])
+
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found', message: 'Vendor not found or already approved.' }); return }
+  slog('INFO', 'procurement', '[vendor] Approved', { tenantId, vendorId: req.params['id'], by: req.auth?.sub })
   res.json({ data: result.rows[0] })
 })
 
@@ -139,7 +160,7 @@ vendorsRouter.patch('/:id', async (req: Req, res: Response) => {
 export const purchaseOrdersRouter = Router()
 purchaseOrdersRouter.use(..._authMiddleware())
 
-purchaseOrdersRouter.get('/', async (req: Req, res: Response) => {
+purchaseOrdersRouter.get('/', requireCapability('procurement.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -154,6 +175,17 @@ purchaseOrdersRouter.get('/', async (req: Req, res: Response) => {
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `purchase_orders.project_id` is NOT NULL, so the resource
+  // is PROJECT_REQUIRED and every row needs live membership of its project. The
+  // predicate is ANDed outside the caller's filters, so `?project_id=` narrows
+  // the authorized set and cannot widen it (§30), and it is applied before
+  // LIMIT so the page and the total describe the same set (§14, §15).
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = collectionScopeSql(principal, 'purchase_orders', 'po.project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'purchase_orders')
+  const j = i + scopeVals.length
+
   const [data, count] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT po.*, v.name AS vendor_name, p.code AS project_code, p.name AS project_name,
@@ -163,19 +195,21 @@ purchaseOrdersRouter.get('/', async (req: Req, res: Response) => {
       JOIN projects p ON p.id = po.project_id
       LEFT JOIN users ab ON ab.id = po.approved_by
       WHERE po.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-      ORDER BY po.created_at DESC LIMIT $${i} OFFSET $${i+1}
-    `, [...vals, limit, offset]),
+      ${scope}
+      ORDER BY po.created_at DESC LIMIT $${j} OFFSET $${j+1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM purchase_orders po
       WHERE po.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scope}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(count.rows[0]?.count ?? '0', 10)
   res.json({ data: data.rows, meta: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-purchaseOrdersRouter.get('/:id', async (req: Req, res: Response) => {
+purchaseOrdersRouter.get('/:id', requireCapability('procurement.view') as never, requireRecordScope('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -195,7 +229,7 @@ purchaseOrdersRouter.get('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.post('/', async (req: Req, res: Response) => {
+purchaseOrdersRouter.post('/', requireCapability('procurement.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -211,7 +245,7 @@ purchaseOrdersRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.patch('/:id', async (req: Req, res: Response) => {
+purchaseOrdersRouter.patch('/:id', requireCapability('procurement.write') as never, requireRecordScope('purchase_orders') as never, guardTransitionOwnedState('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -233,12 +267,9 @@ purchaseOrdersRouter.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-purchaseOrdersRouter.post('/:id/approve', async (req: Req, res: Response) => {
+purchaseOrdersRouter.post('/:id/approve', requireCapability('procurement.approve') as never, requireRecordScope('purchase_orders') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin','project_manager'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden' }); return
-  }
 
   const result = await tenantQuery(tenantId, `
     UPDATE purchase_orders
@@ -263,7 +294,7 @@ purchaseOrdersRouter.post('/:id/approve', async (req: Req, res: Response) => {
 export const rfisRouter = Router()
 rfisRouter.use(..._authMiddleware())
 
-rfisRouter.get('/', async (req: Req, res: Response) => {
+rfisRouter.get('/', requireCapability('construction.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -278,6 +309,20 @@ rfisRouter.get('/', async (req: Req, res: Response) => {
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3B — record scope, applied in SQL.
+  //
+  // `?project_id=` is an optional FILTER, so it cannot be the scope: without it
+  // this route would return every RFI in the tenant. The membership predicate
+  // is therefore ANDed unconditionally and outside the caller's filters, which
+  // means naming another team's project narrows to nothing rather than
+  // widening (§28). The query already joins `projects p`, which the shared
+  // predicate correlates on.
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = projectScopeSql(principal, `$${i}`)
+  const scopeVals = scope ? [principal.id] : []
+  const j = i + scopeVals.length
+
   const data = await tenantQuery(tenantId, `
     SELECT r.*, p.code AS project_code,
            rb.display_name AS raised_by_name, at.display_name AS assigned_to_name
@@ -286,13 +331,14 @@ rfisRouter.get('/', async (req: Req, res: Response) => {
     LEFT JOIN users rb ON rb.id = r.raised_by
     LEFT JOIN users at ON at.id = r.assigned_to
     WHERE r.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    ORDER BY r.created_at DESC LIMIT $${i} OFFSET $${i+1}
-  `, [...vals, limit, offset])
+    ${scope}
+    ORDER BY r.created_at DESC LIMIT $${j} OFFSET $${j+1}
+  `, [...vals, ...scopeVals, limit, offset])
 
   res.json({ data: data.rows })
 })
 
-rfisRouter.post('/', async (req: Req, res: Response) => {
+rfisRouter.post('/', requireCapability('construction.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -320,7 +366,7 @@ rfisRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: row })
 })
 
-rfisRouter.post('/:id/respond', async (req: Req, res: Response) => {
+rfisRouter.post('/:id/respond', requireCapability('construction.write') as never, requireRecordScope('rfi') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const { response } = req.body as { response?: string }
@@ -341,7 +387,7 @@ rfisRouter.post('/:id/respond', async (req: Req, res: Response) => {
 export const submittalsRouter = Router()
 submittalsRouter.use(..._authMiddleware())
 
-submittalsRouter.get('/', async (req: Req, res: Response) => {
+submittalsRouter.get('/', requireCapability('construction.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -355,6 +401,14 @@ submittalsRouter.get('/', async (req: Req, res: Response) => {
 
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3B — same record-scope contract as the RFI collection above:
+  // ?project_id is a filter, membership is the mandatory outer predicate.
+  const principal = await resolveCurrentUser(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scope = projectScopeSql(principal, `$${i}`)
+  const scopeVals = scope ? [principal.id] : []
+  const j = i + scopeVals.length
+
   const data = await tenantQuery(tenantId, `
     SELECT s.*, p.code AS project_code,
            sb.display_name AS submitted_by_name, rv.display_name AS reviewed_by_name
@@ -363,13 +417,14 @@ submittalsRouter.get('/', async (req: Req, res: Response) => {
     LEFT JOIN users sb ON sb.id = s.submitted_by
     LEFT JOIN users rv ON rv.id = s.reviewed_by
     WHERE s.tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    ORDER BY s.created_at DESC LIMIT $${i} OFFSET $${i+1}
-  `, [...vals, limit, offset])
+    ${scope}
+    ORDER BY s.created_at DESC LIMIT $${j} OFFSET $${j+1}
+  `, [...vals, ...scopeVals, limit, offset])
 
   res.json({ data: data.rows })
 })
 
-submittalsRouter.post('/', async (req: Req, res: Response) => {
+submittalsRouter.post('/', requireCapability('construction.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const b = req.body as Record<string, unknown>
@@ -397,14 +452,9 @@ submittalsRouter.post('/', async (req: Req, res: Response) => {
   res.status(201).json({ data: row })
 })
 
-submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
+submittalsRouter.patch('/:id', requireCapability('construction.write') as never, requireRecordScope('submittal') as never, guardTransitionOwnedState('submittals') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-
-  // Allowed lifecycle transitions for non-terminal status changes via PATCH.
-  // Terminal stamps (approved/approved_as_noted/revise_resubmit/rejected) must
-  // go through POST /:id/review which captures reviewer + reviewed_at.
-  const transitionalStatuses = ['draft', 'submitted', 'under_review']
 
   const fields = ['title','type','discipline','spec_section','submitted_by','due_date','metadata']
   const sets: string[] = []
@@ -418,14 +468,11 @@ submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
     }
   }
 
+  // Terminal review stamps are refused upstream by guardTransitionOwnedState;
+  // what reaches here is a transitional status, written like any other field.
   if (Object.prototype.hasOwnProperty.call(req.body, 'status')) {
-    const s = String(req.body['status'])
-    if (!transitionalStatuses.includes(s)) {
-      res.status(422).json({ error: 'validation', message: `status via PATCH must be one of: ${transitionalStatuses.join(', ')}; use POST /:id/review for terminal stamps` })
-      return
-    }
     sets.push(`status = $${i++}`)
-    vals.push(s)
+    vals.push(String(req.body['status']))
   }
 
   if (!sets.length) { res.status(422).json({ error: 'validation', message: 'No valid fields' }); return }
@@ -439,12 +486,9 @@ submittalsRouter.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-submittalsRouter.post('/:id/review', async (req: Req, res: Response) => {
+submittalsRouter.post('/:id/review', requireCapability('construction.approve') as never, requireRecordScope('submittal') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin','project_manager'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'Submittal stamping requires project_manager, admin, or owner role' }); return
-  }
   const { status, review_notes } = req.body as { status?: string; review_notes?: string }
 
   const validStatuses = ['approved','approved_as_noted','revise_resubmit','rejected']

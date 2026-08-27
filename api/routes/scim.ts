@@ -37,6 +37,8 @@ import { query, tenantQuery } from '../db/pool'
 import { requireAuth, requireRole, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { slog } from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
+import { USER_ROLES } from '../authz/capabilities'
 
 // ─── SCIM namespace constants ──────────────────────────────────────────────────
 
@@ -71,6 +73,41 @@ interface DbUser {
   id: string; email: string; display_name: string
   role: string; is_active: boolean
   created_at: string; updated_at?: string
+}
+
+// ─── SCIM role assignment boundary (ADR-014 D7) ───────────────────────────────
+//
+// A SCIM provisioning credential is an identity-federation credential, not
+// business authority. Before this gate the supplied role was written straight
+// into `users.role` with no validation at all, so any live SCIM token could
+// create — or promote an existing user to — `owner`, the role that holds every
+// capability in the registry. That is the escalation this closes.
+//
+// Two rules, applied identically on create, replace and patch:
+//   1. the role must be one the repository actually defines;
+//   2. it may never be `owner`.
+//
+// Rule 2 is the owner decision. Rule 1 exists because an unrecognised string was
+// previously persisted verbatim: `roleHasCapability` fails closed on it, so it
+// granted nothing, but it left a user row in a state no part of the system can
+// reason about. Non-owner roles that the protocol legitimately provisions today,
+// `admin` included, are deliberately unchanged — this gate narrows one specific
+// authority, it does not redesign SCIM role policy.
+const SCIM_FORBIDDEN_ROLE = 'owner'
+
+/** `null` when acceptable; otherwise the SCIM error detail to refuse with. */
+function _rejectScimRole(role: string): string | null {
+  const normalised = role.trim().toLowerCase()
+  if (normalised === SCIM_FORBIDDEN_ROLE) {
+    return `role '${SCIM_FORBIDDEN_ROLE}' cannot be assigned through SCIM provisioning`
+  }
+  // Compared against the raw value, not the normalised one: a differently-cased
+  // variant is not a valid role either, and accepting it would depend on the
+  // database enum to reject what authorization should have.
+  if (!(USER_ROLES as readonly string[]).includes(role)) {
+    return `unknown role '${role}'`
+  }
+  return null
 }
 
 function _scimBase(): string {
@@ -319,6 +356,14 @@ scimRouter.post('/Users', async (req: ScimRequest, res: Response): Promise<void>
     return
   }
 
+  // ADR-014 D7 — refused before the row is created, not after.
+  const roleRejection = _rejectScimRole(role)
+  if (roleRejection) {
+    _logScim(tenantId, 'create_user', undefined, req, 'rejected', { email, role })
+    _scimError(400, roleRejection, 'invalidValue', res)
+    return
+  }
+
   // SCIM-provisioned users authenticate via SAML/SSO only. Store a *valid* but
   // unusable bcrypt hash of a random secret — no plaintext can ever match it.
   // (The previous fabricated `$2b$12$<base64>` string was not a valid bcrypt
@@ -378,6 +423,16 @@ scimRouter.put('/Users/:id', async (req: ScimRequest, res: Response): Promise<vo
   const active      = body['active'] !== false
   const role        = (body['roles'] as Array<{value:string}>)?.[0]?.value
 
+  // ADR-014 D7 — a full replacement may not smuggle in an elevated role either.
+  if (role) {
+    const roleRejection = _rejectScimRole(role)
+    if (roleRejection) {
+      _logScim(tenantId, 'update_user', id, req, 'rejected', { role })
+      _scimError(400, roleRejection, 'invalidValue', res)
+      return
+    }
+  }
+
   try {
     const sets: string[] = ['display_name=$1', 'is_active=$2', 'updated_at=NOW()']
     const vals: unknown[] = [displayName, active]
@@ -435,7 +490,17 @@ scimRouter.patch('/Users/:id', async (req: ScimRequest, res: Response): Promise<
         vals.push(String(value))
       } else if (path === 'roles' || path === 'roles[primary eq true].value') {
         const roleVal = Array.isArray(value) ? (value[0] as Record<string,string>)?.value : String(value)
-        if (roleVal) { sets.push(`role=$${pi++}`); vals.push(roleVal) }
+        if (roleVal) {
+          // ADR-014 D7 — refuse the whole PatchOp. Skipping just this operation
+          // would apply the rest and answer 200, which reads as "role assigned".
+          const roleRejection = _rejectScimRole(roleVal)
+          if (roleRejection) {
+            _logScim(tenantId, 'update_user', id, req, 'rejected', { role: roleVal })
+            _scimError(400, roleRejection, 'invalidValue', res)
+            return
+          }
+          sets.push(`role=$${pi++}`); vals.push(roleVal)
+        }
       } else if (!path && typeof value === 'object' && value !== null) {
         // Okta sends: { op: 'replace', value: { active: false } }
         const v = value as Record<string, unknown>
@@ -519,7 +584,7 @@ type AdminReq = AuthenticatedRequest & TenantRequest
 adminRouter.use(requireAuth as never, requireTenant() as never)
 
 // POST /api/v1/scim/tokens — Generate new SCIM token
-adminRouter.post('/tokens', requireRole('owner', 'admin') as never,
+adminRouter.post('/tokens', requireCapability('platform.identity') as never, requireRole('owner', 'admin') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const tenantId = req.tenantId!
     const { label = 'primary' } = req.body as { label?: string }
@@ -551,7 +616,7 @@ adminRouter.post('/tokens', requireRole('owner', 'admin') as never,
 )
 
 // GET /api/v1/scim/tokens — List tokens (prefix only, no raw value)
-adminRouter.get('/tokens', requireRole('owner', 'admin') as never,
+adminRouter.get('/tokens', requireCapability('platform.admin') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const result = await query(
       `SELECT id, label, token_prefix, created_at, last_used_at, expires_at, is_active
@@ -563,7 +628,7 @@ adminRouter.get('/tokens', requireRole('owner', 'admin') as never,
 )
 
 // DELETE /api/v1/scim/tokens/:id — Revoke token
-adminRouter.delete('/tokens/:id', requireRole('owner', 'admin') as never,
+adminRouter.delete('/tokens/:id', requireCapability('platform.identity') as never, requireRole('owner', 'admin') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const result = await query<{ id: string }>(
       'UPDATE scim_tokens SET is_active=false WHERE id=$1 AND tenant_id=$2 RETURNING id',
@@ -575,7 +640,7 @@ adminRouter.delete('/tokens/:id', requireRole('owner', 'admin') as never,
 )
 
 // GET /api/v1/scim/audit — SCIM operation audit log
-adminRouter.get('/audit', requireRole('owner', 'admin') as never,
+adminRouter.get('/audit', requireCapability('audit.view') as never,
   async (req: AdminReq, res: Response): Promise<void> => {
     const limit  = Math.min(200, parseInt(String(req.query['limit'] ?? '50'), 10))
     const offset = Math.max(0,   parseInt(String(req.query['offset'] ?? '0'), 10))

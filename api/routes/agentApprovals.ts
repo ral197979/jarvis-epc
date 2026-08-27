@@ -11,6 +11,7 @@ import {
   expireStaleApprovals,
 } from '../services/agents/agentGovernanceService'
 import { resumeFromApproval } from '../services/agents/agentTaskQueue'
+import { requireCapability } from '../authz/requireCapability'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -22,7 +23,7 @@ export const agentApprovalsRouter = Router()
 agentApprovalsRouter.use(requireAuth as never, requireTenant() as never)
 
 // GET /api/v1/agents/approvals — list pending approvals
-agentApprovalsRouter.get('/', async (req: Request, res: Response) => {
+agentApprovalsRouter.get('/', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { agentType } = req.query
 
@@ -34,7 +35,7 @@ agentApprovalsRouter.get('/', async (req: Request, res: Response) => {
 })
 
 // GET /api/v1/agents/approvals/:id — get approval detail
-agentApprovalsRouter.get('/:id', async (req: Request, res: Response) => {
+agentApprovalsRouter.get('/:id', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   const approval = await getApproval(p(req, 'id'), r.tenantId!)
   if (!approval) return res.status(404).json({ error: 'Approval not found' })
@@ -42,12 +43,17 @@ agentApprovalsRouter.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /api/v1/agents/approvals/:id/approve
-agentApprovalsRouter.post('/:id/approve', async (req: Request, res: Response) => {
+agentApprovalsRouter.post('/:id/approve', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { reviewedBy, notes } = req.body
+    const { notes } = req.body
+    // ADR-014 Phase 3I §24/§25: the reviewer is the live authenticated
+    // principal, never a body field. `reviewed_by` is the human-in-the-loop
+    // record of record for an AI decision; accepting it from the caller let
+    // any ai.govern holder attribute their own verdict to someone else.
+    const reviewedBy = r.auth?.sub
     if (!reviewedBy) {
-      return res.status(400).json({ error: 'reviewedBy required' })
+      return res.status(401).json({ error: 'unauthenticated' })
     }
 
     const approval = await approveAction(p(req, 'id'), r.tenantId!, reviewedBy, notes)
@@ -62,12 +68,17 @@ agentApprovalsRouter.post('/:id/approve', async (req: Request, res: Response) =>
 })
 
 // POST /api/v1/agents/approvals/:id/reject
-agentApprovalsRouter.post('/:id/reject', async (req: Request, res: Response) => {
+agentApprovalsRouter.post('/:id/reject', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   try {
     const r = req as R
-    const { reviewedBy, notes } = req.body
+    const { notes } = req.body
+    // ADR-014 Phase 3I §24/§25: the reviewer is the live authenticated
+    // principal, never a body field. `reviewed_by` is the human-in-the-loop
+    // record of record for an AI decision; accepting it from the caller let
+    // any ai.govern holder attribute their own verdict to someone else.
+    const reviewedBy = r.auth?.sub
     if (!reviewedBy) {
-      return res.status(400).json({ error: 'reviewedBy required' })
+      return res.status(401).json({ error: 'unauthenticated' })
     }
 
     const approval = await rejectAction(p(req, 'id'), r.tenantId!, reviewedBy, notes)
@@ -78,7 +89,7 @@ agentApprovalsRouter.post('/:id/reject', async (req: Request, res: Response) => 
 })
 
 // POST /api/v1/agents/approvals/expire — expire stale approvals (admin/cron)
-agentApprovalsRouter.post('/expire', async (req: Request, res: Response) => {
+agentApprovalsRouter.post('/expire', requireCapability('ai.govern') as never, async (req: Request, res: Response) => {
   const r = req as R
   const expired = await expireStaleApprovals(r.tenantId!)
   res.json({ expired })

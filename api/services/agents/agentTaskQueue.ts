@@ -195,6 +195,36 @@ export async function getTask(taskId: string, tenantId: string): Promise<AgentTa
   return res.rows.length > 0 ? _mapRow(res.rows[0]) : null
 }
 
+/**
+ * The most recent task of one type for one scope — ADR-014 Phase 2C-5 §19/§20.
+ *
+ * Two GET routes used to ENQUEUE work in order to answer, which made a read
+ * capability sufficient to create durable state. They now observe the newest
+ * task the legitimate mutation path already created, and return an honest empty
+ * state when there is none. Tenant-scoped through `tenantQuery` like every other
+ * read here; the scope fields live in `payload`, which is how both callers write
+ * them.
+ */
+export async function latestTaskForScope(
+  tenantId: string,
+  taskType: string,
+  scopeType: string,
+  scopeId: string,
+): Promise<AgentTask | null> {
+  const res = await tenantQuery(
+    tenantId,
+    `SELECT * FROM agent_tasks
+     WHERE tenant_id = $1
+       AND task_type = $2
+       AND COALESCE(payload->>'scopeType', '') = $3
+       AND COALESCE(payload->>'scopeId', '')   = $4
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [tenantId, taskType, scopeType, scopeId]
+  )
+  return res.rows.length > 0 ? _mapRow(res.rows[0]) : null
+}
+
 export async function listTasks(
   tenantId: string,
   filters: {

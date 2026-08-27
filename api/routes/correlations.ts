@@ -15,6 +15,7 @@ import { Router, Response } from 'express'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { findCorrelates, type Subject } from '../services/correlationFinder'
+import { requireCapability } from '../authz/requireCapability'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -22,7 +23,7 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-router.post('/', async (req: Req, res: Response) => {
+router.post('/', requireCapability('crossdomain.read') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

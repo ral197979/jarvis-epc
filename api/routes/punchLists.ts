@@ -21,6 +21,9 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
+import { guardTransitionOwnedState } from '../authz/transitionStates'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
@@ -30,7 +33,7 @@ router.use(requireTenant() as any)
 
 // ─── Punch Lists ─────────────────────────────────────────────────────────────
 
-router.get('/projects/:projectId/punch-lists', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/punch-lists', requireCapability('quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const { status, limit = '100', offset = '0' } = req.query
@@ -67,7 +70,7 @@ router.get('/projects/:projectId/punch-lists', async (req: Request, res: Respons
   }
 })
 
-router.post('/projects/:projectId/punch-lists', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/punch-lists', requireCapability('quality.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { projectId } = req.params
   const b = req.body ?? {}
@@ -87,7 +90,7 @@ router.post('/projects/:projectId/punch-lists', async (req: Request, res: Respon
   }
 })
 
-router.get('/punch-lists/:id', async (req: Request, res: Response) => {
+router.get('/punch-lists/:id', requireCapability('quality.view') as never, requireRecordScope('punchlist') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(
@@ -112,7 +115,7 @@ router.get('/punch-lists/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/punch-lists/:id', async (req: Request, res: Response) => {
+router.patch('/punch-lists/:id', requireCapability('quality.write') as never, requireRecordScope('punchlist') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'description', 'status']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -134,7 +137,7 @@ router.patch('/punch-lists/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/punch-lists/:id', async (req: Request, res: Response) => {
+router.delete('/punch-lists/:id', requireCapability('quality.write') as never, requireRecordScope('punchlist') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!, 'DELETE FROM punch_lists WHERE id=$1 AND tenant_id=$2', [req.params.id, r.tenantId!])
@@ -147,7 +150,7 @@ router.delete('/punch-lists/:id', async (req: Request, res: Response) => {
 
 // ─── Punch Items ─────────────────────────────────────────────────────────────
 
-router.get('/punch-lists/:id/items', async (req: Request, res: Response) => {
+router.get('/punch-lists/:id/items', requireCapability('quality.view') as never, requireRecordScope('punchlist') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { status, priority, assigned_to } = req.query
   const params: unknown[] = [req.params.id, r.tenantId!]
@@ -180,7 +183,7 @@ router.get('/punch-lists/:id/items', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/punch-lists/:id/items', async (req: Request, res: Response) => {
+router.post('/punch-lists/:id/items', requireCapability('quality.write') as never, requireRecordScope('punchlist') as never, guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.title) return res.status(400).json({ error: 'title required' })
@@ -246,7 +249,7 @@ router.post('/punch-lists/:id/items', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/punch-items/:id', async (req: Request, res: Response) => {
+router.patch('/punch-items/:id', requireCapability('quality.write') as never, requireRecordScope('punch') as never, guardTransitionOwnedState('punch_items') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title', 'description', 'location', 'discipline', 'priority', 'status', 'assigned_to', 'due_date', 'drawing_id', 'pin_x', 'pin_y', 'photos']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))
@@ -268,7 +271,7 @@ router.patch('/punch-items/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/punch-items/:id/verify', async (req: Request, res: Response) => {
+router.post('/punch-items/:id/verify', requireCapability('quality.verify') as never, requireRecordScope('punch') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(
@@ -286,7 +289,7 @@ router.post('/punch-items/:id/verify', async (req: Request, res: Response) => {
   }
 })
 
-router.post('/punch-items/:id/close', async (req: Request, res: Response) => {
+router.post('/punch-items/:id/close', requireCapability('quality.verify') as never, requireRecordScope('punch') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(
@@ -304,7 +307,7 @@ router.post('/punch-items/:id/close', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/punch-items/:id', async (req: Request, res: Response) => {
+router.delete('/punch-items/:id', requireCapability('quality.write') as never, requireRecordScope('punch') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!, 'DELETE FROM punch_items WHERE id=$1 AND tenant_id=$2', [req.params.id, r.tenantId!])

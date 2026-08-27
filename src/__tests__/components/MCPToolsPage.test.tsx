@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { MCPToolsPage } from '../../components/MCPToolsPage'
 import {
@@ -65,6 +65,29 @@ function renderPage() {
   return render(<MCPToolsPage />)
 }
 
+/**
+ * Scoping helpers for the two `*ByRole({ name })` queries in this file.
+ *
+ * `*ByRole` with a `name` filter computes the accessible name of every element
+ * matching the role, and this page renders ~460 nodes — so one such query costs
+ * ~24ms warm and ~340ms cold, against a ~15ms render. Three of these tests were
+ * spending 95% of their wall-clock inside that computation, which made them the
+ * least-headroom tests in the client suite (1162ms against the 5000ms default)
+ * and the first to time out whenever the machine was busy. The work is pure CPU,
+ * so it scales linearly with contention; every other client file peaks near
+ * 290ms.
+ *
+ * Scoping the same query to the region that owns the element is 21–33× cheaper
+ * and strictly stronger: the role and accessible-name matching are unchanged,
+ * accessibility-visibility filtering still applies, and the element must now
+ * also be inside the region it belongs to. `{ hidden: true }` was measured as an
+ * alternative and rejected — it saves nothing here (23.7ms vs 23.8ms, because
+ * the cost is the name computation, not the visibility filter) and would weaken
+ * the query.
+ */
+const tabBar = () => screen.getByText(/🔌 Catalogue/).parentElement as HTMLElement
+const resourcesSection = () => screen.getByText('MCP Resources').parentElement as HTMLElement
+
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 describe('MCPToolsPage', () => {
@@ -95,9 +118,10 @@ describe('MCPToolsPage', () => {
     // Tab buttons are prefixed by an emoji (🔌/⚡/📜). Tool cards have a
     // "Click to execute →" footer that also matches /Execute/i — match by
     // emoji prefix to disambiguate.
-    expect(screen.getByRole('button', { name: /🔌 Catalogue/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /⚡ Execute/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /📜 History/i })).toBeInTheDocument()
+    const tabs = within(tabBar())
+    expect(tabs.getByRole('button', { name: /🔌 Catalogue/i })).toBeInTheDocument()
+    expect(tabs.getByRole('button', { name: /⚡ Execute/i })).toBeInTheDocument()
+    expect(tabs.getByRole('button', { name: /📜 History/i })).toBeInTheDocument()
   })
 
   it('defaults to the Catalogue tab (renders the search input)', () => {
@@ -186,7 +210,7 @@ describe('MCPToolsPage', () => {
   it('expands a resource when its toggle button is clicked', async () => {
     renderPage()
     // findAllByRole lets mount fetches settle before we interact.
-    const toggle = (await screen.findAllByRole('button', { name: /▼/ }))[0]!
+    const toggle = (await within(resourcesSection()).findAllByRole('button', { name: /▼/ }))[0]!
     fireEvent.click(toggle)
     await waitFor(() => expect(toggle).toHaveTextContent('▲'))
   })
@@ -196,7 +220,7 @@ describe('MCPToolsPage', () => {
     // Assert the SAME toggle flips ▼→▲→▼. Robust against async mount fetches
     // (loadCatalogue/checkAvaHealth) re-rendering other toggles — the previous
     // global ▼-count comparison flaked in CI when a fetch resolved mid-test.
-    const toggle = (await screen.findAllByRole('button', { name: /▼/ }))[0]!
+    const toggle = (await within(resourcesSection()).findAllByRole('button', { name: /▼/ }))[0]!
     fireEvent.click(toggle)
     await waitFor(() => expect(toggle).toHaveTextContent('▲'))
     fireEvent.click(toggle)

@@ -3,13 +3,51 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+// ADR-014 Phase 2B-2: NCR and CAPA reads require `quality.view`. Phase 1
+// grants it to owner, PM, engineer and field ops; the engineer is the
+// narrowest role that legitimately raises and reads a non-conformance.
+// Authorization re-resolves that role from the database on every request,
+// so the pool answers the lookup for the caller under test.
+const CALLER = vi.hoisted(() => ({ id: 'caller', tenant_id: 'tenant-1', role: 'engineer', is_active: true }))
+
 const mockQuery = vi.fn()
+
+/**
+ * ADR-014 Phase 3D — the record-scope layer asks two questions before a handler
+ * runs: which project owns this record, and may the caller reach it. Both are
+ * answered here rather than through the scripted mock, for the same reason the
+ * current-user lookup already is: an authorization query must not consume a
+ * `mockResolvedValueOnce` entry written for the handler's own queries.
+ */
+const _recordScopeAnswer = (sql: unknown, params: unknown): { rows: unknown[]; rowCount: number } | null => {
+  const s = String(sql)
+  if (/AS\s+project_id/i.test(s)) return { rows: [{ project_id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 }
+  if (/FROM\s+projects\s+p?\b/i.test(s) && /ANY\(\$\d+::uuid\[\]\)/i.test(s)) {
+    // Echo back the ids the resolver asked about, so the fixture's own
+    // project is the one reported reachable.
+    const ids = ((params as unknown[])?.find(x => Array.isArray(x)) as string[] | undefined) ?? []
+    return { rows: ids.map(id => ({ id })), rowCount: ids.length }
+  }
+  return null
+}
+
 vi.mock('../db/pool', () => ({
-  tenantQuery:       (t: string, sql: string, p: unknown[]) => mockQuery(t, sql, p),
-  query:             (sql: string, p: unknown[]) => mockQuery(null, sql, p),
+  tenantQuery: (t: string, sql: string, p: unknown[]) =>
+    _recordScopeAnswer(sql, p) ?? (/SELECT (id|p\.id) FROM projects/i.test(String(sql))
+      ? Promise.resolve({ rows: [{ id: '30000000-0000-4000-8000-000000000001' }], rowCount: 1 })
+      : mockQuery(t, sql, p)),
+  query:       (sql: string, p: unknown[]) =>
+    /FROM\s+users\s+WHERE\s+id/i.test(String(sql))
+      ? Promise.resolve({ rows: [CALLER], rowCount: 1 })
+      : mockQuery(null, sql, p),
   tenantTransaction: async <T>(_t: string, fn: (c: any) => Promise<T>) => fn({ query: (sql: string, p: unknown[]) => mockQuery(_t, sql, p) }),
 }))
-vi.mock('../auth', () => ({ requireAuth: (req: any, _res: any, next: any) => { req.auth = { sub: 'u1' }; next() } }))
+vi.mock('../auth', () => ({
+  requireAuth: (req: any, _res: any, next: any) => {
+    req.auth = { sub: 'u1', tid: 'tenant-1', role: 'engineer' }
+    next()
+  },
+}))
 vi.mock('../middleware/tenant', () => ({ requireTenant: () => (req: any, _res: any, next: any) => { req.tenantId = 'tenant-1'; next() } }))
 
 import { analyzeNcr, buildAutoRaisedNcr, type NcrRow, type CapaRow } from '../services/quality/ncrService'
@@ -95,7 +133,7 @@ describe('NCR / CAPA routes', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('POST NCR requires a title', async () => {
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs').send({ severity: 'major' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs').send({ severity: 'major' })
     expect(res.status).toBe(400)
   })
 
@@ -105,14 +143,18 @@ describe('NCR / CAPA routes', () => {
       if (/INSERT INTO ncrs/.test(sql)) return { rows: [{ id: 'n1', ncr_number: 7, title: 'Weld defect', severity: 'major', status: 'open' }], rowCount: 1 }
       return { rows: [] }
     })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs').send({ title: 'Weld defect', severity: 'major' })
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs').send({ title: 'Weld defect', severity: 'major' })
     expect(res.status).toBe(201)
     expect(res.body.data.ncr_number).toBe(7)
   })
 
   it('POST CAPA 404s when the NCR does not exist', async () => {
+    // A well-formed id that resolves to no NCR: the record-scope guard admits it
+    // and the handler's own lookup is what answers 404, which is the contract
+    // under test. A malformed id would be refused by the guard first, and the
+    // queued row below would leak into the next test unconsumed.
     mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 }) // project lookup in createCorrectiveAction
-    const res = await request(makeApp()).post('/api/v1/ncrs/missing/capas').send({ description: 'Re-weld and re-inspect' })
+    const res = await request(makeApp()).post('/api/v1/ncrs/8f2b1c44-0000-4000-8000-00000000ffff/capas').send({ description: 'Re-weld and re-inspect' })
     expect(res.status).toBe(404)
   })
 
@@ -123,14 +165,14 @@ describe('NCR / CAPA routes', () => {
       if (/FROM corrective_actions/.test(sql)) return { rows: [{ status: 'open', due_date: '2026-06-01' }] }
       return { rows: [] }
     })
-    const res = await request(makeApp()).get('/api/v1/projects/p1/ncr-summary')
+    const res = await request(makeApp()).get('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncr-summary')
     expect(res.status).toBe(200)
     expect(res.body.data.totals.openCritical).toBe(1)
     expect(res.body.data.overdueCapas).toBe(1)
   })
 
   it('PATCH capa validates status', async () => {
-    const res = await request(makeApp()).patch('/api/v1/capas/c1').send({ status: 'bogus' })
+    const res = await request(makeApp()).patch('/api/v1/capas/40f631ca-1ddb-48db-8bcf-cb9e057cdc98').send({ status: 'bogus' })
     expect(res.status).toBe(400)
   })
 
@@ -141,7 +183,7 @@ describe('NCR / CAPA routes', () => {
       if (/INSERT INTO ncrs/.test(sql)) return { rows: [{ id: 'n1', ncr_number: 4, title: 'Failed inspection: Pour', severity: 'major', status: 'open', source: 'inspection', source_ref: 'insp1' }], rowCount: 1 }
       return { rows: [] }
     })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs/auto-raise').send({})
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs/auto-raise').send({})
     expect(res.status).toBe(201)
     expect(res.body.data.count).toBe(1)
     expect(res.body.data.created[0].source).toBe('inspection')
@@ -152,7 +194,7 @@ describe('NCR / CAPA routes', () => {
       if (/FROM inspections/.test(sql)) return { rows: [] }   // all failed inspections already have NCRs
       return { rows: [] }
     })
-    const res = await request(makeApp()).post('/api/v1/projects/p1/ncrs/auto-raise').send({})
+    const res = await request(makeApp()).post('/api/v1/projects/30000000-0000-4000-8000-000000000001/ncrs/auto-raise').send({})
     expect(res.status).toBe(200)
     expect(res.body.data.count).toBe(0)
   })

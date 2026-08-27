@@ -5,7 +5,12 @@
  * computed continuation sheet (completed-to-date, retention, current payment due).
  *
  * API: /api/v1/projects/:id/sov-items · /projects/:id/pay-applications ·
- *      /pay-applications/:id (computed) · PATCH /pay-applications/:id(/lines)
+ *      /pay-applications/:id (computed) · PATCH /pay-applications/:id(/lines) ·
+ *      POST /pay-applications/:id/submit
+ *
+ * ADR-014 D1: submission and approval are separate server contracts with
+ * separate capabilities, so Submit posts to its own action route rather than
+ * PATCHing a status the approval endpoint now refuses.
  */
 import React, { useEffect, useState, useCallback } from 'react'
 
@@ -124,6 +129,17 @@ export default function BillingView(_props: { onNavigate?: (tab: string) => void
     } finally { setBusy(false) }
   }
 
+  const submitApp = async () => {
+    if (!view) return
+    setBusy(true)
+    try {
+      await fetch(`/api/v1/pay-applications/${view.application.id}/submit`, {
+        method: 'POST', credentials: 'include',
+      })
+      await Promise.all([loadView(view.application.id), loadProject(projectId)])
+    } finally { setBusy(false) }
+  }
+
   const card: React.CSSProperties = { background: 'var(--jarvis-bg2)', border: '1px solid var(--jarvis-bd)', borderRadius: 10, padding: 16, marginBottom: 16 }
   const editable = view && ['draft', 'rejected'].includes(view.application.status)
   const inp: React.CSSProperties = { width: 90, padding: '4px 6px', borderRadius: 4, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', fontSize: 12 }
@@ -192,7 +208,7 @@ export default function BillingView(_props: { onNavigate?: (tab: string) => void
             </span>
             <div style={{ display: 'flex', gap: 6 }}>
               {editable && <button onClick={saveLines} disabled={busy} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: 'none', background: 'var(--jarvis-ac)', color: '#0a0b0f', fontWeight: 700, cursor: 'pointer' }}>Save lines</button>}
-              {view.application.status === 'draft' && <button onClick={() => setStatus('submitted')} disabled={busy} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', cursor: 'pointer' }}>Submit</button>}
+              {view.application.status === 'draft' && <button onClick={submitApp} disabled={busy} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', cursor: 'pointer' }}>Submit</button>}
               {view.application.status === 'submitted' && <>
                 <button onClick={() => setStatus('approved')} disabled={busy} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', cursor: 'pointer' }}>Approve</button>
                 <button onClick={() => setStatus('rejected')} disabled={busy} style={{ padding: '5px 12px', borderRadius: 6, fontSize: 12, border: '1px solid var(--jarvis-bd)', background: 'var(--jarvis-bg)', color: 'var(--jarvis-tx)', cursor: 'pointer' }}>Reject</button>

@@ -34,6 +34,9 @@ import { tenantQuery, query } from '../db/pool'
 import { requireAuth, AuthenticatedRequest }     from '../auth'
 import { requireTenant, TenantRequest }          from '../middleware/tenant'
 import { slog }                                  from '../../src/modules/observability/index'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -63,19 +66,11 @@ async function _creditBalance(tenantId: string): Promise<number> {
   return parseInt(res.rows[0]?.balance ?? '0', 10)
 }
 
-function _requireRole(req: Req, res: Response, ...roles: string[]): boolean {
-  if (!req.auth?.role || !roles.includes(req.auth.role)) {
-    res.status(403).json({ error: 'forbidden', message: `Requires one of: ${roles.join(', ')}` })
-    return false
-  }
-  return true
-}
-
 // ─── POST /uploads/text-ingest ────────────────────────────────────────────────
 // Accepts a plain-text document (spec section, notes) and stores it as a
 // SourceUpload record. Returns the upload ID for use in generate-draft.
 
-router.post('/uploads/text-ingest', async (req: Req, res: Response) => {
+router.post('/uploads/text-ingest', requireCapability('commissioning.write') as never, requireBodyProjectScope('projectId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -102,27 +97,39 @@ router.post('/uploads/text-ingest', async (req: Req, res: Response) => {
 
 // ─── GET /uploads ─────────────────────────────────────────────────────────────
 
-router.get('/uploads', async (req: Req, res: Response) => {
+router.get('/uploads', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
   const { limit, offset } = _paginationParams(req.query as Record<string, unknown>)
+
+  // ADR-014 Phase 3G. `source_uploads` is DUAL_PROJECT_OR_TENANT: migration 006
+  // makes `project_id` nullable with ON DELETE SET NULL — an upload outlives the
+  // project it was filed against — and commissioning.ts stages uploads with
+  // `projectId ?? null` before a project is chosen. The predicate goes before
+  // LIMIT so the page describes the authorized set, and the preview text of an
+  // out-of-scope upload is never serialized.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'source_uploads', 'project_id', '$3')
+  const scopeVals = collectionScopeParams(principal, 'source_uploads')
 
   const result = await tenantQuery(tenantId, `
     SELECT id, file_name, content_type, size_bytes, project_id, created_at,
            LEFT(extracted_text, 200) AS extracted_text_preview
     FROM source_uploads
     WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    ${scopeSql}
     ORDER BY created_at DESC
     LIMIT $1 OFFSET $2
-  `, [limit, offset])
+  `, [limit, offset, ...scopeVals])
 
   res.json({ items: result.rows })
 })
 
 // ─── GET /balance ─────────────────────────────────────────────────────────────
 
-router.get('/balance', async (req: Req, res: Response) => {
+router.get('/balance', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -133,10 +140,15 @@ router.get('/balance', async (req: Req, res: Response) => {
 // ─── POST /credits ────────────────────────────────────────────────────────────
 // Grant credits manually. Owner / admin only.
 
-router.post('/credits', async (req: Req, res: Response) => {
+// ADR-014 D3 — credit issuance is platform entitlement administration, not
+// ordinary project cost approval: it writes billing_credits with a caller-supplied
+// delta that may add or remove entitlement. platform.admin already governs
+// platform feature and usage administration and its holders are {owner, admin} —
+// exactly the legacy role set — so the authority is unchanged while the decision
+// moves from the JWT claim to the live database principal.
+router.post('/credits', requireCapability('platform.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!_requireRole(req, res, 'owner', 'admin')) return
 
   const { delta, reason } = req.body as { delta: number; reason: string }
   if (!delta || !reason) {
@@ -158,7 +170,7 @@ router.post('/credits', async (req: Req, res: Response) => {
 // Queues a GENERATE_DRAFT job. Debit happens inside the worker after validation.
 // Returns immediately with jobId; client polls /jobs or /packs.
 
-router.post('/generate-draft', async (req: Req, res: Response) => {
+router.post('/generate-draft', requireCapability('commissioning.write') as never, requireBodyProjectScope('projectId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -204,7 +216,7 @@ router.post('/generate-draft', async (req: Req, res: Response) => {
 // Persist a rules-engine generated CxPack without going through the AI worker.
 // Stores the full CxPack as payload_json so CxWorkflowView can re-hydrate it.
 
-router.post('/packs/manual', async (req: Req, res: Response) => {
+router.post('/packs/manual', requireCapability('commissioning.write') as never, requireBodyProjectScope('projectId') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -229,7 +241,7 @@ router.post('/packs/manual', async (req: Req, res: Response) => {
 
 // ─── GET /packs ───────────────────────────────────────────────────────────────
 
-router.get('/packs', async (req: Req, res: Response) => {
+router.get('/packs', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -247,6 +259,18 @@ router.get('/packs', async (req: Req, res: Response) => {
 
   const where = conditions.length ? `AND ${conditions.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `commissioning_packs` is DUAL_PROJECT_OR_TENANT: all
+  // three create routes pass `projectId ?? null` behind requireBodyProjectScope,
+  // so a project-less pack is an intended state and stays visible; a pack that
+  // names a project needs membership. Same predicate on the COUNT (§15), and
+  // ANDed outside `?project_id=` so that filter can only narrow (§30).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql      = collectionScopeSql(principal, 'commissioning_packs', 'cp.project_id', `$${p}`)
+  const countScopeSql = collectionScopeSql(principal, 'commissioning_packs', 'project_id', `$${p}`)
+  const scopeVals     = collectionScopeParams(principal, 'commissioning_packs')
+  const q = p + scopeVals.length
+
   const [dataRes, countRes] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT cp.*,
@@ -257,13 +281,15 @@ router.get('/packs', async (req: Req, res: Response) => {
       LEFT JOIN projects pr ON pr.id = cp.project_id
       WHERE cp.tenant_id = current_setting('app.current_tenant_id', true)::uuid
       ${where}
+      ${scopeSql}
       ORDER BY cp.created_at DESC
-      LIMIT $${p} OFFSET $${p + 1}
-    `, [...values, limit, offset]),
+      LIMIT $${q} OFFSET $${q + 1}
+    `, [...values, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::TEXT AS count FROM commissioning_packs
       WHERE tenant_id = current_setting('app.current_tenant_id', true)::uuid ${where}
-    `, values),
+      ${countScopeSql}
+    `, [...values, ...scopeVals]),
   ])
 
   const total = parseInt(countRes.rows[0]?.count ?? '0', 10)
@@ -275,7 +301,7 @@ router.get('/packs', async (req: Req, res: Response) => {
 
 // ─── GET /packs/:id ───────────────────────────────────────────────────────────
 
-router.get('/packs/:id', async (req: Req, res: Response) => {
+router.get('/packs/:id', requireCapability('commissioning.view') as never, requireRecordScope('commissioning_packs') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -309,7 +335,7 @@ router.get('/packs/:id', async (req: Req, res: Response) => {
 // Saves review notes without triggering finalization.
 // Status stays at ready_for_review; finalize is a separate step.
 
-router.patch('/packs/:id/review', async (req: Req, res: Response) => {
+router.patch('/packs/:id/review', requireCapability('commissioning.write') as never, requireRecordScope('commissioning_packs') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -339,7 +365,7 @@ router.patch('/packs/:id/review', async (req: Req, res: Response) => {
 // ─── POST /finalize ───────────────────────────────────────────────────────────
 // Queues a FINALIZE_PACK job. Worker renders MD/HTML and writes paths.
 
-router.post('/finalize', async (req: Req, res: Response) => {
+router.post('/finalize', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -378,7 +404,7 @@ router.post('/finalize', async (req: Req, res: Response) => {
 
 // ─── GET /jobs ────────────────────────────────────────────────────────────────
 
-router.get('/jobs', async (req: Req, res: Response) => {
+router.get('/jobs', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -410,7 +436,7 @@ router.get('/jobs', async (req: Req, res: Response) => {
 // ─── GET /packs/:id/download/:format ─────────────────────────────────────────
 // Streams a generated artifact. format: 'markdown' | 'html' | 'pdf'
 
-router.get('/packs/:id/download/:format', async (req: Req, res: Response) => {
+router.get('/packs/:id/download/:format', requireCapability('commissioning.view') as never, requireRecordScope('commissioning_packs') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

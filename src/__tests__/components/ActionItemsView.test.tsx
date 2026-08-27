@@ -3,7 +3,7 @@
  * Coverage: KPI strip, multi-filter table, detail panel, stage pipeline,
  *           empty state, accessibility, priority/category badges
  */
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import React from 'react'
 import { ActionItemsView, type ActionItemsViewProps } from '../../components/ActionItemsView'
@@ -227,9 +227,20 @@ describe('ActionItemsView — priority and category badges', () => {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 describe('ActionItemsView — empty state', () => {
-  it('shows empty state when no items', () => {
-    render(<ActionItemsView {...defaultProps()} />)
-    expect(screen.getByText(/No action items/i)).toBeDefined()
+  it('shows empty state when neither the store nor the backend has items', async () => {
+    // An empty store no longer means "there is no work" — it means nothing has
+    // been dispatched locally, so the register asks the API. The empty state is
+    // now what you get after that request comes back with nothing, which is the
+    // only point at which the claim is true.
+    const fetchMock = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) }))
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      render(<ActionItemsView {...defaultProps()} />)
+      expect(await screen.findByText(/No action items/i)).toBeDefined()
+      expect(fetchMock).toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

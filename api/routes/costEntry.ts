@@ -13,6 +13,8 @@
 import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest }       from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import {
   createCostEntry, listCostEntries, getCostEntry, updateCostEntry,
   deleteCostEntry, postCostEntry, voidCostEntry, getCostEntrySummary,
@@ -35,7 +37,7 @@ costEntryRouter.use(requireTenant() as never)
 
 // ─── Per-project ──────────────────────────────────────────────────────────────
 
-costEntryRouter.post('/projects/:projectId/cost-entries', async (req: Request, res: Response) => {
+costEntryRouter.post('/projects/:projectId/cost-entries', requireCapability('cost.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   const { description, amount, entryDate } = req.body as Record<string, unknown>
   if (!description || !amount || !entryDate) {
@@ -51,7 +53,7 @@ costEntryRouter.post('/projects/:projectId/cost-entries', async (req: Request, r
   } catch (e) { res.status(500).json({ error: 'Failed to create cost entry' }) }
 })
 
-costEntryRouter.get('/projects/:projectId/cost-entries', async (req: Request, res: Response) => {
+costEntryRouter.get('/projects/:projectId/cost-entries', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entries = await listCostEntries(r.tenantId!, p(req, 'projectId'), {
@@ -65,7 +67,7 @@ costEntryRouter.get('/projects/:projectId/cost-entries', async (req: Request, re
   } catch (e) { res.status(500).json({ error: 'Failed to list cost entries' }) }
 })
 
-costEntryRouter.get('/projects/:projectId/cost-entries/summary', async (req: Request, res: Response) => {
+costEntryRouter.get('/projects/:projectId/cost-entries/summary', requireCapability('cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const summary = await getCostEntrySummary(r.tenantId!, p(req, 'projectId'))
@@ -75,7 +77,7 @@ costEntryRouter.get('/projects/:projectId/cost-entries/summary', async (req: Req
 
 // ─── Single entry ─────────────────────────────────────────────────────────────
 
-costEntryRouter.get('/cost-entries/:id', async (req: Request, res: Response) => {
+costEntryRouter.get('/cost-entries/:id', requireCapability('cost.view') as never, requireRecordScope('cost_entries') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await getCostEntry(r.tenantId!, p(req, 'id'))
@@ -84,7 +86,7 @@ costEntryRouter.get('/cost-entries/:id', async (req: Request, res: Response) => 
   } catch (e) { res.status(500).json({ error: 'Failed to get cost entry' }) }
 })
 
-costEntryRouter.patch('/cost-entries/:id', async (req: Request, res: Response) => {
+costEntryRouter.patch('/cost-entries/:id', requireCapability('cost.write') as never, requireRecordScope('cost_entries') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await updateCostEntry(r.tenantId!, p(req, 'id'), req.body)
@@ -93,7 +95,7 @@ costEntryRouter.patch('/cost-entries/:id', async (req: Request, res: Response) =
   } catch (e) { res.status(500).json({ error: 'Failed to update cost entry' }) }
 })
 
-costEntryRouter.delete('/cost-entries/:id', async (req: Request, res: Response) => {
+costEntryRouter.delete('/cost-entries/:id', requireCapability('cost.write') as never, requireRecordScope('cost_entries') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ok = await deleteCostEntry(r.tenantId!, p(req, 'id'))
@@ -102,7 +104,7 @@ costEntryRouter.delete('/cost-entries/:id', async (req: Request, res: Response) 
   } catch (e) { res.status(500).json({ error: 'Failed to delete cost entry' }) }
 })
 
-costEntryRouter.post('/cost-entries/:id/post', async (req: Request, res: Response) => {
+costEntryRouter.post('/cost-entries/:id/post', requireCapability('cost.approve') as never, requireRecordScope('cost_entries') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await postCostEntry(r.tenantId!, p(req, 'id'), r.auth?.sub ?? 'unknown')
@@ -111,7 +113,7 @@ costEntryRouter.post('/cost-entries/:id/post', async (req: Request, res: Respons
   } catch (e) { res.status(500).json({ error: 'Failed to post cost entry' }) }
 })
 
-costEntryRouter.post('/cost-entries/:id/void', async (req: Request, res: Response) => {
+costEntryRouter.post('/cost-entries/:id/void', requireCapability('cost.approve') as never, requireRecordScope('cost_entries') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const entry = await voidCostEntry(r.tenantId!, p(req, 'id'))

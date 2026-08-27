@@ -15,6 +15,9 @@ import { Router, Response } from 'express'
 import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 import {
   createFix, searchFixes, getFix, deleteFix, verifyFix, listUsedSymptoms,
   type FixConfidence,
@@ -26,13 +29,6 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return false
-  }
-  return true
-}
 
 function _pagination(q: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(q['page']  ?? '1'), 10))
@@ -42,16 +38,24 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── GET symptoms meta (mount before /:id so it doesn't collide) ──────────────
 
-router.get('/_meta/symptoms', async (req: Req, res: Response) => {
+router.get('/_meta/symptoms', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const symptoms = await listUsedSymptoms(tenantId)
+  // ADR-014 Phase 3F §52: the facet follows the same rule as the list it
+  // filters — options drawn from fixes in projects the caller cannot reach
+  // would disclose that those fixes exist.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const symptoms = await listUsedSymptoms(tenantId, {
+    sql:    collectionScopeSql(principal, 'knowledge_fixes', 'project_id', '$SCOPE_USER'),
+    params: collectionScopeParams(principal, 'knowledge_fixes'),
+  })
   res.json({ data: symptoms })
 })
 
 // ─── Search (POST so we can accept structured arrays without URL ugliness) ────
 
-router.post('/search', async (req: Req, res: Response) => {
+router.post('/search', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -70,7 +74,7 @@ router.post('/search', async (req: Req, res: Response) => {
 
 // ─── List ─────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('engineering.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -89,6 +93,17 @@ router.get('/', async (req: Req, res: Response) => {
   if (auto_only === 'false') { conds.push(`extraction_run_id IS NULL`) }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `knowledge_fixes` is DUAL_PROJECT_OR_TENANT: fixExtractor
+  // omits `project_id` from its INSERT entirely, so every extracted fix is
+  // tenant-level and must stay visible to any engineering.view holder, while a
+  // fix raised against a project follows membership. Same predicate on the
+  // COUNT so `total` describes what this caller can page through (§15).
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'knowledge_fixes', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'knowledge_fixes')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT id, project_id, asset_system, asset_tag, symptoms,
@@ -98,13 +113,15 @@ router.get('/', async (req: Req, res: Response) => {
              created_by, created_at, updated_at
       FROM   knowledge_fixes
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scopeSql}
       ORDER  BY created_at DESC
-      LIMIT  $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT  $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM knowledge_fixes
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scopeSql}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)
@@ -116,7 +133,7 @@ router.get('/', async (req: Req, res: Response) => {
 
 // ─── Create ──────────────────────────────────────────────────────────────────
 
-router.post('/', async (req: Req, res: Response) => {
+router.post('/', requireCapability('engineering.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -144,7 +161,7 @@ router.post('/', async (req: Req, res: Response) => {
 
 // ─── Read ────────────────────────────────────────────────────────────────────
 
-router.get('/:id', async (req: Req, res: Response) => {
+router.get('/:id', requireCapability('engineering.view') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const fix = await getFix(tenantId, String(req.params['id']))
@@ -154,7 +171,7 @@ router.get('/:id', async (req: Req, res: Response) => {
 
 // ─── Update ──────────────────────────────────────────────────────────────────
 
-router.patch('/:id', async (req: Req, res: Response) => {
+router.patch('/:id', requireCapability('engineering.write') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -189,7 +206,7 @@ router.patch('/:id', async (req: Req, res: Response) => {
 
 // ─── Verify ──────────────────────────────────────────────────────────────────
 
-router.post('/:id/verify', async (req: Req, res: Response) => {
+router.post('/:id/verify', requireCapability('assistant.admin') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const userId = req.auth?.sub
@@ -208,8 +225,7 @@ router.post('/:id/verify', async (req: Req, res: Response) => {
 
 // ─── Delete (admin) ──────────────────────────────────────────────────────────
 
-router.delete('/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/:id', requireCapability('assistant.admin') as never, requireRecordScope('knowledge_fixes') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const ok = await deleteFix(tenantId, String(req.params['id']))

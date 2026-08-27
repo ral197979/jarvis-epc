@@ -19,6 +19,8 @@
 type IsoDate = string   // YYYY-MM-DD
 
 interface BizState {
+  /** Present only on the shipped demo seed; see DEMO_SEED_MARKER. */
+  __demoSeed?:        true
   company:            { name: string; type: string }
   leads:              Lead[]
   contracts:          Contract[]
@@ -77,9 +79,64 @@ interface Installation  { discipline: string; [k: string]: unknown }
 interface Manpower      { month: string; [k: string]: unknown }
 interface Project       { id: string; [k: string]: unknown }
 
-// ─── Seed data ────────────────────────────────────────────────────────────────
+// ─── Demonstration data — OPT-IN ONLY ────────────────────────────────────────
+//
+// This is a Lusaka WTP / Maputo PM sample. It used to be what a fresh session
+// LOADED: JarvisCore initialised `biz` from it, handed it to ContentRouter, and
+// every store-backed view rendered it. Nothing in that path consults a domain
+// API — `biz` is replaced only by a persisted blob or a user's backup file — so
+// a new user saw a $425,000 active contract for "US DOS", $63,750 of invoices
+// and two open safety incidents, in exactly the styling real figures use.
+//
+// A fresh session now starts EMPTY. The sample is preserved, because demos and
+// tests need it, but it loads only when someone asks for it (see
+// `isDemoRequested`). Empty understates and is obviously empty; the sample
+// overstated and was indistinguishable from the reader's own operations.
+//
+// `__demoSeed` marks the sample so the shell can say so. It is deliberately
+// part of the DATA rather than a separate flag: JarvisCore persists and
+// restores the whole blob, so a flag held outside it would not survive the
+// round trip — which is exactly when provenance would otherwise be lost.
+export const DEMO_SEED_MARKER = '__demoSeed' as const
+
+/** True when this state still descends from the shipped demo sample. */
+export function isDemoSeed(biz: unknown): boolean {
+  return Boolean((biz as Record<string, unknown> | null | undefined)?.[DEMO_SEED_MARKER])
+}
+
+/** Where an explicit opt-in is remembered across navigations. */
+export const DEMO_OPT_IN_KEY = 'jarvis:demo_data'
+
+/**
+ * Has demonstration data been explicitly asked for?
+ *
+ * `?demo=1` turns it on and is remembered; `?demo=0` turns it off and forgets.
+ * Nothing else enables it — in particular, an empty store does NOT fall back to
+ * the sample, which is the whole point of the change.
+ *
+ * Reads defensively: a locked-down or unavailable localStorage must leave the
+ * app empty rather than throwing on boot.
+ */
+export function isDemoRequested(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const param = new URLSearchParams(window.location.search).get('demo')
+    if (param === '1' || param === 'true') {
+      try { window.localStorage.setItem(DEMO_OPT_IN_KEY, '1') } catch { /* private mode */ }
+      return true
+    }
+    if (param === '0' || param === 'false') {
+      try { window.localStorage.removeItem(DEMO_OPT_IN_KEY) } catch { /* private mode */ }
+      return false
+    }
+    return window.localStorage.getItem(DEMO_OPT_IN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 export const DEFAULT_BIZ_STATE: BizState = {
+  [DEMO_SEED_MARKER]: true,
   company:  { name: '', type: '' },
 
   leads: [{
@@ -191,7 +248,37 @@ export const DEFAULT_BIZ_STATE: BizState = {
 }
 
 /**
- * Returns the default state with optional overrides.
+ * What a fresh session starts with: the same SHAPE as the sample, with every
+ * collection empty and no demo marker.
+ *
+ * Derived from `DEFAULT_BIZ_STATE` rather than written out by hand, so a
+ * collection added to the sample cannot be missing here — a hand-maintained
+ * twin would drift, and the failure mode is `undefined.length` inside a view.
+ * Non-array fields (`company`) are reset explicitly; the marker is dropped.
+ */
+export const EMPTY_BIZ_STATE: BizState = (() => {
+  const empty = {} as Record<string, unknown>
+  for (const [key, value] of Object.entries(DEFAULT_BIZ_STATE)) {
+    if (key === DEMO_SEED_MARKER) continue
+    empty[key] = Array.isArray(value) ? [] : value
+  }
+  empty['company'] = { name: '', type: '' }
+  return empty as unknown as BizState
+})()
+
+/**
+ * The state a session should boot with.
+ *
+ * Empty unless demonstration data has been explicitly requested. This is the
+ * single decision point — `$i()` in JarvisCore calls exactly this, so there is
+ * no second path by which the sample can reach a fresh session.
+ */
+export function getInitialBizState(): BizState {
+  return isDemoRequested() ? DEFAULT_BIZ_STATE : EMPTY_BIZ_STATE
+}
+
+/**
+ * Returns the demonstration state with optional overrides.
  * Use for tenant-specific seed data without mutating the base constant.
  */
 export function getDefaultState(overrides?: Partial<BizState>): BizState {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Denver Engineering — MCP Bridge Route
  * ─────────────────────────────────────────────────────────────────────────────
@@ -35,22 +34,30 @@ import { tenantQuery, query }                       from '../db/pool'
 import { assertSafeUrl } from '../lib/ssrfGuard'
 import { slog } from '../../src/modules/observability/index'
 import Anthropic from '@anthropic-ai/sdk'
+import { requireCapability } from '../authz/requireCapability'
+import { collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 // v4.31.0 TS fix: narrow tenantId to required for post-middleware handlers.
 type AuthTenantReq = Request & AuthenticatedRequest & Omit<TenantRequest, 'tenantId'> & { tenantId: string }
 
 const router = Router()
-// Public read-only endpoints (tool catalog + Ava health) bypass auth so the UI
-// can render the tool browser without a full login session.
-const PUBLIC_GET_PATHS = new Set(['/tools', '/ava/health'])
-router.use((req, res, next) => {
-  if (req.method === 'GET' && PUBLIC_GET_PATHS.has(req.path)) return next()
-  return (requireAuth as any)(req, res, next)
-})
-router.use((req, res, next) => {
-  if (req.method === 'GET' && PUBLIC_GET_PATHS.has(req.path)) return next()
-  return (requireTenant as any)(req, res, next)
-})
+// ADR-014 Phase 2B-1: `GET /tools` and `GET /ava/health` used to bypass both
+// guards so "the UI can render the tool browser without a full login session".
+// They are not public data: /tools discloses the tenant's MCP tool catalogue and
+// the configured Ava server host, /ava/health discloses that service's
+// reachability and its error text — platform configuration, unauthenticated.
+// Both surfaces that read them (MCPToolsPage, AutomationView) are Phase 1
+// `platform.admin` screens and always carry a session, so the bypass bought
+// nothing. Every endpoint here now authenticates, resolves a tenant, and
+// authorizes.
+//
+// The replaced wrapper also called `requireTenant` as `(requireTenant as any)(req,
+// res, next)`. `requireTenant` is a factory: that expression built a middleware
+// and threw it away without ever calling `next()`, so every non-bypassed request
+// here hung. It is now mounted correctly, as `requireTenant()`.
+router.use(requireAuth as never)
+router.use(requireTenant() as never)
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 // v4.31.0 test-friendliness: read env vars live (via getters) so tests that
@@ -166,7 +173,7 @@ async function writeAudit(tenantId: string, userId: string | undefined, resource
 
 // ─── GET /api/v1/mcp/tools — merged catalogue ──────────────────────────────────
 
-router.get('/tools', async (req: Request, res: Response) => {
+router.get('/tools', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const AVA_MCP_URL = getAvaMcpUrl()
   const avaTools: unknown[] = []
 
@@ -197,7 +204,7 @@ router.get('/tools', async (req: Request, res: Response) => {
 
 // ─── GET /api/v1/mcp/ava/health ───────────────────────────────────────────────
 
-router.get('/ava/health', async (_req: Request, res: Response) => {
+router.get('/ava/health', requireCapability('platform.admin') as never, async (_req: Request, res: Response) => {
   const AVA_MCP_URL = getAvaMcpUrl()
   if (!AVA_MCP_URL) {
     return res.json({ healthy: false, reason: 'AVA_MCP_URL not configured' })
@@ -215,7 +222,7 @@ router.get('/ava/health', async (_req: Request, res: Response) => {
 
 // ─── POST /api/v1/mcp/execute — unified tool dispatch ─────────────────────────
 
-router.post('/execute', async (req: Request, res: Response) => {
+router.post('/execute', requireCapability('platform.automation') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { tool, params = {}, project_id } = req.body as {
     tool?: string; params?: Record<string, unknown>; project_id?: string
@@ -278,13 +285,26 @@ router.post('/execute', async (req: Request, res: Response) => {
 
 // ─── GET /api/v1/mcp/sessions — agent sessions for tenant ──────────────────────
 
-router.get('/sessions', async (req: Request, res: Response) => {
+router.get('/sessions', requireCapability('platform.admin') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { limit = '20', offset = '0', project_id } = req.query
 
   const params: unknown[] = [r.tenantId]
   let projectFilter = ''
   if (project_id) { params.push(project_id); projectFilter = `AND project_id = $${params.length}` }
+
+  // ADR-014 Phase 3F. `calc_sessions` is DUAL_PROJECT_OR_TENANT: an MCP agent
+  // session created without a project is tenant-level and stays visible, while
+  // one bound to a project needs live membership. platform.admin is held by the
+  // platform administrator as well as the Owner, and §42 is explicit that
+  // administration confers no implicit business-data reach — so the predicate
+  // is load-bearing here rather than holder-neutral. It is ANDed outside
+  // `?project_id=`, which can therefore only narrow (§30), and before LIMIT.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'calc_sessions', 'project_id', `$${params.length + 1}`)
+  const scopeVals = collectionScopeParams(principal, 'calc_sessions')
+  params.push(...scopeVals)
   params.push(parseInt(limit as string), parseInt(offset as string))
 
   try {
@@ -293,6 +313,7 @@ router.get('/sessions', async (req: Request, res: Response) => {
               CASE WHEN pid_svg IS NOT NULL THEN true ELSE false END AS has_pid
        FROM calc_sessions
        WHERE tenant_id = $1 AND tool_name LIKE 'agent:%' ${projectFilter}
+       ${scopeSql}
        ORDER BY created_at DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params

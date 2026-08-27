@@ -12,7 +12,12 @@ import { tenantQuery } from '../../db/pool'
 
 export type ConnectorType =
   | 'slack' | 'teams' | 'email' | 'erp' | 'cmms' | 'bacnet'
-  | 'quickbooks' | 'sap' | 'oracle' | 'webhook' | 'custom'
+  // `billbox` was added to the database enum by migration 090. It was missing,
+  // which meant a BillBox connector row could not exist and every BillBox
+  // emission refused with `provider_not_configured` however correct the
+  // document was. The label is not an adapter — nothing sends until one is
+  // written against a published receiving contract.
+  | 'quickbooks' | 'billbox' | 'sap' | 'oracle' | 'webhook' | 'custom'
 
 export interface ConnectorConfig {
   tenantId:     string
@@ -149,17 +154,34 @@ export async function completeIntegrationJob(
   `, [jobId])
 }
 
+/**
+ * Record a transport failure and schedule the retry.
+ *
+ * Two things this deliberately gets right, because a drained outbox depends on
+ * both:
+ *
+ *   THE JOB GOES BACK TO `pending`. A claimed job is `running`; only `pending`
+ *   rows are re-claimed. Leaving a failed job `running` would strand it — it
+ *   would never retry, never dead-letter, and never surface as either.
+ *
+ *   THE DELAY GROWS WITH THE ATTEMPT. The ladder is read at the job's own
+ *   attempt count, so the second failure waits longer than the first. A fixed
+ *   first-rung delay would hammer a provider that is down at a constant rate,
+ *   which is the thing backoff exists to prevent.
+ *
+ * `attempts` was already incremented by the claim, so it is the number of
+ * attempts MADE. Exhausting `max_attempts` dead-letters instead of retrying.
+ */
 export async function failIntegrationJob(
   jobId: string,
   tenantId: string,
   error: string
 ): Promise<void> {
   const { rows } = await tenantQuery(tenantId, `
-    UPDATE integration_jobs SET error = $1,
-      next_attempt_at = now() + ($2 || ' milliseconds')::interval
-    WHERE id = $3 AND tenant_id = $4
+    UPDATE integration_jobs SET error = $1
+    WHERE id = $2 AND tenant_id = $3
     RETURNING attempts, max_attempts, connector_id
-  `, [error, String(_buildRetryDelay(0)), jobId, tenantId])
+  `, [error, jobId, tenantId])
 
   if (!rows[0]) return
   const { attempts, max_attempts, connector_id } = rows[0]
@@ -168,6 +190,13 @@ export async function failIntegrationJob(
     await tenantQuery(tenantId,
       `UPDATE integration_jobs SET status = 'dead_letter' WHERE id = $1 AND tenant_id = $2`,
       [jobId, tenantId])
+  } else {
+    await tenantQuery(tenantId, `
+      UPDATE integration_jobs
+      SET status = 'pending',
+          next_attempt_at = now() + ($1 || ' milliseconds')::interval
+      WHERE id = $2 AND tenant_id = $3
+    `, [String(_buildRetryDelay(attempts)), jobId, tenantId])
   }
 
   // Increment consecutive failures and recompute health

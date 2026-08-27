@@ -86,14 +86,25 @@ describe('Dashboard — renders without crashing', () => {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 describe('Dashboard — empty state', () => {
-  it('shows welcome message when no leads or contracts', () => {
+  it('names the missing backends rather than telling you to add a lead', async () => {
+    // "Start by adding your first lead or contract" is wrong advice: there is
+    // no leads route and no contracts route, so there is nowhere to add one.
+    // With nothing handed in, the dashboard asks the APIs that DO exist and
+    // reports what is genuinely missing.
     render(<Dashboard biz={emptyBiz()} />)
-    expect(screen.getByText(/welcome to jarvis/i)).toBeDefined()
+    expect(await screen.findByText(/no procurement, document or contract activity/i)).toBeDefined()
+    expect(screen.getByText(/backends that do not exist yet/i)).toBeDefined()
+  })
+
+  it('still welcomes a caller who supplied data of their own', () => {
+    // A populated snapshot is a caller assertion; the original copy applies.
+    render(<Dashboard biz={{ ...emptyBiz(), leads: [{ id: 'L1', status: 'won' }] } as never} />)
+    expect(screen.queryByText(/no procurement, document or contract activity/i)).toBeNull()
   })
 
   it('does not show charts section when empty', () => {
     render(<Dashboard biz={emptyBiz()} />)
-    expect(screen.queryByText('Pipeline Funnel')).toBeNull()
+    expect(screen.queryByText(/Pipeline Funnel/)).toBeNull()
     expect(screen.queryByText('EVM Health')).toBeNull()
   })
 
@@ -231,7 +242,7 @@ describe('Dashboard — activity feed', () => {
 describe('Dashboard — pipeline funnel', () => {
   it('renders funnel chart when leads exist with value', () => {
     render(<Dashboard biz={richBiz()} />)
-    expect(screen.getByText('Pipeline Funnel')).toBeDefined()
+    expect(screen.getByText(/Pipeline Funnel/)).toBeDefined()
   })
 
   it('does not render funnel when all leads have zero value', () => {
@@ -240,7 +251,7 @@ describe('Dashboard — pipeline funnel', () => {
       leads: [{ id: 'L-1', status: 'open', estimated_value: 0, probability: 0 }],
     }
     render(<Dashboard biz={biz} />)
-    expect(screen.queryByText('Pipeline Funnel')).toBeNull()
+    expect(screen.queryByText(/Pipeline Funnel/)).toBeNull()
   })
 })
 

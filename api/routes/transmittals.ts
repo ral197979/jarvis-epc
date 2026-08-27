@@ -24,6 +24,9 @@ import {
   getOverdueTransmittals,
 } from '../services/transmittals/transmittalService'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -37,9 +40,21 @@ const p   = (req: Request, key: string) =>
   qs((req.params as Record<string, string | string[]>)[key]) ?? ''
 
 // GET /transmittals/overdue — must precede /:id
-router.get('/overdue', async (req: Request, res: Response) => {
+router.get('/overdue', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
-    const rows = await getOverdueTransmittals(tid(req))
+    // ADR-014 Phase 3F. `transmittals` is DUAL_PROJECT_OR_TENANT: a transmittal
+    // with no project is a tenant-level record and stays visible to any
+    // docs.view holder; one that names a project needs live membership of it.
+    // The placeholder is symbolic because the service numbers it against its
+    // own parameter list — the service composes SQL, the route decides
+    // authorization.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'transmittals', 'project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'transmittals'),
+    }
+    const rows = await getOverdueTransmittals(tid(req), scope)
     res.json({ data: rows })
   } catch (e) {
     res.status(500).json({ error: 'Failed to get overdue transmittals' })
@@ -47,7 +62,7 @@ router.get('/overdue', async (req: Request, res: Response) => {
 })
 
 // POST /transmittals
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireCapability('docs.write') as never, async (req: Request, res: Response) => {
   const b = req.body as Record<string, unknown>
   if (!b['subject'] || !b['purpose'] || !b['from_party'] || !b['to_party'] ||
       !Array.isArray(b['to_contacts']) || !Array.isArray(b['items'])) {
@@ -64,14 +79,26 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // GET /transmittals
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', requireCapability('docs.view') as never, async (req: Request, res: Response) => {
   try {
+    // ADR-014 Phase 3F. `transmittals` is DUAL_PROJECT_OR_TENANT: a transmittal
+    // with no project is a tenant-level record and stays visible to any
+    // docs.view holder; one that names a project needs live membership of it.
+    // The placeholder is symbolic because the service numbers it against its
+    // own parameter list — the service composes SQL, the route decides
+    // authorization.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'transmittals', 'project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'transmittals'),
+    }
     const rows = await listTransmittals(tid(req), {
       project_id: qs(req.query['project_id'] as string | string[]),
       status:     qs(req.query['status'] as string | string[]),
       purpose:    qs(req.query['purpose'] as string | string[]),
       overdue:    req.query['overdue'] === 'true',
-    })
+    }, scope)
     res.json({ data: rows })
   } catch (e) {
     res.status(500).json({ error: 'Failed to list transmittals' })
@@ -79,7 +106,7 @@ router.get('/', async (req: Request, res: Response) => {
 })
 
 // GET /transmittals/:id
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', requireCapability('docs.view') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   try {
     const result = await getTransmittal(tid(req), p(req, 'id'))
     if (!result) { res.status(404).json({ error: 'Transmittal not found' }); return }
@@ -90,7 +117,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /transmittals/:id/send
-router.post('/:id/send', async (req: Request, res: Response) => {
+router.post('/:id/send', requireCapability('docs.publish') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   try {
     await sendTransmittal(tid(req), p(req, 'id'), sub(req))
     res.json({ data: { sent: true } })
@@ -100,7 +127,7 @@ router.post('/:id/send', async (req: Request, res: Response) => {
 })
 
 // POST /transmittals/:id/respond
-router.post('/:id/respond', async (req: Request, res: Response) => {
+router.post('/:id/respond', requireCapability('docs.write') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   const { response, notes } = req.body as { response?: string; notes?: string }
   const valid = ['approved','approved_with_comments','revise_and_resubmit','rejected','received','no_exception_taken']
   if (!response || !valid.includes(response)) {
@@ -115,7 +142,7 @@ router.post('/:id/respond', async (req: Request, res: Response) => {
 })
 
 // POST /transmittals/:id/close
-router.post('/:id/close', async (req: Request, res: Response) => {
+router.post('/:id/close', requireCapability('docs.publish') as never, requireRecordScope('transmittals') as never, async (req: Request, res: Response) => {
   try {
     await tenantQuery(tid(req),
       `UPDATE transmittals SET status='closed', updated_at=now()

@@ -280,14 +280,26 @@ export async function verifyFix(
 
 // ─── Distinct tag helper (for UI autocomplete) ────────────────────────────────
 
-export async function listUsedSymptoms(tenantId: string): Promise<string[]> {
+/**
+ * ADR-014 Phase 3F §52. This is a FACET — the filter options offered for the
+ * fix library — derived from the same project-bound rows the list returns. A
+ * facet built over rows the caller cannot see leaks their existence just as the
+ * rows would, so it takes the same predicate. `scope` is built by the ROUTE
+ * from the live principal; the service composes SQL and decides nothing.
+ */
+export async function listUsedSymptoms(
+  tenantId: string,
+  scope: { sql: string; params: unknown[] } = { sql: '', params: [] },
+): Promise<string[]> {
+  const scopeSql = scope.sql.replace(/\$SCOPE_USER/g, '$1')
   const res = await tenantQuery<{ s: string }>(tenantId, `
     SELECT DISTINCT unnest(symptoms) AS s
     FROM   knowledge_fixes
     WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    ${scopeSql}
     ORDER  BY s
     LIMIT  500
-  `)
+  `, scope.params)
   return res.rows.map(r => r.s)
 }
 

@@ -243,17 +243,59 @@ export async function expireStaleRecommendations(tenantId: string): Promise<numb
 
 // ─── List Pending ─────────────────────────────────────────────────────────────
 
+/**
+ * Governance columns — what a recommendation IS, not what it is about.
+ *
+ * Enough to run the approval queue: which recommendation, what class of action,
+ * how confident, how urgent, what state, who decided and when.
+ */
+const RECOMMENDATION_GOVERNANCE_COLUMNS = [
+  'id', 'action_id', 'recommended_action', 'category', 'status',
+  'confidence_score', 'impact_score', 'urgency_score', 'min_confidence_threshold',
+  'approval_required', 'generated_by', 'generated_at', 'expires_at',
+  'reviewed_by', 'approved_by', 'executed_by', 'rejection_reason',
+  'reviewed_at', 'executed_at',
+] as const
+
+/**
+ * Columns that carry the tenant's BUSINESS data rather than the AI decision.
+ *
+ * `affected_entities` names the records the action would touch, `data_signals`
+ * and `reason` are the operational evidence it was derived from, and
+ * `rollback_plan`/`preview_data` describe the projected effect on real rows.
+ *
+ * These are exactly the fields `previewRecommendation` returns, and that
+ * endpoint requires `crossdomain.read`. Before ADR-014 Phase 3I this function
+ * issued `SELECT *`, so `GET /ai/recommendations` handed every one of them —
+ * for every pending recommendation in the tenant — to any `ai.govern` holder,
+ * which includes the platform administrator. The list was a strictly larger
+ * disclosure than the endpoint deliberately gated above it.
+ */
+const RECOMMENDATION_BUSINESS_COLUMNS = [
+  'reason', 'data_signals', 'affected_entities', 'rollback_plan', 'preview_data',
+] as const
+
 export async function listPendingRecommendations(
   tenantId: string,
-  limit = 50
+  limit = 50,
+  includeBusinessPayload = false,
 ): Promise<unknown[]> {
+  // Both lists are literals from this module; nothing here comes from a request.
+  const columns = includeBusinessPayload
+    ? [...RECOMMENDATION_GOVERNANCE_COLUMNS, ...RECOMMENDATION_BUSINESS_COLUMNS]
+    : RECOMMENDATION_GOVERNANCE_COLUMNS
   const { rows } = await tenantQuery(tenantId, `
-    SELECT * FROM ai_recommendation_queue
+    SELECT ${columns.join(', ')} FROM ai_recommendation_queue
     WHERE tenant_id = $1 AND status = 'pending' AND expires_at > now()
     ORDER BY urgency_score DESC, generated_at ASC
     LIMIT $2
   `, [tenantId, limit])
   return rows
+}
+
+export const __recommendationColumns = {
+  governance: RECOMMENDATION_GOVERNANCE_COLUMNS,
+  business:   RECOMMENDATION_BUSINESS_COLUMNS,
 }
 
 // ─── Audit Helper ─────────────────────────────────────────────────────────────

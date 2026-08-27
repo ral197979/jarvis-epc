@@ -18,6 +18,8 @@ import { buildProjectCoordination, buildPortfolioCoordination } from '../service
 import { buildProjectReport, buildPortfolioReport } from '../services/copilot/executiveReportService'
 import { buildNarrativeReport } from '../services/copilot/narrativeReportService'
 import { buildPortfolioInsights } from '../services/copilot/portfolioInsightsService'
+import { requireCapability, requireAllCapabilities } from '../authz/requireCapability'
+import { requireProjectScope } from '../authz/recordScope'
 
 type AuthTenantReq = Request & AuthenticatedRequest & TenantRequest
 const router = Router()
@@ -30,7 +32,7 @@ function parseLimit(raw: unknown, fallback: number): number {
   return Math.max(1, Math.min(100, n))
 }
 
-router.get('/copilot/projects/:projectId/focus', async (req: Request, res: Response) => {
+router.get('/copilot/projects/:projectId/focus', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'risk.view', 'quality.view', 'cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const limit = parseLimit(req.query['limit'], 25)
   try {
@@ -42,7 +44,7 @@ router.get('/copilot/projects/:projectId/focus', async (req: Request, res: Respo
   }
 })
 
-router.get('/copilot/focus', async (req: Request, res: Response) => {
+router.get('/copilot/focus', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'risk.view', 'quality.view', 'cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const limit = parseLimit(req.query['limit'], 30)
   try {
@@ -55,7 +57,7 @@ router.get('/copilot/focus', async (req: Request, res: Response) => {
 
 // ── Coordination Copilot: where the project is blocked / out of sync ──────────
 
-router.get('/copilot/projects/:projectId/coordination', async (req: Request, res: Response) => {
+router.get('/copilot/projects/:projectId/coordination', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const limit = parseLimit(req.query['limit'], 50)
   try {
@@ -67,7 +69,7 @@ router.get('/copilot/projects/:projectId/coordination', async (req: Request, res
   }
 })
 
-router.get('/copilot/coordination', async (req: Request, res: Response) => {
+router.get('/copilot/coordination', requireAllCapabilities('assistant.use', 'project.view', 'construction.view', 'engineering.view', 'schedule.view', 'cost.view') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const limit = parseLimit(req.query['limit'], 50)
   try {
@@ -80,7 +82,7 @@ router.get('/copilot/coordination', async (req: Request, res: Response) => {
 
 // ── Executive Copilot: deterministic board / project briefings ────────────────
 
-router.get('/copilot/projects/:projectId/report', async (req: Request, res: Response) => {
+router.get('/copilot/projects/:projectId/report', requireAllCapabilities('assistant.use', 'project.view', 'cost.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const report = await buildProjectReport(r.tenantId!, String(req.params.projectId), new Date())
@@ -91,7 +93,7 @@ router.get('/copilot/projects/:projectId/report', async (req: Request, res: Resp
   }
 })
 
-router.get('/copilot/report', async (_req: Request, res: Response) => {
+router.get('/copilot/report', requireAllCapabilities('assistant.use', 'project.view', 'cost.view') as never, async (_req: Request, res: Response) => {
   const r = _req as AuthTenantReq
   try {
     const report = await buildPortfolioReport(r.tenantId!, new Date())
@@ -103,7 +105,7 @@ router.get('/copilot/report', async (_req: Request, res: Response) => {
 
 // ── Portfolio Copilot: cross-project comparison & resource conflicts ──────────
 
-router.get('/copilot/portfolio', async (_req: Request, res: Response) => {
+router.get('/copilot/portfolio', requireCapability('portfolio.view') as never, async (_req: Request, res: Response) => {
   const r = _req as AuthTenantReq
   try {
     const insights = await buildPortfolioInsights(r.tenantId!, new Date())
@@ -115,7 +117,7 @@ router.get('/copilot/portfolio', async (_req: Request, res: Response) => {
 
 // ── Owner / board narrative report (deterministic, copy-pasteable) ────────────
 
-router.get('/copilot/projects/:projectId/narrative-report', async (req: Request, res: Response) => {
+router.get('/copilot/projects/:projectId/narrative-report', requireAllCapabilities('assistant.use', 'project.view', 'cost.view', 'safety.view', 'quality.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const report = await buildNarrativeReport(r.tenantId!, String(req.params.projectId), new Date())

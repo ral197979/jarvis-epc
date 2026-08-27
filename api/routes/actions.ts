@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Actions Routes (v4.34.0)
  * ────────────────────────────────────────────────
@@ -38,6 +37,19 @@ import { buildDependencyReport } from '../services/actions/actionDependencyGraph
 import { getActionTimeline, publishActionEvent } from '../services/actions/actionEventPublisher'
 import { pauseSla, resumeSla } from '../services/sla/slaPolicyEngine'
 import { getOverview, getTrends, getWorkload } from '../services/actions/actionAnalyticsService'
+import { requireCapability } from '../authz/requireCapability'
+import {
+  requireActionAccess, requireCapabilityForFields, personalPrincipal,
+  isPersonalAdmin, isTenantMember,
+} from '../authz/personalScope'
+import { USER_ROLES } from '../authz/capabilities'
+
+/**
+ * ADR-014 Phase 2C-4A. Ownership fields on an action decide whose Personal
+ * Inbox it belongs to, so writing them is cross-user administration rather than
+ * ordinary personal workflow. Guarded separately from the rest of PATCH /:id.
+ */
+const ASSIGNMENT_FIELDS = ['assigned_to_user_id', 'assigned_to_role'] as const
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -53,18 +65,9 @@ function _pagination(q: Record<string, unknown>) {
   return { page, limit, offset: (page - 1) * limit }
 }
 
-function _requireAdminOrPm(req: Req, res: Response): boolean {
-  const role = req.auth?.role ?? ''
-  if (!['owner','admin','project_manager'].includes(role)) {
-    res.status(403).json({ error: 'forbidden', message: 'project_manager or above required' })
-    return false
-  }
-  return true
-}
-
 // ─── GET /api/v1/actions ─────────────────────────────────────────────────────
 
-actionsRouter.get('/', async (req: Req, res: Response) => {
+actionsRouter.get('/', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -120,11 +123,14 @@ actionsRouter.get('/', async (req: Req, res: Response) => {
 
 // ─── GET /api/v1/actions/my ──────────────────────────────────────────────────
 
-actionsRouter.get('/my', async (req: Req, res: Response) => {
+actionsRouter.get('/my', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
-  const userId = req.auth?.userId
+  // ADR-014 Phase 2C-4A: the live database principal, never `req.auth.userId` —
+  // a field the token does not carry, which made this route answer 401 always.
+  const principal = await personalPrincipal(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const userId = principal.id
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!userId)   { res.status(401).json({ error: 'auth_required' }); return }
 
   const { limit, offset } = _pagination(req.query as Record<string, unknown>)
   const { status } = req.query as Record<string, string>
@@ -154,10 +160,9 @@ actionsRouter.get('/my', async (req: Req, res: Response) => {
 
 // ─── GET /api/v1/actions/overdue ─────────────────────────────────────────────
 
-actionsRouter.get('/overdue', async (req: Req, res: Response) => {
+actionsRouter.get('/overdue', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!_requireAdminOrPm(req, res)) return
 
   const { limit, offset } = _pagination(req.query as Record<string, unknown>)
   const { project_id, system_type, action_type } = req.query as Record<string, string>
@@ -197,7 +202,7 @@ actionsRouter.get('/overdue', async (req: Req, res: Response) => {
 
 // ─── GET /api/v1/actions/summary ─────────────────────────────────────────────
 
-actionsRouter.get('/summary', async (req: Req, res: Response) => {
+actionsRouter.get('/summary', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -239,85 +244,23 @@ actionsRouter.get('/summary', async (req: Req, res: Response) => {
   })
 })
 
-// ─── GET /api/v1/actions/:id ─────────────────────────────────────────────────
-
-actionsRouter.get('/:id', async (req: Req, res: Response) => {
-  const { tenantId } = req
-  const { id } = req.params
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-
-  const [action, escalations] = await Promise.all([
-    tenantQuery(tenantId, `
-      SELECT a.*, p.code AS project_code, p.name AS project_name,
-             u.email AS assigned_user_email
-      FROM actions a
-      LEFT JOIN projects p ON p.id = a.project_id
-      LEFT JOIN users    u ON u.id = a.assigned_to_user_id
-      WHERE a.id = $1
-        AND a.tenant_id = current_setting('app.current_tenant_id',true)::uuid
-    `, [id]),
-    tenantQuery(tenantId, `
-      SELECT * FROM action_escalations
-      WHERE action_id = $1
-        AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
-      ORDER BY escalation_level ASC
-    `, [id]),
-  ])
-
-  if (!action.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
-
-  res.json({ data: { ...action.rows[0], escalations: escalations.rows } })
-})
-
-// ─── PATCH /api/v1/actions/:id ───────────────────────────────────────────────
-
-actionsRouter.patch('/:id', async (req: Req, res: Response) => {
-  const { tenantId } = req
-  const { id } = req.params
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-
-  const { status, priority, assigned_to_user_id, assigned_to_role, description } = req.body as {
-    status?:               string
-    priority?:             string
-    assigned_to_user_id?:  string | null
-    assigned_to_role?:     string | null
-    description?:          string
-  }
-
-  const sets: string[] = ['updated_at = NOW()']
-  const vals: unknown[] = []
-  let i = 1
-
-  if (status !== undefined) {
-    const valid = ['open','in_progress','completed','cancelled']
-    if (!valid.includes(status)) { res.status(400).json({ error: 'invalid_status' }); return }
-    sets.push(`status = $${i++}`); vals.push(status)
-    if (status === 'completed') { sets.push(`completed_at = NOW()`) }
-    if (status === 'cancelled') { sets.push(`cancelled_at = NOW()`) }
-  }
-  if (priority !== undefined)            { sets.push(`priority = $${i++}`);            vals.push(priority) }
-  if (assigned_to_user_id !== undefined) { sets.push(`assigned_to_user_id = $${i++}`); vals.push(assigned_to_user_id) }
-  if (assigned_to_role !== undefined)    { sets.push(`assigned_to_role = $${i++}`);    vals.push(assigned_to_role) }
-  if (description !== undefined)         { sets.push(`description = $${i++}`);         vals.push(description) }
-
-  if (sets.length === 1) { res.status(400).json({ error: 'no_fields_to_update' }); return }
-
-  const result = await tenantQuery(tenantId, `
-    UPDATE actions SET ${sets.join(', ')}
-    WHERE id = $${i}
-      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
-    RETURNING *
-  `, [...vals, id])
-
-  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
-  res.json({ data: result.rows[0] })
-})
-
 // ═══════════════════════════════════════════════════════════════════════════════
-// SLA RULES
+// LITERAL SINGLE-SEGMENT ROUTES — must stay above GET /:id
 // ═══════════════════════════════════════════════════════════════════════════════
+//
+// ADR-014 Phase 2C-5 §24. Express matches in DECLARATION order, so while these
+// three were declared after `GET /:id` every request to /actions/sla-rules,
+// /actions/delegations and /actions/inbox was served by the single-action
+// handler and answered 404 — proved behaviourally in
+// api/__tests__/authzActionsRouteResolution.test.ts before this repair.
+//
+// /inbox additionally lost authority: it declares `personal.admin`, `GET /:id`
+// declares `personal.view`, so the weaker guard was the one that ran.
+//
+// Only the declarations moved; no handler body, path or guard changed. The
+// bodies that follow each POST/PATCH sibling stayed in their domain sections.
 
-actionsRouter.get('/sla-rules', async (req: Req, res: Response) => {
+actionsRouter.get('/sla-rules', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const rows = await tenantQuery(tenantId, `
@@ -328,78 +271,12 @@ actionsRouter.get('/sla-rules', async (req: Req, res: Response) => {
   res.json({ data: rows.rows })
 })
 
-actionsRouter.post('/sla-rules', async (req: Req, res: Response) => {
+actionsRouter.get('/delegations', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!_requireAdminOrPm(req, res)) return
-
-  const { action_type, system_type, default_duration_hours, escalation_levels } = req.body as {
-    action_type:              string
-    system_type?:             string | null
-    default_duration_hours?:  number
-    escalation_levels?:       unknown[]
-  }
-
-  if (!action_type) { res.status(400).json({ error: 'action_type_required' }); return }
-
-  const result = await tenantQuery(tenantId, `
-    INSERT INTO sla_rules (tenant_id, action_type, system_type, default_duration_hours, escalation_levels)
-    VALUES ($1, $2, $3, $4, $5::jsonb)
-    ON CONFLICT (tenant_id, action_type, system_type) DO UPDATE
-      SET default_duration_hours = EXCLUDED.default_duration_hours,
-          escalation_levels      = EXCLUDED.escalation_levels,
-          updated_at             = NOW()
-    RETURNING *
-  `, [
-    tenantId,
-    action_type,
-    system_type ?? null,
-    default_duration_hours ?? 72,
-    JSON.stringify(escalation_levels ?? []),
-  ])
-
-  res.status(201).json({ data: result.rows[0] })
-})
-
-actionsRouter.patch('/sla-rules/:id', async (req: Req, res: Response) => {
-  const { tenantId } = req
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!_requireAdminOrPm(req, res)) return
-
-  const { id } = req.params
-  const { default_duration_hours, escalation_levels, is_active } = req.body as {
-    default_duration_hours?: number
-    escalation_levels?:      unknown[]
-    is_active?:              boolean
-  }
-
-  const sets: string[] = ['updated_at = NOW()']
-  const vals: unknown[] = []
-  let i = 1
-
-  if (default_duration_hours !== undefined) { sets.push(`default_duration_hours = $${i++}`); vals.push(default_duration_hours) }
-  if (escalation_levels !== undefined)      { sets.push(`escalation_levels = $${i++}::jsonb`); vals.push(JSON.stringify(escalation_levels)) }
-  if (is_active !== undefined)              { sets.push(`is_active = $${i++}`); vals.push(is_active) }
-
-  const result = await tenantQuery(tenantId, `
-    UPDATE sla_rules SET ${sets.join(', ')}
-    WHERE id = $${i}
-      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
-    RETURNING *
-  `, [...vals, id])
-
-  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
-  res.json({ data: result.rows[0] })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// APPROVAL DELEGATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-actionsRouter.get('/delegations', async (req: Req, res: Response) => {
-  const { tenantId } = req
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const userId = req.auth?.userId
+  const principal = await personalPrincipal(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const userId = principal.id
 
   const rows = await tenantQuery(tenantId, `
     SELECT d.*,
@@ -416,92 +293,7 @@ actionsRouter.get('/delegations', async (req: Req, res: Response) => {
   res.json({ data: rows.rows })
 })
 
-actionsRouter.post('/delegations', async (req: Req, res: Response) => {
-  const { tenantId } = req
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const userId = req.auth?.userId
-  if (!userId) { res.status(401).json({ error: 'auth_required' }); return }
-
-  const { delegate_user_id, start_date, end_date, scope } = req.body as {
-    delegate_user_id: string
-    start_date:       string
-    end_date:         string
-    scope?:           Record<string, unknown>
-  }
-
-  if (!delegate_user_id) { res.status(400).json({ error: 'delegate_user_id_required' }); return }
-  if (!start_date)       { res.status(400).json({ error: 'start_date_required' }); return }
-  if (!end_date)         { res.status(400).json({ error: 'end_date_required' }); return }
-  if (delegate_user_id === userId) {
-    res.status(400).json({ error: 'cannot_delegate_to_self' }); return
-  }
-
-  // Check for circular delegation (A → B already exists and B → A being attempted)
-  const circularCheck = await tenantQuery<{ count: string }>(tenantId, `
-    SELECT COUNT(*)::text AS count FROM approval_delegations
-    WHERE tenant_id        = current_setting('app.current_tenant_id',true)::uuid
-      AND user_id          = $1
-      AND delegate_user_id = $2
-      AND is_active        = TRUE
-  `, [delegate_user_id, userId])
-
-  if (parseInt(circularCheck.rows[0]?.count ?? '0') > 0) {
-    res.status(400).json({ error: 'circular_delegation', message: 'delegate already delegates to you' })
-    return
-  }
-
-  try {
-    const result = await tenantQuery(tenantId, `
-      INSERT INTO approval_delegations (tenant_id, user_id, delegate_user_id, start_date, end_date, scope, created_by)
-      VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
-      RETURNING *
-    `, [tenantId, userId, delegate_user_id, start_date, end_date, JSON.stringify(scope ?? {}), userId])
-
-    slog('INFO', 'actionsRouter', '[delegation] Created', {
-      user_id: userId, delegate: delegate_user_id, start_date, end_date,
-    })
-    res.status(201).json({ data: result.rows[0] })
-  } catch (err: unknown) {
-    const msg = String(err)
-    if (msg.includes('unique') || msg.includes('duplicate')) {
-      res.status(409).json({ error: 'delegation_already_exists' })
-    } else {
-      res.status(500).json({ error: 'internal_error', message: msg })
-    }
-  }
-})
-
-actionsRouter.patch('/delegations/:id', async (req: Req, res: Response) => {
-  const { tenantId } = req
-  const { id } = req.params
-  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const userId = req.auth?.userId
-
-  // Users can only deactivate their own delegations (or admins can deactivate any)
-  const role = req.auth?.role ?? ''
-  const isAdmin = ['owner','admin'].includes(role)
-
-  const result = await tenantQuery(tenantId, `
-    UPDATE approval_delegations
-    SET    is_active   = FALSE,
-           updated_at  = NOW()
-    WHERE  id          = $1
-      AND  tenant_id   = current_setting('app.current_tenant_id',true)::uuid
-      AND  ($2 OR user_id = $3)
-    RETURNING *
-  `, [id, isAdmin, userId])
-
-  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
-  res.json({ data: result.rows[0] })
-})
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PHASE 2 ROUTES (v4.34.0)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ─── GET /api/v1/actions/inbox ────────────────────────────────────────────────
-
-actionsRouter.get('/inbox', async (req: Req, res: Response) => {
+actionsRouter.get('/inbox', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -589,35 +381,312 @@ actionsRouter.get('/inbox', async (req: Req, res: Response) => {
   res.json({ data, meta: { limit: lim, next_cursor: nextCursor } })
 })
 
+// ─── GET /api/v1/actions/:id ─────────────────────────────────────────────────
+
+actionsRouter.get('/:id', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  const { id } = req.params
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // ADR-014 Phase 2C-4A: personal.view opens the route; ownership decides the record.
+  if (!await requireActionAccess(req, res, id as string)) return
+
+  const [action, escalations] = await Promise.all([
+    tenantQuery(tenantId, `
+      SELECT a.*, p.code AS project_code, p.name AS project_name,
+             u.email AS assigned_user_email
+      FROM actions a
+      LEFT JOIN projects p ON p.id = a.project_id
+      LEFT JOIN users    u ON u.id = a.assigned_to_user_id
+      WHERE a.id = $1
+        AND a.tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    `, [id]),
+    tenantQuery(tenantId, `
+      SELECT * FROM action_escalations
+      WHERE action_id = $1
+        AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+      ORDER BY escalation_level ASC
+    `, [id]),
+  ])
+
+  if (!action.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+
+  res.json({ data: { ...action.rows[0], escalations: escalations.rows } })
+})
+
+// ─── PATCH /api/v1/actions/:id ───────────────────────────────────────────────
+
+actionsRouter.patch('/:id',
+  requireCapability('personal.write') as never,
+  // Reassignment is cross-user administration, not ordinary personal workflow:
+  // it moves the action out of (or into) somebody's inbox. Refused before the
+  // handler runs, so an ordinary holder cannot reach the UPDATE at all.
+  requireCapabilityForFields(ASSIGNMENT_FIELDS, 'personal.admin') as never,
+  async (req: Req, res: Response) => {
+  const { tenantId } = req
+  const { id } = req.params
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const principal = await requireActionAccess(req, res, id as string)
+  if (!principal) return
+
+  const { status, priority, assigned_to_user_id, assigned_to_role, description } = req.body as {
+    status?:               string
+    priority?:             string
+    assigned_to_user_id?:  string | null
+    assigned_to_role?:     string | null
+    description?:          string
+  }
+
+  const sets: string[] = ['updated_at = NOW()']
+  const vals: unknown[] = []
+  let i = 1
+
+  if (status !== undefined) {
+    const valid = ['open','in_progress','completed','cancelled']
+    if (!valid.includes(status)) { res.status(400).json({ error: 'invalid_status' }); return }
+    sets.push(`status = $${i++}`); vals.push(status)
+    if (status === 'completed') { sets.push(`completed_at = NOW()`) }
+    if (status === 'cancelled') { sets.push(`cancelled_at = NOW()`) }
+  }
+  if (priority !== undefined)            { sets.push(`priority = $${i++}`);            vals.push(priority) }
+  if (assigned_to_user_id !== undefined) { sets.push(`assigned_to_user_id = $${i++}`); vals.push(assigned_to_user_id) }
+  if (assigned_to_role !== undefined)    { sets.push(`assigned_to_role = $${i++}`);    vals.push(assigned_to_role) }
+  if (description !== undefined)         { sets.push(`description = $${i++}`);         vals.push(description) }
+
+  if (sets.length === 1) { res.status(400).json({ error: 'no_fields_to_update' }); return }
+
+  // A tenant administrator may move work between inboxes in THIS tenant only.
+  // Holding personal.admin must not become a way to attach this tenant's work
+  // to a principal from another one.
+  if (assigned_to_user_id != null) {
+    if (!await isTenantMember(tenantId, assigned_to_user_id)) {
+      res.status(422).json({ error: 'assignee_not_in_tenant' }); return
+    }
+  }
+  if (assigned_to_role != null && !(USER_ROLES as readonly string[]).includes(assigned_to_role)) {
+    res.status(422).json({ error: 'invalid_role' }); return
+  }
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE actions SET ${sets.join(', ')}
+    WHERE id = $${i}
+      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    RETURNING *
+  `, [...vals, id])
+
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  res.json({ data: result.rows[0] })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SLA RULES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+actionsRouter.post('/sla-rules', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const { action_type, system_type, default_duration_hours, escalation_levels } = req.body as {
+    action_type:              string
+    system_type?:             string | null
+    default_duration_hours?:  number
+    escalation_levels?:       unknown[]
+  }
+
+  if (!action_type) { res.status(400).json({ error: 'action_type_required' }); return }
+
+  const result = await tenantQuery(tenantId, `
+    INSERT INTO sla_rules (tenant_id, action_type, system_type, default_duration_hours, escalation_levels)
+    VALUES ($1, $2, $3, $4, $5::jsonb)
+    ON CONFLICT (tenant_id, action_type, system_type) DO UPDATE
+      SET default_duration_hours = EXCLUDED.default_duration_hours,
+          escalation_levels      = EXCLUDED.escalation_levels,
+          updated_at             = NOW()
+    RETURNING *
+  `, [
+    tenantId,
+    action_type,
+    system_type ?? null,
+    default_duration_hours ?? 72,
+    JSON.stringify(escalation_levels ?? []),
+  ])
+
+  res.status(201).json({ data: result.rows[0] })
+})
+
+actionsRouter.patch('/sla-rules/:id', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const { id } = req.params
+  const { default_duration_hours, escalation_levels, is_active } = req.body as {
+    default_duration_hours?: number
+    escalation_levels?:      unknown[]
+    is_active?:              boolean
+  }
+
+  const sets: string[] = ['updated_at = NOW()']
+  const vals: unknown[] = []
+  let i = 1
+
+  if (default_duration_hours !== undefined) { sets.push(`default_duration_hours = $${i++}`); vals.push(default_duration_hours) }
+  if (escalation_levels !== undefined)      { sets.push(`escalation_levels = $${i++}::jsonb`); vals.push(JSON.stringify(escalation_levels)) }
+  if (is_active !== undefined)              { sets.push(`is_active = $${i++}`); vals.push(is_active) }
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE sla_rules SET ${sets.join(', ')}
+    WHERE id = $${i}
+      AND tenant_id = current_setting('app.current_tenant_id',true)::uuid
+    RETURNING *
+  `, [...vals, id])
+
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  res.json({ data: result.rows[0] })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APPROVAL DELEGATIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+actionsRouter.post('/delegations', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // The delegator is ALWAYS the live principal. Before ADR-014 Phase 2C-4A this
+  // read `req.auth?.userId`, a field the token does not carry, so the route
+  // answered 401 unconditionally and self-service delegation never worked.
+  const principal = await personalPrincipal(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const userId = principal.id
+
+  // Delegating somebody else's queue is cross-user administration and is not
+  // available through this route at all — not even to a personal.admin holder,
+  // who has no way here to say whose queue is being delegated.
+  const body = (req.body ?? {}) as Record<string, unknown>
+  for (const forbidden of ['user_id', 'delegator_id', 'delegator_user_id', 'created_by']) {
+    if (Object.prototype.hasOwnProperty.call(body, forbidden)) {
+      res.status(403).json({ error: 'forbidden', restricted_fields: [forbidden] }); return
+    }
+  }
+
+  const { delegate_user_id, start_date, end_date, scope } = req.body as {
+    delegate_user_id: string
+    start_date:       string
+    end_date:         string
+    scope?:           Record<string, unknown>
+  }
+
+  if (!delegate_user_id) { res.status(400).json({ error: 'delegate_user_id_required' }); return }
+  if (!start_date)       { res.status(400).json({ error: 'start_date_required' }); return }
+  if (!end_date)         { res.status(400).json({ error: 'end_date_required' }); return }
+  if (delegate_user_id === userId) {
+    res.status(400).json({ error: 'cannot_delegate_to_self' }); return
+  }
+  // Tenant A must not be able to nominate a delegate from tenant B.
+  if (!await isTenantMember(tenantId, delegate_user_id)) {
+    res.status(422).json({ error: 'delegate_not_in_tenant' }); return
+  }
+
+  // Check for circular delegation (A → B already exists and B → A being attempted)
+  const circularCheck = await tenantQuery<{ count: string }>(tenantId, `
+    SELECT COUNT(*)::text AS count FROM approval_delegations
+    WHERE tenant_id        = current_setting('app.current_tenant_id',true)::uuid
+      AND user_id          = $1
+      AND delegate_user_id = $2
+      AND is_active        = TRUE
+  `, [delegate_user_id, userId])
+
+  if (parseInt(circularCheck.rows[0]?.count ?? '0') > 0) {
+    res.status(400).json({ error: 'circular_delegation', message: 'delegate already delegates to you' })
+    return
+  }
+
+  try {
+    const result = await tenantQuery(tenantId, `
+      INSERT INTO approval_delegations (tenant_id, user_id, delegate_user_id, start_date, end_date, scope, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
+      RETURNING *
+    `, [tenantId, userId, delegate_user_id, start_date, end_date, JSON.stringify(scope ?? {}), userId])
+
+    slog('INFO', 'actionsRouter', '[delegation] Created', {
+      user_id: userId, delegate: delegate_user_id, start_date, end_date,
+    })
+    res.status(201).json({ data: result.rows[0] })
+  } catch (err: unknown) {
+    const msg = String(err)
+    if (msg.includes('unique') || msg.includes('duplicate')) {
+      res.status(409).json({ error: 'delegation_already_exists' })
+    } else {
+      res.status(500).json({ error: 'internal_error', message: msg })
+    }
+  }
+})
+
+actionsRouter.patch('/delegations/:id', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
+  const { tenantId } = req
+  const { id } = req.params
+  if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  const principal = await personalPrincipal(req)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const userId = principal.id
+
+  // A user deactivates their own delegation. Deactivating somebody else's is
+  // cross-user Personal Inbox administration and needs personal.admin — which
+  // the platform administrator deliberately does not hold. Before ADR-014 Phase
+  // 2C-4A this branch was `['owner','admin'].includes(req.auth?.role)`: authority
+  // read from the token, so a demoted user kept it until the token expired.
+  const isAdmin = isPersonalAdmin(principal)
+
+  const result = await tenantQuery(tenantId, `
+    UPDATE approval_delegations
+    SET    is_active   = FALSE,
+           updated_at  = NOW()
+    WHERE  id          = $1
+      AND  tenant_id   = current_setting('app.current_tenant_id',true)::uuid
+      AND  ($2 OR user_id = $3)
+    RETURNING *
+  `, [id, isAdmin, userId])
+
+  if (!result.rows[0]) { res.status(404).json({ error: 'not_found' }); return }
+  res.json({ data: result.rows[0] })
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHASE 2 ROUTES (v4.34.0)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── GET /api/v1/actions/inbox ────────────────────────────────────────────────
+
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
-actionsRouter.get('/analytics/overview', async (req: Req, res: Response) => {
+actionsRouter.get('/analytics/overview', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   res.json({ data: await getOverview(tenantId) })
 })
 
-actionsRouter.get('/analytics/trends', async (req: Req, res: Response) => {
+actionsRouter.get('/analytics/trends', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const days = Math.min(365, parseInt(String(req.query['days'] ?? '30'), 10))
   res.json({ data: await getTrends(tenantId, days) })
 })
 
-actionsRouter.get('/analytics/workload', async (req: Req, res: Response) => {
+actionsRouter.get('/analytics/workload', requireCapability('personal.admin') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!_requireAdminOrPm(req, res)) return
   const limit = Math.min(50, parseInt(String(req.query['limit'] ?? '20'), 10))
   res.json({ data: await getWorkload(tenantId, limit) })
 })
 
 // ─── Relationships ────────────────────────────────────────────────────────────
 
-actionsRouter.post('/:id/relationships', async (req: Req, res: Response) => {
+actionsRouter.post('/:id/relationships', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+
+  const principal = await requireActionAccess(req, res, id as string)
+  if (!principal) return
 
   const { target_action_id, relation_type, notes } = req.body as Record<string, string>
   if (!target_action_id || !relation_type) {
@@ -629,7 +698,7 @@ actionsRouter.post('/:id/relationships', async (req: Req, res: Response) => {
     targetActionId: target_action_id,
     relationType:   relation_type as never,
     notes:          notes ?? null,
-    actorId:        req.auth?.userId ?? null,
+    actorId:        principal.id,
   })
 
   if (error === 'cycle_detected')            { res.status(409).json({ error }); return }
@@ -640,28 +709,46 @@ actionsRouter.post('/:id/relationships', async (req: Req, res: Response) => {
   res.status(201).json({ data: relation })
 })
 
-actionsRouter.get('/:id/relationships', async (req: Req, res: Response) => {
+actionsRouter.get('/:id/relationships', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // ADR-014 Phase 2C-4A: personal.view opens the route; ownership decides the record.
+  if (!await requireActionAccess(req, res, id as string)) return
   const direction = (req.query['direction'] as 'inbound' | 'outbound' | 'both') ?? 'both'
   res.json({ data: await listRelations(tenantId, id as string, direction) })
 })
 
-actionsRouter.delete('/relationships/:relId', async (req: Req, res: Response) => {
+actionsRouter.delete('/relationships/:relId', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  const deleted = await deleteRelation(tenantId, req.params.relId as string, req.auth?.userId ?? null)
+
+  // Authorize against the action the relation hangs off, not the relation id.
+  // "The relation exists in my tenant" is not ownership — it would let any
+  // personal.write holder unpick another user's dependency graph.
+  const parent = await tenantQuery<{ source_action_id: string }>(tenantId, `
+    SELECT source_action_id FROM action_relations
+    WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
+  `, [req.params.relId, tenantId])
+  const sourceActionId = parent.rows[0]?.source_action_id
+  if (!sourceActionId) { res.status(404).json({ error: 'not_found' }); return }
+
+  const principal = await requireActionAccess(req, res, sourceActionId)
+  if (!principal) return
+
+  const deleted = await deleteRelation(tenantId, req.params.relId as string, principal.id)
   if (!deleted) { res.status(404).json({ error: 'not_found' }); return }
   res.json({ deleted: true })
 })
 
 // ─── Timeline ─────────────────────────────────────────────────────────────────
 
-actionsRouter.get('/:id/timeline', async (req: Req, res: Response) => {
+actionsRouter.get('/:id/timeline', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // ADR-014 Phase 2C-4A: personal.view opens the route; ownership decides the record.
+  if (!await requireActionAccess(req, res, id as string)) return
   const limit  = Math.min(200, parseInt(String(req.query['limit'] ?? '100'), 10))
   const before = req.query['before'] as string | undefined
   res.json({ data: await getActionTimeline(tenantId, id as string, limit, before) })
@@ -669,31 +756,39 @@ actionsRouter.get('/:id/timeline', async (req: Req, res: Response) => {
 
 // ─── Dependencies ─────────────────────────────────────────────────────────────
 
-actionsRouter.get('/:id/dependencies', async (req: Req, res: Response) => {
+actionsRouter.get('/:id/dependencies', requireCapability('personal.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // ADR-014 Phase 2C-4A: personal.view opens the route; ownership decides the record.
+  if (!await requireActionAccess(req, res, id as string)) return
   res.json({ data: await buildDependencyReport(tenantId, id as string) })
 })
 
 // ─── SLA pause / resume ───────────────────────────────────────────────────────
 
-actionsRouter.post('/:id/sla/pause', async (req: Req, res: Response) => {
+actionsRouter.post('/:id/sla/pause', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  // Action-local SLA state, not tenant SLA policy — so personal.write, not
+  // personal.admin, despite `sla` in the path. Policy lives on /sla-rules.
+  const principal = await requireActionAccess(req, res, id as string)
+  if (!principal) return
   const paused = await pauseSla(tenantId, id as string)
   if (!paused) { res.status(409).json({ error: 'not_active_or_not_found' }); return }
-  void publishActionEvent(tenantId, id as string, 'sla_paused', req.auth?.userId ?? null)
+  void publishActionEvent(tenantId, id as string, 'sla_paused', principal.id)
   res.json({ paused: true })
 })
 
-actionsRouter.post('/:id/sla/resume', async (req: Req, res: Response) => {
+actionsRouter.post('/:id/sla/resume', requireCapability('personal.write') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   const { id } = req.params
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
+  const principal = await requireActionAccess(req, res, id as string)
+  if (!principal) return
   const resumed = await resumeSla(tenantId, id as string)
   if (!resumed) { res.status(409).json({ error: 'not_paused_or_not_found' }); return }
-  void publishActionEvent(tenantId, id as string, 'sla_resumed', req.auth?.userId ?? null)
+  void publishActionEvent(tenantId, id as string, 'sla_resumed', principal.id)
   res.json({ resumed: true })
 })

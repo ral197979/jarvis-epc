@@ -18,6 +18,8 @@ import { Router, Response } from 'express'
 import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope } from '../authz/recordScope'
 import { askJarvis } from '../services/askBuilder'
 import { AiBudgetExceededError } from '../services/enterprise/aiCostTracker'
 
@@ -26,6 +28,13 @@ type Req = AuthenticatedRequest & TenantRequest
 const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
+// ADR-014 Phase 2 §20: the UI hides Ask Jarvis from roles without
+// `assistant.use`, but the endpoint itself accepted any authenticated tenant
+// user, so the route denial was bypassable by calling the API directly. Every
+// operation on this router now requires the same capability the sidebar reads.
+// NOTE: this authorizes *use of the endpoint*. It does not filter which
+// documents the retriever may return — that is Phase 3.
+router.use(requireCapability('assistant.use') as never)
 
 // ─── Prompt injection guard ───────────────────────────────────────────────────
 
@@ -184,12 +193,9 @@ router.post('/sessions/:id/resolve', async (req: Req, res: Response) => {
 
 // ─── DELETE /ask/sessions/:id (admin) ─────────────────────────────────────────
 
-router.delete('/sessions/:id', async (req: Req, res: Response) => {
+router.delete('/sessions/:id', requireCapability('assistant.admin') as never, requireRecordScope('chat_sessions') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden' }); return
-  }
   const r = await tenantQuery<{ id: string }>(tenantId, `
     DELETE FROM chat_sessions
     WHERE id = $1
@@ -202,7 +208,7 @@ router.delete('/sessions/:id', async (req: Req, res: Response) => {
 
 // ─── GET /ask/chunks/:id — citation hover/modal ────────────────────────────────
 
-router.get('/chunks/:id', async (req: Req, res: Response) => {
+router.get('/chunks/:id', requireRecordScope('knowledge_chunks') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
   const r = await tenantQuery(tenantId, `

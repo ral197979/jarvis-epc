@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * Denver Engineering — Team & Workforce API Routes (v10.13.0)
  *
@@ -17,6 +16,9 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { createMember, listMembers, getMember, updateMember, createAssignment, listAssignmentsByMember, listAssignmentsByProject, endAssignment, getTeamSummary, type MemberStatus } from '../services/team/teamService'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope, requireBodyProjectScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type R = Request & AuthenticatedRequest & TenantRequest
 const p = (req: Request, key: string) => {
@@ -32,13 +34,13 @@ export const teamRouter = Router()
 teamRouter.use(requireAuth     as never)
 teamRouter.use(requireTenant() as never)
 
-teamRouter.get('/team/summary', async (req: Request, res: Response) => {
+teamRouter.get('/team/summary', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ summary: await getTeamSummary(r.tenantId!) }) }
   catch (e) { res.status(500).json({ error: 'Failed to load team summary' }) }
 })
 
-teamRouter.post('/team/members', async (req: Request, res: Response) => {
+teamRouter.post('/team/members', requireCapability('team.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { firstName, lastName, role } = req.body as Record<string, unknown>
   if (!firstName || !lastName || !role) {
@@ -48,7 +50,7 @@ teamRouter.post('/team/members', async (req: Request, res: Response) => {
   catch (e) { res.status(500).json({ error: 'Failed to create member' }) }
 })
 
-teamRouter.get('/team/members', async (req: Request, res: Response) => {
+teamRouter.get('/team/members', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const members = await listMembers(r.tenantId!, {
@@ -59,16 +61,27 @@ teamRouter.get('/team/members', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to list members' }) }
 })
 
-teamRouter.get('/team/members/:id', async (req: Request, res: Response) => {
+teamRouter.get('/team/members/:id', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
-    const member = await getMember(r.tenantId!, p(req, 'id'))
+    // ADR-014 Phase 3G §4/§5. The member itself keeps its own `team.view`
+    // authority — a caller is not denied knowledge that Jane exists because
+    // Jane works on a project they cannot reach. What IS filtered are the
+    // project-bound rows beneath her. `project_assignments` is PROJECT_REQUIRED,
+    // so the predicate is a plain membership test.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'project_assignments', 'a.project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'project_assignments'),
+    }
+    const member = await getMember(r.tenantId!, p(req, 'id'), scope)
     if (!member) { res.status(404).json({ error: 'Member not found' }); return }
     res.json({ member })
   } catch (e) { res.status(500).json({ error: 'Failed to get member' }) }
 })
 
-teamRouter.patch('/team/members/:id', async (req: Request, res: Response) => {
+teamRouter.patch('/team/members/:id', requireCapability('team.write') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const member = await updateMember(r.tenantId!, p(req, 'id'), req.body)
@@ -77,13 +90,26 @@ teamRouter.patch('/team/members/:id', async (req: Request, res: Response) => {
   } catch (e) { res.status(500).json({ error: 'Failed to update member' }) }
 })
 
-teamRouter.get('/team/members/:id/assignments', async (req: Request, res: Response) => {
+teamRouter.get('/team/members/:id/assignments', requireCapability('team.view') as never, async (req: Request, res: Response) => {
   const r = req as R
-  try { res.json({ assignments: await listAssignmentsByMember(r.tenantId!, p(req, 'id')) }) }
+  try {
+    // ADR-014 Phase 3G §4/§5. The member itself keeps its own `team.view`
+    // authority — a caller is not denied knowledge that Jane exists because
+    // Jane works on a project they cannot reach. What IS filtered are the
+    // project-bound rows beneath her. `project_assignments` is PROJECT_REQUIRED,
+    // so the predicate is a plain membership test.
+    const principal = await resolveCurrentUser(req as never)
+    if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+    const scope = {
+      sql:    collectionScopeSql(principal, 'project_assignments', 'a.project_id', '$SCOPE_USER'),
+      params: collectionScopeParams(principal, 'project_assignments'),
+    }
+    res.json({ assignments: await listAssignmentsByMember(r.tenantId!, p(req, 'id'), scope) })
+  }
   catch (e) { res.status(500).json({ error: 'Failed to list assignments' }) }
 })
 
-teamRouter.post('/team/assignments', async (req: Request, res: Response) => {
+teamRouter.post('/team/assignments', requireCapability('team.approve') as never, requireBodyProjectScope('projectId') as never, async (req: Request, res: Response) => {
   const r = req as R
   const { memberId, projectId, assignmentRole, startDate } = req.body as Record<string, unknown>
   if (!memberId || !projectId || !assignmentRole || !startDate) {
@@ -93,13 +119,13 @@ teamRouter.post('/team/assignments', async (req: Request, res: Response) => {
   catch (e) { res.status(500).json({ error: 'Failed to create assignment' }) }
 })
 
-teamRouter.get('/projects/:projectId/team', async (req: Request, res: Response) => {
+teamRouter.get('/projects/:projectId/team', requireCapability('team.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as R
   try { res.json({ assignments: await listAssignmentsByProject(r.tenantId!, p(req, 'projectId')) }) }
   catch (e) { res.status(500).json({ error: 'Failed to list project team' }) }
 })
 
-teamRouter.post('/team/assignments/:id/end', async (req: Request, res: Response) => {
+teamRouter.post('/team/assignments/:id/end', requireCapability('team.approve') as never, requireRecordScope('project_assignments') as never, async (req: Request, res: Response) => {
   const r = req as R
   try {
     const ok = await endAssignment(r.tenantId!, p(req, 'id'))

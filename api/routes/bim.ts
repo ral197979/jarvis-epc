@@ -18,6 +18,8 @@ import { Router, Request, Response } from 'express'
 import { requireAuth, type AuthenticatedRequest } from '../auth'
 import { requireTenant, type TenantRequest } from '../middleware/tenant'
 import { tenantQuery } from '../db/pool'
+import { requireCapability } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 import { createAction } from '../services/actionService'  // v4.33.0 Ava
 import { getApsViewerToken, fromStorageKey } from '../services/bim/apsViewerService' // v10.2.0
 
@@ -28,7 +30,7 @@ router.use(requireTenant() as any)
 
 const FORMATS = new Set(['ifc','glb','gltf','nwd','rvt'])
 
-router.get('/projects/:projectId/bim-models', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/bim-models', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -41,7 +43,7 @@ router.get('/projects/:projectId/bim-models', async (req: Request, res: Response
   }
 })
 
-router.post('/projects/:projectId/bim-models', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/bim-models', requireCapability('engineering.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.name || !b.format) return res.status(400).json({ error: 'name and format required' })
@@ -64,7 +66,7 @@ router.post('/projects/:projectId/bim-models', async (req: Request, res: Respons
   }
 })
 
-router.get('/bim-models/:id', async (req: Request, res: Response) => {
+router.get('/bim-models/:id', requireCapability('engineering.view') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const result = await tenantQuery(r.tenantId!,
@@ -77,7 +79,7 @@ router.get('/bim-models/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.patch('/bim-models/:id', async (req: Request, res: Response) => {
+router.patch('/bim-models/:id', requireCapability('engineering.write') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['name','discipline','document_id','size_bytes','element_count',
                    'coord_system','georef','metadata','status']
@@ -98,7 +100,7 @@ router.patch('/bim-models/:id', async (req: Request, res: Response) => {
   }
 })
 
-router.delete('/bim-models/:id', async (req: Request, res: Response) => {
+router.delete('/bim-models/:id', requireCapability('engineering.write') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     await tenantQuery(r.tenantId!,
@@ -113,7 +115,7 @@ router.delete('/bim-models/:id', async (req: Request, res: Response) => {
 // ─── APS Viewer token ────────────────────────────────────────────────────────
 // Returns a short-lived APS 2-legged token + URN for the embedded Forge viewer.
 // The viewer runs entirely in the browser; this endpoint only provides auth.
-router.get('/bim-models/:id/viewer-token', async (req: Request, res: Response) => {
+router.get('/bim-models/:id/viewer-token', requireCapability('engineering.view') as never, requireRecordScope('bim_models') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   try {
     const modelRes = await tenantQuery(r.tenantId!,
@@ -133,7 +135,7 @@ router.get('/bim-models/:id/viewer-token', async (req: Request, res: Response) =
 })
 
 // ─── BIM Issues ──────────────────────────────────────────────────────────────
-router.get('/projects/:projectId/bim-issues', async (req: Request, res: Response) => {
+router.get('/projects/:projectId/bim-issues', requireCapability('engineering.view') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const { status, severity, model_id } = req.query
   const params: unknown[] = [r.tenantId!, req.params.projectId]
@@ -152,7 +154,7 @@ router.get('/projects/:projectId/bim-issues', async (req: Request, res: Response
   }
 })
 
-router.post('/projects/:projectId/bim-issues', async (req: Request, res: Response) => {
+router.post('/projects/:projectId/bim-issues', requireCapability('engineering.write') as never, requireProjectScope() as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const b = req.body ?? {}
   if (!b.title) return res.status(400).json({ error: 'title required' })
@@ -184,7 +186,7 @@ router.post('/projects/:projectId/bim-issues', async (req: Request, res: Respons
   }
 })
 
-router.patch('/bim-issues/:id', async (req: Request, res: Response) => {
+router.patch('/bim-issues/:id', requireCapability('engineering.write') as never, requireRecordScope('bim_issues') as never, async (req: Request, res: Response) => {
   const r = req as AuthTenantReq
   const allowed = ['title','description','severity','status','element_ids','viewpoint','assigned_to']
   const updates = Object.entries(req.body).filter(([k]) => allowed.includes(k))

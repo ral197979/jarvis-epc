@@ -23,6 +23,9 @@ import { tenantQuery } from '../db/pool'
 import { requireAuth, AuthenticatedRequest } from '../auth'
 import { requireTenant, TenantRequest } from '../middleware/tenant'
 import { arbitrate } from '../services/ciArbiter'
+import { requireCapability } from '../authz/requireCapability'
+import { requireRecordScope, collectionScopeSql, collectionScopeParams } from '../authz/recordScope'
+import { resolveCurrentUser } from '../authz/currentUser'
 
 type Req = AuthenticatedRequest & TenantRequest
 
@@ -30,13 +33,6 @@ const router = Router()
 router.use(requireAuth as never)
 router.use(requireTenant() as never)
 
-function _requireAdmin(req: Req, res: Response): boolean {
-  if (!['owner','admin'].includes(req.auth?.role ?? '')) {
-    res.status(403).json({ error: 'forbidden', message: 'owner/admin role required' })
-    return false
-  }
-  return true
-}
 
 function _pagination(q: Record<string, unknown>) {
   const page  = Math.max(1, parseInt(String(q['page'] ?? '1'), 10))
@@ -46,7 +42,7 @@ function _pagination(q: Record<string, unknown>) {
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
-router.get('/', async (req: Req, res: Response) => {
+router.get('/', requireCapability('commissioning.view') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -65,6 +61,17 @@ router.get('/', async (req: Req, res: Response) => {
   }
   const where = conds.length ? `AND ${conds.join(' AND ')}` : ''
 
+  // ADR-014 Phase 3F. `commissioning_autosign_rules` is DUAL_PROJECT_OR_TENANT,
+  // declared explicitly by migration 016's
+  // `scope CHECK (scope IN ('global','client','project'))`: a global autosign
+  // rule is a designed state, not an orphan, and must stay visible. A rule that
+  // names a project needs live membership of it. Same predicate on the COUNT.
+  const principal = await resolveCurrentUser(req as never)
+  if (!principal) { res.status(401).json({ error: 'unauthenticated' }); return }
+  const scopeSql  = collectionScopeSql(principal, 'commissioning_autosign_rules', 'project_id', `$${i}`)
+  const scopeVals = collectionScopeParams(principal, 'commissioning_autosign_rules')
+  const j = i + scopeVals.length
+
   const [rows, countRow] = await Promise.all([
     tenantQuery(tenantId, `
       SELECT id, scope, client_id, project_id, system_type, criteria_name, criteria_kind,
@@ -73,21 +80,22 @@ router.get('/', async (req: Req, res: Response) => {
              created_at, updated_at
       FROM   commissioning_autosign_rules
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
+      ${scopeSql}
       ORDER  BY system_type, criteria_name, scope
-      LIMIT  $${i} OFFSET $${i + 1}
-    `, [...vals, limit, offset]),
+      LIMIT  $${j} OFFSET $${j + 1}
+    `, [...vals, ...scopeVals, limit, offset]),
     tenantQuery<{ count: string }>(tenantId, `
       SELECT COUNT(*)::text AS count FROM commissioning_autosign_rules
       WHERE  tenant_id = current_setting('app.current_tenant_id',true)::uuid ${where}
-    `, vals),
+      ${scopeSql}
+    `, [...vals, ...scopeVals]),
   ])
 
   const total = parseInt(countRow.rows[0]?.count ?? '0', 10)
   res.json({ data: rows.rows, pagination: { page, limit, total, pages: Math.ceil(total / limit) } })
 })
 
-router.post('/', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.post('/', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -148,8 +156,7 @@ router.post('/', async (req: Req, res: Response) => {
   }
 })
 
-router.patch('/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.patch('/:id', requireCapability('commissioning.approve') as never, requireRecordScope('commissioning_autosign_rules') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -177,8 +184,7 @@ router.patch('/:id', async (req: Req, res: Response) => {
   res.json({ data: result.rows[0] })
 })
 
-router.delete('/:id', async (req: Req, res: Response) => {
-  if (!_requireAdmin(req, res)) return
+router.delete('/:id', requireCapability('commissioning.approve') as never, requireRecordScope('commissioning_autosign_rules') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 
@@ -194,7 +200,7 @@ router.delete('/:id', async (req: Req, res: Response) => {
 
 // ─── Arbitration ──────────────────────────────────────────────────────────────
 
-router.post('/arbitrate', async (req: Req, res: Response) => {
+router.post('/arbitrate', requireCapability('commissioning.approve') as never, async (req: Req, res: Response) => {
   const { tenantId } = req
   if (!tenantId) { res.status(400).json({ error: 'tenant_required' }); return }
 

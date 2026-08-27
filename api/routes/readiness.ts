@@ -14,11 +14,13 @@ import {
   computeReadiness, persistReadinessScore, type ReadinessDomain,
 } from '../services/readiness/readinessEngine'
 
+import { requireAllCapabilities } from '../authz/requireCapability'
+import { requireProjectScope, requireRecordScope } from '../authz/recordScope'
 export const readinessRouter = Router()
 
 // ─── GET /readiness/project/:id ───────────────────────────────────────────────
 
-readinessRouter.get('/project/:id', async (req: Request, res: Response) => {
+readinessRouter.get('/project/:id', requireAllCapabilities('project.view', 'quality.view') as never, requireProjectScope('id') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const projectId = req.params['id'] as string
   const domain    = (req.query['domain'] as ReadinessDomain) ?? 'project'
@@ -44,7 +46,7 @@ readinessRouter.get('/project/:id', async (req: Request, res: Response) => {
 
 // ─── GET /readiness/system/:id ────────────────────────────────────────────────
 
-readinessRouter.get('/system/:id', async (req: Request, res: Response) => {
+readinessRouter.get('/system/:id', requireAllCapabilities('commissioning.view', 'quality.view') as never, requireRecordScope('systems') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
   const systemId = req.params['id'] as string
 
@@ -62,7 +64,7 @@ readinessRouter.get('/system/:id', async (req: Request, res: Response) => {
 
 // ─── GET /readiness/subsystem/:id ─────────────────────────────────────────────
 
-readinessRouter.get('/subsystem/:id', async (req: Request, res: Response) => {
+readinessRouter.get('/subsystem/:id', requireAllCapabilities('commissioning.view', 'quality.view') as never, requireRecordScope('subsystems') as never, async (req: Request, res: Response) => {
   const tenantId    = req.tenantId!
   const subsystemId = req.params['id'] as string
 
@@ -74,7 +76,7 @@ readinessRouter.get('/subsystem/:id', async (req: Request, res: Response) => {
 
 // ─── GET /readiness/project/:id/history ──────────────────────────────────────
 
-readinessRouter.get('/project/:id/history', async (req: Request, res: Response) => {
+readinessRouter.get('/project/:id/history', requireAllCapabilities('project.view', 'quality.view') as never, requireProjectScope('id') as never, async (req: Request, res: Response) => {
   const tenantId  = req.tenantId!
   const projectId = req.params['id']!
   const domain    = (req.query['domain'] as string) ?? 'project'
@@ -93,7 +95,7 @@ readinessRouter.get('/project/:id/history', async (req: Request, res: Response) 
 
 // ─── GET /readiness/overview ──────────────────────────────────────────────────
 
-readinessRouter.get('/overview', async (req: Request, res: Response) => {
+readinessRouter.get('/overview', requireAllCapabilities('project.view', 'quality.view') as never, async (req: Request, res: Response) => {
   const tenantId = req.tenantId!
 
   const res2 = await tenantQuery(tenantId, `
