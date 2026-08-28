@@ -1,9 +1,31 @@
-# Disaster Recovery Runbook — Denver Engineering
+# Disaster Recovery Runbook — Denver Engineering (SUPERSEDED — retained for history)
 
-**Version:** 10.0.0  
-**RTO Target:** 4 hours  
-**RPO Target:** 1 hour  
-**Last Updated:** 2026-05-07
+> ## ⚠️ This runbook describes infrastructure that does not exist. Do not follow it in an incident.
+>
+> Every procedure below is written against an **AWS RDS + WAL-G + S3 cross-region**
+> architecture. That architecture was **never deployed** for Denver. The independent audit
+> of 2026-06-20 checked: a repo-wide search for `pg_dump|wal-g|pgbackrest` found no backup
+> tooling at all, and recorded the WAL→S3 PITR table below (lines 70-75 of the original)
+> as describing tooling that does not exist. The RTO 4h / RPO 1h targets stated here were
+> never measured against a real restore.
+>
+> The active hosting stack is **Fly.io + Neon**, confirmed by the owner on **2026-08-27**.
+>
+> **Denver currently has no validated DR runbook.** Authoring the Neon equivalent
+> (branch/PITR restore, retention policy, drill evidence) is outstanding follow-up work
+> that requires owner input on retention targets — it was deliberately not invented as
+> part of the Render-retirement cleanup.
+>
+> Kept in place, under its original filename, because dated audit records under `audit/`
+> and `docs/PHASE10_IMPLEMENTATION_REPORT.md` cite this path as evidence.
+>
+> See also `docs/DISASTER_RECOVERY_RUNBOOK_RENDER.md`, which briefly superseded this file
+> for the Render stack and is itself now retired.
+
+**Version:** 10.0.0 (historical)  
+**RTO Target:** 4 hours — *aspirational, never measured*  
+**RPO Target:** 1 hour — *aspirational, never measured*  
+**Last Updated:** 2026-05-07 — *marked superseded 2026-08-28*
 
 ---
 
