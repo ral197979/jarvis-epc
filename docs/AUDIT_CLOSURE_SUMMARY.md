@@ -35,8 +35,8 @@ Every finding maps to commit(s) and to closure evidence. Evidence files live und
 
 | Item | Status | Evidence path |
 |---|---|---|
-| WS1 PITR/retention/prod RPO-RTO | PENDING (Render) | operator-kit.sh WS1 |
-| WS2 prod-scale load + telemetry | PENDING (Render) | operator-kit.sh WS2 |
+| WS1 PITR/retention/prod RPO-RTO | PENDING (Neon) | operator-kit.sh WS1 |
+| WS2 prod-scale load + telemetry | PENDING (Fly.io) | operator-kit.sh WS2 |
 | WS3 bucket versioning/lifecycle/IAM | PENDING (cloud) | operator-kit.sh WS3 |
 | WS4 prod alert firing per class | PENDING (after deploy) | operator-kit.sh WS4 |
 

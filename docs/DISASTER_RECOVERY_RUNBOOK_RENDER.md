@@ -1,9 +1,24 @@
-# Disaster Recovery Runbook — Render (authoritative)
+# Disaster Recovery Runbook — Render (SUPERSEDED — retained for history)
 
-**Supersedes** `docs/DISASTER_RECOVERY_RUNBOOK.md` for the production stack. The prior
-runbook described an AWS RDS + WAL-G + S3 cross-region architecture that **does not exist**
-in this deployment (the platform runs on **Render managed PostgreSQL 16**). This runbook
-reflects the actual stack and the procedures verified during the 2026-06-21 audit closure.
+> ## ⚠️ This runbook describes a retired platform. Do not follow it in an incident.
+>
+> The owner confirmed on **2026-08-27** that the active hosting stack is **Fly.io + Neon**
+> and that Render is retired. Every procedure below is written against **Render managed
+> PostgreSQL 16** and the Render dashboard, neither of which the platform uses any more.
+> The Render-specific backup, PITR, and restore steps therefore **do not apply**.
+>
+> **Denver currently has no validated DR runbook.** Authoring the Neon equivalent
+> (branch/PITR restore, retention policy, drill evidence) is outstanding follow-up work
+> that requires owner input on retention targets — it was deliberately not invented as
+> part of the Render-retirement cleanup.
+>
+> Kept in place, under its original filename, because dated audit records under `audit/`
+> cite this path as evidence.
+
+**Historical context.** This runbook superseded `docs/DISASTER_RECOVERY_RUNBOOK.md`, which
+described an AWS RDS + WAL-G + S3 cross-region architecture that never existed in this
+deployment. It reflected the Render stack and the procedures verified during the 2026-06-21
+audit closure.
 
 ---
 

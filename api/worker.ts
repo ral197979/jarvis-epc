@@ -7,10 +7,9 @@
  *   2. CPU-bound work (PDF, reports) doesn't block HTTP event loop
  *   3. Multiple HTTP server instances can share one worker process
  *
- * Render.com configuration (render.yaml):
- *   - type: worker
- *     name: denver-eng-workers
- *     startCommand: node dist/api/worker.js
+ * Not deployed today: Fly.io runs a single always-on machine whose web process
+ * also hosts the background workers in-process. This entrypoint remains available
+ * for a future dedicated worker process (`node dist/api/worker.js`).
  *
  * Environment: same env vars as api/server.ts.
  * Set WORKER_ONLY=true to prevent workers from starting inside server.ts.

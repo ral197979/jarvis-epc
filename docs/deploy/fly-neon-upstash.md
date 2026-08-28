@@ -169,6 +169,6 @@ The actual production app on this account is **`denver-epc`** (org `personal`, r
 
 **Rollback:** the primary rollback target for either app is always "whatever release was running immediately before the failed deploy" (for production, that is currently **v5** — see `audit/evidence/fly-staging-readiness-2026-07/FLY_PRODUCTION_BASELINE.md` for why v4 is a secondary fallback only, not primary). `flyctl releases --app <app>` plus `flyctl deploy --image <prior-release-image>` (or the Fly dashboard rollback action) is the mechanism; nothing new was built for this, since Fly's built-in release history already covers it.
 
-**Render:** outside the active deployment path for both staging and production. `render.yaml` and `render-deploy.yml` are unmodified by this work and unrelated to it.
+**Render:** retired. The owner confirmed on 2026-08-27 that Fly.io + Neon is the only hosting stack; `render.yaml` and `.github/workflows/render-deploy.yml` have been deleted.
 
 **Production promotion requires separate authorization.** This document, `fly.staging.toml`, and `fly-staging-deploy.yml` govern staging only. Nothing here deploys, or is intended to imply authorization to deploy, PR #18 (or any other change) to `denver-epc`. As of this section being written, **no application deployment — staging or production — has been performed** under `infra/fly-staging-readiness`; see `audit/evidence/fly-staging-readiness-2026-07/DEPLOYMENT_NOT_EXECUTED.md`.

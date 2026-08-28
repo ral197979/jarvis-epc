@@ -60,7 +60,7 @@ Route (emitEvent / sync trigger)
 background_jobs / integration_jobs  (durable queue, per-tenant)
    │  claim FOR UPDATE SKIP LOCKED
    ▼
-Worker (render.yaml: dedicated worker service)
+Worker (in-process today; `api/worker.ts` is the undeployed dedicated entrypoint)
    │
    ├── webhook_dispatch → dispatchWebhookEvent() → HMAC-signed POST (SSRF-guarded) → webhook_deliveries log
    └── integration_sync → _performSync(integration)  ← ❌ STUB to be replaced by Connector SDK

@@ -1,7 +1,7 @@
 # Denver Engineering — Application Overview
 
 > **v4.31.0** · AI-powered Engineering, Procurement & Construction Platform  
-> Built by Ava Systems LLC · Deployed on Render (Node 20, PostgreSQL 16, Redis)
+> Built by Ava Systems LLC · Deployed on Fly.io + Neon (Node 20, PostgreSQL 16, optional Redis)
 
 ---
 
@@ -35,7 +35,7 @@ Denver Engineering is a full-stack SaaS platform for **engineering, procurement,
 └─────────────────────────────────────────────────────┘
 ```
 
-**Tech stack:** React 18 · Vite · TypeScript · Zustand · Express · PostgreSQL 16 · pgvector · Redis · Pino logging · Helmet · JWT (jsonwebtoken) · bcrypt · Render (hosting)
+**Tech stack:** React 18 · Vite · TypeScript · Zustand · Express · PostgreSQL 16 · pgvector · Redis · Pino logging · Helmet · JWT (jsonwebtoken) · bcrypt · Fly.io + Neon (hosting)
 
 ---
 
@@ -615,8 +615,8 @@ Tenant and user settings.
 
 | Component | Spec |
 |-----------|------|
-| Hosting | Render (standard plan, Node 20) |
-| Database | PostgreSQL 16 (standard-4gb, 71 migrations, pgvector extension) |
+| Hosting | Fly.io (always-on machine, Node 20) |
+| Database | Neon PostgreSQL 16 (71 migrations, pgvector extension) |
 | Cache / Token store | Redis (allkeys-lru) |
 | File storage | S3 (presigned URL upload) |
 | AI provider | Anthropic Claude (Ask Jarvis) + OpenAI (embeddings) |

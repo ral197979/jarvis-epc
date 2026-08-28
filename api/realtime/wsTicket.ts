@@ -13,7 +13,7 @@
  *      identity comes from the SERVER-side record, never from query params.
  *
  * Storage is in-process. For multi-instance deployments the issuing instance
- * must also terminate the WS (Render sticky sessions) OR this should be backed
+ * must also terminate the WS (sticky sessions at the edge) OR this should be backed
  * by Redis — see note at the bottom. The interface is intentionally small so a
  * Redis-backed implementation can be dropped in without touching callers.
  */
