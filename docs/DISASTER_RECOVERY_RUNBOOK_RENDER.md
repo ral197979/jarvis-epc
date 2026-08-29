@@ -12,6 +12,10 @@
 > that requires owner input on retention targets — it was deliberately not invented as
 > part of the Render-retirement cleanup.
 >
+> Inventory and draft procedures for the live Fly + Neon stack now live in
+> `docs/DISASTER_RECOVERY_RUNBOOK_FLY_NEON.md` — measured, but **still unvalidated**
+> pending a recovery drill, so the statement above stands.
+>
 > Kept in place, under its original filename, because dated audit records under `audit/`
 > cite this path as evidence.
 
